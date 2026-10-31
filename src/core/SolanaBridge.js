@@ -10,9 +10,33 @@ import {
 import {
   SolanaMobileWalletAdapter,
   createDefaultAddressSelector,
-  createDefaultAuthorizationResultCache,
-  createDefaultWalletNotFoundHandler
+  createDefaultAuthorizationResultCache
 } from '@solana-mobile/wallet-adapter-mobile';
+
+// 安装针对 Android WebView / Capacitor 环境的 MWA 协议桥接补丁
+function installMwaWebViewBridge() {
+  if (typeof window === 'undefined') return;
+  if (window.__mwa_bridge_installed) return;
+  window.__mwa_bridge_installed = true;
+
+  try {
+    const origAssign = window.location.assign.bind(window.location);
+    window.location.assign = function(url) {
+      const urlStr = String(url || '');
+      if (urlStr.startsWith('solana-wallet:') || urlStr.startsWith('solana:')) {
+        console.log('📱 [SolanaBridge] 捕获到 MWA 协议跳转:', urlStr.slice(0, 50) + '...');
+        // 关键：在下一个事件循环触发 window.blur，使 MWA getDetectionPromise 立即完成探针校验，避免 3000ms 伪超时
+        setTimeout(() => {
+          console.log('📱 [SolanaBridge] 主动派发 window.blur 事件响应 MWA 探针');
+          window.dispatchEvent(new Event('blur'));
+        }, 80);
+      }
+      return origAssign(url);
+    };
+  } catch (e) {
+    console.warn('⚠️ 劫持 location.assign 失败:', e);
+  }
+}
 
 export class SolanaBridge {
   constructor() {
@@ -46,17 +70,20 @@ export class SolanaBridge {
   }
 
   initMWA() {
+    installMwaWebViewBridge();
     try {
       this.adapter = new SolanaMobileWalletAdapter({
         addressSelector: createDefaultAddressSelector(),
         appIdentity: {
           name: 'CastawaySOL',
           uri: 'https://castawaysol.game',
-          icon: 'icon.png'
+          icon: 'https://castawaysol.game/icon.png'
         },
         authorizationResultCache: createDefaultAuthorizationResultCache(),
         chain: 'solana:devnet',
-        onWalletNotFound: createDefaultWalletNotFoundHandler()
+        onWalletNotFound: async (adapter) => {
+          console.warn('⚠️ [SolanaBridge] onWalletNotFound 回调被触发');
+        }
       });
     } catch (e) {
       console.warn('⚠️ [SolanaBridge] MWA 初始化降级:', e);
@@ -137,6 +164,9 @@ export class SolanaBridge {
             isGuest: false
           }));
           await this.fetchBalance();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+          }
           return {
             success: true,
             address: this.walletAddress,
@@ -147,7 +177,14 @@ export class SolanaBridge {
       } catch (mwaErr) {
         console.warn('⚠️ MWA 唤起未完成或用户取消:', mwaErr);
         if (preferType === 'mwa') {
-          return { success: false, message: mwaErr.message || '用户取消连接' };
+          const errMsg = mwaErr.message || '';
+          let userTip = '连接未完成或已被取消';
+          if (errMsg.includes('ERROR_WALLET_NOT_FOUND') || errMsg.includes('no installed wallet')) {
+            userTip = '未检测到可用钱包，请确保已安装 Phantom 并在弹出菜单中授权';
+          } else if (errMsg.includes('rejected') || errMsg.includes('cancelled') || errMsg.includes('User rejected')) {
+            userTip = '您已取消本次钱包授权';
+          }
+          return { success: false, message: userTip, originalError: errMsg };
         }
       }
     }

@@ -841,6 +841,10 @@ export class UIManager {
       body.hud-dialog-open #joystick-zone, body.hud-dialog-open #joystick-zone *, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .bottom-quick-bar *, body.hud-dialog-open .mobile-action-zone, body.hud-dialog-open .mobile-action-zone *,
       body.hud-modal-open .top-dashboard, body.hud-modal-open .top-dashboard *, body.hud-modal-open .top-right-group, body.hud-modal-open .top-right-group *, body.hud-modal-open #joystick-zone, body.hud-modal-open #joystick-zone *,
       body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .bottom-quick-bar *, body.hud-modal-open .mobile-action-zone, body.hud-modal-open .mobile-action-zone * { pointer-events: none !important; }
+      /* 新浮动摇杆（#virtual-joystick-touch-zone 感应层 z95 / #joystick-base）同样淡出、不可点；快捷栏抬到感应层之上，避免被左半屏感应层盖住点不到 */
+      body.hud-dialog-open #joystick-base, body.hud-modal-open #joystick-base, body.hud-drawer-open #joystick-base { opacity: .25 !important; }
+      body.hud-dialog-open #virtual-joystick-touch-zone, body.hud-modal-open #virtual-joystick-touch-zone { pointer-events: none !important; }
+      .bottom-quick-bar { z-index: 97; }
       /* 抽屉打开时菜单键保持可见可点（再点一次收起），其余顶栏按钮淡出 */
       body.hud-drawer-open .top-right-group { opacity: 1; z-index: 565; }
       body.hud-drawer-open .top-right-group > :not(#btn-hud-more) { opacity: .3; pointer-events: none; }
@@ -867,7 +871,7 @@ export class UIManager {
         .animal-dialog .dialog-body { font-size: 14px; line-height: 1.55; min-height: 0; }
         .animal-dialog .dialog-header { margin-bottom: 4px; }
         /* 主按钮回到安全区内（右侧 ≥24px） */
-        .mobile-action-zone .main-action-capsule { width: 136px; max-width: 136px; box-sizing: border-box; }
+        .mobile-action-zone .main-action-capsule { width: 136px; max-width: 136px; box-sizing: border-box; transform-origin: right center; } /* 靠近目标时 scale(1.05) 向左放大，不越过右侧 24px */
         /* 抽屉从顶栏下方开始，不盖住「☰ 菜单」键 */
         .hud-nav-secondary.hud-drawer, .hud-nav-secondary.hud-drawer.open { top: calc(var(--hud-nav-b) + 8px); padding-top: 8px; border-radius: 18px 0 0 18px; }
       }
@@ -1254,6 +1258,9 @@ export class UIManager {
     document.getElementById('btn-solana').addEventListener('click', () => {
       haptics.light();
       this.handleSolanaWallet();
+    });
+    window.addEventListener('solana-wallet-changed', () => {
+      this.updateSolanaBtn();
     });
 
     // 关闭弹窗
