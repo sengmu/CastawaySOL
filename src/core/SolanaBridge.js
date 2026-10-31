@@ -20,21 +20,31 @@ function installMwaWebViewBridge() {
   window.__mwa_bridge_installed = true;
 
   try {
-    const origAssign = window.location.assign.bind(window.location);
-    window.location.assign = function(url) {
-      const urlStr = String(url || '');
-      if (urlStr.startsWith('solana-wallet:') || urlStr.startsWith('solana:')) {
-        console.log('📱 [SolanaBridge] 捕获到 MWA 协议跳转:', urlStr.slice(0, 50) + '...');
-        // 关键：在下一个事件循环触发 window.blur，使 MWA getDetectionPromise 立即完成探针校验，避免 3000ms 伪超时
-        setTimeout(() => {
-          console.log('📱 [SolanaBridge] 主动派发 window.blur 事件响应 MWA 探针');
-          window.dispatchEvent(new Event('blur'));
-        }, 80);
+    // 拦截 window.addEventListener('blur')
+    // MWA 官方库在 launchAssociation 时会等待 window.blur 事件（3000ms 超时）。
+    // 在 Android WebView 宿主环境中拉起系统 BottomSheet 时，WebView 不会触发 blur 事件导致伪超时报错。
+    // 此处捕获该监听器并在 80ms 内主动派发 blur，保证底层 WebSocket 顺利建立连接。
+    const origAddEventListener = window.addEventListener.bind(window);
+    window.addEventListener = function(type, listener, options) {
+      if (type === 'blur' && typeof listener === 'function') {
+        const fnStr = listener.toString();
+        if (fnStr.includes('handleBlur') || fnStr.includes('cleanup')) {
+          console.log('🎯 [SolanaBridge] 捕获到 MWA getDetectionPromise 注册的 blur 探针！');
+          setTimeout(() => {
+            console.log('⚡ [SolanaBridge] 主动派发 blur 事件放行 MWA WebSocket 会话！');
+            try {
+              listener(new Event('blur'));
+            } catch (err) {
+              console.warn('派发 blur 事件异常:', err);
+            }
+          }, 80);
+        }
       }
-      return origAssign(url);
+      return origAddEventListener(type, listener, options);
     };
+    console.log('✅ [SolanaBridge] MWA 原生 WebView 桥接补丁已装载');
   } catch (e) {
-    console.warn('⚠️ 劫持 location.assign 失败:', e);
+    console.warn('⚠️ 安装 MWA WebView 桥接失败:', e);
   }
 }
 
@@ -60,6 +70,10 @@ export class SolanaBridge {
 
     // 载入本地缓存状态
     this.loadState();
+
+    if (typeof window !== 'undefined') {
+      window.solanaBridge = this;
+    }
   }
 
   detectSeekerDevice() {
