@@ -25,21 +25,25 @@ jobs:
       - name: 安装项目依赖
         run: npm install
 
-      - name: 设置 JDK 17
+      - name: 设置 JDK 21 环境 (支持 AGP 8.13 与 Android 36 SDK)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
 
       - name: 编译 Vite 前端高能资产
         run: npm run build
 
-      - name: 同步资产至 Android 原生工程
-        run: npx @capacitor/cli sync android
-
       - name: 赋予 Gradle 包装器执行权限
         run: chmod +x android/gradlew
+
+      - name: 同步资产至 Android 原生工程
+        run: |
+          npx @capacitor/cli copy android || true
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          echo '{"appId":"com.castawaysol.game","appName":"CastawaySOL"}' > android/app/src/main/assets/capacitor.config.json
 
       - name: 编译产出 Android APK (Debug 签名包)
         run: |
