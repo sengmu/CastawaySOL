@@ -336,10 +336,11 @@ export class MonkeyHelperSystem {
       this.busyTarget.cooldown = 45.0; // 冷却 45 秒
 
       const lootPool = [
-        { id: 'ancient_coin', count: 1, name: '古代文明海盗金币 🪙', prob: 0.5 },
-        { id: 'pearl', count: 1, name: '深海纯白珍珠 🦪', prob: 0.4 },
+        { id: 'sol_crystal', count: 2, name: '未解密高能硅晶原石 💎 (DePIN 算力核心)', prob: 0.75 },
+        { id: 'battery', count: 1, name: '干燥储能电池 🔋 (矿机备用电源)', prob: 0.5 },
+        { id: 'ancient_coin', count: 1, name: '古代文明海盗金币 🪙', prob: 0.45 },
         { id: 'treasure_map_piece', count: 1, name: '羊皮纸藏宝图残页 🗺️', prob: 0.35 },
-        { id: 'iron_ore', count: 2, name: '深层天然铁矿石 🪨', prob: 0.6 }
+        { id: 'iron_ore', count: 2, name: '深层天然铁矿石 🪨', prob: 0.5 }
       ];
 
       const gotten = [];

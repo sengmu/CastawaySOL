@@ -37,7 +37,7 @@ export class FlotsamSalvageSystem {
         color: 0x5a6577,
         geo: 'cylinder',
         size: [0.32, 0.32, 0.75],
-        drops: ['nail', 'nail', 'stone_chunk']
+        drops: ['nail', 'nail', 'battery'] // 产出矿机备用电池
       },
       {
         type: 'flotsam_crate',
@@ -45,7 +45,7 @@ export class FlotsamSalvageSystem {
         color: 0xa07844,
         geo: 'box',
         size: [0.65, 0.55, 0.65],
-        drops: ['wood_plank', 'apple', 'nail']
+        drops: ['wood_plank', 'apple', 'sol_crystal'] // 漂流打捞可开出未解密硅晶原石
       },
       {
         type: 'flotsam_jug',

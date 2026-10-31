@@ -394,9 +394,23 @@ export class SaveSystem {
       this.game.ancientTempleScene.deserialize(data.ancientTempleScene);
     }
     if (data.currentIslandId === 'ancient_temple' && this.game.travelToIsland) {
-      this.game.currentIslandId = 'ancient_temple';
-      this.game.setMainIslandVisible(false);
-      if (this.game.ancientTempleScene) this.game.ancientTempleScene.setVisible(true);
+      const [px, py, pz] = (data.player && data.player.position) ? data.player.position : [0, 0, 0];
+      // 地宫物理包围盒：X in [-16, 16], Z in [-26, 26]
+      const isInsideTemple = (Math.abs(px) <= 16 && pz >= -26 && pz <= 26);
+      if (!isInsideTemple || (pz < -20 && px === 0)) {
+        // 坐标明显仍在主岛后山门前，自愈纠正场景 ID，解除进入死锁
+        this.game.currentIslandId = 'main_island';
+      } else {
+        this.game.currentIslandId = 'ancient_temple';
+        this.game.setMainIslandVisible(false);
+        if (this.game.ancientTempleScene) this.game.ancientTempleScene.setVisible(true);
+        if (this.game.renderer) this.game.renderer.setClearColor(0x0a101d);
+        if (this.game.scene) this.game.scene.fog = new THREE.FogExp2(0x0a101d, 0.012);
+        if (this.game.dayNight && this.game.dayNight.dirLight) this.game.dayNight.dirLight.visible = false;
+        if (this.game.player && this.game.player.snapCamera) {
+          this.game.player.snapCamera(0, 0.50, 11.0);
+        }
+      }
     }
 
     // 4. 恢复主线剧情进度

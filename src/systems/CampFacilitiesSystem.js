@@ -12,14 +12,21 @@ export class CampFacilitiesSystem {
     this.stepCounter = 0; // 步数冷凝累积器
     this.isAutoProductionActive = false; // 是否激活自动生产减负特权 (类似《疯狂水世界》12元自动生产执照)
 
-    // 幸存者居民生产岗位排班映射表 (支持打捞、采集、净水)
+    // 幸存者居民生产岗位排班映射表 (支持打捞、采集、净水、矿石开采运送)
     this.jobsConfig = {
+      miner: {
+        id: 'miner',
+        name: '硅晶矿脉探采员',
+        icon: '⛏️',
+        desc: '巡视全岛 DePIN 硅晶矿脉与海蚀崖壁，每日运回高能原石直接供矿机运算',
+        baseYield: { sol_crystal: 2, stone_chunk: 2 }
+      },
       salvager: {
         id: 'salvager',
         name: '浅海打捞巡警',
         icon: '⚓',
-        desc: '巡视南岸与出航湾，打捞潮汐冲刷上来的木板与铁钉',
-        baseYield: { wood_plank: 2, nail: 1 }
+        desc: '巡视南岸与出航湾，打捞潮汐冲刷上来的木板、铁钉与备用电池',
+        baseYield: { wood_plank: 2, nail: 1, battery: 1 }
       },
       forager: {
         id: 'forager',

@@ -4109,19 +4109,30 @@ export class UIManager {
                   }).join('')}
                 </div>
 
-                <!-- 升级按钮 -->
-                <div style="display:flex; gap:10px; margin-top:8px;">
-                  <button id="btn-perform-upgrade" style="
-                    flex:1; padding:10px; border-radius:10px; border:none; cursor:${check.ok ? 'pointer' : 'not-allowed'};
-                    background:${check.ok ? 'linear-gradient(135deg, #00b894, #00cec9)' : 'rgba(255,255,255,0.1)'};
-                    color:${check.ok ? '#fff' : 'rgba(255,255,255,0.4)'};
-                    font-weight:900; font-size:13px; box-shadow:${check.ok ? '0 4px 14px rgba(0,206,201,0.4)' : 'none'};
-                  ">
-                    ${check.ok ? `🔨 确认升级至【${nextTier.title}】` : '❌ 材料不足，无法改装'}
-                  </button>
+                <!-- 升级按钮组（双轨：常规资材组装 / $SOL 黑市蓝图快造） -->
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                  <div style="display:flex; gap:10px;">
+                    <button id="btn-perform-upgrade" style="
+                      flex:1; padding:10px; border-radius:10px; border:none; cursor:${check.ok ? 'pointer' : 'not-allowed'};
+                      background:${check.ok ? 'linear-gradient(135deg, #00b894, #00cec9)' : 'rgba(255,255,255,0.1)'};
+                      color:${check.ok ? '#fff' : 'rgba(255,255,255,0.4)'};
+                      font-weight:900; font-size:12.5px; box-shadow:${check.ok ? '0 4px 14px rgba(0,206,201,0.4)' : 'none'};
+                    ">
+                      ${check.ok ? `🔨 资材组装升级【${nextTier.title}】` : '❌ 资材不足，无法组装'}
+                    </button>
+                    ${nextTier.solCost ? `
+                      <button id="btn-sol-upgrade" style="
+                        flex:1; padding:10px; border-radius:10px; border:1px solid #14f195; cursor:pointer;
+                        background:linear-gradient(135deg, #9945ff, #14f195); color:#0b101b; font-weight:900; font-size:12.5px;
+                        box-shadow:0 4px 14px rgba(20,241,149,0.35);
+                      ">
+                        🪙 ${nextTier.solCost} $SOL 黑市蓝图一键快造
+                      </button>
+                    ` : ''}
+                  </div>
                   <button id="btn-quick-sail" style="
-                    padding:10px 18px; border-radius:10px; border:none; cursor:pointer;
-                    background:linear-gradient(135deg, #0984e3, #74b9ff); color:#fff; font-weight:900; font-size:13px;
+                    width:100%; padding:9px; border-radius:10px; border:none; cursor:pointer;
+                    background:linear-gradient(135deg, #0984e3, #74b9ff); color:#fff; font-weight:900; font-size:12.5px;
                   ">
                     🧭 展开海图出航
                   </button>
@@ -4237,6 +4248,16 @@ export class UIManager {
       if (upBtn) {
         upBtn.addEventListener('click', () => {
           if (system.performUpgrade()) {
+            render();
+          }
+        });
+      }
+
+      // 绑定 $SOL 算力代币黑市快造
+      const solUpBtn = body.querySelector('#btn-sol-upgrade');
+      if (solUpBtn) {
+        solUpBtn.addEventListener('click', () => {
+          if (system.performSolUpgrade()) {
             render();
           }
         });

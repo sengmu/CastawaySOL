@@ -861,4 +861,25 @@ export class PlayerController {
     this.cameraTarget.lerp(new THREE.Vector3(this.position.x, lookTargetY, this.position.z + forwardLookZ), 12.0 * delta);
     this.camera.lookAt(this.cameraTarget);
   }
+
+  // 跨场景或传送时瞬时对齐相机机位与朝向，彻底杜绝角度残留与视角穿帮
+  snapCamera(angleH = 0, angleV = 0.50, distance = 11.0) {
+    this.cameraAngleH = angleH;
+    this.cameraAngleV = angleV;
+    this.cameraDistance = distance;
+
+    const horizontalDist = this.cameraDistance * Math.cos(this.cameraAngleV);
+    const verticalDist = this.cameraDistance * Math.sin(this.cameraAngleV);
+
+    const targetCamX = this.position.x + Math.sin(this.cameraAngleH) * horizontalDist;
+    const targetCamZ = this.position.z + Math.cos(this.cameraAngleH) * horizontalDist;
+    const targetCamY = this.position.y + verticalDist + 0.65;
+
+    this.camera.position.set(targetCamX, targetCamY, targetCamZ);
+
+    const forwardLookZ = (angleH === 0) ? -4.0 : -0.6;
+    const lookTargetY = this.position.y + 0.95;
+    this.cameraTarget.set(this.position.x, lookTargetY, this.position.z + forwardLookZ);
+    this.camera.lookAt(this.cameraTarget);
+  }
 }

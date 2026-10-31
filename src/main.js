@@ -382,9 +382,9 @@ class Game {
     if (visible && this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
   }
 
-  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出)
-  travelToIsland(islandId) {
-    if (this.currentIslandId === islandId) return;
+  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，支持 force 强制突破异常状态死锁)
+  travelToIsland(islandId, force = false) {
+    if (!force && this.currentIslandId === islandId) return;
 
     const previousIsland = this.currentIslandId;
     soundEngine.playPlaceFurniture();
@@ -405,7 +405,8 @@ class Game {
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(true);
 
-        // 切换为地宫幽暗氛围光与深渊轻雾
+        // 切换为地宫幽暗氛围光与深渊轻雾，严密同步清除底色
+        this.renderer.setClearColor(0x0a101d);
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = false;
         if (this.scene) this.scene.fog = new THREE.FogExp2(0x0a101d, 0.012);
 
@@ -415,8 +416,10 @@ class Game {
         this.player.rotation = Math.PI; // 朝向神殿大殿内部 (北向)
         if (this.player.mesh) this.player.mesh.rotation.y = Math.PI;
 
-        // 瞬时对齐相机，避免从主岛远端 lerp 穿帮
-        if (this.camera && this.player) {
+        // 瞬时校准相机机位，杜绝角度残留与视角穿帮
+        if (this.player && this.player.snapCamera) {
+          this.player.snapCamera(0, 0.50, 11.0);
+        } else if (this.camera && this.player) {
           const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
           const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
           this.camera.position.set(0, 0.4 + camDistV + 0.8, 15 + camDistH);
@@ -447,6 +450,7 @@ class Game {
         // 传送到浮木岛沙滩码头
         this.player.position.set(0, 0.4, 11);
         if (this.player.pivot) this.player.pivot.position.set(0, 0.4, 11);
+        if (this.player && this.player.snapCamera) this.player.snapCamera(0, 0.42, 12.0);
 
         this.ui.showDialog(
           '⛵ 抵达 · 漂流浮木岛 (Timber Isle)',
@@ -466,6 +470,7 @@ class Game {
         // 传送到矿石岛滩头
         this.player.position.set(0, 0.4, 11.5);
         if (this.player.pivot) this.player.pivot.position.set(0, 0.4, 11.5);
+        if (this.player && this.player.snapCamera) this.player.snapCamera(0, 0.42, 12.0);
 
         this.ui.showDialog(
           '🌋 抵达 · 海蚀矿石岛 (Quarry Isle)',
@@ -480,7 +485,12 @@ class Game {
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
         this.setMainIslandVisible(true);
 
-        // 恢复海岛蓝天日光与清润海雾
+        // 恢复海岛蓝天日光与清润海雾与天空清除底色
+        if (this.dayNight) {
+          this.dayNight.setMode(this.dayNight.currentMode);
+        } else {
+          this.renderer.setClearColor(0x76c4e0);
+        }
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
         if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
 
@@ -491,7 +501,9 @@ class Game {
           this.player.rotation = 0; // 朝向南面海岛腹地
           if (this.player.mesh) this.player.mesh.rotation.y = 0;
 
-          if (this.camera && this.player) {
+          if (this.player && this.player.snapCamera) {
+            this.player.snapCamera(0, 0.38, 12.0);
+          } else if (this.camera && this.player) {
             const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
             const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
             this.camera.position.set(0, 0.4 + camDistV + 0.8, -20.0 + camDistH);
@@ -846,7 +858,7 @@ class Game {
 
       if (distToPortal < 3.2) {
         // 穿越光阵返回海岛主地图
-        this.travelToIsland('main_island');
+        this.travelToIsland('main_island', true);
         return;
       } else if (distToAltar < 3.8) {
         // 参悟前殿日冕解谜
@@ -868,8 +880,8 @@ class Game {
         return;
       }
     } else if (this.ancientTemple && distanceXZ(playerPos, [this.ancientTemple.altarWorldPos.x, 0, this.ancientTemple.altarWorldPos.z]) < 4.2) {
-      // 在主岛后山神殿门前，点击或按E直接踏入独立地图
-      this.travelToIsland('ancient_temple');
+      // 在主岛后山神殿门前，点击或按E直接踏入独立地图 (传入 force=true 确保任何旧存档状态下均可瞬移进入)
+      this.travelToIsland('ancient_temple', true);
       return;
     }
 

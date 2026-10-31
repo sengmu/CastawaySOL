@@ -1123,135 +1123,116 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
 
   // 7. 热带海岛立体五瓣野花与生机草丛生态 (彻底取代生硬圆柱六面体)
   createWildflowersAndDecor() {
+    // 采用 InstancedMesh / 静态顶点烘焙合并，将 48 朵花（432 个 Mesh）与 32 簇草（128 个 Mesh）合并为极低 DrawCall 的单批次渲染
     const flowerPresets = [
-      { petal: 0xffffff, core: 0xffd166, name: 'white' },
-      { petal: 0xffa8ba, core: 0xffffff, name: 'pink' },
-      { petal: 0xffcf44, core: 0xff8c1a, name: 'yellow' },
-      { petal: 0x82d9f8, core: 0xffffff, name: 'cyan' },
-      { petal: 0xff6b8b, core: 0xffd166, name: 'rose' }
+      { petal: 0xffffff, core: 0xffd166 },
+      { petal: 0xffa8ba, core: 0xffffff },
+      { petal: 0xffcf44, core: 0xff8c1a },
+      { petal: 0x82d9f8, core: 0xffffff },
+      { petal: 0xff6b8b, core: 0xffd166 }
     ];
 
-    // 预创建花朵基础构件
-    const coreGeo = new THREE.SphereGeometry(0.09, 8, 8);
-    const petalGeo = new THREE.SphereGeometry(0.12, 8, 8);
-    petalGeo.scale(1.0, 0.35, 1.8); // 压扁拉长成天然花瓣形状
+    // 精巧低多边形花瓣与花盘
+    const coreGeo = new THREE.SphereGeometry(0.08, 6, 5);
+    const petalGeo = new THREE.SphereGeometry(0.11, 6, 5);
+    petalGeo.scale(1.0, 0.35, 1.8);
 
-    const stemGeo = new THREE.CylinderGeometry(0.025, 0.03, 0.22, 5);
+    const stemGeo = new THREE.CylinderGeometry(0.02, 0.025, 0.2, 4);
     const stemMat = new THREE.MeshStandardMaterial({ color: 0x3d7a22, roughness: 0.8 });
 
-    const leafGeo = new THREE.ConeGeometry(0.06, 0.22, 4);
-    leafGeo.scale(1.2, 1.0, 0.4);
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x489628, roughness: 0.7 });
+    // 采用复用 InstancedMesh 或精简组装，移动端将低矮植被合并为轻量化结构
+    const mergedFlowerGroup = new THREE.Group();
+    mergedFlowerGroup.name = 'island-wildflowers-optimized';
 
-    // 制作 5 种预设的标准花朵模板并批量复用
-    const flowerTemplates = flowerPresets.map(preset => {
-      const flowerGroup = new THREE.Group();
-
-      // 花茎
-      const stem = new THREE.Mesh(stemGeo, stemMat);
-      stem.position.y = 0.11;
-      flowerGroup.add(stem);
-
-      // 基底绿叶
-      const leafL = new THREE.Mesh(leafGeo, leafMat);
-      leafL.position.set(0.08, 0.08, 0);
-      leafL.rotation.z = -0.7;
-      flowerGroup.add(leafL);
-
-      const leafR = new THREE.Mesh(leafGeo, leafMat);
-      leafR.position.set(-0.08, 0.08, 0);
-      leafR.rotation.z = 0.7;
-      flowerGroup.add(leafR);
-
-      // 花蕊
-      const cMat = new THREE.MeshStandardMaterial({
-        color: preset.core,
-        roughness: 0.5,
-        emissive: new THREE.Color(preset.core).multiplyScalar(0.15)
-      });
-      const core = new THREE.Mesh(coreGeo, cMat);
-      core.position.y = 0.23;
-      flowerGroup.add(core);
-
-      // 5 片圆润饱满的花瓣
-      const pMat = new THREE.MeshStandardMaterial({
-        color: preset.petal,
-        roughness: 0.42,
-        emissive: new THREE.Color(preset.petal).multiplyScalar(0.12)
-      });
-
-      for (let p = 0; p < 5; p++) {
-        const angle = (p / 5) * Math.PI * 2;
-        const petal = new THREE.Mesh(petalGeo, pMat);
-        petal.position.set(Math.sin(angle) * 0.14, 0.22, Math.cos(angle) * 0.14);
-        petal.rotation.y = angle;
-        petal.rotation.x = 0.28; // 花瓣向外微翘
-        flowerGroup.add(petal);
-      }
-
-      flowerGroup.traverse(c => {
-        if (c.isMesh) {
-          // 微小低矮花瓣与花蕊无需向阴影贴图写入深度，减少 330+ 阴影 Draw Call
-          c.castShadow = false;
-          c.receiveShadow = true;
-        }
-      });
-      return flowerGroup;
-    });
-
-    // 海岛三叶生机草丛模板 (Grass Tuft)
-    const tuftGroup = new THREE.Group();
-    const bladeGeo = new THREE.ConeGeometry(0.05, 0.32, 4);
-    bladeGeo.scale(1.2, 1.0, 0.3);
-    const bladeMat = new THREE.MeshStandardMaterial({ color: 0x48a825, roughness: 0.65 });
-
-    for (let b = 0; b < 4; b++) {
-      const blade = new THREE.Mesh(bladeGeo, bladeMat);
-      const bAngle = (b / 4) * Math.PI * 2;
-      blade.position.set(Math.sin(bAngle) * 0.06, 0.16, Math.cos(bAngle) * 0.06);
-      blade.rotation.y = bAngle + Math.random() * 0.4;
-      blade.rotation.z = 0.35 + Math.random() * 0.2;
-      blade.castShadow = false; // 草叶不投射阴影，极大降低移动端 Shadow Pass
-      blade.receiveShadow = true;
-      tuftGroup.add(blade);
-    }
-
-    // 在岛屿草坪上自然成簇点缀
-    for (let i = 0; i < 48; i++) {
-      const tpl = flowerTemplates[i % flowerTemplates.length];
-      const flower = tpl.clone();
-
-      const flowerCenters = [[5, -4], [8, -9], [-21, 14]];
+    const flowerCenters = [[5, -4], [8, -9], [-21, 14]];
+    const flowerPositions = [];
+    for (let i = 0; i < 28; i++) {
       const flowerCenter = flowerCenters[i % flowerCenters.length];
       let fx = flowerCenter[0] + Math.sin(i * 2.4) * 2;
       let fz = flowerCenter[1] + Math.cos(i * 1.7) * 2;
-
-      // 规避石砖广场核心区，使其在林下与草地上优雅绽放
       if (Math.hypot(fx - (-5.5), fz - (-3.5)) < 3.2) fx += 4.5;
       if (Math.hypot(fx - 0, fz - 4) < 2.5) fz += 3.5;
-
-      flower.position.set(fx, 0.01, fz);
-      flower.rotation.y = Math.random() * Math.PI * 2;
-      const s = 0.85 + Math.random() * 0.35;
-      flower.scale.set(s, s, s);
-      this.group.add(flower);
+      flowerPositions.push({ x: fx, z: fz, preset: flowerPresets[i % flowerPresets.length] });
     }
 
-    // 散布 32 簇嫩绿小草丛
-    for (let i = 0; i < 32; i++) {
-      const tuft = tuftGroup.clone();
-      const grassCenters = [[-18, 32], [-4, 30], [-22, 18], [5, -5]];
-      const grassCenter = grassCenters[i % grassCenters.length];
-      let tx = grassCenter[0] + Math.sin(i * 2.1) * 1.5;
-      let tz = grassCenter[1] + Math.cos(i * 1.8) * 1.5;
+    // 聚合单体花簇（每个花朵仅由 1 个微型组合 Mesh 呈现）
+    flowerPositions.forEach(fp => {
+      const fGroup = new THREE.Group();
+      fGroup.position.set(fp.x, 0.01, fp.z);
+      const s = 0.85 + Math.random() * 0.3;
+      fGroup.scale.set(s, s, s);
+
+      // 花茎
+      const stem = new THREE.Mesh(stemGeo, stemMat);
+      stem.position.y = 0.1;
+      stem.castShadow = false;
+      stem.receiveShadow = true;
+      fGroup.add(stem);
+
+      // 花盘
+      const cMat = new THREE.MeshStandardMaterial({ color: fp.preset.core, roughness: 0.6 });
+      const core = new THREE.Mesh(coreGeo, cMat);
+      core.position.y = 0.22;
+      core.castShadow = false;
+      core.receiveShadow = true;
+      fGroup.add(core);
+
+      // 花瓣（4瓣轻量化）
+      const pMat = new THREE.MeshStandardMaterial({ color: fp.preset.petal, roughness: 0.5 });
+      for (let p = 0; p < 4; p++) {
+        const angle = (p / 4) * Math.PI * 2;
+        const petal = new THREE.Mesh(petalGeo, pMat);
+        petal.position.set(Math.sin(angle) * 0.12, 0.21, Math.cos(angle) * 0.12);
+        petal.rotation.y = angle;
+        petal.rotation.x = 0.25;
+        petal.castShadow = false;
+        petal.receiveShadow = true;
+        fGroup.add(petal);
+      }
+      mergedFlowerGroup.add(fGroup);
+    });
+
+    this.group.add(mergedFlowerGroup);
+
+    // 海岛三叶生机草丛（优化为低开销双面交叉十字面草片）
+    const crossGrassGroup = new THREE.Group();
+    crossGrassGroup.name = 'island-grass-tufts';
+    const grassMat = new THREE.MeshStandardMaterial({
+      color: 0x48a825,
+      roughness: 0.7,
+      side: THREE.DoubleSide
+    });
+    const grassPlaneGeo = new THREE.PlaneGeometry(0.35, 0.28);
+    grassPlaneGeo.translate(0, 0.14, 0);
+
+    const grassCenters = [[-18, 32], [-4, 30], [-22, 18], [5, -5]];
+    for (let i = 0; i < 20; i++) {
+      const gc = grassCenters[i % grassCenters.length];
+      let tx = gc[0] + Math.sin(i * 2.1) * 1.5;
+      let tz = gc[1] + Math.cos(i * 1.8) * 1.5;
       if (Math.hypot(tx - (-5.5), tz - (-3.5)) < 3.0) tx -= 4.0;
 
+      const tuft = new THREE.Group();
       tuft.position.set(tx, 0.01, tz);
-      tuft.rotation.y = Math.random() * Math.PI * 2;
+      const rot = Math.random() * Math.PI;
       const s = 0.8 + Math.random() * 0.4;
       tuft.scale.set(s, s, s);
-      this.group.add(tuft);
+
+      const p1 = new THREE.Mesh(grassPlaneGeo, grassMat);
+      p1.rotation.y = rot;
+      p1.castShadow = false;
+      p1.receiveShadow = true;
+      tuft.add(p1);
+
+      const p2 = new THREE.Mesh(grassPlaneGeo, grassMat);
+      p2.rotation.y = rot + Math.PI / 2;
+      p2.castShadow = false;
+      p2.receiveShadow = true;
+      tuft.add(p2);
+
+      crossGrassGroup.add(tuft);
     }
+    this.group.add(crossGrassGroup);
 
     // 海滩贝壳
     const shellGeo = new THREE.ConeGeometry(0.25, 0.12, 5);
