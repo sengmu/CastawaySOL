@@ -851,13 +851,13 @@ export class PlayerController {
 
     const targetCamX = this.position.x + Math.sin(this.cameraAngleH) * horizontalDist;
     const targetCamZ = this.position.z + Math.cos(this.cameraAngleH) * horizontalDist;
-    const targetCamY = this.position.y + verticalDist + 0.8;
+    const targetCamY = this.position.y + verticalDist + 0.65;
 
     this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 12.0 * delta);
 
-    // 黄金三分法则：视线微抬并向前瞻望（Forward Lookahead），角色处于中下部，完整饱览整片树冠、樱花与远景
-    const forwardLookZ = -2.2;
-    const lookTargetY = this.position.y + 1.7;
+    // 黄金视距重构：视点居中小猫上身，将主角提升至屏幕黄金分割点（垂直约 45% 适中高度），不再沉底或被底部UI遮挡
+    const forwardLookZ = -0.6;
+    const lookTargetY = this.position.y + 0.95;
     this.cameraTarget.lerp(new THREE.Vector3(this.position.x, lookTargetY, this.position.z + forwardLookZ), 12.0 * delta);
     this.camera.lookAt(this.cameraTarget);
   }

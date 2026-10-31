@@ -239,21 +239,22 @@ export class UIManager {
         box-shadow: 0 4px 15px rgba(0, 206, 201, 0.3);
       }
 
-      /* 底部快捷物品栏 (防遮挡与静默横滑) */
+      /* 底部快捷物品栏 (避开中央角色，布局在左侧摇杆旁，防遮挡与静默横滑) */
       .bottom-quick-bar {
         position: absolute;
-        bottom: calc(16px + var(--sab, 0px));
-        left: 50%; transform: translateX(-50%);
+        bottom: calc(14px + var(--sab, 0px));
+        left: calc(185px + max(16px, var(--sal, 0px)));
+        transform: none;
         background: rgba(18, 24, 28, 0.85);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 22px;
-        padding: 8px;
-        display: flex; gap: 8px; align-items: center;
+        border-radius: 18px;
+        padding: 5px 8px;
+        display: flex; gap: 6px; align-items: center;
         box-shadow: 0 8px 30px rgba(0,0,0,0.35);
         z-index: 90;
-        max-width: min(46vw, calc(100vw - 390px));
+        max-width: min(36vw, calc(100vw - 420px));
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
@@ -264,10 +265,10 @@ export class UIManager {
       .quick-slot {
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        padding: 8px 10px; min-width: 64px; min-height: 58px;
-        display: flex; flex-direction: column; align-items: center; gap: 3px;
-        color: #ffffff; font-size: 12px; font-weight: 700;
+        border-radius: 10px;
+        padding: 5px 8px; min-width: 52px; min-height: 46px;
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        color: #ffffff; font-size: 11px; font-weight: 700;
         cursor: pointer; white-space: nowrap; transition: background 0.15s, transform 0.1s;
       }
       .quick-slot.selected {
@@ -375,6 +376,8 @@ export class UIManager {
           font-size: 16px;
         }
         .bottom-quick-bar {
+          left: 50%;
+          transform: translateX(-50%);
           bottom: calc(82px + var(--sab, 0px));
           max-width: calc(100vw - 24px);
           padding: 6px 8px;
@@ -708,7 +711,7 @@ export class UIManager {
         .top-right-group { right: max(24px, var(--sar, 0px)); top: max(10px, var(--sat, 0px)); }
         .mobile-action-zone { right: max(24px, var(--sar, 0px)); bottom: max(12px, var(--sab, 0px)); }
         #joystick-zone { left: max(24px, var(--sal, 0px)) !important; bottom: max(8px, var(--sab, 0px)) !important; }
-        .bottom-quick-bar { bottom: max(10px, var(--sab, 0px)); }
+        .bottom-quick-bar { left: calc(185px + max(16px, var(--sal, 0px))); transform: none; bottom: max(10px, var(--sab, 0px)); }
         .time-tag, .gauge-label-row, .canteen-pill, .survival-water-row, .survival-warning, .quest-banner, .aux-btn-label, .quick-slot { font-size: 12px; }
         .gauge-label-row span:last-child { font-size: 13px; }
         .gauge-item { grid-template-columns: minmax(0,1fr) 26px; }
@@ -761,6 +764,11 @@ export class UIManager {
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
       }
       .context-tag[hidden] { display: none; }
+      /* 状态卡修复：竖屏/旧卡最小字号 12px（标签、数值、水壶 3/3、喝水按钮、任务条） */
+      @media (orientation: portrait) {
+        .top-dashboard .gauge-label-row span, .top-dashboard .gauge-label-row span:last-child, .top-dashboard .survival-water-row, .top-dashboard .survival-water-row span,
+        .top-dashboard .canteen-pill, .top-dashboard .survival-warning, .top-dashboard .quest-banner { font-size: 12px; }
+      }
       .gauge-fill { width: 100% !important; transform-origin: left center; transition: transform .35s ease-out; }
       .canteen-dots { display: none; }
       @media (orientation: landscape) and (max-height: 500px) {
@@ -768,32 +776,37 @@ export class UIManager {
         .top-right-group { gap: 8px; max-width: none; }
         .top-right-group .hud-nav-btn { min-width: 48px; min-height: 48px; padding: 0 14px; border-radius: 14px; font-size: 13px; }
         .top-right-group .hud-nav-desktop-label { display: inline; }
+      }
+      /* 状态卡修复（2026-10-31）：紧凑状态卡改为横屏都生效（不再要求高度 ≤500px），竖屏仍用竖屏样式 */
+      @media (orientation: landscape) {
         /* 紧凑状态卡（约 192x60）：图标 + 细条，数值低于 30% 才显示并变色 */
-        .top-dashboard { width: 192px; gap: 0; }
+        .top-dashboard { width: 200px; gap: 0; }
         .dashboard-panel { padding: 4px 8px 5px; border-radius: 12px; }
         .stats-header { margin: 0 0 2px; padding: 0; border: 0; gap: 4px; min-height: 16px; flex-wrap: nowrap; }
         .stats-header .time-tag { font-size: 12px; line-height: 16px; white-space: nowrap; }
         #hud-time { flex-shrink: 0; }
         #hud-weather { min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 0 5px; border-radius: 6px; }
         .gauges-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px; }
-        .gauge-item { display: flex; align-items: center; gap: 4px; height: 14px; padding: 0 2px; border-radius: 5px; }
+        .gauge-item { display: flex; flex-direction: row; align-items: center; gap: 3px; height: 14px; padding: 0 2px; border-radius: 5px; } /* 状态卡修复：底层是 column，导致血条被压成 0 高 */
         .gauge-label-row span:first-child { order: 0; flex: 0 0 auto; }
         .gauge-label-row .hud-icon { width: 13px; height: 13px; }
         .gauge-name { display: none; }
-        .gauge-track { order: 1; flex: 1 1 auto; height: 4px; border-radius: 2px; }
-        .gauge-label-row span:last-child { order: 2; font-size: 13px; font-weight: 800; color: #ffb6a5; }
+        .gauge-track { order: 1; flex: 1 1 auto; min-width: 24px; height: 4px; border-radius: 2px; }
+        .gauge-label-row span:last-child { order: 2; flex-shrink: 0; font-size: 13px; font-weight: 800; color: #ffb6a5; }
         .gauge-item:not([data-low="true"]) .gauge-label-row span:last-child { display: none; }
         .gauge-item[data-low="true"] .gauge-fill { background: linear-gradient(90deg, #ff9f7a, #e5533d); }
-        .canteen-dots { display: inline-block; order: 3; font-size: 12px; line-height: 1; letter-spacing: -1px; color: #74b9ff; white-space: nowrap; }
+        .canteen-dots { display: inline-block; order: 3; flex-shrink: 0; font-size: 12px; line-height: 1; letter-spacing: -2px; color: #74b9ff; white-space: nowrap; }
         .gauge-drinkable::after { content: ''; position: absolute; left: -4px; right: -4px; top: -16px; bottom: -16px; }
         .survival-water-row { display: none; }
         .survival-warning { margin-top: 4px; padding: 3px 6px; font-size: 12px; }
+      }
+      @media (orientation: landscape) and (max-height: 500px) {
         /* 任务条：固定在上中，只显示一行 */
         .quest-banner {
           position: fixed; top: max(10px, var(--sat, 0px)); left: 50%; transform: translateX(-50%); z-index: 95;
           height: 32px; min-height: 0; padding: 0 14px; border-radius: 16px; display: block; line-height: 32px;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px;
-          width: max-content; max-width: min(440px, calc(100vw - 448px));
+          width: max-content; max-width: min(440px, calc(100vw - 464px)); /* 状态卡修复：卡片加宽到 200px 后留出间距 */
         }
         /* 右下动作区：主要按钮 48px 以上 */
         .aux-btn { width: 48px; height: 48px; }

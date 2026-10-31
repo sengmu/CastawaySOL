@@ -153,7 +153,7 @@ export class TreeInteraction {
           const fMesh = new THREE.Mesh(fruitGeo, fruitMat);
           fMesh.position.copy(off);
           fMesh.scale.set(1.0, 0.92, 1.0);
-          fMesh.castShadow = true;
+          fMesh.castShadow = false; // 树冠本身已有完整浓密阴影，果实无需独立投射深度
           // 挂载至 model 内部，随树冠枝桠微风与晃动同步摆荡
           model.add(fMesh);
           fruits.push(fMesh);
@@ -176,7 +176,7 @@ export class TreeInteraction {
           const cMesh = new THREE.Mesh(coconutGeo, coconutMat);
           cMesh.position.copy(off);
           cMesh.scale.set(0.9, 1.25, 0.9);
-          cMesh.castShadow = true;
+          cMesh.castShadow = false; // 隐藏在茂密椰叶下，免去多余深度计算
           // 挂载至 model 内部，随椰树杆梢同步摇摆
           model.add(cMesh);
           fruits.push(cMesh);

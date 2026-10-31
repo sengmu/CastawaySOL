@@ -362,6 +362,7 @@ class Game {
     if (this.beachResources && this.beachResources.group) this.beachResources.group.visible = visible;
     if (this.flotsamSalvage && this.flotsamSalvage.group) this.flotsamSalvage.group.visible = visible;
     if (this.villagers && this.villagers.group) this.villagers.group.visible = visible;
+    if (this.wildlifeCombat && this.wildlifeCombat.group) this.wildlifeCombat.group.visible = visible;
     if (this.buildSystem && this.buildSystem.furnitureGroup) this.buildSystem.furnitureGroup.visible = visible;
     if (this.landmarksGroup) this.landmarksGroup.visible = visible;
     if (this.campfireGroup) this.campfireGroup.visible = visible;
@@ -379,9 +380,9 @@ class Game {
     const previousIsland = this.currentIslandId;
     soundEngine.playPlaceFurniture();
     if (islandId === 'ancient_temple') {
-      this.ui.showToast('🏛️ 穿越青铜石门……踏入古代神殿深渊秘境！');
+      this.ui.showToast('🏛️ 穿越青蓝秘境漩涡……踏入远古神殿独立地宫！');
     } else if (previousIsland === 'ancient_temple') {
-      this.ui.showToast('🌀 穿越青蓝光阵……返回海岛主地图！');
+      this.ui.showToast('🌀 踏入青蓝符文传送阵……返回海岛主地图！');
     } else {
       this.ui.showToast('⛵ 扬帆起航！破浪驶向远方海域……');
     }
@@ -395,18 +396,33 @@ class Game {
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(true);
 
+        // 切换为地宫幽暗氛围光与深渊轻雾
+        if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = false;
+        if (this.scene) this.scene.fog = new THREE.FogExp2(0x0a101d, 0.012);
+
         // 传送到古代神殿入口传送光阵 (0, 0.4, 15)
         this.player.position.set(0, 0.4, 15);
         if (this.player.pivot) this.player.pivot.position.set(0, 0.4, 15);
-        this.player.rotation = Math.PI; // 朝向神殿大殿内部
+        this.player.rotation = Math.PI; // 朝向神殿大殿内部 (北向)
         if (this.player.mesh) this.player.mesh.rotation.y = Math.PI;
+
+        // 瞬时对齐相机，避免从主岛远端 lerp 穿帮
+        if (this.camera && this.player) {
+          const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
+          const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
+          this.camera.position.set(0, 0.4 + camDistV + 0.8, 15 + camDistH);
+          if (this.player.cameraTarget) {
+            this.player.cameraTarget.set(0, 0.4 + 1.7, 15 - 2.2);
+            this.camera.lookAt(this.player.cameraTarget);
+          }
+        }
 
         this.ui.showDialog(
           '🏛️ 踏入 · 后山古代神殿 (Ancient Temple)',
-          '沉重的巨石门扉在身后轰鸣，你步入了深埋后山地底千年的远古神殿独立密室！\n\n' +
-          '四周林立着散发幽光的象形符文立柱，大殿中央伫立着神秘的【星辰日冕祭坛】与【九宫图腾石板】！\n' +
+          '穿越呼啸的空间漩涡，你踏入了深埋后山地底千年的远古神殿独立密室！\n\n' +
+          '四周耸立着散发幽光的象形符文巨柱，大殿中央伫立着神秘的【星辰日冕祭坛】与【九宫图腾石阵】！\n' +
           '深入殿堂参悟机关解谜，轰开内殿玄铁大门，探寻沉睡的远古波塞冬黄金神藏！\n\n' +
-          '💡 提示：若需返回海岛，随时走入大厅南侧的【青蓝符文光阵】即可！'
+          '💡 提示：若需返回海岛，随时走入身后的【青蓝符文光阵】即可！'
         );
       } else if (islandId === 'timber_isle') {
         this.currentIslandId = 'timber_isle';
@@ -415,6 +431,9 @@ class Game {
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
         this.timberIsleScene.setVisible(true);
+
+        if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
+        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
 
         // 传送到浮木岛沙滩码头
         this.player.position.set(0, 0.4, 11);
@@ -431,6 +450,9 @@ class Game {
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
         if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
         this.quarryIsleScene.setVisible(true);
+
+        if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
+        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
 
         // 传送到矿石岛滩头
         this.player.position.set(0, 0.4, 11.5);
@@ -449,10 +471,27 @@ class Game {
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
         this.setMainIslandVisible(true);
 
+        // 恢复海岛蓝天日光与清润海雾
+        if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
+        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
+
         // 判断返航来源：若从古代神殿出来，传送到后山神殿大门前；若从海上归来，传送到西南码头
         if (previousIsland === 'ancient_temple') {
           this.player.position.set(0, 0.4, -20.0);
           if (this.player.pivot) this.player.pivot.position.set(0, 0.4, -20.0);
+          this.player.rotation = 0; // 朝向南面海岛腹地
+          if (this.player.mesh) this.player.mesh.rotation.y = 0;
+
+          if (this.camera && this.player) {
+            const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
+            const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
+            this.camera.position.set(0, 0.4 + camDistV + 0.8, -20.0 + camDistH);
+            if (this.player.cameraTarget) {
+              this.player.cameraTarget.set(0, 0.4 + 1.7, -20.0 - 2.2);
+              this.camera.lookAt(this.player.cameraTarget);
+            }
+          }
+
           this.ui.showToast('🏛️ 穿过符文传送光阵，回到了后山海风之中！');
         } else {
           // 传送到西南出航湾码头栈桥
@@ -1040,6 +1079,11 @@ class Game {
     // 更新各个子系统
     this.terrain.update(delta);
     this.player.update(delta);
+
+    // 动态更新阴影中心紧随玩家核心视野，实现次世代丝滑软阴影
+    if (this.dayNight) {
+      this.dayNight.update(delta, this.player.position);
+    }
 
     // 键盘移动步数衰减结算与潮汐推进
     if (this.player.isMoving) {

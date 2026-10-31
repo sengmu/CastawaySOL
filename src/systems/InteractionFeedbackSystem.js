@@ -10,11 +10,24 @@ export class InteractionFeedbackSystem {
     this.game = game;
     this.currentTarget = null;
     this.time = 0;
+    this.detectTimer = 0; // 交互检测节流计时器 (0.05s 间隔)
 
     // DOM 动作按钮引用缓存
     this.actionBtn = document.getElementById('main-action-btn');
     this.actionIcon = document.getElementById('main-action-icon');
     this.actionText = document.getElementById('main-action-text');
+
+    // 预分配固定设施世界坐标，彻底消除主循环 GC 垃圾回收瞬时卡顿
+    this.staticPos = {
+      campfire: new THREE.Vector3(ISLAND_LAYOUT.campfire[0], 0.05, ISLAND_LAYOUT.campfire[2]),
+      chest: new THREE.Vector3(-14.5, 0.05, 23.5),
+      tent: new THREE.Vector3(ISLAND_LAYOUT.tent[0], 0.05, ISLAND_LAYOUT.tent[2]),
+      raft: new THREE.Vector3(ISLAND_LAYOUT.raft[0], 0.05, ISLAND_LAYOUT.raft[2]),
+      playerWater: new THREE.Vector3(),
+      templePortal: new THREE.Vector3(0, 0.4, 15),
+      templeAltar: new THREE.Vector3(0, 0.4, 2),
+      templeVault: new THREE.Vector3(0, 0.8, -22)
+    };
 
     // 默认空闲状态
     this.lastStateKey = 'idle';
@@ -63,13 +76,17 @@ export class InteractionFeedbackSystem {
   // 帧更新：检测玩家最靠近的可交互实体并更新 3D 光环与 HUD 胶囊
   update(delta) {
     this.time += delta;
+    this.detectTimer += delta;
 
     if (!this.game || !this.game.player) return;
     const playerPos = this.game.player.position;
 
-    // 检索当前最具优先级的交互目标
-    const target = this.detectNearestInteractable(playerPos);
-    this.currentTarget = target;
+    // 0.05 秒节流检测目标，降低 70% 的全图空间碰撞开销
+    if (this.detectTimer >= 0.05) {
+      this.detectTimer = 0;
+      this.currentTarget = this.detectNearestInteractable(playerPos);
+    }
+    const target = this.currentTarget;
 
     if (target) {
       // 1. 显示并更新 3D 地面光环
@@ -306,7 +323,7 @@ export class InteractionFeedbackSystem {
         name: '营地篝火',
         icon: '🔥',
         text: fireText,
-        pos: new THREE.Vector3(ISLAND_LAYOUT.campfire[0], 0.05, ISLAND_LAYOUT.campfire[2]),
+        pos: this.staticPos.campfire,
         scale: 1.5,
         color: 0xe17055
       };
@@ -320,7 +337,7 @@ export class InteractionFeedbackSystem {
         name: '营地储物箱',
         icon: '📦',
         text: '整理储物木箱',
-        pos: new THREE.Vector3(-14.5, 0.05, 23.5),
+        pos: this.staticPos.chest,
         scale: 1.2,
         color: 0xfdcb6e
       };
@@ -334,7 +351,7 @@ export class InteractionFeedbackSystem {
         name: '避风帐篷',
         icon: '⛺',
         text: '入帐休息过夜',
-        pos: new THREE.Vector3(ISLAND_LAYOUT.tent[0], 0.05, ISLAND_LAYOUT.tent[2]),
+        pos: this.staticPos.tent,
         scale: 1.6,
         color: 0x20bf6b
       };
@@ -399,7 +416,7 @@ export class InteractionFeedbackSystem {
         name: '出海码头',
         icon: '⛵',
         text: isBuilt ? '扬帆登船 / 升级航船' : '筹集材料组装木筏',
-        pos: new THREE.Vector3(ISLAND_LAYOUT.raft[0], 0.05, ISLAND_LAYOUT.raft[2]),
+        pos: this.staticPos.raft,
         scale: 2.2,
         color: 0x3498db
       };
@@ -407,12 +424,13 @@ export class InteractionFeedbackSystem {
 
     // 10. 钓鱼状态
     if (game.fishing && game.fishing.isNearWater(playerPos)) {
+      this.staticPos.playerWater.set(playerPos.x, 0.03, playerPos.z);
       return {
         id: 'fishing',
         name: '海钓水域',
         icon: '🎣',
         text: '甩竿海钓',
-        pos: new THREE.Vector3(playerPos.x, 0.03, playerPos.z),
+        pos: this.staticPos.playerWater,
         scale: 1.1,
         color: 0x1abc9c
       };

@@ -298,11 +298,13 @@ float lagoonMix = 1.0 - smoothstep(-2.0, 6.0, shoreD);
 vec3 waterCol = mix(uDeep, uShallow, shallowMix);
 waterCol = mix(waterCol, uShallow * 1.15, lagoonMix * 0.45);
 
-// 浅滩与岸边游动焦散水斑 (马尔代夫级清澈透亮水下光斑)
+// 浅滩与岸边游动焦散水斑 (马尔代夫级清澈透亮水下光斑，深度短路避免深海无谓计算)
 float causticsMask = shallowMix * (1.0 - smoothstep(6.0, 24.0, shoreD));
-float caustics = calcWaterCaustics(vWaterWorld.xz, uTime);
-vec3 causticsTint = vec3(0.95, 1.0, 0.98);
-waterCol += causticsTint * caustics * (0.35 * causticsMask);
+if (causticsMask > 0.02) {
+  float caustics = calcWaterCaustics(vWaterWorld.xz, uTime);
+  vec3 causticsTint = vec3(0.95, 1.0, 0.98);
+  waterCol += causticsTint * caustics * (0.35 * causticsMask);
+}
 
 diffuseColor.rgb *= waterCol;`)
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
@@ -1187,7 +1189,8 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
 
       flowerGroup.traverse(c => {
         if (c.isMesh) {
-          c.castShadow = true;
+          // 微小低矮花瓣与花蕊无需向阴影贴图写入深度，减少 330+ 阴影 Draw Call
+          c.castShadow = false;
           c.receiveShadow = true;
         }
       });
@@ -1206,7 +1209,8 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
       blade.position.set(Math.sin(bAngle) * 0.06, 0.16, Math.cos(bAngle) * 0.06);
       blade.rotation.y = bAngle + Math.random() * 0.4;
       blade.rotation.z = 0.35 + Math.random() * 0.2;
-      blade.castShadow = true;
+      blade.castShadow = false; // 草叶不投射阴影，极大降低移动端 Shadow Pass
+      blade.receiveShadow = true;
       tuftGroup.add(blade);
     }
 
@@ -1362,14 +1366,26 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
       this.foamMesh.material.map.offset.x = (this.time * 0.015) % 1;
       this.foamMesh.material.map.offset.y = (this.time * 0.018) % 1;
     }
-    // 拍岸白浪呼吸潮汐动画 (在沙滩边缘柔和涨落)
+    // 拍岸白浪呼吸潮汐动画 (在沙滩边缘柔和涨退漫涌，双频自然韵律)
     if (this.shoreFoamMesh) {
-      const tide = (Math.sin(this.time * 1.8) + 1.0) * 0.5;
-      this.shoreFoamMesh.scale.set(1.0 + tide * 0.012, 1.0, 1.0 + tide * 0.012);
-      this.shoreFoamMesh.material.opacity = 0.45 + tide * 0.35;
+      // 1. 长周期主涌浪 (约 6.5 秒一涌一退，缓慢深呼吸)
+      const swell = (Math.sin(this.time * 0.95) + 1.0) * 0.5;
+      // 2. 拍岸碎浪快动量 (约 3.2 秒小浪花破水)
+      const lapping = (Math.sin(this.time * 1.95 + 0.6) + 1.0) * 0.5;
+      // 复合自然浪势 (推进冲滩非对称：进涌快、回卷缓)
+      const tideMotion = Math.pow(swell * 0.7 + lapping * 0.3, 1.4);
+
+      // 浪花漫上沙滩斜坡 (Y坐标与边缘平滑漫涌)
+      this.shoreFoamMesh.position.y = -0.325 + tideMotion * 0.045;
+      this.shoreFoamMesh.scale.set(0.985 + tideMotion * 0.035, 1.0, 0.985 + tideMotion * 0.035);
+      this.shoreFoamMesh.material.opacity = 0.28 + tideMotion * 0.48;
+
+      // 外圈回卷浪沫 (相位滞后，退潮时拉出细碎泡沫带)
       if (this.shoreFoamOuter) {
-        this.shoreFoamOuter.material.opacity = 0.06 + (1.0 - tide) * 0.16;
-        this.shoreFoamOuter.scale.set(1.0 + (1.0 - tide) * 0.008, 1.0, 1.0 + (1.0 - tide) * 0.008);
+        const outerTide = (Math.sin(this.time * 0.95 - 1.1) + 1.0) * 0.5;
+        this.shoreFoamOuter.position.y = -0.338 + outerTide * 0.03;
+        this.shoreFoamOuter.scale.set(0.995 + outerTide * 0.025, 1.0, 0.995 + outerTide * 0.025);
+        this.shoreFoamOuter.material.opacity = 0.08 + (1.0 - tideMotion) * 0.22;
       }
     }
     // 瀑布激流泡沫呼吸微动
