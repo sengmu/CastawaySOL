@@ -205,38 +205,51 @@ export class UIManager {
         right: calc(20px + var(--sar, 0px));
         z-index: 100;
         display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
       .aux-action-row {
         display: flex; gap: 10px; align-items: center;
+        touch-action: manipulation;
       }
       .aux-btn {
-        width: 52px; height: 52px; border-radius: 50%;
-        background: rgba(18, 24, 28, 0.82);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #ffffff; font-size: 15px; font-weight: 700;
+        width: 54px; height: 54px; border-radius: 50%;
+        background: rgba(18, 24, 28, 0.85);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1.5px solid rgba(255, 255, 255, 0.28);
+        color: #ffffff; font-size: 16px; font-weight: 700;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        cursor: pointer; transition: transform 0.1s;
+        box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+        cursor: pointer; transition: transform 0.08s ease-out, border-color 0.15s;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
-      .aux-btn:active { transform: scale(0.9); }
-      .aux-btn-label { font-size: 9px; color: rgba(255, 255, 255, 0.7); margin-top: 1px; }
+      .aux-btn:active { transform: scale(0.90); border-color: #00cec9; }
+      .aux-btn-label { font-size: 9.5px; color: rgba(255, 255, 255, 0.8); margin-top: 1px; pointer-events: none; }
 
       /* 主情境动作大胶囊 */
       .main-action-capsule {
-        width: 152px; height: 68px;
+        width: 154px; height: 68px;
         border-radius: 36px;
         background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-        border: 2px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 8px 30px rgba(0, 206, 201, 0.45);
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 8px 30px rgba(0, 206, 201, 0.5);
         display: flex; align-items: center; justify-content: center; gap: 10px;
         color: #ffffff; font-size: 20px; font-weight: 900;
-        cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
+        cursor: pointer; transition: transform 0.08s ease-out, box-shadow 0.2s;
         touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
       .main-action-capsule:active {
-        transform: scale(0.94);
-        box-shadow: 0 4px 15px rgba(0, 206, 201, 0.3);
+        transform: scale(0.93);
+        box-shadow: 0 4px 15px rgba(0, 206, 201, 0.35);
       }
 
       /* 底部快捷物品栏 (避开中央角色，布局在左侧摇杆旁，防遮挡与静默横滑) */
@@ -771,8 +784,8 @@ export class UIManager {
       }
       .gauge-fill { width: 100% !important; transform-origin: left center; transition: transform .35s ease-out; }
       .canteen-dots { display: none; }
-      @media (orientation: landscape) and (max-height: 500px) {
-        /* 顶栏只留「背包」「☰ 菜单」；顶栏规则统一按「横屏且高度 ≤500px」匹配，不再依赖宽度 ≤900px */
+      @media (orientation: landscape) {
+        /* 顶栏只留「背包」「☰ 菜单」；UI 重叠优化：顶栏规则统一按「横屏」匹配 */
         .top-right-group { gap: 8px; max-width: none; }
         .top-right-group .hud-nav-btn { min-width: 48px; min-height: 48px; padding: 0 14px; border-radius: 14px; font-size: 13px; }
         .top-right-group .hud-nav-desktop-label { display: inline; }
@@ -800,8 +813,8 @@ export class UIManager {
         .survival-water-row { display: none; }
         .survival-warning { margin-top: 4px; padding: 3px 6px; font-size: 12px; }
       }
-      @media (orientation: landscape) and (max-height: 500px) {
-        /* 任务条：固定在上中，只显示一行 */
+      @media (orientation: landscape) {
+        /* 任务条：固定在上中，只显示一行（UI 重叠优化：统一为横屏） */
         .quest-banner {
           position: fixed; top: max(10px, var(--sat, 0px)); left: 50%; transform: translateX(-50%); z-index: 95;
           height: 32px; min-height: 0; padding: 0 14px; border-radius: 16px; display: block; line-height: 32px;
@@ -812,6 +825,51 @@ export class UIManager {
         .aux-btn { width: 48px; height: 48px; }
         .aux-action-row { gap: 8px; }
         .main-action-capsule { min-height: 52px; }
+      }
+    `;
+    // UI 重叠优化（2026-10-31）：顶栏避让、对话中遮罩、提示下移、主按钮安全区、抽屉不盖菜单键、面板打开 HUD 淡出（集中在这一层，便于回滚）
+    style.textContent += `
+      :root { --hud-nav-w: 230px; --hud-nav-b: 58px; --hud-top-b: 66px; }
+      #btn-quick-mining { position: relative; }
+      .hud-sol-gift { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #ff4757; border: 2px solid #fff; box-shadow: 0 0 6px rgba(255,71,87,.8); pointer-events: none; }
+      .hud-sol-gift[hidden] { display: none; }
+      .toast-item.toast-quest { -webkit-line-clamp: 4; }
+      .hud-dialog-scrim { position: fixed; inset: 0; z-index: 545; background: rgba(6,14,12,.32); display: none; }
+      body.hud-dialog-open .hud-dialog-scrim { display: block; }
+      body.hud-dialog-open #joystick-zone, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .mobile-action-zone,
+      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-right-group, body.hud-modal-open #joystick-zone, body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .mobile-action-zone { opacity: .25 !important; transition: opacity .18s; }
+      body.hud-dialog-open #joystick-zone, body.hud-dialog-open #joystick-zone *, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .bottom-quick-bar *, body.hud-dialog-open .mobile-action-zone, body.hud-dialog-open .mobile-action-zone *,
+      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-dashboard *, body.hud-modal-open .top-right-group, body.hud-modal-open .top-right-group *, body.hud-modal-open #joystick-zone, body.hud-modal-open #joystick-zone *,
+      body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .bottom-quick-bar *, body.hud-modal-open .mobile-action-zone, body.hud-modal-open .mobile-action-zone * { pointer-events: none !important; }
+      /* 抽屉打开时菜单键保持可见可点（再点一次收起），其余顶栏按钮淡出 */
+      body.hud-drawer-open .top-right-group { opacity: 1; z-index: 565; }
+      body.hud-drawer-open .top-right-group > :not(#btn-hud-more) { opacity: .3; pointer-events: none; }
+      body.hud-drawer-open #btn-hud-more { background: rgba(217,192,138,.95); color: #1e272e; }
+      @media (orientation: landscape) {
+        :root { --hud-ql: calc(max(24px, var(--sal, 0px)) + 212px); --hud-qr: calc(max(24px, var(--sar, 0px)) + var(--hud-nav-w) + 12px); }
+        /* 顶栏：$SOL 只显示数量（🎁 改角标），背包/菜单为 48x48 图标键 */
+        .top-right-group { gap: 10px; }
+        .top-right-group .hud-nav-btn { padding: 0 12px; }
+        .top-right-group #btn-open-inv, .top-right-group #btn-hud-more { width: 48px; min-width: 48px; padding: 0; }
+        .top-right-group .hud-nav-desktop-label, .top-right-group .hud-sol-unit { display: none; }
+        /* 任务条：居中于状态卡与按钮组之间的空隙；上下透明边把点击区撑到 44px，视觉仍是 32px */
+        .quest-banner {
+          top: calc(max(10px, var(--sat, 0px)) - 6px); left: calc((var(--hud-ql) + 100vw - var(--hud-qr)) / 2);
+          max-width: calc(100vw - var(--hud-ql) - var(--hud-qr)); box-sizing: border-box; height: 44px; line-height: 32px;
+          border-top: 6px solid transparent; border-bottom: 6px solid transparent; background-clip: padding-box; cursor: pointer;
+        }
+        .toast-stack { top: calc(max(10px, var(--sat, 0px)) + 40px); left: calc((var(--hud-ql) + 100vw - var(--hud-qr)) / 2); max-width: calc(100vw - var(--hud-ql) - var(--hud-qr)); }
+        /* 对话框（晨报等）：顶栏下方居中，可滚动 */
+        .animal-dialog {
+          top: calc(var(--hud-top-b) + 8px); bottom: auto; width: min(620px, calc(100vw - 48px)); max-width: none; box-sizing: border-box;
+          max-height: min(calc(100vh - 80px), calc(100vh - var(--hud-top-b) - 20px)); overflow-y: auto; padding: 10px 16px; border-width: 3px; border-radius: 18px;
+        }
+        .animal-dialog .dialog-body { font-size: 14px; line-height: 1.55; min-height: 0; }
+        .animal-dialog .dialog-header { margin-bottom: 4px; }
+        /* 主按钮回到安全区内（右侧 ≥24px） */
+        .mobile-action-zone .main-action-capsule { width: 136px; max-width: 136px; box-sizing: border-box; }
+        /* 抽屉从顶栏下方开始，不盖住「☰ 菜单」键 */
+        .hud-nav-secondary.hud-drawer, .hud-nav-secondary.hud-drawer.open { top: calc(var(--hud-nav-b) + 8px); padding-top: 8px; border-radius: 18px 0 0 18px; }
       }
     `;
     document.head.appendChild(style);
@@ -858,7 +916,7 @@ export class UIManager {
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
       <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900; border:1px solid rgba(255,255,255,0.7); box-shadow:0 0 16px rgba(20,241,149,0.5);" aria-label="矿机中枢">
-        ⛏️ <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0 $SOL</span>
+        ⛏️ <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:13px; font-weight:900;">$SOL</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
       </button>
       <button class="hud-nav-btn" id="btn-open-inv" aria-label="背包">🎒 <span class="hud-nav-desktop-label">背包</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
@@ -940,6 +998,12 @@ export class UIManager {
       <div class="dialog-tap-hint">▼ 点击屏幕继续</div>
     `;
     document.body.appendChild(this.dialogBox);
+    // UI 重叠优化：对话中遮罩（点任意处关闭对话框），顶栏尺寸跟随，面板/对话打开状态标记
+    this.dialogScrim = document.createElement('div');
+    this.dialogScrim.className = 'hud-dialog-scrim';
+    this.dialogScrim.id = 'hud-dialog-scrim';
+    document.body.appendChild(this.dialogScrim);
+    this._initOverlapGuards(topNav, dashboard);
 
     const navIcons = { 'btn-fullscreen': Maximize, 'btn-open-inv': Backpack, 'btn-open-merge': Hammer, 'btn-open-help': BookOpen, 'btn-hud-more': Menu, 'btn-solana': Wallet, 'btn-quick-run': Zap, 'btn-quick-jump': ArrowUp };
     Object.entries(navIcons).forEach(([id, definition]) => {
@@ -1044,11 +1108,15 @@ export class UIManager {
     const waterRow = document.querySelector('.survival-water-row');
     if (waterRow) waterRow.addEventListener('click', (e) => { if (!e.target.closest('#canteen-btn')) drink(); });
 
-    // 跳跃
-    document.getElementById('btn-quick-jump').addEventListener('click', () => {
-      haptics.heavy();
-      this.player.jump();
-    });
+    // 跳跃 (零延迟极速响应)
+    const jumpBtn = document.getElementById('btn-quick-jump');
+    if (jumpBtn) {
+      jumpBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        haptics.heavy();
+        this.player.jump();
+      });
+    }
 
     // 快速攻击突刺与远程猎弓射击
     const attackBtn = document.getElementById('btn-quick-attack');
@@ -1057,7 +1125,8 @@ export class UIManager {
       let pressTimer = null;
       let longPressed = false;
       const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
-      attackBtn.addEventListener('pointerdown', () => {
+      attackBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
         longPressed = false;
         cancelPress();
         pressTimer = setTimeout(() => {
@@ -1069,7 +1138,8 @@ export class UIManager {
         }, 550);
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach((type) => attackBtn.addEventListener(type, cancelPress));
-      attackBtn.addEventListener('click', () => {
+      attackBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (longPressed) { longPressed = false; return; }
         haptics.medium();
         this._attackShownUntil = performance.now() + 4000;
@@ -1079,19 +1149,27 @@ export class UIManager {
       attackBtn.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
-    // 疾跑
+    // 疾跑开关 (瞬时轻微触觉反馈)
     const runBtn = document.getElementById('btn-quick-run');
-    runBtn.addEventListener('click', () => {
-      haptics.light();
-      this.player.forceRun = !this.player.forceRun;
-      runBtn.style.background = this.player.forceRun ? 'rgba(0, 184, 148, 0.85)' : 'rgba(18, 24, 28, 0.82)';
-    });
+    if (runBtn) {
+      runBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        haptics.light();
+        this.player.forceRun = !this.player.forceRun;
+        runBtn.style.background = this.player.forceRun ? 'rgba(0, 184, 148, 0.85)' : 'rgba(18, 24, 28, 0.82)';
+        runBtn.style.borderColor = this.player.forceRun ? '#00cec9' : 'rgba(255, 255, 255, 0.28)';
+      });
+    }
 
     // 主情境动作触发
-    document.getElementById('main-action-btn').addEventListener('click', () => {
-      haptics.medium();
-      if (this.onActionCallback) this.onActionCallback('interact');
-    });
+    const mainActionBtn = document.getElementById('main-action-btn');
+    if (mainActionBtn) {
+      mainActionBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        haptics.medium();
+        if (this.onActionCallback) this.onActionCallback('interact');
+      });
+    }
 
     // 顶部全屏与系统按键
     const fsBtn = document.getElementById('btn-fullscreen');
@@ -1190,6 +1268,10 @@ export class UIManager {
       this.dialogBox.style.display = 'none';
       soundEngine.playAnimalVoice();
     });
+    // UI 重叠优化：点遮罩（任意处）同样关闭对话框；点任务条用提示显示完整任务
+    if (this.dialogScrim) this.dialogScrim.addEventListener('click', (event) => { event.stopPropagation(); this.dialogBox.click(); });
+    const questEl = document.getElementById('quest-banner');
+    if (questEl) questEl.addEventListener('click', () => { haptics.light(); this.showToast(this.currentQuest, 'quest'); });
 
     // 初始化 Solana 钱包按钮状态
     this.updateSolanaBtn();
@@ -1318,8 +1400,15 @@ export class UIManager {
       const solCount = (this.inventory ? this.inventory['sol_token'] : 0) || 0;
       const g = window.__game;
       const unclaimed = (g && g.miningRig) ? g.miningRig.unclaimedSol : 0;
-      const solStr = unclaimed > 0 ? `${solCount} $SOL (🎁+${unclaimed})` : `${solCount} $SOL`;
-      this._hudWrite('hud-sol-token', solStr, (v) => { solHud.textContent = v; });
+      // UI 重叠优化：顶栏只写数量，待领取用角标小圆点表示（完整信息放在 aria-label）
+      this._hudWrite('hud-sol-token', String(solCount), (v) => { solHud.textContent = v; });
+      const giftDot = this._hudEl('hud-sol-gift');
+      this._hudWrite('hud-sol-gift', `${solCount}|${unclaimed > 0 ? unclaimed : ''}`, (v) => {
+        const gift = v.split('|')[1];
+        if (giftDot) giftDot.hidden = !gift;
+        const btn = document.getElementById('btn-quick-mining');
+        if (btn) btn.setAttribute('aria-label', gift ? `矿机中枢：${solCount} $SOL，待领取 ${gift}` : `矿机中枢：${solCount} $SOL`);
+      });
     }
 
     const sips = this.survival.canteenSips;
@@ -1590,6 +1679,72 @@ export class UIManager {
     const next = this._toastPending.shift();
     if (next) this._presentToast(next);
   }
+  // UI 重叠优化（2026-10-31）：把顶栏按钮组宽度/底边写进 CSS 变量（任务条、提示、对话框、抽屉据此避让）；标记对话框/面板打开状态
+  _initOverlapGuards(topNav, dashboard) {
+    const root = document.documentElement;
+    const panel = dashboard && dashboard.querySelector('.dashboard-panel');
+    let last = '';
+    const sync = () => {
+      const n = topNav.getBoundingClientRect();
+      const c = panel ? panel.getBoundingClientRect() : null;
+      const vals = [Math.ceil(n.width), Math.ceil(n.bottom), Math.ceil(Math.max(n.bottom, c ? c.bottom : 0))];
+      const key = vals.join(',');
+      if (key === last) return;
+      last = key;
+      root.style.setProperty('--hud-nav-w', vals[0] + 'px');
+      root.style.setProperty('--hud-nav-b', vals[1] + 'px');
+      root.style.setProperty('--hud-top-b', vals[2] + 'px');
+    };
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(sync);
+      ro.observe(topNav);
+      if (panel) ro.observe(panel);
+    }
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', () => setTimeout(sync, 300));
+    sync();
+    const watch = (el, cls) => {
+      if (!el) return;
+      const upd = () => document.body.classList.toggle(cls, el.style.display !== '' && el.style.display !== 'none');
+      new MutationObserver(upd).observe(el, { attributes: true, attributeFilter: ['style'] });
+      upd();
+    };
+    watch(this.dialogBox, 'hud-dialog-open');
+    watch(this.modalBackdrop, 'hud-modal-open');
+    this._initPwaInstall();
+  }
+
+  // UI 重叠优化：PWA 安装入口放进「☰ 菜单」抽屉；App 内（Capacitor 原生）或已安装（standalone）时不显示
+  _initPwaInstall() {
+    const cap = window.Capacitor;
+    const isApp = !!(cap && (typeof cap.isNativePlatform === 'function' ? cap.isNativePlatform() : cap.platform && cap.platform !== 'web'));
+    const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    const remove = () => { const b = document.getElementById('pwa-install-btn'); if (b) b.remove(); };
+    if (isApp || standalone) { remove(); return; }
+    const add = () => {
+      const prompt = window.__pwaInstallPrompt;
+      const drawer = document.getElementById('hud-nav-secondary');
+      if (!prompt || !drawer || document.getElementById('pwa-install-btn')) return;
+      const btn = document.createElement('button');
+      btn.className = 'hud-nav-btn';
+      btn.id = 'pwa-install-btn';
+      btn.type = 'button';
+      btn.innerHTML = '📲 <span class="hud-nav-desktop-label">安装到桌面</span>';
+      btn.addEventListener('click', async () => {
+        const p = window.__pwaInstallPrompt;
+        if (!p) { btn.remove(); return; }
+        p.prompt();
+        try { const { outcome } = await p.userChoice; if (outcome === 'accepted') btn.remove(); } catch (e) { /* 忽略 */ }
+        window.__pwaInstallPrompt = null;
+      });
+      const quality = drawer.querySelector('.hud-drawer-quality');
+      drawer.insertBefore(btn, quality || null);
+    };
+    window.addEventListener('pwa-installable', add);
+    window.addEventListener('appinstalled', () => { window.__pwaInstallPrompt = null; remove(); });
+    add();
+  }
+
   showDialog(speaker, text) {
     if (this.player && this.player.resetInput) this.player.resetInput();
     document.getElementById('dialog-speaker').textContent = speaker;

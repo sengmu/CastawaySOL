@@ -133,34 +133,8 @@
         deferredPrompt = e;
         window.__pwaInstallPrompt = e;
 
-        // 在页面右上方动态呈现快捷安装按钮
-        let btn = document.getElementById('pwa-install-btn');
-        if (!btn) {
-          btn = document.createElement('button');
-          btn.id = 'pwa-install-btn';
-          btn.innerHTML = '📲 安装到桌面';
-          btn.style.cssText = `
-            position: fixed; top: 16px; right: 210px; z-index: 999;
-            background: linear-gradient(135deg, #20bf6b, #0fb9b1);
-            color: #fff; border: 2px solid rgba(255,255,255,0.85);
-            border-radius: 20px; padding: 7px 15px; font-size: 13px; font-weight: 700;
-            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            display: flex; align-items: center; gap: 4px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            animation: pulseInstall 2s infinite;
-          `;
-          btn.onclick = async () => {
-            if (deferredPrompt) {
-              deferredPrompt.prompt();
-              const { outcome } = await deferredPrompt.userChoice;
-              if (outcome === 'accepted') {
-                btn.remove();
-              }
-              deferredPrompt = null;
-            }
-          };
-          document.body.appendChild(btn);
-        }
+        // UI 重叠优化（2026-10-31）：不再在顶栏固定悬浮「安装到桌面」按钮；网页版由 UIManager 放进「☰ 菜单」抽屉，App 内/已安装时不显示
+        window.dispatchEvent(new Event('pwa-installable'));
       });
 
       window.addEventListener('load', () => {

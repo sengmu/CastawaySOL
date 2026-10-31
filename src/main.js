@@ -48,9 +48,9 @@ class Game {
   constructor() {
     this.container = document.getElementById('app');
 
-    // 1. 初始化 Three.js 渲染管线 (移动端由高物理PPI屏幕自然呈现抗锯齿，免去昂贵的硬件 MSAA 带宽抢占)
+    // 1. 初始化 Three.js 渲染管线 (移动端 56° 黄金广角透视，视野开阔通透，饱览热带海天与海岛全貌)
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 1000);
     this.renderer = new THREE.WebGLRenderer({
       antialias: !isMobileDevice,
       powerPreference: 'high-performance',
@@ -382,9 +382,11 @@ class Game {
     if (visible && this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
   }
 
-  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，支持 force 强制突破异常状态死锁)
+  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，全面支持 force 强制纠正脱节状态)
   travelToIsland(islandId, force = false) {
-    if (!force && this.currentIslandId === islandId) return;
+    // 智能防死锁自愈：如果当前状态与玩家物理位置严重脱节（例如处于神殿但坐标在后山外部），解除拦截强制传送
+    const isDesynced = (islandId === 'ancient_temple' && this.currentIslandId === 'ancient_temple' && this.player.position.z < -10);
+    if (!force && !isDesynced && this.currentIslandId === islandId) return;
 
     const previousIsland = this.currentIslandId;
     soundEngine.playPlaceFurniture();

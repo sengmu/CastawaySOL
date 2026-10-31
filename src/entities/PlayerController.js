@@ -54,12 +54,16 @@ export class PlayerController {
     this.keys = {};
     this.initInput();
 
-    // 黄金第三人称背后视角 (三分法前瞻广角机位，饱览宏大树冠与远景海天)
+    // 黄金第三人称背后视角 (广角开阔透视机位，视野更广，饱览宏大树冠、远景海天与矿机流光)
     this.rotation = Math.PI;       // 角色背对镜头向北
     this.targetRotation = Math.PI;
     this.cameraAngleH = 0;
     this.cameraAngleV = 0.58;      // 33° 黄金舒缓平视微俯角
-    this.cameraDistance = 7.8;     // 7.8 米黄金视距
+    this.baseCameraDistance = 8.8; // 8.8 米宏大开阔黄金基准视距
+    this.cameraDistance = 8.8;
+    this.targetCameraDistance = 8.8;
+    this.cameraVelH = 0;           // 偏航角平滑旋转阻尼速度
+    this.cameraVelV = 0;           // 俯仰角平滑旋转阻尼速度
     this.cameraTarget = new THREE.Vector3(this.position.x, this.position.y + 1.7, this.position.z - 2.2);
 
     const horizontalDist = this.cameraDistance * Math.cos(this.cameraAngleV);
@@ -400,10 +404,10 @@ export class PlayerController {
     });
 
     this.domElement.addEventListener('wheel', (e) => {
-      this.cameraDistance = Math.max(7.0, Math.min(24.0, this.cameraDistance + e.deltaY * 0.01));
+      this.targetCameraDistance = Math.max(5.5, Math.min(22.0, this.targetCameraDistance + e.deltaY * 0.01));
     });
 
-    // 移动端右半屏滑动转动视角与双指捏合缩放
+    // 移动端右半屏滑动转动视角与双指捏合缩放 (具备避让UI热区与惯性阻尼系统)
     this.pinchDist = null;
 
     this.domElement.addEventListener('touchstart', (e) => {
@@ -416,9 +420,16 @@ export class PlayerController {
 
       for (let i = 0; i < e.changedTouches.length; i++) {
         const t = e.changedTouches[i];
-        if (t.clientX > window.innerWidth * 0.32) {
+        // 避让左侧摇杆感应区 (0.45vw) 与右下角动作控制盘热区
+        if (t.clientX > window.innerWidth * 0.45) {
+          const elem = document.elementFromPoint(t.clientX, t.clientY);
+          if (elem && elem.closest('.mobile-action-zone, button, .aux-btn, .main-action-capsule, .hud-nav-item, .modal-backdrop, .bottom-quick-bar, .recipe-craft-drawer')) {
+            continue; // 玩家点击的是操作按键，不转动视角，防止战斗与互动视角乱甩
+          }
           this.touchCameraId = t.identifier;
           this.touchLastPos = { x: t.clientX, y: t.clientY };
+          this.cameraVelH = 0;
+          this.cameraVelV = 0;
           break;
         }
       }
@@ -430,7 +441,7 @@ export class PlayerController {
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const newDist = Math.hypot(dx, dy);
         const deltaDist = this.pinchDist - newDist;
-        this.cameraDistance = Math.max(5.5, Math.min(22.0, this.cameraDistance + deltaDist * 0.035));
+        this.targetCameraDistance = Math.max(5.5, Math.min(22.0, this.targetCameraDistance + deltaDist * 0.035));
         this.pinchDist = newDist;
         return;
       }
@@ -440,8 +451,9 @@ export class PlayerController {
         if (t.identifier === this.touchCameraId) {
           const dx = t.clientX - this.touchLastPos.x;
           const dy = t.clientY - this.touchLastPos.y;
-          this.cameraAngleH -= dx * 0.0055;
-          this.cameraAngleV = Math.max(0.40, Math.min(1.38, this.cameraAngleV + dy * 0.0045));
+          // 累加平滑旋转角速度
+          this.cameraVelH += -dx * 0.0038;
+          this.cameraVelV += dy * 0.0030;
           this.touchLastPos = { x: t.clientX, y: t.clientY };
           break;
         }
@@ -449,8 +461,12 @@ export class PlayerController {
     }, { passive: true });
 
     const clearTouch = (e) => {
-      if (e.touches.length < 2) {
+      if (!e.touches || e.touches.length < 2) {
         this.pinchDist = null;
+      }
+      if (!e.touches || e.touches.length === 0) {
+        this.touchCameraId = null;
+        return;
       }
       for (let i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i].identifier === this.touchCameraId) {
@@ -846,6 +862,21 @@ export class PlayerController {
   }
 
   updateCamera(delta) {
+    // 1. 惯性平滑阻尼更新偏航角与俯仰角 (电影级云台阻尼感，俯仰角范围更宽广)
+    this.cameraAngleH += this.cameraVelH;
+    this.cameraAngleV += this.cameraVelV;
+    this.cameraAngleV = Math.max(0.26, Math.min(1.42, this.cameraAngleV));
+
+    // 指数平滑衰减
+    const damping = Math.exp(-16.0 * delta);
+    this.cameraVelH *= damping;
+    this.cameraVelV *= damping;
+
+    // 2. 视距平滑过渡 (Smooth Zoom Lerp) + 移动与疾跑时动态广角后拉 (探索视野大 25%)
+    const speedPullback = this.isMoving ? (this.isRunning ? 1.5 : 0.85) : 0.0;
+    const desiredDistance = this.targetCameraDistance + speedPullback;
+    this.cameraDistance = THREE.MathUtils.lerp(this.cameraDistance, desiredDistance, Math.min(1.0, 8.0 * delta));
+
     const horizontalDist = this.cameraDistance * Math.cos(this.cameraAngleV);
     const verticalDist = this.cameraDistance * Math.sin(this.cameraAngleV);
 
@@ -867,6 +898,9 @@ export class PlayerController {
     this.cameraAngleH = angleH;
     this.cameraAngleV = angleV;
     this.cameraDistance = distance;
+    this.targetCameraDistance = distance;
+    this.cameraVelH = 0;
+    this.cameraVelV = 0;
 
     const horizontalDist = this.cameraDistance * Math.cos(this.cameraAngleV);
     const verticalDist = this.cameraDistance * Math.sin(this.cameraAngleV);

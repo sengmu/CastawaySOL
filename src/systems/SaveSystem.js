@@ -386,20 +386,23 @@ export class SaveSystem {
       this.game.weatherSystem.deserialize(data.weather);
     }
 
-    // 3.85 恢复后山神秘古代神殿与密室解谜副本
+    // 3.85 恢复后山神秘古代神殿与密室解谜副本 (带绝对坐标安全自愈纠正)
     if (data.templePuzzle && this.game.templePuzzle) {
       this.game.templePuzzle.deserialize(data.templePuzzle);
     }
     if (data.ancientTempleScene && this.game.ancientTempleScene) {
       this.game.ancientTempleScene.deserialize(data.ancientTempleScene);
     }
-    if (data.currentIslandId === 'ancient_temple' && this.game.travelToIsland) {
+    if (data.currentIslandId === 'ancient_temple') {
       const [px, py, pz] = (data.player && data.player.position) ? data.player.position : [0, 0, 0];
-      // 地宫物理包围盒：X in [-16, 16], Z in [-26, 26]
-      const isInsideTemple = (Math.abs(px) <= 16 && pz >= -26 && pz <= 26);
-      if (!isInsideTemple || (pz < -20 && px === 0)) {
-        // 坐标明显仍在主岛后山门前，自愈纠正场景 ID，解除进入死锁
+      // 地下独立神殿正常探索区间：Z 轴必须从南向入口 z=15 延伸至北向后殿 z=-22
+      // 若 Z 坐标落在主岛后山门前区间 (z < -10 且 x 接近 0)，判定为场景ID脱节脏数据，自动修正回主岛
+      const isActuallyOutsideDoor = (Math.abs(px) < 6.0 && pz < -10);
+      if (isActuallyOutsideDoor) {
+        console.warn('🔄 [SaveSystem] 检测到玩家位置处于主岛后山大门前，自动纠正场景为 main_island，解除传送死锁');
         this.game.currentIslandId = 'main_island';
+        this.game.setMainIslandVisible(true);
+        if (this.game.ancientTempleScene) this.game.ancientTempleScene.setVisible(false);
       } else {
         this.game.currentIslandId = 'ancient_temple';
         this.game.setMainIslandVisible(false);
