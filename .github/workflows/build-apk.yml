@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: 安装项目依赖
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: 设置 JDK 21 环境 (支持 AGP 8.13 与 Android 36 SDK)
         uses: actions/setup-java@v4
