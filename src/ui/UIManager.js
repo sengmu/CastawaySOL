@@ -3559,6 +3559,12 @@ export class UIManager {
     document.getElementById('modal-title').innerHTML = '⛏️ 荒岛绿色解密矿机 (Solana DePIN Rig)';
     const body = document.getElementById('modal-body');
 
+    // 弹窗实时动态刷新定时器
+    if (this._miningRigTimer) {
+      clearInterval(this._miningRigTimer);
+      this._miningRigTimer = null;
+    }
+
     const render = () => {
       const inv = this.inventory;
       const crystalCount = inv['sol_crystal'] || 0;
@@ -3566,31 +3572,41 @@ export class UIManager {
       const isDay = miningRig.isDaytime();
       const progress = Math.min(100, Math.round(miningRig.hashProgress));
       const battery = Math.round(miningRig.batteryPower);
+      const isTurbo = miningRig.turboTimer > 0;
+      const combo = miningRig.manualTapCombo || 0;
+      const turboBonus = isTurbo ? (2.2 + Math.min(combo * 0.08, 1.2)) : 1.0;
+      const currentHashrate = (miningRig.hashrate * (isDay ? 1.5 : (battery > 0 ? 1.0 : 0.3)) * turboBonus).toFixed(1);
 
       body.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; max-height:65vh; overflow-y:auto; padding:4px;">
+        <div style="display:flex; flex-direction:column; gap:12px; max-height:68vh; overflow-y:auto; padding:4px;">
           <!-- 1. 核心算力与出块大看板 -->
-          <div style="background:linear-gradient(135deg, rgba(153,69,255,0.22), rgba(20,241,149,0.18)); border:1.5px solid #14f195; border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(20,241,149,0.15);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div style="
+            background:${isTurbo ? 'linear-gradient(135deg, rgba(255,211,42,0.28), rgba(255,118,117,0.2))' : 'linear-gradient(135deg, rgba(153,69,255,0.22), rgba(20,241,149,0.18))'};
+            border:1.5px solid ${isTurbo ? '#ffd32a' : '#14f195'};
+            border-radius:14px; padding:14px;
+            box-shadow:0 8px 24px ${isTurbo ? 'rgba(255,211,42,0.28)' : 'rgba(20,241,149,0.15)'};
+            transition: all 0.25s ease;
+          ">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
               <div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="font-size:22px;">⚡</span>
+                  <span style="font-size:22px;">${isTurbo ? '🔥' : '⚡'}</span>
                   <div style="font-size:16px; font-weight:900; color:#fff;">
-                    ${miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)'}
+                    ${isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)')}
                   </div>
                 </div>
-                <div style="font-size:11.5px; color:#14f195; margin-top:2px;">
-                  实时运算算力：<strong>${(miningRig.hashrate * (isDay ? 1.5 : (battery > 0 ? 1.0 : 0.3))).toFixed(1)} MH/s</strong> · ${isDay ? '☀️ 白天日光增益 +50%' : '🌙 夜间使用蓄电池'}
+                <div style="font-size:11.5px; color:${isTurbo ? '#fed330' : '#14f195'}; margin-top:2px; font-weight:700;">
+                  运算算力：<span id="mr-hashrate" style="font-size:14px; font-weight:900;">${currentHashrate} MH/s</span> · ${isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电')}
                 </div>
               </div>
 
               ${miningRig.unclaimedSol > 0 ? `
                 <button id="btn-claim-sol" style="
-                  background:linear-gradient(135deg, #14f195, #9945ff); border:none; border-radius:10px;
-                  padding:8px 14px; color:#fff; font-weight:900; font-size:12.5px; cursor:pointer;
-                  box-shadow:0 4px 16px rgba(20,241,149,0.45); animation:pulse 1.5s infinite;
+                  background:linear-gradient(135deg, #ffd32a, #ff9f1a); border:none; border-radius:10px;
+                  padding:8px 14px; color:#1e272e; font-weight:900; font-size:12.5px; cursor:pointer;
+                  box-shadow:0 4px 18px rgba(255,211,42,0.6); animation:pulse 1.2s infinite;
                 ">
-                  🪙 领取 ${miningRig.unclaimedSol} 枚 $SOL
+                  🪙 收获 ${miningRig.unclaimedSol} 枚 $SOL！
                 </button>
               ` : `
                 <div style="font-size:11px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); padding:4px 8px; border-radius:6px;">
@@ -3602,32 +3618,70 @@ export class UIManager {
             <!-- 当前区块解密进度条 -->
             <div style="margin-bottom:12px;">
               <div style="display:flex; justify-content:space-between; font-size:11px; color:#fff; margin-bottom:4px; font-weight:700;">
-                <span>当前区块哈希进度: ${progress}%</span>
+                <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#14f195;">${progress}%</strong></span>
                 <span>已验证区块: #${miningRig.totalBlocksMined} (累计挖出 ${miningRig.totalSolMined} $SOL)</span>
               </div>
-              <div style="width:100%; height:10px; background:rgba(0,0,0,0.4); border-radius:5px; overflow:hidden; border:1px solid rgba(255,255,255,0.15);">
-                <div style="width:${progress}%; height:100%; background:linear-gradient(90deg, #9945ff, #14f195); border-radius:5px; transition:width 0.2s ease;"></div>
+              <div style="width:100%; height:12px; background:rgba(0,0,0,0.45); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
+                <div id="mr-progress-bar" style="
+                  width:${progress}%; height:100%;
+                  background:${isTurbo ? 'linear-gradient(90deg, #ff7675, #ffd32a)' : 'linear-gradient(90deg, #9945ff, #14f195)'};
+                  border-radius:6px; transition:width 0.15s linear;
+                "></div>
               </div>
             </div>
 
             <!-- 矿机硬件核心指标 -->
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-              <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
                 <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">晶石装载量</div>
                 <div style="font-size:13px; font-weight:900; color:#14f195;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
               </div>
-              <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
                 <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">蓄电池储能</div>
                 <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#00cec9' : '#ff7675'};">${battery}%</div>
               </div>
-              <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
                 <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">背包 $SOL 储备</div>
                 <div style="font-size:13px; font-weight:900; color:#fed330;">${tokenCount} 🪙</div>
               </div>
             </div>
           </div>
 
-          <!-- 2. 硅晶原石装填区 -->
+          <!-- 2. 手动狂暴增压点按核心区 (Tap-to-Boost / Manual Turbo) -->
+          <div style="
+            background:rgba(255,255,255,0.06); border:1.5px dashed ${isTurbo ? '#ffd32a' : 'rgba(255,255,255,0.22)'};
+            border-radius:14px; padding:12px; text-align:center; position:relative; overflow:hidden;
+          ">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-size:12.5px; font-weight:900; color:#fff;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
+              <div id="mr-combo-badge" style="
+                font-size:11px; font-weight:900;
+                background:${combo > 5 ? 'linear-gradient(135deg, #ff7675, #d63031)' : 'rgba(255,255,255,0.12)'};
+                color:#fff; padding:2px 8px; border-radius:10px;
+              ">
+                ${combo > 0 ? `COMBO x${combo}` : '待增压'}
+              </div>
+            </div>
+
+            <button id="btn-manual-boost" style="
+              width:100%; height:48px;
+              background:${isTurbo ? 'linear-gradient(135deg, #ff9f1a, #ff3838)' : 'linear-gradient(135deg, #9945ff, #14f195)'};
+              border:none; border-radius:12px;
+              color:#fff; font-size:15px; font-weight:900; letter-spacing:0.5px;
+              cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+              box-shadow:0 6px 20px ${isTurbo ? 'rgba(255,56,56,0.45)' : 'rgba(20,241,149,0.35)'};
+              user-select:none; -webkit-user-select:none;
+              transition:transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            ">
+              <span style="font-size:20px;">⚡</span>
+              <span>${isTurbo ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！'}</span>
+            </button>
+            <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:6px;">
+              连续点按注入机械动能：算力爆发飞涨 + 立即推进解密进度 + 45%概率出块暴击！
+            </div>
+          </div>
+
+          <!-- 3. 硅晶原石装填区 -->
           <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <div style="font-size:12.5px; font-weight:900; color:#fff;">💎 装填硅晶原石 (提供运算原料)</div>
@@ -3653,7 +3707,7 @@ export class UIManager {
             ${crystalCount === 0 ? '<div style="font-size:11px; color:#fab1a0; margin-top:6px;">后山高台分布有发光【高能硅晶矿脉】，手持石镐或石锤可敲凿采集！</div>' : ''}
           </div>
 
-          <!-- 3. 生物质与电池储能维护区 -->
+          <!-- 4. 生物质与电池储能维护区 -->
           <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <div style="font-size:12.5px; font-weight:900; color:#fff;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
@@ -3693,11 +3747,37 @@ export class UIManager {
         </div>
       `;
 
+      // 绑定手动增压 Tap-to-Boost (优先使用 pointerdown 以消除延迟)
+      const boostBtn = body.querySelector('#btn-manual-boost');
+      if (boostBtn) {
+        boostBtn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          boostBtn.style.transform = 'scale(0.94)';
+          const res = miningRig.triggerManualBoost();
+          if (res) {
+            // 即时反馈动效
+            setTimeout(() => { boostBtn.style.transform = 'scale(1.02)'; }, 80);
+            setTimeout(() => { boostBtn.style.transform = 'scale(1.0)'; }, 160);
+          }
+          // 局部轻量更新文本
+          const p = Math.min(100, Math.round(miningRig.hashProgress));
+          const pBar = body.querySelector('#mr-progress-bar');
+          const pTxt = body.querySelector('#mr-progress-text');
+          if (pBar) pBar.style.width = `${p}%`;
+          if (pTxt) pTxt.textContent = `${p}%`;
+        });
+      }
+
       // 绑定领取 $SOL
       const claimBtn = body.querySelector('#btn-claim-sol');
       if (claimBtn) {
         claimBtn.addEventListener('click', () => {
+          const claimedAmt = miningRig.unclaimedSol;
           miningRig.claimSolTokens();
+          soundEngine.playItemDrop();
+          haptics.heavy();
+          this.showToast(`🎉 成功收获 ${claimedAmt} 枚 $SOL 算力收益！`);
           render();
         });
       }
@@ -3734,6 +3814,34 @@ export class UIManager {
     };
 
     render();
+
+    // 开启高频轻量实时同步 (每 200ms 同步进度条与倒计时)
+    this._miningRigTimer = setInterval(() => {
+      if (!this.modalBackdrop || this.modalBackdrop.style.display === 'none') {
+        clearInterval(this._miningRigTimer);
+        this._miningRigTimer = null;
+        return;
+      }
+      const p = Math.min(100, Math.round(miningRig.hashProgress));
+      const pBar = body.querySelector('#mr-progress-bar');
+      const pTxt = body.querySelector('#mr-progress-text');
+      const boostBtn = body.querySelector('#btn-manual-boost');
+      const comboBadge = body.querySelector('#mr-combo-badge');
+      if (pBar) pBar.style.width = `${p}%`;
+      if (pTxt) pTxt.textContent = `${p}%`;
+      if (boostBtn) {
+        const isT = miningRig.turboTimer > 0;
+        const btnSpan = boostBtn.querySelector('span:last-child');
+        if (btnSpan) {
+          btnSpan.textContent = isT ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！';
+        }
+      }
+      if (comboBadge) {
+        const c = miningRig.manualTapCombo || 0;
+        comboBadge.textContent = c > 0 ? `COMBO x${c}` : '待增压';
+      }
+    }, 200);
+
     this.modalBackdrop.style.display = 'flex';
     soundEngine.playItemDrop();
   }

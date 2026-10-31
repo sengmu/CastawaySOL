@@ -31,8 +31,18 @@ export class MiningRigSystem {
     this.hashProgress = 0;              // 当前区块解密进度 (0 ~ 100)
     this.hashSpeed = 15;                // 每秒哈希解密进度
 
+    // 狂暴超频与手动增压模式 (Turbo / Overdrive Mode)
+    this.turboTimer = 0;                // 狂暴剩余时间 (秒)
+    this.turboBoostMultiplier = 1.0;    // 狂暴倍率
+    this.manualTapCombo = 0;            // 手动连续点按连击数
+    this.lastTapTime = 0;
+
     // 待领取的产出槽
     this.unclaimedSol = 0;              // 待收取的 $SOL 算力代币
+
+    // 出块 3D 粒子对象池
+    this.burstCoinPool = [];
+    this.burstCoinCount = 12;
 
     this.group = new THREE.Group();
     this.group.name = 'depin-mining-rig-entity';
@@ -41,6 +51,8 @@ export class MiningRigSystem {
     }
 
     this.initEntityMesh();
+    this.initSkyBeam();
+    this.initBurstParticles();
   }
 
   // 构建矿机 3D 拟真模型
@@ -142,6 +154,142 @@ export class MiningRigSystem {
     this.group.add(rigGroup);
   }
 
+  // 初始化直插天际的 DePIN 算力光柱 (贯通苍穹，全岛可见)
+  initSkyBeam() {
+    this.beamGroup = new THREE.Group();
+    this.beamGroup.position.copy(this.anchor);
+    this.beamGroup.position.y += 0.8;
+
+    // 核心内光柱 (青绿高亮)
+    const innerGeo = new THREE.CylinderGeometry(0.12, 0.28, 42.0, 12, 1, true);
+    innerGeo.translate(0, 21.0, 0);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0x14f195,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.innerBeam = new THREE.Mesh(innerGeo, innerMat);
+    this.beamGroup.add(this.innerBeam);
+
+    // 外围脉冲光环晕 (紫色弥散光)
+    const outerGeo = new THREE.CylinderGeometry(0.35, 0.75, 40.0, 12, 1, true);
+    outerGeo.translate(0, 20.0, 0);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0x9945ff,
+      transparent: true,
+      opacity: 0.28,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.outerBeam = new THREE.Mesh(outerGeo, outerMat);
+    this.beamGroup.add(this.outerBeam);
+
+    // 顶端向外溢散的微粒环 (2 个交替上升)
+    this.beamRings = [];
+    for (let i = 0; i < 3; i++) {
+      const ringGeo = new THREE.RingGeometry(0.3, 0.45, 16);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = i * 2.5;
+      ring.userData = { initialY: i * 2.5, speed: 1.8 + i * 0.4 };
+      this.beamGroup.add(ring);
+      this.beamRings.push(ring);
+    }
+
+    this.group.add(this.beamGroup);
+  }
+
+  // 初始化出块爆裂金币与粒子池 (对象池复用)
+  initBurstParticles() {
+    this.burstGroup = new THREE.Group();
+    this.burstGroup.position.copy(this.anchor);
+    this.burstGroup.position.y += 0.8;
+
+    const coinGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.03, 10);
+    const coinMat = new THREE.MeshStandardMaterial({
+      color: 0xfed330,
+      emissive: 0xffa801,
+      emissiveIntensity: 0.6,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+
+    for (let i = 0; i < this.burstCoinCount; i++) {
+      const coin = new THREE.Mesh(coinGeo, coinMat);
+      coin.visible = false;
+      coin.userData = {
+        vel: new THREE.Vector3(),
+        rotSpeed: new THREE.Vector3(),
+        life: 0,
+        maxLife: 1.2
+      };
+      this.burstGroup.add(coin);
+      this.burstCoinPool.push(coin);
+    }
+
+    // 出块冲击波光环
+    const shockwaveGeo = new THREE.RingGeometry(0.2, 0.4, 24);
+    shockwaveGeo.rotateX(-Math.PI / 2);
+    const shockwaveMat = new THREE.MeshBasicMaterial({
+      color: 0x14f195,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.shockwave = new THREE.Mesh(shockwaveGeo, shockwaveMat);
+    this.shockwave.position.y = 0.1;
+    this.shockwave.userData = { life: 0, maxLife: 0.9 };
+    this.burstGroup.add(this.shockwave);
+
+    this.group.add(this.burstGroup);
+  }
+
+  // 触发一次惊艳的出块爆金币物理喷涌视效
+  triggerBlockBurstFX() {
+    // 1. 激活冲击波扩散
+    if (this.shockwave) {
+      this.shockwave.userData.life = 1.0;
+      this.shockwave.scale.set(1, 1, 1);
+      this.shockwave.material.opacity = 0.85;
+      this.shockwave.material.color.setHex(this.turboTimer > 0 ? 0xffd32a : 0x14f195);
+    }
+
+    // 2. 喷射 8~12 枚旋转金币
+    for (const coin of this.burstCoinPool) {
+      coin.visible = true;
+      coin.position.set(0, 0.1, 0);
+      const angle = Math.random() * Math.PI * 2;
+      const speedH = 0.8 + Math.random() * 1.5;
+      coin.userData.vel.set(
+        Math.cos(angle) * speedH,
+        2.5 + Math.random() * 2.0, // 向上喷射
+        Math.sin(angle) * speedH
+      );
+      coin.userData.rotSpeed.set(
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15
+      );
+      coin.userData.life = 1.0;
+      coin.userData.maxLife = 0.8 + Math.random() * 0.4;
+      coin.scale.setScalar(1.0);
+    }
+  }
+
   // 投入硅晶原石 sol_crystal 进行解密运算
   loadCrystal(count = 1) {
     const inv = this.game.ui.inventory;
@@ -216,6 +364,41 @@ export class MiningRigSystem {
     this.advanceHashProgress(stepBonus);
   }
 
+  // 手动狂暴增压点按 (Tap-to-Boost / Manual Turbo)
+  triggerManualBoost() {
+    if (this.loadedCrystals <= 0) {
+      if (this.game && this.game.ui) {
+        this.game.ui.showToast('⚠️ 矿机晶石仓为空，请先装填【未解密硅晶原石】！');
+      }
+      return false;
+    }
+
+    const now = performance.now();
+    if (now - this.lastTapTime < 1200) {
+      this.manualTapCombo = Math.min(20, this.manualTapCombo + 1);
+    } else {
+      this.manualTapCombo = 1;
+    }
+    this.lastTapTime = now;
+
+    // 延长超频狂暴时长 (上限 20 秒)
+    this.turboTimer = Math.min(20.0, this.turboTimer + 2.5);
+
+    // 瞬时推进一步哈希进度 (连击数越高，瞬时爆发越强)
+    const comboBonus = 1.2 + Math.min(this.manualTapCombo * 0.15, 2.0);
+    this.advanceHashProgress(comboBonus);
+
+    // 手机马达与声效反馈
+    haptics.heavy();
+    soundEngine.playItemDrop();
+
+    return {
+      combo: this.manualTapCombo,
+      turboTimer: this.turboTimer,
+      boostGain: comboBonus
+    };
+  }
+
   // 推进哈希出块计算
   advanceHashProgress(amount) {
     if (this.loadedCrystals <= 0) {
@@ -240,10 +423,16 @@ export class MiningRigSystem {
       // 消耗 1 块硅晶原石
       this.loadedCrystals--;
 
-      // 产出 1~2 枚 $SOL 算力代币
-      const reward = 1 + (Math.random() < 0.4 ? 1 : 0);
+      // 产出 1~2 枚 $SOL 算力代币 (超频状态下有 45% 几率狂暴暴击 +1)
+      const isCrit = (this.turboTimer > 0) && (Math.random() < 0.45);
+      const baseReward = 1 + (Math.random() < 0.35 ? 1 : 0);
+      const reward = baseReward + (isCrit ? 1 : 0);
+
       this.unclaimedSol += reward;
       this.totalSolMined += reward;
+
+      // 触发 3D 物理爆金币与冲击波全屏视效
+      this.triggerBlockBurstFX();
 
       // 同步成绩至 Solana 链上/本地凭证桥
       if (this.game.solanaBridge) {
@@ -253,7 +442,10 @@ export class MiningRigSystem {
       // 出块音效与提示
       soundEngine.playLevelUp();
       haptics.success();
-      this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！产出【$SOL 算力代币】x${reward}！`);
+      if (this.game && this.game.ui) {
+        const critTag = isCrit ? ' 💥【超频狂暴暴击双倍】' : '';
+        this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！${critTag} 产出【$SOL 算力代币】x${reward}！`);
+      }
 
       if (this.loadedCrystals <= 0) {
         this.isActive = false;
@@ -296,24 +488,38 @@ export class MiningRigSystem {
   // 每帧动画动效与算力推进
   update(delta) {
     const isDay = this.isDaytime();
-    // 太阳能白天算力加成 1.5 倍
-    const powerMultiplier = isDay ? 1.5 : (this.batteryPower > 0 ? 1.0 : 0.3);
+    // 1. 狂暴超频计时器衰减
+    if (this.turboTimer > 0) {
+      this.turboTimer -= delta;
+      if (this.turboTimer <= 0) {
+        this.turboTimer = 0;
+        this.manualTapCombo = 0;
+      }
+    }
 
-    if (this.isActive && this.loadedCrystals > 0) {
-      // 散热风扇飞速旋转
+    // 基础能源与超频倍率
+    const isTurbo = this.turboTimer > 0;
+    const turboBonus = isTurbo ? (2.2 + Math.min(this.manualTapCombo * 0.08, 1.2)) : 1.0;
+    const powerMultiplier = (isDay ? 1.5 : (this.batteryPower > 0 ? 1.0 : 0.3)) * turboBonus;
+
+    const isRigRunning = this.isActive && this.loadedCrystals > 0;
+
+    if (isRigRunning) {
+      // 散热风扇狂飙飞转 (超频时极速轰鸣)
       if (this.fanGroup) {
-        this.fanGroup.rotation.z += delta * 18.0 * powerMultiplier;
+        this.fanGroup.rotation.z += delta * (isTurbo ? 48.0 : 18.0) * powerMultiplier;
       }
 
-      // 指示灯脉冲呼吸
-      const time = Date.now() * 0.006;
+      // 指示灯脉冲呼吸 (超频时金黄闪耀，平时青紫交替)
+      const time = Date.now() * 0.008;
       if (this.statusLed) {
-        this.statusLed.material.emissiveIntensity = 0.5 + Math.sin(time) * 0.45;
-        this.statusLed.material.color.setHex(isDay ? 0x14f195 : 0x9945ff);
-        this.statusLed.material.emissive.setHex(isDay ? 0x14f195 : 0x9945ff);
+        this.statusLed.material.emissiveIntensity = 0.6 + Math.sin(time * (isTurbo ? 3.0 : 1.0)) * 0.4;
+        const ledColor = isTurbo ? 0xffd32a : (isDay ? 0x14f195 : 0x9945ff);
+        this.statusLed.material.color.setHex(ledColor);
+        this.statusLed.material.emissive.setHex(ledColor);
       }
 
-      // 实时时间平滑推进解密
+      // 实时时间平滑推进解密 (受超频狂暴加速驱动)
       this.advanceHashProgress(delta * this.hashSpeed * 0.25 * powerMultiplier);
     } else {
       // 待机慢转
@@ -327,7 +533,79 @@ export class MiningRigSystem {
       }
     }
 
-    // 地表信标光圈动效（有未领取代币时醒目脉冲）
+    // 2. 天际 DePIN 算力光柱渲染与呼吸动态
+    if (this.beamGroup) {
+      this.beamGroup.visible = isRigRunning;
+      if (isRigRunning) {
+        const beamPulse = 0.5 + Math.sin(Date.now() * 0.004) * 0.2;
+        if (this.innerBeam) {
+          this.innerBeam.material.opacity = (isTurbo ? 0.85 : 0.45) * beamPulse;
+          this.innerBeam.material.color.setHex(isTurbo ? 0xfffa65 : 0x14f195);
+        }
+        if (this.outerBeam) {
+          this.outerBeam.material.opacity = (isTurbo ? 0.45 : 0.22) * beamPulse;
+          this.outerBeam.material.color.setHex(isTurbo ? 0xff7675 : 0x9945ff);
+        }
+        // 光环上升流动
+        if (this.beamRings) {
+          this.beamRings.forEach(ring => {
+            ring.position.y += delta * ring.userData.speed * (isTurbo ? 2.5 : 1.0);
+            if (ring.position.y > 38.0) {
+              ring.position.y = 0.5;
+            }
+            ring.rotation.z += delta * 1.5;
+          });
+        }
+      }
+    }
+
+    // 3. 出块金币抛物线物理飞散更新
+    if (this.burstCoinPool) {
+      for (const coin of this.burstCoinPool) {
+        if (!coin.visible) continue;
+        coin.userData.life -= delta / coin.userData.maxLife;
+        if (coin.userData.life <= 0) {
+          coin.visible = false;
+          continue;
+        }
+
+        // 重力下落与阻力
+        coin.userData.vel.y -= 9.8 * delta;
+        coin.position.x += coin.userData.vel.x * delta;
+        coin.position.y += coin.userData.vel.y * delta;
+        coin.position.z += coin.userData.vel.z * delta;
+
+        // 自转
+        coin.rotation.x += coin.userData.rotSpeed.x * delta;
+        coin.rotation.y += coin.userData.rotSpeed.y * delta;
+        coin.rotation.z += coin.userData.rotSpeed.z * delta;
+
+        // 落地轻微弹跳与淡出
+        if (coin.position.y <= 0.02) {
+          coin.position.y = 0.02;
+          coin.userData.vel.y = -coin.userData.vel.y * 0.35; // 弹跳衰减
+          coin.userData.vel.x *= 0.8;
+          coin.userData.vel.z *= 0.8;
+        }
+
+        const scale = Math.max(0.01, coin.userData.life);
+        coin.scale.set(scale, scale, scale);
+      }
+    }
+
+    // 4. 出块冲击波光环扩散
+    if (this.shockwave && this.shockwave.userData.life > 0) {
+      this.shockwave.userData.life -= delta / this.shockwave.userData.maxLife;
+      const progress = 1.0 - Math.max(0, this.shockwave.userData.life);
+      const ringScale = 1.0 + progress * 6.5; // 扩散至 6.5 倍
+      this.shockwave.scale.set(ringScale, 1.0, ringScale);
+      this.shockwave.material.opacity = Math.sin(this.shockwave.userData.life * Math.PI) * 0.75;
+      if (this.shockwave.userData.life <= 0) {
+        this.shockwave.material.opacity = 0;
+      }
+    }
+
+    // 5. 地表待领取代币信标光圈动效
     if (this.beaconRing) {
       this.beaconRing.visible = this.unclaimedSol > 0;
       if (this.beaconRing.visible) {
