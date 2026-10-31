@@ -265,6 +265,16 @@ uniform vec3 uShallow;
 uniform vec3 uSkyColor;
 uniform float uWaveStrength;
 varying vec3 vWaterWorld;
+
+// 浅滩折射动态焦散水光 (Water Caustics)
+float calcWaterCaustics(vec2 p, float t) {
+  vec2 p1 = p * 0.38 + vec2(t * 0.18, -t * 0.14);
+  vec2 p2 = p * 0.42 - vec2(-t * 0.15, t * 0.20);
+  float c1 = sin(p1.x * 2.8 + sin(p1.y * 2.4 + t * 0.75)) + cos(p1.y * 2.8 + cos(p1.x * 2.4 - t * 0.75));
+  float c2 = sin(p2.x * 2.6 - cos(p2.y * 2.2 - t * 0.65)) + cos(p2.y * 2.6 + sin(p2.x * 2.2 + t * 0.65));
+  return pow(clamp((c1 + c2) * 0.25 + 0.5, 0.0, 1.0), 3.2);
+}
+
 // 高度场 h = Σ a·sin(f·dot(p,d) + ωt) 的解析梯度
 vec2 waterGrad(vec2 p, float t) {
   // 大块柔和涌浪：f 为空间频率（波长 = 2π/f 米），越小波越大越稀
@@ -286,7 +296,14 @@ float shoreD = length(max(waterAx - vec2(36.0, 29.0), 0.0)) - 13.0;
 float shallowMix = 1.0 - smoothstep(0.0, 18.0, shoreD);
 float lagoonMix = 1.0 - smoothstep(-2.0, 6.0, shoreD);
 vec3 waterCol = mix(uDeep, uShallow, shallowMix);
-waterCol = mix(waterCol, uShallow * 1.1, lagoonMix * 0.45);
+waterCol = mix(waterCol, uShallow * 1.15, lagoonMix * 0.45);
+
+// 浅滩与岸边游动焦散水斑 (马尔代夫级清澈透亮水下光斑)
+float causticsMask = shallowMix * (1.0 - smoothstep(6.0, 24.0, shoreD));
+float caustics = calcWaterCaustics(vWaterWorld.xz, uTime);
+vec3 causticsTint = vec3(0.95, 1.0, 0.98);
+waterCol += causticsTint * caustics * (0.35 * causticsMask);
+
 diffuseColor.rgb *= waterCol;`)
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
 vec2 waterG = waterGrad(vWaterWorld.xz, uTime) * uWaveStrength;
