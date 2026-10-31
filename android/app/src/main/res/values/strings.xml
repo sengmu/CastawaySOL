@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CastawaySOL</string>
+    <string name="title_activity_main">CastawaySOL</string>
+    <string name="package_name">com.castawaysol.game</string>
+    <string name="custom_url_scheme">com.castawaysol.game</string>
+</resources>

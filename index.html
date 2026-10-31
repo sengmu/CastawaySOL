@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#87ceeb" />
+    <title>CastawaySOL - 荒岛生存与探索 (Solana 3D Adventure)</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏝️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2330a9ce%22/><text y=%2270%22 x=%2215%22 font-size=%2265%22>🏝️</text></svg>">
+    <script>
+      window.__app_errors = [];
+      window.__app_logs = [];
+      window.addEventListener('error', (e) => {
+        window.__app_errors.push(e.message + ' at ' + e.filename + ':' + e.lineno);
+      });
+      const _origLog = console.log;
+      console.log = function(...args) {
+        window.__app_logs.push(args.join(' '));
+        _origLog.apply(console, args);
+      };
+      const _origWarn = console.warn;
+      console.warn = function(...args) {
+        window.__app_errors.push('[WARN] ' + args.join(' '));
+        _origWarn.apply(console, args);
+      };
+    </script>
+    <style>
+      :root {
+        --sat: env(safe-area-inset-top, 0px);
+        --sar: env(safe-area-inset-right, 0px);
+        --sab: env(safe-area-inset-bottom, 0px);
+        --sal: env(safe-area-inset-left, 0px);
+      }
+      html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; background: #87ceeb;
+        touch-action: none;
+        -webkit-user-select: none; user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #orientation-hint {
+        display: none !important;
+      }
+      .orient-icon { font-size: 56px; animation: rotatePhone 1.5s infinite ease-in-out; }
+      @keyframes rotatePhone {
+        0%, 10% { transform: rotate(0deg); }
+        50%, 60% { transform: rotate(-90deg); }
+        100% { transform: rotate(0deg); }
+      }
+      #loading-screen {
+        position: fixed; inset: 0; background: #95d5b2;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 9999; font-family: 'Microsoft YaHei', sans-serif;
+        color: #1b4332; transition: opacity 0.6s ease;
+      }
+      .loading-logo { font-size: 72px; animation: bounce 1s infinite alternate; }
+      .loading-title { font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: 2px; }
+      .loading-desc { font-size: 14px; margin-top: 8px; color: #2d6a4f; text-align: center; padding: 0 20px; }
+      @keyframes bounce {
+        from { transform: translateY(0); }
+        to { transform: translateY(-16px); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="orientation-hint">
+      <div class="orient-icon">📱</div>
+      <h2 style="margin: 16px 0 8px; font-size: 20px; font-weight: 800; color: #ffdd59;">请旋转手机至横屏</h2>
+      <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); max-width: 280px; line-height: 1.5;">
+        CastawaySOL 专为横屏触控定制，旋转屏幕获得最佳 3D 海岛冒险视野
+      </p>
+    </div>
+    <div id="loading-screen">
+      <div class="loading-logo">🏝️</div>
+      <div class="loading-title">CastawaySOL</div>
+      <div class="loading-desc">正在加载海岛高精生存探索资产与生态系统...</div>
+    </div>
+    <script>
+      setInterval(() => {
+        let dumpEl = document.getElementById('debug-dump');
+        if (!dumpEl) {
+          dumpEl = document.createElement('pre');
+          dumpEl.id = 'debug-dump';
+          dumpEl.style.display = 'none';
+          document.body.appendChild(dumpEl);
+        }
+        const p = window.__game ? window.__game.player : null;
+        dumpEl.textContent = JSON.stringify({
+          errors: window.__app_errors,
+          logs: window.__app_logs,
+          playerPos: p ? p.position : null,
+          hasModel: p ? !!p.model : false,
+          bones: p ? {
+            tail1: !!p.bones.tail1,
+            tail2: !!p.bones.tail2,
+            tail3: !!p.bones.tail3,
+            legL: !!p.bones.legL
+          } : null,
+          villagers: window.__game && window.__game.villagers ? window.__game.villagers.villagers.map(v => ({ id: v.id, pos: v.group.position, isWalking: v.isWalking })) : []
+        }, null, 2);
+      }, 500);
+    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+    <script>
+      // 注册 PWA Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+
+      // 监听 PWA 安装提示
+      let deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        window.__pwaInstallPrompt = e;
+
+        // 在页面右上方动态呈现快捷安装按钮
+        let btn = document.getElementById('pwa-install-btn');
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.id = 'pwa-install-btn';
+          btn.innerHTML = '📲 安装到桌面';
+          btn.style.cssText = `
+            position: fixed; top: 16px; right: 210px; z-index: 999;
+            background: linear-gradient(135deg, #20bf6b, #0fb9b1);
+            color: #fff; border: 2px solid rgba(255,255,255,0.85);
+            border-radius: 20px; padding: 7px 15px; font-size: 13px; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            display: flex; align-items: center; gap: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            animation: pulseInstall 2s infinite;
+          `;
+          btn.onclick = async () => {
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              const { outcome } = await deferredPrompt.userChoice;
+              if (outcome === 'accepted') {
+                btn.remove();
+              }
+              deferredPrompt = null;
+            }
+          };
+          document.body.appendChild(btn);
+        }
+      });
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loader = document.getElementById('loading-screen');
+          if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 600);
+          }
+        }, 1200);
+      });
+    </script>
+  </body>
+</html>

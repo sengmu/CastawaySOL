@@ -1,0 +1,378 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset />
+  <library_images>
+    <image id="mPltTreeCedarLeafColor_Grd">
+      <init_from>mPltTreeCedarLeafColor_Grd.png</init_from>
+    </image>
+    <image id="mPltTreeCedarLeaf_AlbGry">
+      <init_from>mPltTreeCedarLeaf_AlbGry.png</init_from>
+    </image>
+    <image id="mPltTreeCedarLeaf_Mix">
+      <init_from>mPltTreeCedarLeaf_Mix.png</init_from>
+    </image>
+    <image id="mPltTreeCedarLeaf_Nrm">
+      <init_from>mPltTreeCedarLeaf_Nrm.png</init_from>
+    </image>
+    <image id="mPltTreeCedarLeaf_OP">
+      <init_from>mPltTreeCedarLeaf_OP.png</init_from>
+    </image>
+    <image id="mPltTreeCedarTrunkColor_Grd">
+      <init_from>mPltTreeCedarTrunkColor_Grd.png</init_from>
+    </image>
+    <image id="mTreeCedarTrunk_AlbGry">
+      <init_from>mTreeCedarTrunk_AlbGry.png</init_from>
+    </image>
+    <image id="mTreeCedarTrunk_Mix">
+      <init_from>mTreeCedarTrunk_Mix.png</init_from>
+    </image>
+    <image id="mTreeCedarTrunk_Nrm">
+      <init_from>mTreeCedarTrunk_Nrm.png</init_from>
+    </image>
+  </library_images>
+  <library_materials>
+    <material id="mPltTreeCedarLeaf">
+      <instance_effect url="#Effect_mPltTreeCedarLeaf" />
+    </material>
+    <material id="mTreeCedarTrunk">
+      <instance_effect url="#Effect_mTreeCedarTrunk" />
+    </material>
+  </library_materials>
+  <library_effects>
+    <effect id="Effect_mPltTreeCedarLeaf">
+      <profile_COMMON>
+        <newparam sid="surface_mPltTreeCedarLeaf-bump">
+          <surface type="2D">
+            <init_from>mPltTreeCedarLeaf_Nrm</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltTreeCedarLeaf-bump">
+          <sampler2D>
+            <source>surface_mPltTreeCedarLeaf-bump</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mPltTreeCedarLeaf-diffuse">
+          <surface type="2D">
+            <init_from>mPltTreeCedarLeaf_AlbGry</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltTreeCedarLeaf-diffuse">
+          <sampler2D>
+            <source>surface_mPltTreeCedarLeaf-diffuse</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mPltTreeCedarLeaf-specular">
+          <surface type="2D">
+            <init_from>mPltTreeCedarLeaf_Mix</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltTreeCedarLeaf-specular">
+          <sampler2D>
+            <source>surface_mPltTreeCedarLeaf-specular</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <phong>
+            <bump>
+              <texture texture="sampler_mPltTreeCedarLeaf-bump" texcoord="CHANNEL0" />
+            </bump>
+            <diffuse>
+              <texture texture="sampler_mPltTreeCedarLeaf-diffuse" texcoord="CHANNEL0" />
+            </diffuse>
+            <specular>
+              <texture texture="sampler_mPltTreeCedarLeaf-specular" texcoord="CHANNEL0" />
+            </specular>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="Effect_mTreeCedarTrunk">
+      <profile_COMMON>
+        <newparam sid="surface_mTreeCedarTrunk-bump">
+          <surface type="2D">
+            <init_from>mTreeCedarTrunk_Nrm</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mTreeCedarTrunk-bump">
+          <sampler2D>
+            <source>surface_mTreeCedarTrunk-bump</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mTreeCedarTrunk-diffuse">
+          <surface type="2D">
+            <init_from>mTreeCedarTrunk_AlbGry</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mTreeCedarTrunk-diffuse">
+          <sampler2D>
+            <source>surface_mTreeCedarTrunk-diffuse</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mTreeCedarTrunk-specular">
+          <surface type="2D">
+            <init_from>mTreeCedarTrunk_Mix</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mTreeCedarTrunk-specular">
+          <sampler2D>
+            <source>surface_mTreeCedarTrunk-specular</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <phong>
+            <bump>
+              <texture texture="sampler_mTreeCedarTrunk-bump" texcoord="CHANNEL0" />
+            </bump>
+            <diffuse>
+              <texture texture="sampler_mTreeCedarTrunk-diffuse" texcoord="CHANNEL0" />
+            </diffuse>
+            <specular>
+              <texture texture="sampler_mTreeCedarTrunk-specular" texcoord="CHANNEL0" />
+            </specular>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_geometries>
+    <geometry id="Leaf_L01__mPltTreeCedarLeaf-mesh" name="Leaf_L01__mPltTreeCedarLeaf">
+      <mesh>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-position">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-position-array" count="135">-0.537784 3.476904 -0.4631755 -0.7945049 3.804478 -0.5225722 -0.7825384 3.500647 -0.3759448 -0.4831098 3.695703 -0.5943844 -1.047543 3.639642 -0.3379754 -0.5414667 3.969314 -0.7071691 -1.168144 4.377669 -0.5273615 -1.459553 4.187838 -0.3147725 -0.8767356 4.5675 -0.7399505 -1.692559 5.046731 -0.6486508 -2.006979 4.84191 -0.4192752 -1.37814 5.251552 -0.8780264 -2.472609 5.448764 -0.6630774 -1.953707 5.78679 -1.041627 -2.213158 5.617777 -0.8523524 0.6127672 2.86649 -0.4549363 0.835588 3.143655 -0.6198686 0.5554885 2.986344 -0.6758403 0.835026 2.951854 -0.3561507 0.5993591 3.172802 -0.8900287 1.071817 3.114508 -0.3497084 1.193715 3.588966 -0.8847328 0.9266773 3.621915 -1.190128 1.460753 3.556018 -0.5793383 1.670515 4.182391 -1.238125 1.38064 4.218157 -1.569636 1.96039 4.146625 -0.9066129 1.850551 4.649862 -1.780508 2.279225 4.59697 -1.29026 2.064888 4.623416 -1.535384 -0.0001009681 3.288422 -1.099501 -0.001857233 3.589597 -1.349751 -0.2056906 3.389575 -1.203156 0.2041883 3.410263 -1.181135 -0.3482338 3.572114 -1.368361 0.3445193 3.607079 -1.331141 -0.004578062 4.073503 -1.751826 -0.4029717 4.053395 -1.773231 0.3938153 4.093611 -1.730422 -0.008088643 4.67552 -2.252051 -0.4239738 4.654529 -2.274395 0.4077965 4.696511 -2.229707 -0.3761476 5.250549 -2.764731 0.3530493 5.287354 -2.725553 -0.01154916 5.268952 -2.745142</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-position-array" count="45" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-normal">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-normal-array" count="135">0.3405088 0.4187867 0.8414873 0.4207436 0.3091977 0.853229 0.3405088 0.4187867 0.8414873 0.3405088 0.4187867 0.8414873 0.4246575 0.3052838 0.853229 0.4246575 0.3033268 0.853229 0.3796478 0.3659491 0.849315 0.3796478 0.3679061 0.849315 0.3796478 0.3679061 0.849315 0.3013699 0.4677104 0.8297456 0.3013699 0.4677104 0.8317025 0.3013699 0.4677104 0.8317025 0.2544031 0.5225049 0.81409 0.2544031 0.5225049 0.81409 0.2544031 0.5225049 0.81409 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.4970646 0.702544 0.5107632 -0.483366 0.7181996 0.4990215 -0.483366 0.7181996 0.5009785 -0.483366 0.7181996 0.5009785 -0.4637965 0.7416829 0.4853229 -0.4637965 0.7416829 0.4853229 -0.4637965 0.7416829 0.4853229 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233 -0.07240704 0.6379648 0.7671233</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-normal-array" count="45" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-color">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-color-array" count="180">-0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 -0.5 3.5 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0.5996094 2.898438 -0.5 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1 0 3.298828 -1.099609 1</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-color-array" count="45" stride="4">
+              <param name="R" type="float" />
+              <param name="G" type="float" />
+              <param name="B" type="float" />
+              <param name="A" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-texcoord">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-texcoord-array" count="90">0.8819257 0.784329 0.8819257 0.7487297 0.9031052 0.7665217 0.8607461 0.7665217 0.9165942 0.7487297 0.8472572 0.7487297 0.8819257 0.6822613 0.9165942 0.6822613 0.8472572 0.6822613 0.8819257 0.6444648 0.9165942 0.6444648 0.8472572 0.6444648 0.9165942 0.5432975 0.8472572 0.5432975 0.8819257 0.5432975 0.8819257 0.784329 0.8819257 0.7487297 0.9031052 0.7665217 0.8607461 0.7665217 0.9165942 0.7487297 0.8472572 0.7487297 0.8819257 0.6822613 0.9165942 0.6822613 0.8472572 0.6822613 0.8819257 0.6309606 0.9165942 0.6309606 0.8472572 0.6309606 0.9165942 0.5432975 0.8472572 0.5432975 0.8819257 0.5432975 0.9611658 0.7743496 0.9611658 0.738735 0.98233 0.7565423 0.9399863 0.7565423 0.995819 0.738735 0.9264973 0.738735 0.9611658 0.672282 0.995819 0.672282 0.9264973 0.672282 0.9611658 0.6344701 0.995819 0.6344701 0.9264973 0.6344701 0.995819 0.533318 0.9264973 0.533318 0.9611658 0.533318</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-texcoord-array" count="45" stride="2">
+              <param name="S" type="float" />
+              <param name="T" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Leaf_L01__mPltTreeCedarLeaf-vertex">
+          <input semantic="POSITION" source="#Leaf_L01__mPltTreeCedarLeaf-position" />
+        </vertices>
+        <triangles material="mPltTreeCedarLeaf" count="48">
+          <input semantic="VERTEX" source="#Leaf_L01__mPltTreeCedarLeaf-vertex" offset="0" />
+          <input semantic="NORMAL" source="#Leaf_L01__mPltTreeCedarLeaf-normal" offset="1" />
+          <input semantic="COLOR" source="#Leaf_L01__mPltTreeCedarLeaf-color" offset="2" set="0" />
+          <input semantic="TEXCOORD" source="#Leaf_L01__mPltTreeCedarLeaf-texcoord" offset="3" set="0" />
+          <p>0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 1 1 1 1 0 0 0 0 2 2 2 2 1 1 1 1 4 4 4 4 5 5 5 5 1 1 1 1 3 3 3 3 1 1 1 1 6 6 6 6 4 4 4 4 6 6 6 6 1 1 1 1 5 5 5 5 6 6 6 6 7 7 7 7 4 4 4 4 8 8 8 8 6 6 6 6 5 5 5 5 7 7 7 7 6 6 6 6 9 9 9 9 6 6 6 6 8 8 8 8 9 9 9 9 10 10 10 10 7 7 7 7 9 9 9 9 8 8 8 8 11 11 11 11 9 9 9 9 10 10 10 10 9 9 9 9 12 12 12 12 9 9 9 9 11 11 11 11 13 13 13 13 9 9 9 9 14 14 14 14 12 12 12 12 14 14 14 14 9 9 9 9 13 13 13 13 15 15 15 15 16 16 16 16 17 17 17 17 18 18 18 18 16 16 16 16 15 15 15 15 17 17 17 17 16 16 16 16 19 19 19 19 20 20 20 20 16 16 16 16 18 18 18 18 16 16 16 16 21 21 21 21 19 19 19 19 21 21 21 21 16 16 16 16 20 20 20 20 21 21 21 21 22 22 22 22 19 19 19 19 23 23 23 23 21 21 21 21 20 20 20 20 22 22 22 22 21 21 21 21 24 24 24 24 21 21 21 21 23 23 23 23 24 24 24 24 25 25 25 25 22 22 22 22 24 24 24 24 23 23 23 23 26 26 26 26 24 24 24 24 25 25 25 25 24 24 24 24 27 27 27 27 24 24 24 24 26 26 26 26 28 28 28 28 24 24 24 24 29 29 29 29 27 27 27 27 29 29 29 29 24 24 24 24 28 28 28 28 30 30 30 30 31 31 31 31 32 32 32 32 33 33 33 33 31 31 31 31 30 30 30 30 32 32 32 32 31 31 31 31 34 34 34 34 35 35 35 35 31 31 31 31 33 33 33 33 31 31 31 31 36 36 36 36 34 34 34 34 36 36 36 36 31 31 31 31 35 35 35 35 36 36 36 36 37 37 37 37 34 34 34 34 38 38 38 38 36 36 36 36 35 35 35 35 37 37 37 37 36 36 36 36 39 39 39 39 36 36 36 36 38 38 38 38 39 39 39 39 40 40 40 40 37 37 37 37 39 39 39 39 38 38 38 38 41 41 41 41 39 39 39 39 40 40 40 40 39 39 39 39 42 42 42 42 39 39 39 39 41 41 41 41 43 43 43 43 39 39 39 39 44 44 44 44 42 42 42 42 44 44 44 44 39 39 39 39 43 43 43 43 </p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="fg_treeA_0__mTreeCedarTrunk-mesh" name="fg_treeA_0__mTreeCedarTrunk">
+      <mesh>
+        <source id="fg_treeA_0__mTreeCedarTrunk-position">
+          <float_array id="fg_treeA_0__mTreeCedarTrunk-position-array" count="279">0.01549898 3.637219 -1.402069 0.01549898 3.241493 -1.22715 -0.1119536 3.297253 -1.156736 -0.1745069 2.878567 -0.6208857 0.01549898 2.703545 -0.8816252 0.01549898 2.235752 -0.7092987 -0.1745069 2.878567 -0.6208857 -0.1524807 3.014279 -0.8147168 0.01549898 2.703545 -0.8816252 -0.1119536 3.297253 -1.156736 0.01549898 3.241493 -1.22715 -0.1524807 3.014279 -0.8147168 0.01549898 2.703545 -0.8816252 0.6066164 -0.3791367 -0.8072847 -0.01274735 -0.3078238 -1.137535 -0.008137971 0.3114253 -0.8638808 0.4558468 0.2938408 -0.5754446 0.8378705 -0.3912889 -0.3398065 0.005246085 1.167054 -0.747272 0.2702198 0.2746174 -0.1459566 0.5658993 -0.4054843 0.1576113 0.3962934 1.158922 -0.5056559 0.001497438 -0.4135348 0.5018572 0.3809555 1.806482 -0.4741227 0.005118393 1.866555 -0.7086993 0.2895738 1.148082 -0.1513813 0.0110635 0.2746174 0.08512941 0.005118828 1.164858 0.01829451 -0.2702198 0.2746174 -0.1459566 -0.5629034 -0.4054843 0.1576113 -0.7730044 -0.3912889 -0.3398066 0.2854081 1.805714 -0.1401269 -0.4547043 0.2938408 -0.5754446 -0.5934865 -0.3791366 -0.8072847 -0.008137971 0.3114253 -0.8638808 -0.01274735 -0.3078238 -1.137535 -0.3860557 1.158922 -0.5056559 0.005246085 1.167054 -0.747272 -0.2793362 1.148082 -0.1513813 -0.3707179 1.806482 -0.4741227 0.005118393 1.866555 -0.7086993 0.01549898 2.235752 -0.7092987 -0.2751705 1.805714 -0.1401269 -0.4009633 2.38439 -0.4448382 -0.1745069 2.878567 -0.6208857 0.005118828 1.806866 0.0002453104 -0.51478 2.933137 -0.4613654 -0.5704349 3.433458 -0.6413478 0.2994234 1.955129 -0.2244257 -0.6929073 3.371628 -0.5650632 -1.082115 3.872396 -0.785017 -0.6805751 3.384704 -0.3937862 -0.4462405 2.974334 -0.2294309 -0.3065932 2.401044 -0.1738121 -0.3748927 3.086038 -0.2282611 -0.5840569 3.432374 -0.3570308 -0.5361251 3.477985 -0.4643857 -0.5704349 3.433458 -0.6413478 -0.303004 3.158768 -0.3937219 -0.1745069 2.878567 -0.6208857 -0.1480137 2.943919 -0.3699292 0.03515993 2.491344 -0.4027097 0.01549898 2.189638 -0.02564111 0.03515993 2.491344 -0.4027097 0.1577485 2.461561 -0.3699292 0.2575816 2.433294 -0.6208857 0.4027215 2.263722 -0.238235 0.2882988 2.525801 -0.393722 0.642834 2.825402 -0.5715261 0.3419409 2.398327 -0.2282611 0.6128851 2.866476 -0.4548015 0.9392427 3.034776 -0.5209933 0.6606948 2.785859 -0.3603599 0.6910596 2.715557 -0.4274402 0.6982535 2.747308 -0.5832211 0.642834 2.825402 -0.5715261 0.2575816 2.433294 -0.6208857 0.4566624 2.222525 -0.4613655 0.01549898 2.235752 -0.7092987 0.3764614 1.964177 -0.4680472 0.01549898 2.703545 -0.8816252 0.2575816 2.433294 -0.6208857 0.01549898 2.235752 -0.7092987 0.1834787 3.014279 -0.8147168 0.01549898 3.241493 -1.22715 0.01549898 3.120068 -0.7196757 0.03515993 2.491344 -0.4027097 -0.1745069 2.878567 -0.6208857 -0.1524807 3.014279 -0.8147168 -0.1119536 3.297253 -1.156736 0.1429515 3.297253 -1.156736 0.01549898 3.637219 -1.402069 0.01549898 3.373758 -1.167873</float_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-position-array" count="93" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fg_treeA_0__mTreeCedarTrunk-normal">
+          <float_array id="fg_treeA_0__mTreeCedarTrunk-normal-array" count="279">0 0.1643836 -0.9863014 0 -0.5655577 -0.8258317 -0.9765166 0.1056751 -0.1917808 -0.483366 0.09589041 -0.8708415 -0.1193738 -0.4285714 -0.8962818 -0.2270059 -0.07436399 -0.9706458 -0.483366 0.09589041 -0.8708415 -0.9765166 0.005870841 -0.2133072 -0.1193738 -0.4285714 -0.8962818 -0.9765166 0.1056751 -0.1917808 0 -0.5655577 -0.8258317 -0.9765166 0.005870841 -0.2133072 -0.1193738 -0.4285714 -0.8962818 0.6086106 0.3659491 -0.702544 -0.001956947 0.4187867 -0.9080235 -0.001956947 0.2896282 -0.9569471 0.7651663 0.3131115 -0.5636008 0.8610567 0.4951076 0.1135029 0.003913894 0.1017613 -0.9941292 0.7299413 0.2681018 0.630137 0.5909981 0.5283757 0.6086106 0.8395303 0.0665362 -0.5401174 -0.001956947 0.5675147 0.8219178 0.8688846 0.03522505 -0.4911937 -0.07827789 0.04109589 -0.9960861 0.776908 0.009784736 0.630137 0.003913894 0.2152642 0.9765166 -0.001956947 0.02348337 1 -0.7279844 0.258317 0.6340509 -0.6105675 0.5264188 0.5909981 -0.8845401 0.4520548 0.109589 0.7632094 0.037182 0.6438356 -0.7808219 0.3013699 -0.5459883 -0.6379648 0.3581213 -0.6829746 -0.001956947 0.2896282 -0.9569471 -0.001956947 0.4187867 -0.9080235 -0.8414873 0.07436399 -0.5342466 0.003913894 0.1017613 -0.9941292 -0.7710372 0.01174168 0.6360078 -0.9001957 0.01565558 -0.4363992 -0.07827789 0.04109589 -0.9960861 -0.2270059 -0.07436399 -0.9706458 -0.776908 0.001956947 0.630137 -0.8825831 -0.09197652 -0.4618395 -0.483366 0.09589041 -0.8708415 -0.02935421 0.03913894 0.9980431 -0.8336595 -0.2896282 -0.4696673 0.3189824 0.1741683 -0.9315069 0.7495108 -0.01369863 0.6634051 -0.7064579 -0.5127202 -0.4872798 -0.3561644 0.5753425 -0.7358121 -0.816047 -0.1996086 0.5420744 -0.704501 -0.1037182 0.702544 -0.7377691 -0.03913894 0.6751468 0.1291585 0.332681 0.9334638 0.1565558 0.5420744 0.8258317 0.7201566 0.6927593 0.0332681 0.3189824 0.1741683 -0.9315069 0.8023483 0.5968689 0.005870841 -0.483366 0.09589041 -0.8708415 0.8121331 0.4657534 0.3502935 0.6829746 0.4598826 0.5675147 0 0.1448141 0.9902152 0.81409 0.4324853 0.3894325 -0.09393346 0.8962818 0.4324853 0.5596869 0.04892368 -0.8277887 0.7495108 -0.2133072 0.6262231 -0.6360078 0.7436399 0.2015656 -0.3248532 0.3757339 -0.8669276 0.2289628 0.2876712 0.9295499 -0.62818 0.7612525 0.1604697 0.9001957 0.4344423 0.04109589 -0.05675147 0.407045 0.9119374 0.8414873 -0.3776908 0.3855186 0.6203523 -0.4109589 -0.667319 -0.3248532 0.3757339 -0.8669276 0.5596869 0.04892368 -0.8277887 0.7945206 -0.3483366 -0.4970646 -0.2270059 -0.07436399 -0.9706458 0.8003914 -0.1154599 -0.5870842 -0.1193738 -0.4285714 -0.8962818 0.5596869 0.04892368 -0.8277887 -0.2270059 -0.07436399 -0.9706458 0.9960861 0.06262231 -0.0704501 0 -0.5655577 -0.8258317 0.146771 0.7162427 0.6829746 0.6829746 0.4598826 0.5675147 -0.483366 0.09589041 -0.8708415 -0.9765166 0.005870841 -0.2133072 -0.9765166 0.1056751 -0.1917808 0.9765166 0.1056751 -0.1917808 0 0.1643836 -0.9863014 0 0.7886497 0.6144814</float_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-normal-array" count="93" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fg_treeA_0__mTreeCedarTrunk-texcoord">
+          <float_array id="fg_treeA_0__mTreeCedarTrunk-texcoord-array" count="186">0.6487526 0.9976043 0.6307622 0.9796292 0.6418402 0.9729305 0.6345464 0.9275502 0.6176089 0.952636 0.6115816 0.9346609 0.6345464 0.9275502 0.6377508 0.9485924 0.6176089 0.952636 0.6418402 0.9729305 0.6307622 0.9796292 0.6377508 0.9485924 0.6176089 0.952636 0.7279164 0.7757381 0.7452812 0.7874113 0.7238575 0.8036164 0.6964065 0.8036164 0.704982 0.7729763 0.7176623 0.8303654 0.6733959 0.8036164 0.6829175 0.7729763 0.6923171 0.8303654 0.6479896 0.7695888 0.6914626 0.8493935 0.7161974 0.8493935 0.6664378 0.8303654 0.6473182 0.8036164 0.6466163 0.8303654 0.6229801 0.8036164 0.614786 0.7729763 0.5918975 0.7729763 0.66598 0.8493935 0.5983673 0.8036164 0.5747768 0.7757381 0.5608912 0.8036164 0.547097 0.7874113 0.6009308 0.8303654 0.5662013 0.8303654 0.6285344 0.8303654 0.6016327 0.8493935 0.5696498 0.8493935 0.5712978 0.8693675 0.6288396 0.8493935 0.6011902 0.8693675 0.5693446 0.9033036 0.6465553 0.8493935 0.5936828 0.9035477 0.5674677 0.9301137 0.6684825 0.8614786 0.577142 0.926894 0.5644312 0.9584497 0.5850462 0.926894 0.6048676 0.9035477 0.6237583 0.8693675 0.6262913 0.9035477 0.5980163 0.9312733 0.598291 0.9368887 0.5985656 0.9368887 0.626978 0.9035477 0.6300755 0.9155108 0.6368811 0.8993667 0.6467994 0.9014115 0.6490425 0.8699932 0.6467994 0.9014115 0.6567025 0.8993667 0.6787213 0.9224231 0.6819562 0.8996567 0.6780041 0.9104601 0.7051499 0.9429465 0.6786908 0.9104601 0.7054246 0.9429465 0.7321431 0.9486687 0.7056993 0.9373159 0.7117876 0.9347371 0.7194629 0.9347371 0.729778 0.9376059 0.7198901 0.9102159 0.696376 0.8962081 0.7176776 0.874876 0.6918898 0.8575418 0.6799268 0.956405 0.6689097 0.9294881 0.6917372 0.9379873 0.664332 0.9485466 0.6706798 0.9768673 0.6509957 0.9456474 0.649546 0.9218585 0.6345464 0.9275502 0.6377508 0.9485924 0.6418402 0.9729305 0.6590219 0.9728695 0.6512703 0.9982605 0.6514687 0.972076</float_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-texcoord-array" count="93" stride="2">
+              <param name="S" type="float" />
+              <param name="T" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="fg_treeA_0__mTreeCedarTrunk-vertex">
+          <input semantic="POSITION" source="#fg_treeA_0__mTreeCedarTrunk-position" />
+        </vertices>
+        <triangles material="mTreeCedarTrunk" count="122">
+          <input semantic="VERTEX" source="#fg_treeA_0__mTreeCedarTrunk-vertex" offset="0" />
+          <input semantic="NORMAL" source="#fg_treeA_0__mTreeCedarTrunk-normal" offset="1" />
+          <input semantic="TEXCOORD" source="#fg_treeA_0__mTreeCedarTrunk-texcoord" offset="2" set="0" />
+          <p>0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8 9 9 9 10 10 10 11 11 11 10 10 10 12 12 12 11 11 11 13 13 13 14 14 14 15 15 15 16 16 16 13 13 13 15 15 15 13 13 13 16 16 16 17 17 17 16 16 16 15 15 15 18 18 18 16 16 16 19 19 19 17 17 17 19 19 19 20 20 20 17 17 17 21 21 21 16 16 16 18 18 18 21 21 21 19 19 19 16 16 16 19 19 19 22 22 22 20 20 20 21 21 21 18 18 18 23 23 23 18 18 18 24 24 24 23 23 23 21 21 21 25 25 25 19 19 19 25 25 25 21 21 21 23 23 23 22 22 22 19 19 19 26 26 26 25 25 25 27 27 27 19 19 19 27 27 27 26 26 26 19 19 19 22 22 22 26 26 26 28 28 28 26 26 26 27 27 27 28 28 28 28 28 28 29 29 29 22 22 22 28 28 28 30 30 30 29 29 29 27 27 27 25 25 25 31 31 31 31 31 31 25 25 25 23 23 23 28 28 28 32 32 32 30 30 30 33 33 33 30 30 30 32 32 32 34 34 34 35 35 35 33 33 33 32 32 32 34 34 34 33 33 33 32 32 32 36 36 36 34 34 34 28 28 28 36 36 36 32 32 32 36 36 36 37 37 37 34 34 34 28 28 28 38 38 38 36 36 36 27 27 27 38 38 38 28 28 28 36 36 36 39 39 39 37 37 37 36 36 36 38 38 38 39 39 39 39 39 39 40 40 40 37 37 37 41 41 41 40 40 40 39 39 39 38 38 38 27 27 27 42 42 42 38 38 38 42 42 42 39 39 39 43 43 43 41 41 41 39 39 39 43 43 43 39 39 39 42 42 42 41 41 41 43 43 43 44 44 44 27 27 27 45 45 45 42 42 42 45 45 45 27 27 27 31 31 31 43 43 43 46 46 46 44 44 44 47 47 47 44 44 44 46 46 46 31 31 31 48 48 48 45 45 45 48 48 48 31 31 31 23 23 23 49 49 49 47 47 47 46 46 46 47 47 47 49 49 49 50 50 50 49 49 49 46 46 46 51 51 51 50 50 50 49 49 49 51 51 51 46 46 46 43 43 43 52 52 52 46 46 46 52 52 52 51 51 51 43 43 43 53 53 53 52 52 52 53 53 53 43 43 43 42 42 42 52 52 52 54 54 54 51 51 51 52 52 52 53 53 53 54 54 54 51 51 51 55 55 55 50 50 50 54 54 54 55 55 55 51 51 51 55 55 55 56 56 56 50 50 50 50 50 50 56 56 56 57 57 57 58 58 58 56 56 56 55 55 55 56 56 56 58 58 58 57 57 57 54 54 54 58 58 58 55 55 55 58 58 58 59 59 59 57 57 57 59 59 59 58 58 58 60 60 60 54 54 54 60 60 60 58 58 58 61 61 61 59 59 59 60 60 60 62 62 62 60 60 60 54 54 54 53 53 53 62 62 62 54 54 54 53 53 53 42 42 42 62 62 62 42 42 42 45 45 45 62 62 62 60 60 60 62 62 62 63 63 63 48 48 48 62 62 62 45 45 45 64 64 64 63 63 63 62 62 62 64 64 64 65 65 65 61 61 61 48 48 48 66 66 66 62 62 62 65 65 65 64 64 64 67 67 67 65 65 65 67 67 67 68 68 68 69 69 69 64 64 64 62 62 62 67 67 67 64 64 64 69 69 69 66 66 66 69 69 69 62 62 62 67 67 67 70 70 70 68 68 68 68 68 68 70 70 70 71 71 71 70 70 70 67 67 67 72 72 72 67 67 67 69 69 69 72 72 72 71 71 71 70 70 70 72 72 72 73 73 73 72 72 72 69 69 69 72 72 72 73 73 73 71 71 71 66 66 66 73 73 73 69 69 69 73 73 73 74 74 74 71 71 71 71 71 71 74 74 74 75 75 75 75 75 75 74 74 74 76 76 76 77 77 77 74 74 74 73 73 73 74 74 74 77 77 77 76 76 76 66 66 66 77 77 77 73 73 73 76 76 76 77 77 77 78 78 78 79 79 79 77 77 77 66 66 66 77 77 77 79 79 79 78 78 78 48 48 48 79 79 79 66 66 66 78 78 78 79 79 79 24 24 24 79 79 79 48 48 48 23 23 23 79 79 79 23 23 23 24 24 24 80 80 80 81 81 81 82 82 82 80 80 80 83 83 83 81 81 81 80 80 80 84 84 84 83 83 83 83 83 83 85 85 85 81 81 81 81 81 81 85 85 85 86 86 86 86 86 86 85 85 85 87 87 87 87 87 87 85 85 85 88 88 88 88 88 88 85 85 85 89 89 89 84 84 84 90 90 90 83 83 83 85 85 85 83 83 83 90 90 90 84 84 84 91 91 91 90 90 90 85 85 85 92 92 92 89 89 89 89 89 89 92 92 92 91 91 91 92 92 92 85 85 85 90 90 90 91 91 91 92 92 92 90 90 90 </p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_controllers>
+    <controller id="Armature_Leaf_L01__mPltTreeCedarLeaf-mesh">
+      <skin source="#Leaf_L01__mPltTreeCedarLeaf-mesh">
+        <bind_shape_matrix>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</bind_shape_matrix>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-mesh-joint">
+          <Name_array id="Leaf_L01__mPltTreeCedarLeaf-mesh-joint-array" count="1">Root</Name_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-mesh-joint-array" count="1" stride="1">
+              <param name="JOINT" type="name" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-mesh-inv_bind_matrix">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-mesh-inv_bind_matrix-array" count="16">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-mesh-inv_bind_matrix-array" count="1" stride="16">
+              <param name="TRANSFORM" type="float4x4" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Leaf_L01__mPltTreeCedarLeaf-mesh-weight">
+          <float_array id="Leaf_L01__mPltTreeCedarLeaf-mesh-weight-array" count="1">1</float_array>
+          <technique_common>
+            <accessor source="#Leaf_L01__mPltTreeCedarLeaf-mesh-weight-array" count="1" stride="1">
+              <param name="WEIGHT" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <joints>
+          <input semantic="JOINT" source="#Leaf_L01__mPltTreeCedarLeaf-mesh-joint" />
+          <input semantic="INV_BIND_MATRIX" source="#Leaf_L01__mPltTreeCedarLeaf-mesh-inv_bind_matrix" />
+        </joints>
+        <vertex_weights count="45">
+          <input semantic="JOINT" source="#Leaf_L01__mPltTreeCedarLeaf-mesh-joint" offset="0" />
+          <input semantic="WEIGHT" source="#Leaf_L01__mPltTreeCedarLeaf-mesh-weight" offset="1" />
+          <vcount>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 </vcount>
+          <v>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </v>
+        </vertex_weights>
+      </skin>
+    </controller>
+    <controller id="Armature_fg_treeA_0__mTreeCedarTrunk-mesh">
+      <skin source="#fg_treeA_0__mTreeCedarTrunk-mesh">
+        <bind_shape_matrix>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</bind_shape_matrix>
+        <source id="fg_treeA_0__mTreeCedarTrunk-mesh-joint">
+          <Name_array id="fg_treeA_0__mTreeCedarTrunk-mesh-joint-array" count="1">Root</Name_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-mesh-joint-array" count="1" stride="1">
+              <param name="JOINT" type="name" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fg_treeA_0__mTreeCedarTrunk-mesh-inv_bind_matrix">
+          <float_array id="fg_treeA_0__mTreeCedarTrunk-mesh-inv_bind_matrix-array" count="16">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-mesh-inv_bind_matrix-array" count="1" stride="16">
+              <param name="TRANSFORM" type="float4x4" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="fg_treeA_0__mTreeCedarTrunk-mesh-weight">
+          <float_array id="fg_treeA_0__mTreeCedarTrunk-mesh-weight-array" count="1">1</float_array>
+          <technique_common>
+            <accessor source="#fg_treeA_0__mTreeCedarTrunk-mesh-weight-array" count="1" stride="1">
+              <param name="WEIGHT" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <joints>
+          <input semantic="JOINT" source="#fg_treeA_0__mTreeCedarTrunk-mesh-joint" />
+          <input semantic="INV_BIND_MATRIX" source="#fg_treeA_0__mTreeCedarTrunk-mesh-inv_bind_matrix" />
+        </joints>
+        <vertex_weights count="93">
+          <input semantic="JOINT" source="#fg_treeA_0__mTreeCedarTrunk-mesh-joint" offset="0" />
+          <input semantic="WEIGHT" source="#fg_treeA_0__mTreeCedarTrunk-mesh-weight" offset="1" />
+          <vcount>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 </vcount>
+          <v>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </v>
+        </vertex_weights>
+      </skin>
+    </controller>
+  </library_controllers>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Armature" name="Armature" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <node id="Armature_Root" name="Root" sid="Root" type="JOINT">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        </node>
+      </node>
+      <node id="Leaf_L01__mPltTreeCedarLeaf" name="Leaf_L01__mPltTreeCedarLeaf" type="NODE">
+        <instance_controller url="#Armature_Leaf_L01__mPltTreeCedarLeaf-mesh">
+          <skeleton>#Armature_Root</skeleton>
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="mPltTreeCedarLeaf" target="#mPltTreeCedarLeaf" />
+              <bind_vertex_input semantic="CHANNEL0" input_semantic="TEXCOORD" input_set="0" />
+              <bind_vertex_input semantic="CHANNEL1" input_semantic="TEXCOORD" input_set="1" />
+              <bind_vertex_input semantic="CHANNEL2" input_semantic="TEXCOORD" input_set="2" />
+            </technique_common>
+          </bind_material>
+        </instance_controller>
+      </node>
+      <node id="fg_treeA_0__mTreeCedarTrunk" name="fg_treeA_0__mTreeCedarTrunk" type="NODE">
+        <instance_controller url="#Armature_fg_treeA_0__mTreeCedarTrunk-mesh">
+          <skeleton>#Armature_Root</skeleton>
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="mTreeCedarTrunk" target="#mTreeCedarTrunk" />
+              <bind_vertex_input semantic="CHANNEL0" input_semantic="TEXCOORD" input_set="0" />
+              <bind_vertex_input semantic="CHANNEL1" input_semantic="TEXCOORD" input_set="1" />
+              <bind_vertex_input semantic="CHANNEL2" input_semantic="TEXCOORD" input_set="2" />
+            </technique_common>
+          </bind_material>
+        </instance_controller>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene" />
+  </scene>
+</COLLADA>

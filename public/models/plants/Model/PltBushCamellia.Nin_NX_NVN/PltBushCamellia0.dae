@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset />
+  <library_images>
+    <image id="mPltBushCamelliaFlowColor_Grd">
+      <init_from>mPltBushCamelliaFlowColor_Grd.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaFlow_AlbGry">
+      <init_from>mPltBushCamelliaFlow_AlbGry.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaFlow_Mix">
+      <init_from>mPltBushCamelliaFlow_Mix.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaFlow_Nrm">
+      <init_from>mPltBushCamelliaFlow_Nrm.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaFlow_OP">
+      <init_from>mPltBushCamelliaFlow_OP.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaLeafColor_Grd">
+      <init_from>mPltBushCamelliaLeafColor_Grd.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaLeaf_AlbGry">
+      <init_from>mPltBushCamelliaLeaf_AlbGry.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaLeaf_Mix">
+      <init_from>mPltBushCamelliaLeaf_Mix.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaLeaf_Nrm">
+      <init_from>mPltBushCamelliaLeaf_Nrm.png</init_from>
+    </image>
+    <image id="mPltBushCamelliaLeaf_OP">
+      <init_from>mPltBushCamelliaLeaf_OP.png</init_from>
+    </image>
+  </library_images>
+  <library_materials>
+    <material id="mPltBushCamelliaLeaf">
+      <instance_effect url="#Effect_mPltBushCamelliaLeaf" />
+    </material>
+  </library_materials>
+  <library_effects>
+    <effect id="Effect_mPltBushCamelliaLeaf">
+      <profile_COMMON>
+        <newparam sid="surface_mPltBushCamelliaLeaf-bump">
+          <surface type="2D">
+            <init_from>mPltBushCamelliaLeaf_Nrm</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltBushCamelliaLeaf-bump">
+          <sampler2D>
+            <source>surface_mPltBushCamelliaLeaf-bump</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mPltBushCamelliaLeaf-diffuse">
+          <surface type="2D">
+            <init_from>mPltBushCamelliaLeaf_AlbGry</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltBushCamelliaLeaf-diffuse">
+          <sampler2D>
+            <source>surface_mPltBushCamelliaLeaf-diffuse</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <newparam sid="surface_mPltBushCamelliaLeaf-specular">
+          <surface type="2D">
+            <init_from>mPltBushCamelliaLeaf_Mix</init_from>
+            <format>A8R8G8B8</format>
+          </surface>
+        </newparam>
+        <newparam sid="sampler_mPltBushCamelliaLeaf-specular">
+          <sampler2D>
+            <source>surface_mPltBushCamelliaLeaf-specular</source>
+            <wrap_s>WRAP</wrap_s>
+            <wrap_t>WRAP</wrap_t>
+          </sampler2D>
+        </newparam>
+        <technique sid="common">
+          <phong>
+            <bump>
+              <texture texture="sampler_mPltBushCamelliaLeaf-bump" texcoord="CHANNEL0" />
+            </bump>
+            <diffuse>
+              <texture texture="sampler_mPltBushCamelliaLeaf-diffuse" texcoord="CHANNEL0" />
+            </diffuse>
+            <specular>
+              <texture texture="sampler_mPltBushCamelliaLeaf-specular" texcoord="CHANNEL0" />
+            </specular>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_geometries>
+    <geometry id="L_leaf_a45__mPltBushCamelliaLeaf-mesh" name="L_leaf_a45__mPltBushCamelliaLeaf">
+      <mesh>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-position">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-position-array" count="198">0 1.82 -0.1940941 0.3502836 1.953079 -0.5621613 0.34 2.2 -0.3524158 -2.291026 3.373305 -1.050841 -0.02057616 2.172924 -0.3404402 -0.425034 3.546216 -1.668742 -1.861076 1.986536 0.2854364 2.322845 3.531738 -0.1791278 0.04279047 2.184298 -0.4728683 1.417853 2.160474 0.9136886 0.9221836 3.540434 -1.568983 0.6625974 -0.4 -1.005309 -0.004892346 -0.4 -1.335541 -3.741313E-05 0.3658328 -1.094023 0.4856609 0.3292186 -0.5371152 0 1.079056 -0.8740938 0.3258035 1.068659 -0.4872886 0 1.377801 -0.7898373 0.2602846 1.377709 -0.4598343 0 1.82 -0.7607227 0.2833118 1.743983 -0.5289981 0.3502836 1.953079 -0.5621613 0.34 2.2 -0.6407228 0.7282031 2.487644 -0.5807228 -3.741313E-05 0.3658328 -1.094023 -0.004892346 -0.4 -1.335541 -0.6233528 -0.4 -1.005309 -0.4845183 0.3292186 -0.5371152 0 1.079056 -0.8740938 -0.3258035 1.068659 -0.4872886 0 1.377801 -0.7898373 -0.3027891 1.517709 -0.4598343 0 1.82 -0.7607227 -0.4662391 2.006305 -0.5513324 -0.3280984 2.331044 -0.6607227 -0.7882031 2.476181 -0.5807227 -0.6233528 -0.4 -1.005309 -0.8114367 -0.4 -0.5203294 -0.4845183 0.3292186 -0.5371152 -0.2879534 0.465552 0.06522089 -0.5913105 -0.4 0.08482474 -0.3258035 1.068659 -0.4872886 2.182322E-05 -0.4 0.4413809 -0.3027891 1.517709 -0.4598343 0.2878786 0.465552 0.06522089 0.5913542 -0.4 0.08482474 0.8763027 -0.4 -0.5203293 0.6625974 -0.4 -1.005309 0.4856609 0.3292186 -0.5371152 0.3258035 1.068659 -0.4872886 0.2602846 1.377709 -0.4598343 0 1.317344 -0.1501182 0 1.82 -0.1940941 0.2833118 1.743983 -0.5289981 0.3502836 1.953079 -0.5621613 -0.4662391 2.006305 -0.5513324 0.34 2.2 -0.3524158 0.7282031 2.487644 -0.5807228 -0.4058763 2.189471 -0.3592744 -0.7882031 2.476181 -0.5807227 0.2827533 2.339995 -0.44 0.34 2.2 -0.6407228 -0.3387703 2.341152 -0.44 -0.3280984 2.331044 -0.6607227 -0.02 2.091986 -0.44 0 1.82 -0.7607227</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-position-array" count="66" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-normal">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-normal-array" count="198">0.1722113 0.1056751 0.9804305 0.8767123 -0.4461839 -0.1741683 0.3855186 0.07240704 0.9197652 0.1604697 0.7103718 0.6849315 0.1604697 0.7103718 0.6849315 0.1604697 0.7103718 0.6849315 0.1604697 0.7103718 0.6849315 -0.4872798 0.7181996 0.4970646 -0.4872798 0.7181996 0.4970646 -0.4872798 0.7181996 0.4970646 -0.4872798 0.7181996 0.4970646 0.7123288 0.4305284 -0.553816 -0.01174168 0.4892368 -0.8727984 -0.005870841 0.407045 -0.9138943 0.8806262 0.3776908 -0.2837573 0.009784736 0.2700587 -0.962818 0.9549902 0.2133072 -0.2035225 0.03131115 0.1545988 -0.9882583 0.9902152 0.1389433 0.02935421 0.1585127 0.01956947 -0.9863014 0.9745597 -0.2015656 -0.09784736 0.8767123 -0.4461839 -0.1741683 -0.01369863 0.2720157 -0.962818 0.7984344 0.592955 -0.109589 -0.005870841 0.407045 -0.9138943 -0.01174168 0.4892368 -0.8727984 -0.7436399 0.3972603 -0.5381604 -0.8982387 0.3483366 -0.2700587 0.009784736 0.2700587 -0.962818 -0.9549902 0.1526419 -0.2563601 0.03131115 0.1545988 -0.9882583 -0.9980431 0.05479452 0.04305284 0.1585127 0.01956947 -0.9863014 -0.8786693 -0.4422701 -0.1800391 0.3033268 0.6203523 -0.7240704 -0.6027398 0.6849315 0.4090019 -0.7436399 0.3972603 -0.5381604 -0.9217221 0.3835616 0.0665362 -0.8982387 0.3483366 -0.2700587 -0.6966732 0.3170255 0.6438356 -0.739726 0.2739726 0.6164383 -0.9549902 0.1526419 -0.2563601 0 0.2915851 0.9569471 -0.9980431 0.05479452 0.04305284 0.6868885 0.3405088 0.6418787 0.7123288 0.2641879 0.6497065 0.9001957 0.4285714 0.07827789 0.7123288 0.4305284 -0.553816 0.8806262 0.3776908 -0.2837573 0.9549902 0.2133072 -0.2035225 0.9902152 0.1389433 0.02935421 0.05088063 0.2876712 0.9569471 0.1722113 0.1056751 0.9804305 0.9745597 -0.2015656 -0.09784736 0.8767123 -0.4461839 -0.1741683 -0.8786693 -0.4422701 -0.1800391 0.3855186 0.07240704 0.9197652 0.7984344 0.592955 -0.109589 -0.4227006 0.03131115 0.9060665 -0.6027398 0.6849315 0.4090019 -0.4383562 0.8864971 0.1506849 -0.01369863 0.2720157 -0.962818 0.3091977 0.7749511 0.5499021 0.3033268 0.6203523 -0.7240704 0.2896282 0.9491194 0.1193738 0.1585127 0.01956947 -0.9863014</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-normal-array" count="66" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-color">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-color-array" count="264">18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 -0.2998047 2.298828 -0.3999023 1 -0.2998047 2.298828 -0.3999023 1 -0.2998047 2.298828 -0.3999023 1 -0.2998047 2.298828 -0.3999023 1 0.2998047 2.298828 -0.3999023 1 0.2998047 2.298828 -0.3999023 1 0.2998047 2.298828 -0.3999023 1 0.2998047 2.298828 -0.3999023 1 18.51563 72.125 29 0 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 0 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 0 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 0 18.51563 72.125 29 0 18.51563 72.125 29 0 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05 18.51563 72.125 29 9.995699E-05</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-color-array" count="66" stride="4">
+              <param name="R" type="float" />
+              <param name="G" type="float" />
+              <param name="B" type="float" />
+              <param name="A" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-texcoord">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-texcoord-array" count="132">0.9223633 0.5461426 0.9526367 0.5471191 0.9399414 0.5427246 0.8398438 0.0009765625 0.8432617 0.3969727 0.6870117 0.1552734 0.9946289 0.1552734 0.8398438 0.0009765625 0.8432617 0.3969727 0.6870117 0.1552734 0.9946289 0.1552734 1.94043 0.4267578 1.915039 0.4267578 1.915039 0.4726563 1.93457 0.4638672 1.915039 0.4873047 1.930664 0.4824219 1.915039 0.5019531 1.927734 0.5039063 1.915039 0.5270996 1.933594 0.5178223 1.938477 0.5314941 1.928711 0.5380859 1.945313 0.5510254 1.915039 0.4731445 1.915039 0.4272461 1.891602 0.4267578 1.894531 0.4638672 1.915039 0.4873047 1.898438 0.4824219 1.915039 0.5019531 1.901367 0.5039063 1.915039 0.5273438 1.895508 0.5202637 1.899414 0.5393066 1.883789 0.5512695 0.8735352 0.421875 0.8916016 0.421875 0.8920898 0.46875 0.9140625 0.4726563 0.9121094 0.421875 0.8969727 0.4916992 0.9228516 0.421875 0.8989258 0.5336914 0.9301758 0.4726563 0.9311523 0.421875 0.949707 0.421875 0.9648438 0.421875 0.9458008 0.472168 0.9438477 0.4960938 0.9462891 0.5351563 0.9223633 0.5297852 0.9223633 0.5461426 0.949707 0.5410156 0.9526367 0.5471191 0.894043 0.5422363 0.9399414 0.5427246 0.9570313 0.5556641 0.9052734 0.5473633 0.8842773 0.5581055 0.9326172 0.5490723 0.9379883 0.5581055 0.9106445 0.5498047 0.9091797 0.5595703 0.9223633 0.5546875 0.9223633 0.5603027</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-texcoord-array" count="66" stride="2">
+              <param name="S" type="float" />
+              <param name="T" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="L_leaf_a45__mPltBushCamelliaLeaf-vertex">
+          <input semantic="POSITION" source="#L_leaf_a45__mPltBushCamelliaLeaf-position" />
+        </vertices>
+        <triangles material="mPltBushCamelliaLeaf" count="62">
+          <input semantic="VERTEX" source="#L_leaf_a45__mPltBushCamelliaLeaf-vertex" offset="0" />
+          <input semantic="NORMAL" source="#L_leaf_a45__mPltBushCamelliaLeaf-normal" offset="1" />
+          <input semantic="COLOR" source="#L_leaf_a45__mPltBushCamelliaLeaf-color" offset="2" set="0" />
+          <input semantic="TEXCOORD" source="#L_leaf_a45__mPltBushCamelliaLeaf-texcoord" offset="3" set="0" />
+          <p>0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6 4 4 4 4 3 3 3 3 7 7 7 7 8 8 8 8 9 9 9 9 10 10 10 10 8 8 8 8 7 7 7 7 11 11 11 11 12 12 12 12 13 13 13 13 14 14 14 14 11 11 11 11 13 13 13 13 14 14 14 14 13 13 13 13 15 15 15 15 16 16 16 16 14 14 14 14 15 15 15 15 16 16 16 16 15 15 15 15 17 17 17 17 18 18 18 18 16 16 16 16 17 17 17 17 19 19 19 19 18 18 18 18 17 17 17 17 19 19 19 19 20 20 20 20 18 18 18 18 19 19 19 19 21 21 21 21 20 20 20 20 22 22 22 22 21 21 21 21 19 19 19 19 23 23 23 23 21 21 21 21 22 22 22 22 24 24 24 24 25 25 25 25 26 26 26 26 27 27 27 27 24 24 24 24 26 26 26 26 28 28 28 28 24 24 24 24 27 27 27 27 29 29 29 29 28 28 28 28 27 27 27 27 30 30 30 30 28 28 28 28 29 29 29 29 31 31 31 31 30 30 30 30 29 29 29 29 31 31 31 31 32 32 32 32 30 30 30 30 31 31 31 31 33 33 33 33 32 32 32 32 32 32 32 32 33 33 33 33 34 34 34 34 34 34 34 34 33 33 33 33 35 35 35 35 36 36 36 36 37 37 37 37 38 38 38 38 39 39 39 39 38 38 38 38 37 37 37 37 39 39 39 39 37 37 37 37 40 40 40 40 39 39 39 39 41 41 41 41 38 38 38 38 39 39 39 39 40 40 40 40 42 42 42 42 39 39 39 39 43 43 43 43 41 41 41 41 42 42 42 42 44 44 44 44 39 39 39 39 44 44 44 44 42 42 42 42 45 45 45 45 44 44 44 44 45 45 45 45 46 46 46 46 47 47 47 47 48 48 48 48 46 46 46 46 48 48 48 48 44 44 44 44 46 46 46 46 49 49 49 49 44 44 44 44 48 48 48 48 50 50 50 50 44 44 44 44 49 49 49 49 44 44 44 44 51 51 51 51 39 39 39 39 51 51 51 51 44 44 44 44 50 50 50 50 51 51 51 51 43 43 43 43 39 39 39 39 51 51 51 51 50 50 50 50 52 52 52 52 52 52 52 52 43 43 43 43 51 51 51 51 52 52 52 52 50 50 50 50 53 53 53 53 52 52 52 52 53 53 53 53 54 54 54 54 52 52 52 52 55 55 55 55 43 43 43 43 56 56 56 56 54 54 54 54 57 57 57 57 52 52 52 52 58 58 58 58 55 55 55 55 59 59 59 59 55 55 55 55 58 58 58 58 60 60 60 60 56 56 56 56 57 57 57 57 61 61 61 61 60 60 60 60 57 57 57 57 59 59 59 59 58 58 58 58 62 62 62 62 62 62 62 62 58 58 58 58 52 52 52 52 62 62 62 62 63 63 63 63 59 59 59 59 64 64 64 64 60 60 60 60 61 61 61 61 60 60 60 60 64 64 64 64 56 56 56 56 64 64 64 64 52 52 52 52 56 56 56 56 52 52 52 52 64 64 64 64 62 62 62 62 62 62 62 62 64 64 64 64 63 63 63 63 65 65 65 65 64 64 64 64 61 61 61 61 63 63 63 63 64 64 64 64 65 65 65 65 </p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_controllers>
+    <controller id="Armature_L_leaf_a45__mPltBushCamelliaLeaf-mesh">
+      <skin source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh">
+        <bind_shape_matrix>1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</bind_shape_matrix>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-joint">
+          <Name_array id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-joint-array" count="1">Root</Name_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-joint-array" count="1" stride="1">
+              <param name="JOINT" type="name" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-inv_bind_matrix">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-inv_bind_matrix-array" count="16">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-inv_bind_matrix-array" count="1" stride="16">
+              <param name="TRANSFORM" type="float4x4" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-weight">
+          <float_array id="L_leaf_a45__mPltBushCamelliaLeaf-mesh-weight-array" count="1">1</float_array>
+          <technique_common>
+            <accessor source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-weight-array" count="1" stride="1">
+              <param name="WEIGHT" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <joints>
+          <input semantic="JOINT" source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-joint" />
+          <input semantic="INV_BIND_MATRIX" source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-inv_bind_matrix" />
+        </joints>
+        <vertex_weights count="66">
+          <input semantic="JOINT" source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-joint" offset="0" />
+          <input semantic="WEIGHT" source="#L_leaf_a45__mPltBushCamelliaLeaf-mesh-weight" offset="1" />
+          <vcount>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 </vcount>
+          <v>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </v>
+        </vertex_weights>
+      </skin>
+    </controller>
+  </library_controllers>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Armature" name="Armature" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <node id="Armature_Root" name="Root" sid="Root" type="JOINT">
+          <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        </node>
+      </node>
+      <node id="L_leaf_a45__mPltBushCamelliaLeaf" name="L_leaf_a45__mPltBushCamelliaLeaf" type="NODE">
+        <instance_controller url="#Armature_L_leaf_a45__mPltBushCamelliaLeaf-mesh">
+          <skeleton>#Armature_Root</skeleton>
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="mPltBushCamelliaLeaf" target="#mPltBushCamelliaLeaf" />
+              <bind_vertex_input semantic="CHANNEL0" input_semantic="TEXCOORD" input_set="0" />
+              <bind_vertex_input semantic="CHANNEL1" input_semantic="TEXCOORD" input_set="1" />
+              <bind_vertex_input semantic="CHANNEL2" input_semantic="TEXCOORD" input_set="2" />
+            </technique_common>
+          </bind_material>
+        </instance_controller>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene" />
+  </scene>
+</COLLADA>

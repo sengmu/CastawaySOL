@@ -1,0 +1,34 @@
+# Node 依赖与打包
+node_modules/
+dist/
+.temp/
+*.local
+
+# 编辑器与系统文件
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 测试与审计临时图片
+*.png
+*.cjs
+
+# Android 构建产物与缓存
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/local.properties
+*.apk
+*.aab
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

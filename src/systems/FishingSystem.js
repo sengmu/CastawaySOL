@@ -1,0 +1,131 @@
+import * as THREE from 'three';
+import { soundEngine } from '../core/AudioSystem.js';
+import { haptics } from '../core/HapticFeedback.js';
+
+export class FishingSystem {
+  constructor(scene, player, ui, survival) {
+    this.scene = scene;
+    this.player = player;
+    this.ui = ui;
+    this.survival = survival;
+
+    this.state = 'idle'; // idle | waiting | bite | hooked
+    this.biteTimer = 0;
+    this.bobber = null;
+
+    this.createBobber();
+  }
+
+  createBobber() {
+    const group = new THREE.Group();
+    // 经典红白双色钓鱼浮标
+    const topGeo = new THREE.SphereGeometry(0.14, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const topMat = new THREE.MeshStandardMaterial({ color: 0xee3322, roughness: 0.2 });
+    const topMesh = new THREE.Mesh(topGeo, topMat);
+
+    const botGeo = new THREE.SphereGeometry(0.14, 8, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+    const botMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+    const botMesh = new THREE.Mesh(botGeo, botMat);
+
+    group.add(topMesh);
+    group.add(botMesh);
+    group.visible = false;
+
+    this.bobber = group;
+    this.scene.add(this.bobber);
+  }
+
+  // 检测玩家是否处于近海或栈桥码头可钓鱼区域
+  isNearWater(playerPos) {
+    // 码头区域 (-31 < x < -25, z > 30)
+    const isAtPier = playerPos.x > -33 && playerPos.x < -23 && playerPos.z > 28;
+    // 环岛沙滩近海边缘 (|x| > 38 || |z| > 32)
+    const isAtBeachEdge = Math.abs(playerPos.x) > 37 || Math.abs(playerPos.z) > 31;
+    return isAtPier || isAtBeachEdge;
+  }
+
+  // 抛竿或收竿动作响应
+  handleAction() {
+    if (this.state === 'idle') {
+      if (!this.ui.inventory.fishingrod || this.ui.inventory.fishingrod <= 0) {
+        this.ui.showBubbleNotice('背包里没有鱼竿！先去工作台用【木棍x2 + 藤蔓x1】制作一根吧！');
+        return false;
+      }
+
+      // 开始抛竿
+      this.state = 'waiting';
+      const lookDir = new THREE.Vector3(
+        Math.sin(this.player.rotation),
+        0,
+        Math.cos(this.player.rotation)
+      ).normalize();
+
+      // 浮标落在前方 3.5 米水面上
+      this.bobber.position.copy(this.player.position).addScaledVector(lookDir, 3.5);
+      this.bobber.position.y = -0.32;
+      this.bobber.visible = true;
+
+      haptics.medium();
+      soundEngine.playSplash();
+      this.ui.showBubbleNotice('🎣 抛竿入水！静心等待鱼儿咬钩……');
+
+      // 2.5 ~ 4.5 秒后咬钩 (出战海月玄猫雷蒙德时享受 35% 提速加成)
+      let biteMult = 1.0;
+      if (typeof window !== 'undefined' && window.__game && window.__game.petCompanion) {
+        biteMult = window.__game.petCompanion.getFishingBiteTimeMultiplier();
+      }
+      this.biteTimer = (2.2 + Math.random() * 2.3) * biteMult;
+      return true;
+    } else if (this.state === 'bite') {
+      // 成功起竿！
+      this.state = 'idle';
+      this.bobber.visible = false;
+      haptics.success();
+      soundEngine.playSplash();
+
+      // 80% 几率钓到大鱼，20% 几率钓到漂流瓶
+      if (Math.random() > 0.2) {
+        this.ui.addInventory('fish', 1);
+        this.ui.showBubbleNotice('🎉 哇！成功钓到了一条鲜活肥美的大鱼 🐟！');
+      } else {
+        this.ui.addInventory('broken_radio', 1);
+        this.ui.showBubbleNotice('🍾 钓出了一个装有零件的漂流罐，获得了【坏收音机】！');
+      }
+      return true;
+    } else if (this.state === 'waiting') {
+      // 太早起竿，鱼惊跑了
+      this.state = 'idle';
+      this.bobber.visible = false;
+      haptics.light();
+      this.ui.showBubbleNotice('收竿太早了，鱼儿被吓跑了……');
+      return true;
+    }
+    return false;
+  }
+
+  update(delta) {
+    if (this.state === 'waiting') {
+      // 浮标在水面随微波上下浮动
+      this.bobber.position.y = -0.32 + Math.sin(Date.now() * 0.006) * 0.03;
+      this.biteTimer -= delta;
+      if (this.biteTimer <= 0) {
+        this.state = 'bite';
+        haptics.warning();
+        soundEngine.playItemDrop();
+        this.ui.showBubbleNotice('❗ 鱼咬钩了！快点击【🎣收竿】！');
+        // 咬钩后给 1.8 秒反应窗口
+        this.escapeTimer = 1.8;
+      }
+    } else if (this.state === 'bite') {
+      // 剧烈下沉晃动
+      this.bobber.position.y = -0.42 + Math.sin(Date.now() * 0.03) * 0.06;
+      this.escapeTimer -= delta;
+      if (this.escapeTimer <= 0) {
+        this.state = 'idle';
+        this.bobber.visible = false;
+        haptics.light();
+        this.ui.showBubbleNotice('哎呀！收竿慢了一步，大鱼脱钩游走了！');
+      }
+    }
+  }
+}
