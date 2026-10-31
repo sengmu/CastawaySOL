@@ -7,6 +7,7 @@ import { ShopManager } from './ShopManager.js';
 import { haptics } from '../core/HapticFeedback.js';
 import { createElement, Backpack, Hammer, BookOpen, Maximize, Minimize, MoreHorizontal, Wallet, Zap, ArrowUp, Droplets, MessageCircle, Gem, Mountain, Sailboat, PawPrint, Heart, Fish, Flame, Bed, Trees, Drumstick, Menu } from 'lucide';
 import { VISUAL_QUALITY_KEY } from '../core/VisualQuality.js';
+import { iconHTML } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
 
 function hudIcon(definition) {
   const svg = createElement(definition);
@@ -876,6 +877,12 @@ export class UIManager {
         .hud-nav-secondary.hud-drawer, .hud-nav-secondary.hud-drawer.open { top: calc(var(--hud-nav-b) + 8px); padding-top: 8px; border-radius: 18px 0 0 18px; }
       }
     `;
+    // 黏土图标集成（2026-10-31）：图片图标通用样式（尺寸由 iconHTML 内联指定，点击区仍由按钮本身保证 ≥44px）
+    style.textContent += `
+      .clay-icon { display: inline-block; vertical-align: middle; object-fit: contain; flex-shrink: 0; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.28)); }
+      .aux-btn .clay-icon { margin-bottom: 1px; }
+      .hud-drawer .clay-nav-icon { margin-right: 2px; }
+    `;
     document.head.appendChild(style);
 
     // 1. 顶部 CastawaySOL 主仪表盘
@@ -920,7 +927,7 @@ export class UIManager {
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
       <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900; border:1px solid rgba(255,255,255,0.7); box-shadow:0 0 16px rgba(20,241,149,0.5);" aria-label="矿机中枢">
-        ⛏️ <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:13px; font-weight:900;">$SOL</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
+        ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:13px; font-weight:900;">$SOL</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
       </button>
       <button class="hud-nav-btn" id="btn-open-inv" aria-label="背包">🎒 <span class="hud-nav-desktop-label">背包</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
@@ -954,7 +961,7 @@ export class UIManager {
     actionZone.innerHTML = `
       <div class="aux-action-row">
         <div class="context-tag" id="context-tag" role="status" hidden></div>
-        <div class="aux-btn ctx-hidden" id="btn-quick-attack" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.92), rgba(214, 48, 49, 0.92)); border: 1.5px solid rgba(255, 150, 150, 0.7); box-shadow: 0 4px 16px rgba(231, 76, 60, 0.5);">⚔️<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击 [F]</span></div>
+        <div class="aux-btn ctx-hidden" id="btn-quick-attack" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.92), rgba(214, 48, 49, 0.92)); border: 1.5px solid rgba(255, 150, 150, 0.7); box-shadow: 0 4px 16px rgba(231, 76, 60, 0.5);">${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击 [F]</span></div>
         <div class="aux-btn" id="btn-quick-run">⚡<span class="aux-btn-label">疾跑</span></div>
         <div class="aux-btn" id="btn-quick-jump">🦘<span class="aux-btn-label">跳跃</span></div>
       </div>
@@ -1010,6 +1017,11 @@ export class UIManager {
     this._initOverlapGuards(topNav, dashboard);
 
     const navIcons = { 'btn-fullscreen': Maximize, 'btn-open-inv': Backpack, 'btn-open-merge': Hammer, 'btn-open-help': BookOpen, 'btn-hud-more': Menu, 'btn-solana': Wallet, 'btn-quick-run': Zap, 'btn-quick-jump': ArrowUp };
+    // 黏土图标集成：顶栏背包/菜单、抽屉合成台/营地/商店/手册、疾跑/跳跃改用黏土图标（其余仍用 lucide）
+    const CLAY_NAV = { 'btn-open-inv': 'hud/backpack', 'btn-hud-more': 'hud/menu', 'btn-open-merge': 'menu/crafting_table', 'btn-camp-manage': 'menu/camp', 'btn-open-shop': 'menu/shop', 'btn-open-help': 'menu/manual', 'btn-quick-run': 'hud/sprint', 'btn-quick-jump': 'hud/jump' };
+    const CLAY_NAV_SIZE = { 'btn-open-inv': 30, 'btn-hud-more': 30, 'btn-quick-run': 26, 'btn-quick-jump': 26 };
+    navIcons['btn-camp-manage'] = null;
+    navIcons['btn-open-shop'] = null;
     Object.entries(navIcons).forEach(([id, definition]) => {
       const button = document.getElementById(id);
       if (!button) return; // 按钮可能已被移除（如 UI 第一步删掉的右下喝水键）
@@ -1017,10 +1029,10 @@ export class UIManager {
       if (text?.nodeType === Node.TEXT_NODE) {
         const label = text.textContent.replace(/^[^\p{L}\p{N}]+/u, '');
         text.remove();
-        button.insertAdjacentHTML('afterbegin', hudIcon(definition) + label);
+        button.insertAdjacentHTML('afterbegin', (CLAY_NAV[id] ? iconHTML(CLAY_NAV[id], CLAY_NAV_SIZE[id] || 24, { eager: true, className: 'clay-nav-icon' }) : hudIcon(definition)) + label);
       }
     });
-    document.getElementById('main-action-icon').innerHTML = hudIcon(MessageCircle);
+    document.getElementById('main-action-icon').innerHTML = iconHTML('hud/interact', 30, { eager: true }); // 黏土图标集成
     const gaugeIcons = [[Heart, '生命'], [Drumstick, '饱食'], [Droplets, '水分'], [Zap, '疲劳']];
     dashboard.querySelectorAll('.gauge-label-row span:first-child').forEach((label, index) => {
       label.innerHTML = hudIcon(gaugeIcons[index][0]) + `<span class="gauge-name">${gaugeIcons[index][1]}</span>`;
@@ -1565,7 +1577,10 @@ export class UIManager {
       pet_nest: PawPrint, sheep_pouch: Backpack, mining_rig: Zap,
       temple_enter: Mountain, temple_portal: Sailboat, temple_altar: Gem, temple_vault: Gem
     };
-    icon.innerHTML = hudIcon(contextIcons[type] || MessageCircle);
+    // 黏土图标集成：通用互动/村民用黏土「互动」图标，矿机/驮袋用对应黏土图标，其余情境仍用 lucide
+    const clayCtx = { mining_rig: 'hud/mining_rig', sheep_pouch: 'hud/backpack' };
+    const ctxDef = contextIcons[type];
+    icon.innerHTML = clayCtx[type] ? iconHTML(clayCtx[type], 30, { eager: true }) : (ctxDef && ctxDef !== MessageCircle ? hudIcon(ctxDef) : iconHTML('hud/interact', 30, { eager: true }));
   }
 
   updateObjective(text) {
@@ -4787,31 +4802,9 @@ export class UIManager {
     return names[id] || id;
   }
 
-  getItemIcon(id) {
-    const icons = {
-      apple: '🍎', coconut: '🥥', tree_branch: '🥢', tree_bark: '🍂',
-      tree_sap: '💧', ivy: '🌿', lumber: '🪵', wood_plank: '🪵', stone_chunk: '🪨',
-      nail: '🔩', canteen_clean_water: '🚰', fish: '🐟',
-      kindling: '🔥', torch: '🕯️', fishingrod: '🎣', baked_fish: '🍱',
-      baked_apple: '🥧', broken_radio: '📻', battery: '🔋', workradio: '📻',
-      escape_raft: '⛵',
-      spear: '🗡️', wooden_bow: '🏹', flint_arrow: '🏹',
-      fire_arrow: '🏹🔥', bone_armor: '🦺', herbal_paste: '🩹',
-      energy_drink: '🧃', bamboo_canteen: '🍶', stone_pickaxe: '⛏️', iron_ore: '⛏️', iron_ingot: '🧱',
-      beast_trap: '🪤', wooden_spikes: '🪵', crab_shield: '🛡️',
-      raw_meat: '🥩', cooked_meat: '🍖',
-      crab_meat: '🦀', cooked_crab: '🦀',
-      beast_hide: '🧶', crab_shell: '🛡️',
-      large_backpack: '🎒',
-      golden_coconut: '🥥', bird_egg: '🥚',
-      ancient_coin: '🪙', treasure_map_piece: '🗺️',
-      pearl: '🦪', tough_bark: '🍂',
-      sea_crab: '🦀', sardine: '🐟',
-      smoked_fish: '🍱',
-      sol_crystal: '💎',
-      sol_token: '🪙'
-    };
-    return icons[id] || '📦';
+  // 黏土图标集成（2026-10-31）：合并原 53 项 emoji 表与 CraftingSystem 34 项，统一走 IconRegistry；有黏土图返回 <img>，否则回退 emoji
+  getItemIcon(id, size) {
+    return iconHTML(id, size);
   }
 
   // 航行黑幕转场淡入

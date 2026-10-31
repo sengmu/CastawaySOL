@@ -2,6 +2,7 @@
 // 包含：低多边形沙滩巨蟹与丛林野猪程序化模型、巡逻与警戒冲撞状态机、扇形长矛打击判定、伤害飘字与战利品掉落
 import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
+import { iconHTML } from '../ui/IconRegistry.js'; // 黏土图标集成（2026-10-31）
 import { distanceXZ, ISLAND_LAYOUT } from '../core/IslandLayout.js';
 
 // 伤害飘字画布生成工具
@@ -535,11 +536,11 @@ export class WildlifeCombatSystem {
       const atkBtn = document.getElementById('btn-quick-attack');
       if (atkBtn) {
         if (this.combatMode === 'ranged') {
-          atkBtn.innerHTML = `🏹<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${arrowCount})</span>`;
+          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${arrowCount})</span>`;
           atkBtn.style.background = 'linear-gradient(135deg, rgba(230, 126, 34, 0.95), rgba(211, 84, 0, 0.95))';
           atkBtn.style.borderColor = 'rgba(243, 156, 18, 0.85)';
         } else {
-          atkBtn.innerHTML = `⚔️<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击 [F]</span>`;
+          atkBtn.innerHTML = `${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击 [F]</span>`;
           atkBtn.style.background = 'linear-gradient(135deg, rgba(231, 76, 60, 0.92), rgba(214, 48, 49, 0.92))';
           atkBtn.style.borderColor = 'rgba(255, 150, 150, 0.7)';
         }
@@ -580,7 +581,7 @@ export class WildlifeCombatSystem {
       if (typeof document !== 'undefined') {
         const atkBtn = document.getElementById('btn-quick-attack');
         if (atkBtn && this.combatMode === 'ranged') {
-          atkBtn.innerHTML = `🏹<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${inv['flint_arrow']})</span>`;
+          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${inv['flint_arrow']})</span>`;
         }
       }
     }

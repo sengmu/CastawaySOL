@@ -529,3 +529,35 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
 **未验证**：Seeker 真机；真实 `beforeinstallprompt` 与 Capacitor 原生环境判断；拖动摇杆时与对话框交互；竖屏（P3 未做）。未重新打包 Android。
 
 **回滚**：改前备份在 `E:\CastawaySOL\_backup_overlap_20261031`（UIManager.js、index.html、HANDOFF.md）。注意：这些改动已被包含进用户提交 `1d60708` 与 `13e0d70`（摇杆层/主按钮补丁，同时含新摇杆、MWA 等用户改动），不要整文件还原或 revert 整个提交；按「UI 重叠优化」注释删除对应 CSS 层、`_initOverlapGuards` / `_initPwaInstall`、遮罩与任务条点击绑定、$SOL 文本写法，index.html 恢复备份中的 PWA 按钮代码即可。
+## 黏土图标集成（2026-10-31）
+
+**素材**：`public/icons/{items,tools,menu,hud}/*.png`，共 37 个 128x128 透明 PNG（黏土质感，由 Grok Bot 生图）。构建时 Vite 会原样拷到 `dist/icons/`。
+
+**代码**
+- 新增 `src/ui/IconRegistry.js`：`iconHTML(id, size, opts)`，id 可以是游戏物品 id（`apple`、`stone_axe`）或图标路径（`hud/attack`）。有图时返回 `<img class="clay-icon" loading="lazy">`（HUD 用 `eager`），尺寸默认 `1.25em`（跟随所在文字大小）；没有图或图片加载失败（onerror）时回退为 emoji。
+- 合并了 `UIManager.getItemIcon`（53 项）与 `CraftingSystem.itemDefs`（34 项）两张 emoji 表，得到 64 个物品 id。冲突处理：木棍、树脂、火把用新图；工作收音机 `workradio` 没有新图，沿用 📡（与故障无线电 📻 区分）。补齐了原先缺失的 11 个 id（big_rock、feather、copper_ore、stone_axe、iron_pickaxe、stone_hammer、bow_arrow、sos_sign、clam、baked_clam、baked_meat）。
+- 物品 id → 图标映射（29 个）：fish→fish_raw，baked_fish→fish_grilled，raw_meat→meat_raw，cooked_meat/baked_meat→meat_cooked，canteen_clean_water/bamboo_canteen→water_bamboo，tree_branch→stick，tree_bark→bark，tree_sap→resin，ivy→vine，stone_chunk→flint，lumber→log，wood_plank→plank，nail→nails，kindling→tinder，fishingrod→fishing_rod，spear→flint_spear，wooden_bow/bow_arrow→hunting_bow；其余同名。
+- `UIManager.js`：`getItemIcon(id, size)` 改为委托 `iconHTML`，背包、快捷栏、合成台、储物箱等 17 处调用自动生效。顶栏 $SOL 改用 `hud/mining_rig`。背包、菜单、疾跑、跳跃、抽屉里的合成台/营地/商店/手册通过 `CLAY_NAV` 映射改用黏土图标（全屏、钱包仍用 lucide）。攻击键改用 `hud/attack`。主按钮默认图标和「村民」情境改用 `hud/interact`，矿机和驮袋情境分别用 `hud/mining_rig` 和 `hud/backpack`，其余情境仍用 lucide。新增 `.clay-icon` 样式。
+- `WildlifeCombatSystem.js`：攻击键在近战和远程模式下切换时，分别改用 `hud/attack` 和 `tools/hunting_bow`。
+- `InteractionFeedbackSystem.js`：待机时主按钮图标从 💬 改为 `hud/interact`。靠近具体目标时仍显示该目标自己的 emoji（如 🎣、🏕️）。
+- `CraftingSystem.js`、`index.html` 未改；`CraftingSystem.getItemDef().icon` 仍是 emoji，目前只用于文字。
+
+**验证**（无头 Edge，914x411，DPR 2.625，触屏模拟，vite preview）：HUD、菜单抽屉、背包、合成面板中可见的黏土图标全部加载成功（naturalWidth 128），共 23 个不同的图标请求，没有 404，也没有运行时报错。按钮尺寸：顶栏 64x48 / 48x48，攻击、疾跑、跳跃 48x48，抽屉项 241x44，快捷栏格 62x59，点击区都 ≥44px。攻击键在远程/近战模式下正确切换弓和剑的图标。`npm run build` 通过。
+
+**未做 / 注意**：35 个物品 id 还没有黏土图，回退为 emoji（见 IconRegistry 的 ITEM_EMOJI）。Android 未同步（未执行 `cap sync`，未重新打包）。
+
+**回滚**：备份在 `E:\CastawaySOL\_backup_icons_20261031`（备份时间晚于用户提交 30e1ac2）。如果之后用户又改过这些文件，不要整文件覆盖，按「黏土图标集成」注释逐段撤销：`getItemIcon` 恢复备份中的 emoji 表；删除 `CLAY_NAV`、`clayCtx` 两段和 `.clay-icon` 样式层；把 $SOL/攻击处的 `${iconHTML(...)}` 改回 ⛏️/⚔️；WildlifeCombatSystem 改回 🏹/⚔️，InteractionFeedbackSystem 改回 💬；删除 `IconRegistry.js` 和它的 import；最后视需要删除 `public/icons/`。
+## 黏土图标第二批（2026-10-31）
+
+**素材**：在 `public/icons/items/` 新增 35 个 128x128 透明 PNG，与第一批没有重名。`public/icons` 现在共 72 个图标。
+
+**映射**（`src/ui/IconRegistry.js` 的 `AVAILABLE` 和 `ITEM_IMAGE` 两处，均有「黏土图标第二批」注释）：baked_apple→baked_apple，broken_radio→broken_radio，battery→battery，workradio→working_radio，escape_raft→raft，flint_arrow→flint_arrow，fire_arrow→rocket（火箭），bone_armor→bone_armor，herbal_paste→herb_salve，energy_drink→energy_drink，iron_ingot→iron_ingot，beast_trap→trap，wooden_spikes→thorn，crab_shield→crab_shield，crab_meat→crab_meat_raw，cooked_crab→crab_meat_cooked，beast_hide→hide，crab_shell→crab_shell，large_backpack→big_backpack，golden_coconut→golden_coconut，bird_egg→bird_egg，ancient_coin→ancient_coin，treasure_map_piece→map_fragment，pearl→pearl，tough_bark→tough_bark，sea_crab→crab，sardine→sardine，smoked_fish→smoked_fish，big_rock→big_rock，feather→feather，copper_ore→copper_ore，iron_pickaxe→steel_pickaxe，sos_sign→sos_sign，clam→clam，baked_clam→grilled_clam。现在合并表里的 64 个物品 id 全部有黏土图，emoji 只作为图片加载失败时的回退。
+
+**主按钮情境图标**（`src/systems/InteractionFeedbackSystem.js`）：新增 `CONTEXT_EMOJI_ICON` 对照表和 `contextIconHTML()`，`updateActionHUD` 改为用它渲染目标图标（查表时会去掉 emoji 后面的 FE0F 变体符）。已换成黏土图的有 16 个：🎣 钓竿、🍎 苹果、🥥 椰子、🪵 原木、🪓 石斧、⛏️ 石镐、🐚 海蛤、💬 互动、🔥 引火物、⛵ 木筏、🚰/💧 竹水筒、💎 SOL 晶体、📻 工作收音机、🏕️/⛺ 营地。没有合适的图、保持 emoji 的有 8 个：🌀 传送阵、🏛️ 祭坛、👑 神藏、🎁 告示/礼物、🧰 黑匣子、🐒 小猴、🌸 樱花、📦 储物箱。
+
+**验证**（无头 Edge，914x411，DPR 2.625，触屏模拟，vite preview）：对 64 个物品 id 调用 `getItemIcon`，64 个全部返回图片。背包面板 74 个可见图片、合成面板 73 个、抽屉 13 个，全部加载成功（naturalWidth 128），没有残留 emoji。72 个图标请求都是 200，没有 404，也没有运行时报错。逐个测试 24 种情境 emoji：16 个换成黏土图，8 个保持 emoji。按钮尺寸：主按钮 143x55，顶栏 65x48 / 48x48，疾跑、跳跃 48x48，抽屉项最小 44px 高。`npm run build` 通过。没有重新打包 Android，也没有提交。
+
+**回滚**：备份在 `E:\CastawaySOL\_backup_icons2_20261031`（IconRegistry.js、InteractionFeedbackSystem.js、UIManager.js、HANDOFF.md，备份于本批修改之前；UIManager.js 本批未改）。如果之后有并行修改，不要整文件覆盖，按以下步骤撤销：
+1. 删除 IconRegistry 中带「黏土图标第二批」注释的两段。
+2. 在 InteractionFeedbackSystem 中删除 `CONTEXT_EMOJI_ICON` 和 `contextIconHTML`，把 `contextIconHTML(target.icon)` 改回 `target.icon`。
+3. 按上表删除 `public/icons/items/` 里新增的 35 个文件。

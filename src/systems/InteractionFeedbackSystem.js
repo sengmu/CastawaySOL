@@ -4,6 +4,20 @@
 
 import * as THREE from 'three';
 import { distanceXZ, ISLAND_LAYOUT } from '../core/IslandLayout.js';
+import { iconHTML } from '../ui/IconRegistry.js'; // 黏土图标集成（2026-10-31）
+
+// 黏土图标第二批（2026-10-31）：主按钮情境 emoji → 黏土图标对照；对不上的保持 emoji
+const CONTEXT_EMOJI_ICON = {
+  '🎣': 'tools/fishing_rod', '🍎': 'items/apple', '🥥': 'items/coconut', '🪵': 'items/log', '🪓': 'tools/stone_axe',
+  '⛏': 'tools/stone_pickaxe', '🐚': 'items/clam', '💬': 'hud/interact', '🔥': 'items/tinder', '⛵': 'items/raft',
+  '🚰': 'items/water_bamboo', '💧': 'items/water_bamboo', '💎': 'items/sol_crystal', '📻': 'items/working_radio',
+  '🏕': 'menu/camp', '⛺': 'menu/camp'
+};
+function contextIconHTML(emoji) {
+  const key = String(emoji || '').replace(/\uFE0F/g, '');
+  const path = CONTEXT_EMOJI_ICON[key];
+  return path ? iconHTML(path, 30, { eager: true }) : emoji;
+}
 
 export class InteractionFeedbackSystem {
   constructor(game) {
@@ -454,7 +468,7 @@ export class InteractionFeedbackSystem {
         this.lastStateKey = stateKey;
 
         // 注入高亮动画与情境信息
-        if (this.actionIcon) this.actionIcon.innerHTML = target.icon;
+        if (this.actionIcon) this.actionIcon.innerHTML = contextIconHTML(target.icon); // 黏土图标第二批
         if (this.actionText) this.actionText.textContent = target.text;
 
         // 按钮高亮脉冲并赋予醒目质感
@@ -469,7 +483,7 @@ export class InteractionFeedbackSystem {
         this.lastStateKey = 'idle';
 
         // 恢复柔和待机
-        if (this.actionIcon) this.actionIcon.innerHTML = '💬';
+        if (this.actionIcon) this.actionIcon.innerHTML = iconHTML('hud/interact', 30, { eager: true });
         if (this.actionText) this.actionText.textContent = '探索';
 
         this.actionBtn.style.opacity = '0.72';
