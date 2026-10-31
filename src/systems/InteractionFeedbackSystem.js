@@ -112,19 +112,66 @@ export class InteractionFeedbackSystem {
     const game = this.game;
     const inv = (game.ui ? game.ui.inventory : {}) || {};
 
-    // 1. 战利品 / 掉落包裹
+    // === 0. 神殿独立室内地宫地图专属交互优先级 ===
+    if (game.currentIslandId === 'ancient_temple') {
+      const distToPortal = distanceXZ(playerPos, [0, 0, 15]);
+      const distToAltar = distanceXZ(playerPos, [0, 0, 2]);
+      const distToVault = distanceXZ(playerPos, [0, 0, -22]);
+
+      if (distToPortal < 3.2) {
+        return {
+          id: 'temple_portal',
+          name: '符文传送光阵',
+          icon: '🌀',
+          text: '返回海岛主地图',
+          pos: new THREE.Vector3(0, 0.4, 15),
+          scale: 1.8,
+          color: 0x0abde3
+        };
+      } else if (distToAltar < 3.8) {
+        const stageName = game.templePuzzle ? (game.templePuzzle.stage === 0 ? '第一重·棱镜对焦' : game.templePuzzle.stage === 1 ? '第二重·九宫图腾' : '已破阵') : '密室机关';
+        return {
+          id: 'temple_altar',
+          name: '星辰日冕祭坛',
+          icon: '🏛️',
+          text: `参悟日冕机关 (${stageName})`,
+          pos: new THREE.Vector3(0, 0.4, 2),
+          scale: 2.0,
+          color: 0xffd32a
+        };
+      } else if (distToVault < 3.8) {
+        const isDoorOpen = game.ancientTempleScene && game.ancientTempleScene.isInnerGateOpen;
+        const isClaimed = game.templePuzzle && game.templePuzzle.vaultClaimed;
+        return {
+          id: 'temple_vault',
+          name: '波塞冬黄金神藏',
+          icon: '👑',
+          text: isDoorOpen ? (isClaimed ? '神藏已领取' : '开启黄金神藏！') : '玄铁大门紧闭',
+          pos: new THREE.Vector3(0, 0.8, -22),
+          scale: 2.2,
+          color: isDoorOpen ? 0xffd32a : 0x747d8c
+        };
+      }
+      return null;
+    }
+
+    // === 主岛与其它岛屿交互 ===
+    // 1. 战利品 / 掉落包裹 (严格防御检查)
     if (game.wildlifeCombat) {
-      for (const loot of game.wildlifeCombat.lootBags) {
-        if (!loot.picked && loot.pos.distanceTo(playerPos) < 2.5) {
-          return {
-            id: 'loot',
-            name: loot.name || '拾取战利品',
-            icon: '🎁',
-            text: '拾取战利品',
-            pos: loot.pos,
-            scale: 0.8,
-            color: 0xffd32a
-          };
+      const lootList = game.wildlifeCombat.lootDrops || game.wildlifeCombat.lootBags || [];
+      if (Array.isArray(lootList)) {
+        for (const loot of lootList) {
+          if (!loot.picked && loot.pos && loot.pos.distanceTo(playerPos) < 2.5) {
+            return {
+              id: 'loot',
+              name: loot.name || '拾取战利品',
+              icon: '🎁',
+              text: '拾取战利品',
+              pos: loot.pos,
+              scale: 0.8,
+              color: 0xffd32a
+            };
+          }
         }
       }
     }

@@ -43,6 +43,7 @@ export class AncientTempleScene {
     this.floorMesh.position.set(0, -0.6, 0);
     this.floorMesh.receiveShadow = true;
     this.floorMesh.userData.movementSurface = true;
+    this.floorMesh.userData.walkSurface = true;
     this.group.add(this.floorMesh);
 
     // 中央青金导光石阶长廊

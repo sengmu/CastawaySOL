@@ -496,7 +496,7 @@ export class PlayerController {
       }
       if (!isHierarchyVisible) return;
 
-      if (object.userData.walkSurface) surfaces.push(object);
+      if (object.userData.walkSurface || object.userData.movementSurface) surfaces.push(object);
       if (object.userData.movementBox) {
         object.updateWorldMatrix(true, true);
         const bounds = new THREE.Box3();
