@@ -173,7 +173,7 @@ export class BuildSystem {
     if (!this.canAfford(itemConf)) {
       if (this.game && this.game.ui) {
         const costStr = Object.entries(itemConf.cost).map(([k, v]) => `${k} x${v}`).join(', ');
-        this.game.ui.showToast(`❌ 材料不足！建造【${itemConf.name}】需要：${costStr}`);
+        this.game.ui.showToast(`❌ 材料不足！建造【${itemConf.name}】需要：${costStr}`, 'medium');
       }
       return;
     }
@@ -210,7 +210,7 @@ export class BuildSystem {
 
     soundEngine.playPlaceFurniture();
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`🔨 成功建造了【${itemConf.name}】！`);
+      this.game.ui.showToast(`🔨 成功建造了【${itemConf.name}】！`, 'medium');
     }
     this.saveData();
   }

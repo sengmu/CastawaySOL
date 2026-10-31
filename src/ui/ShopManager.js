@@ -553,7 +553,7 @@ export class ShopManager {
       const inv = this.game.ui.inventory;
       const reqTokens = product.priceToken || 999;
       if ((inv['sol_token'] || 0) < reqTokens) {
-        if (toast) toast.showToast(`行囊中 $SOL 算力代币不足 (需 ${reqTokens} 枚)！前往营地矿机出块！`);
+        if (toast) toast.showToast(`行囊中 $SOL 算力代币不足 (需 ${reqTokens} 枚)！前往营地矿机出块！`, 'medium');
         return;
       }
 
@@ -582,7 +582,7 @@ export class ShopManager {
     soundEngine.playPlaceFurniture();
 
     if (toast) {
-      toast.showToast(`⏳ 正在通过 Solana 网络发起 ${product.priceSOL} SOL 微支付订单...`);
+      toast.showToast(`⏳ 正在通过 Solana 网络发起 ${product.priceSOL} SOL 微支付订单...`, 'medium');
     }
 
     // 模拟链上广播并秒级完成确认 (0.8 秒沉浸体验)
@@ -593,7 +593,7 @@ export class ShopManager {
       soundEngine.playLevelUp();
 
       if (toast) {
-        toast.showToast(`🎉 支付成功！TX: [${txHash}]\n${msg}`);
+        toast.showToast(`🎉 支付成功！TX: [${txHash}]\n${msg}`, 'important');
       }
 
       // 自动保存游戏存档，锁定购买状态

@@ -82,7 +82,7 @@ export class FlotsamSalvageSystem {
     this.hasAutoSalvageBuoy = true;
     this.deployBuoyMesh();
     if (this.game && this.game.ui) {
-      this.game.ui.showToast('⚓ 近海【自动打捞浮标网】已成功部署！潮汐漂流物将自动归仓！');
+      this.game.ui.showToast('⚓ 近海【自动打捞浮标网】已成功部署！潮汐漂流物将自动归仓！', 'medium');
     }
   }
 
@@ -264,7 +264,7 @@ export class FlotsamSalvageSystem {
         storage[itemKey] = (storage[itemKey] || 0) + 1;
       });
       if (this.game.ui) {
-        this.game.ui.showToast(`⚓ 打捞浮标截获了【${uncollected.spec.name}】，建材已自动归入营地木箱！`);
+        this.game.ui.showToast(`⚓ 打捞浮标截获了【${uncollected.spec.name}】，建材已自动归入营地木箱！`, 'small');
       }
       return true;
     }

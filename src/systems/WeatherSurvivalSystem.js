@@ -154,7 +154,7 @@ export class WeatherSurvivalSystem {
 
     // 提示气象变幻
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`🌦️ 气象异动：【${spec.icon} ${spec.name}】！\n${spec.desc}`);
+      this.game.ui.showToast(`🌦️ 气象异动：【${spec.icon} ${spec.name}】！\n${spec.desc}`, 'important');
     }
 
     if (weatherKey === 'typhoon') {
@@ -209,7 +209,7 @@ export class WeatherSurvivalSystem {
     });
 
     if (this.game && this.game.ui) {
-      this.game.ui.showToast('🌊 台风巨浪将【沉船黑匣子】与深海遗落冲上了南岸沙滩！快去抢救打捞！');
+      this.game.ui.showToast('🌊 台风巨浪将【沉船黑匣子】与深海遗落冲上了南岸沙滩！快去抢救打捞！', 'important');
     }
   }
 
@@ -235,12 +235,12 @@ export class WeatherSurvivalSystem {
         } else if (item.id === 'deepsea_shell') {
           if (this.game.ui) {
             this.game.ui.addInventory('sea_crab', 3);
-            this.game.ui.showToast('🐚 获取了 3 只被巨浪击昏的深海肥蟹！');
+            this.game.ui.showToast('🐚 获取了 3 只被巨浪击昏的深海肥蟹！', 'small');
           }
         } else if (item.id === 'driftwood_raft') {
           if (this.game.ui) {
             this.game.ui.addInventory('lumber', 2);
-            this.game.ui.showToast('🪵 拆解深海浮木，获得了【高等级重型方木】x2！');
+            this.game.ui.showToast('🪵 拆解深海浮木，获得了【高等级重型方木】x2！', 'small');
           }
         }
         return true;
@@ -393,7 +393,7 @@ export class WeatherSurvivalSystem {
             this.game.survival.life = Math.max(0, this.game.survival.life - 3);
             if (this.game.ui) {
               this.game.ui.updateSurvivalHUD();
-              this.game.ui.showToast(`🥶 严重失温！体温仅 ${this.bodyTemp.toFixed(1)}°C！生命持续流失！快去营火烘暖！`);
+              this.game.ui.showToast(`🥶 严重失温！体温仅 ${this.bodyTemp.toFixed(1)}°C！生命持续流失！快去营火烘暖！`, 'important');
             }
           }
         }

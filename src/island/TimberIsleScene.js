@@ -355,7 +355,7 @@ export class TimberIsleScene {
   claimOutpost() {
     if (this.outpostClaimed) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('🚩 此处已建成为避风家园【浮木前哨站】！');
+        this.game.ui.showToast('🚩 此处已建成为避风家园【浮木前哨站】！', 'medium');
       }
       return;
     }

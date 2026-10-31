@@ -48,7 +48,7 @@ export class FishingSystem {
   handleAction() {
     if (this.state === 'idle') {
       if (!this.ui.inventory.fishingrod || this.ui.inventory.fishingrod <= 0) {
-        this.ui.showBubbleNotice('背包里没有鱼竿！先去工作台用【木棍x2 + 藤蔓x1】制作一根吧！');
+        this.ui.showBubbleNotice('背包里没有鱼竿！先去工作台用【木棍x2 + 藤蔓x1】制作一根吧！', 'medium');
         return false;
       }
 
@@ -67,7 +67,7 @@ export class FishingSystem {
 
       haptics.medium();
       soundEngine.playSplash();
-      this.ui.showBubbleNotice('🎣 抛竿入水！静心等待鱼儿咬钩……');
+      this.ui.showBubbleNotice('🎣 抛竿入水！静心等待鱼儿咬钩……', 'small');
 
       // 2.5 ~ 4.5 秒后咬钩 (出战海月玄猫雷蒙德时享受 35% 提速加成)
       let biteMult = 1.0;
@@ -86,10 +86,10 @@ export class FishingSystem {
       // 80% 几率钓到大鱼，20% 几率钓到漂流瓶
       if (Math.random() > 0.2) {
         this.ui.addInventory('fish', 1);
-        this.ui.showBubbleNotice('🎉 哇！成功钓到了一条鲜活肥美的大鱼 🐟！');
+        this.ui.showBubbleNotice('🎉 哇！成功钓到了一条鲜活肥美的大鱼 🐟！', 'small');
       } else {
         this.ui.addInventory('broken_radio', 1);
-        this.ui.showBubbleNotice('🍾 钓出了一个装有零件的漂流罐，获得了【坏收音机】！');
+        this.ui.showBubbleNotice('🍾 钓出了一个装有零件的漂流罐，获得了【坏收音机】！', 'small');
       }
       return true;
     } else if (this.state === 'waiting') {
@@ -97,7 +97,7 @@ export class FishingSystem {
       this.state = 'idle';
       this.bobber.visible = false;
       haptics.light();
-      this.ui.showBubbleNotice('收竿太早了，鱼儿被吓跑了……');
+      this.ui.showBubbleNotice('收竿太早了，鱼儿被吓跑了……', 'medium');
       return true;
     }
     return false;
@@ -112,7 +112,7 @@ export class FishingSystem {
         this.state = 'bite';
         haptics.warning();
         soundEngine.playItemDrop();
-        this.ui.showBubbleNotice('❗ 鱼咬钩了！快点击【🎣收竿】！');
+        this.ui.showBubbleNotice('❗ 鱼咬钩了！快点击【🎣收竿】！', 'important');
         // 咬钩后给 1.8 秒反应窗口
         this.escapeTimer = 1.8;
       }
@@ -124,7 +124,7 @@ export class FishingSystem {
         this.state = 'idle';
         this.bobber.visible = false;
         haptics.light();
-        this.ui.showBubbleNotice('哎呀！收竿慢了一步，大鱼脱钩游走了！');
+        this.ui.showBubbleNotice('哎呀！收竿慢了一步，大鱼脱钩游走了！', 'medium');
       }
     }
   }

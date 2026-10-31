@@ -151,11 +151,11 @@ export class MonkeyHelperSystem {
   // 执行爬树采摘技能 (Climb & Shake)
   commandClimbTree(treeObj) {
     if (!this.isAvailable()) {
-      this.game.ui.showToast('🐒 小猴 Bub 正忙或尚未入队！');
+      this.game.ui.showToast('🐒 小猴 Bub 正忙或尚未入队！', 'medium');
       return false;
     }
     if (this.energy < 10) {
-      this.game.ui.showToast('🐒 小猴 Bub 已经精疲力竭了，请先喂食苹果或香蕉恢复精力！');
+      this.game.ui.showToast('🐒 小猴 Bub 已经精疲力竭了，请先喂食苹果或香蕉恢复精力！', 'medium');
       return false;
     }
 
@@ -171,7 +171,7 @@ export class MonkeyHelperSystem {
 
     haptics.medium();
     soundEngine.playItemDrop();
-    this.game.ui.showToast('🐒 小猴 Bub 灵巧地蹿上树冠，正在奋力晃动树枝！');
+    this.game.ui.showToast('🐒 小猴 Bub 灵巧地蹿上树冠，正在奋力晃动树枝！', 'small');
 
     // 摇晃树木物理动效
     if (this.game.trees && this.game.trees.shakeTreeMesh) {
@@ -184,15 +184,15 @@ export class MonkeyHelperSystem {
   // 执行岩缝钻穴寻宝技能 (Explore Crevice)
   commandExploreCrevice(creviceObj) {
     if (!this.isAvailable()) {
-      this.game.ui.showToast('🐒 小猴 Bub 正忙或尚未入队！');
+      this.game.ui.showToast('🐒 小猴 Bub 正忙或尚未入队！', 'medium');
       return false;
     }
     if (this.energy < 15) {
-      this.game.ui.showToast('🐒 小猴 Bub 肚子咕咕叫，精力不足，请先投喂点心！');
+      this.game.ui.showToast('🐒 小猴 Bub 肚子咕咕叫，精力不足，请先投喂点心！', 'medium');
       return false;
     }
     if (creviceObj.cooldown > 0) {
-      this.game.ui.showToast(`⌛ 此处石缝刚被搜寻过，小海兽尚未搬来新宝物（剩余冷却 ${Math.ceil(creviceObj.cooldown)}秒）！`);
+      this.game.ui.showToast(`⌛ 此处石缝刚被搜寻过，小海兽尚未搬来新宝物（剩余冷却 ${Math.ceil(creviceObj.cooldown)}秒）！`, 'medium');
       return false;
     }
 
@@ -212,7 +212,7 @@ export class MonkeyHelperSystem {
 
     haptics.success();
     soundEngine.playSplash();
-    this.game.ui.showToast(`🐒 小猴哧溜一声钻进了【${creviceObj.name}】的黑暗深处！`);
+    this.game.ui.showToast(`🐒 小猴哧溜一声钻进了【${creviceObj.name}】的黑暗深处！`, 'small');
 
     return true;
   }
@@ -247,7 +247,7 @@ export class MonkeyHelperSystem {
     soundEngine.playCooking();
     if (this.game.ui) {
       this.game.ui.renderInventory();
-      this.game.ui.showToast(`🐒 小猴美美地吃光了【${this.game.ui.getItemName(foodKey)}】！精力+${energyAdd}，好感度+${affinityAdd}！`);
+      this.game.ui.showToast(`🐒 小猴美美地吃光了【${this.game.ui.getItemName(foodKey)}】！精力+${energyAdd}，好感度+${affinityAdd}！`, 'small');
     }
 
     return { ok: true, energy: this.energy, affinity: this.affinity };

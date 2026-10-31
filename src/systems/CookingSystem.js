@@ -26,7 +26,7 @@ export class CookingSystem {
       soundEngine.playCooking();
       haptics.success();
       this.ui.renderInventory();
-      this.ui.showBubbleNotice('🔥 在营火上滋滋烤熟了金黄多汁的排骨，获得了【香烤野味排骨 🍖】！');
+      this.ui.showBubbleNotice('🔥 在营火上滋滋烤熟了金黄多汁的排骨，获得了【香烤野味排骨 🍖】！', 'small');
       if (typeof window !== 'undefined' && window.__game && window.__game.story && window.__game.story.onCookFood) {
         window.__game.story.onCookFood();
       }
@@ -37,7 +37,7 @@ export class CookingSystem {
       soundEngine.playCooking();
       haptics.success();
       this.ui.renderInventory();
-      this.ui.showBubbleNotice('🔥 烤熟了肥美鲜红的蟹肉，获得了【香烤极品红蟹 🦀】！');
+      this.ui.showBubbleNotice('🔥 烤熟了肥美鲜红的蟹肉，获得了【香烤极品红蟹 🦀】！', 'small');
       if (typeof window !== 'undefined' && window.__game && window.__game.story && window.__game.story.onCookFood) {
         window.__game.story.onCookFood();
       }
@@ -48,7 +48,7 @@ export class CookingSystem {
       soundEngine.playCooking();
       haptics.success();
       this.ui.renderInventory();
-      this.ui.showBubbleNotice('🔥 在温暖的篝火上烤熟了一条大鱼，获得了【香烤大鱼 🍱】！');
+      this.ui.showBubbleNotice('🔥 在温暖的篝火上烤熟了一条大鱼，获得了【香烤大鱼 🍱】！', 'small');
       if (typeof window !== 'undefined' && window.__game && window.__game.story && window.__game.story.onCookFood) {
         window.__game.story.onCookFood();
       }
@@ -59,14 +59,14 @@ export class CookingSystem {
       soundEngine.playCooking();
       haptics.success();
       this.ui.renderInventory();
-      this.ui.showBubbleNotice('🔥 烤熟了一颗金黄诱人的苹果，获得了【烤苹果 🥧】！');
+      this.ui.showBubbleNotice('🔥 烤熟了一颗金黄诱人的苹果，获得了【烤苹果 🥧】！', 'small');
       if (typeof window !== 'undefined' && window.__game && window.__game.story && window.__game.story.onCookFood) {
         window.__game.story.onCookFood();
       }
       return true;
     } else {
       haptics.light();
-      this.ui.showBubbleNotice('没有可以烹饪的食材！先去海边捕蟹 🦀、狩猎野猪 🐗、钓鱼 🐟 或采苹果 🍎 吧！');
+      this.ui.showBubbleNotice('没有可以烹饪的食材！先去海边捕蟹 🦀、狩猎野猪 🐗、钓鱼 🐟 或采苹果 🍎 吧！', 'medium');
       return false;
     }
   }

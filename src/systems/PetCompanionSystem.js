@@ -199,7 +199,7 @@ export class PetCompanionSystem {
   setActivePet(petId) {
     if (!this.isUnlocked(petId)) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('⚠️ 尚未收服该伙伴，请在营地暖巢用金币兑换或呼叫特权空投！');
+        this.game.ui.showToast('⚠️ 尚未收服该伙伴，请在营地暖巢用金币兑换或呼叫特权空投！', 'medium');
       }
       return false;
     }
@@ -210,7 +210,7 @@ export class PetCompanionSystem {
 
     const spec = this.getPetSpec(petId);
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`✨ 【${spec.name}】已设为当前出战随行伙伴！`);
+      this.game.ui.showToast(`✨ 【${spec.name}】已设为当前出战随行伙伴！`, 'medium');
     }
 
     // 同步刷新 3D 模型显隐与跟随映射
@@ -360,7 +360,7 @@ export class PetCompanionSystem {
     // 检查驮包格数上限 (最多 6 种不同物品)
     const distinctKeys = Object.keys(this.sheepPouchInventory);
     if (!distinctKeys.includes(itemKey) && distinctKeys.length >= 6) {
-      if (this.game.ui) this.game.ui.showToast('🐑 金羊随行驮包已装满 (最多 6 格)！');
+      if (this.game.ui) this.game.ui.showToast('🐑 金羊随行驮包已装满 (最多 6 格)！', 'medium');
       return false;
     }
 
@@ -424,7 +424,7 @@ export class PetCompanionSystem {
           this.game.ui.addInventory(pickedCatch, 1);
           soundEngine.playSplash();
           haptics.success();
-          this.game.ui.showToast(`🐱 海月玄猫雷蒙德敏捷地跃入浅滩，嘴里叼回了一条【${catchNames[pickedCatch]}】塞给你！`);
+          this.game.ui.showToast(`🐱 海月玄猫雷蒙德敏捷地跃入浅滩，嘴里叼回了一条【${catchNames[pickedCatch]}】塞给你！`, 'small');
         }
       }
     }

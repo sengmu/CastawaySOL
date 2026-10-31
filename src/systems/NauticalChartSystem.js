@@ -56,7 +56,7 @@ export class NauticalChartSystem {
     if (this.islands[islandId]) {
       this.islands[islandId].discovered = true;
       if (this.game && this.game.ui) {
-        this.game.ui.showToast(`🧭 航海图更新：已标记【${this.islands[islandId].name}】！`);
+        this.game.ui.showToast(`🧭 航海图更新：已标记【${this.islands[islandId].name}】！`, 'medium');
       }
     }
   }

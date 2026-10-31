@@ -311,7 +311,7 @@ export class StorySystem {
     if (this.game && this.game.ui) {
       const step = this.getCurrentStep();
       this.game.ui.updateObjective(this.getQuestBannerText());
-      this.game.ui.showToast(isStep ? `🎯 目标达成！进入下一步：${step.desc}` : `🎉 恭喜晋升新篇章！`);
+      this.game.ui.showToast(isStep ? `🎯 目标达成！进入下一步：${step.desc}` : `🎉 恭喜晋升新篇章！`, { level: isStep ? 'medium' : 'important', group: 'quest' });
     }
   }
 

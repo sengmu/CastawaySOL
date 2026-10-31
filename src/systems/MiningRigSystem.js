@@ -294,12 +294,12 @@ export class MiningRigSystem {
   loadCrystal(count = 1) {
     const inv = this.game.ui.inventory;
     if ((inv['sol_crystal'] || 0) < count) {
-      this.game.ui.showToast('行囊中硅晶原石不足，前往后山崖壁开采矿脉！');
+      this.game.ui.showToast('行囊中硅晶原石不足，前往后山崖壁开采矿脉！', 'medium');
       return false;
     }
 
     if (this.loadedCrystals + count > this.maxCrystalCapacity) {
-      this.game.ui.showToast(`矿机晶石仓已满 (上限 ${this.maxCrystalCapacity} 块)！`);
+      this.game.ui.showToast(`矿机晶石仓已满 (上限 ${this.maxCrystalCapacity} 块)！`, 'medium');
       return false;
     }
 
@@ -312,7 +312,7 @@ export class MiningRigSystem {
     this.game.ui.renderInventory();
     haptics.success();
     soundEngine.playItemDrop();
-    this.game.ui.showToast(`💎 成功装入【未解密硅晶原石】x${count}！矿机进入高速哈希运算解密状态！`);
+    this.game.ui.showToast(`💎 成功装入【未解密硅晶原石】x${count}！矿机进入高速哈希运算解密状态！`, 'small');
 
     return true;
   }
@@ -336,7 +336,7 @@ export class MiningRigSystem {
     this.game.ui.renderInventory();
     haptics.medium();
     soundEngine.playPlaceFurniture();
-    this.game.ui.showToast(`⚡ 成功注入能源【${this.game.ui.getItemName(itemKey)}】！矿机蓄电量回升至 ${this.batteryPower}%！`);
+    this.game.ui.showToast(`⚡ 成功注入能源【${this.game.ui.getItemName(itemKey)}】！矿机蓄电量回升至 ${this.batteryPower}%！`, 'small');
 
     return true;
   }
@@ -368,7 +368,7 @@ export class MiningRigSystem {
   triggerManualBoost() {
     if (this.loadedCrystals <= 0) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('⚠️ 矿机晶石仓为空，请先装填【未解密硅晶原石】！');
+        this.game.ui.showToast('⚠️ 矿机晶石仓为空，请先装填【未解密硅晶原石】！', 'medium');
       }
       return false;
     }
@@ -444,7 +444,7 @@ export class MiningRigSystem {
       haptics.success();
       if (this.game && this.game.ui) {
         const critTag = isCrit ? ' 💥【超频狂暴暴击双倍】' : '';
-        this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！${critTag} 产出【$SOL 算力代币】x${reward}！`);
+        this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！${critTag} 产出【$SOL 算力代币】x${reward}！`, 'important');
       }
 
       if (this.loadedCrystals <= 0) {
@@ -464,7 +464,7 @@ export class MiningRigSystem {
   // 一键收取已挖出的 $SOL 算力代币
   claimSolTokens() {
     if (this.unclaimedSol <= 0) {
-      this.game.ui.showToast('矿机产出槽空空如也，静待下一个区块验证出块！');
+      this.game.ui.showToast('矿机产出槽空空如也，静待下一个区块验证出块！', 'medium');
       return false;
     }
 

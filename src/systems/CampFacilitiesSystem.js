@@ -56,7 +56,7 @@ export class CampFacilitiesSystem {
     this.residentJobs[villagerId] = jobId;
     const jobInfo = this.jobsConfig[jobId];
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`📋 成功任命岗位：【${jobInfo.name}】！每日清晨将按新岗位产出！`);
+      this.game.ui.showToast(`📋 成功任命岗位：【${jobInfo.name}】！每日清晨将按新岗位产出！`, 'medium');
     }
     return true;
   }
@@ -153,7 +153,7 @@ export class CampFacilitiesSystem {
     if (!this.game || !this.game.ui) return false;
     const inv = this.game.ui.inventory;
     if ((inv[fuelItem] || 0) < count) {
-      this.game.ui.showToast(`❌ 背包中缺少【${this.game.ui.getItemName(fuelItem)}】！`);
+      this.game.ui.showToast(`❌ 背包中缺少【${this.game.ui.getItemName(fuelItem)}】！`, 'medium');
       return false;
     }
 
@@ -167,7 +167,7 @@ export class CampFacilitiesSystem {
     const added = this.purifierWaterLevel - oldLevel;
 
     soundEngine.playCooking();
-    this.game.ui.showToast(`🔥 添柴快速蒸馏中！成功凝结了 ${added} 份纯净甘泉！(当前蓄水: ${this.purifierWaterLevel}/${this.maxPurifierWater})`);
+    this.game.ui.showToast(`🔥 添柴快速蒸馏中！成功凝结了 ${added} 份纯净甘泉！(当前蓄水: ${this.purifierWaterLevel}/${this.maxPurifierWater})`, 'medium');
     return true;
   }
 
@@ -196,7 +196,7 @@ export class CampFacilitiesSystem {
       this.purifierWaterLevel = Math.max(0, this.purifierWaterLevel - 1);
       soundEngine.playSplash();
 
-      this.game.ui.showToast('💧 从净水滴滤台畅饮了冰凉甘泉！水壶已备满！');
+      this.game.ui.showToast('💧 从净水滴滤台畅饮了冰凉甘泉！水壶已备满！', 'small');
       if (this.game.story && this.game.story.onDrinkWater) {
         this.game.story.onDrinkWater();
       }
@@ -206,13 +206,13 @@ export class CampFacilitiesSystem {
     // 若玩家状态充盈，将过滤好的淡水灌装成纯净水道具收入背包
     if (this.purifierWaterLevel > 0) {
       if (this.game.ui.isInventoryFull && this.game.ui.isInventoryFull('canteen_clean_water')) {
-        this.game.ui.showToast('❌ 行囊已满，无法容纳新的纯净水道具！');
+        this.game.ui.showToast('❌ 行囊已满，无法容纳新的纯净水道具！', 'medium');
         return;
       }
       this.purifierWaterLevel--;
       this.game.ui.addInventory('canteen_clean_water', 1);
       soundEngine.playSplash();
-      this.game.ui.showToast(`🚰 从净水台灌装了【甘甜纯净水】收入行囊！（水箱剩余：${this.purifierWaterLevel}/${this.maxPurifierWater}）`);
+      this.game.ui.showToast(`🚰 从净水台灌装了【甘甜纯净水】收入行囊！（水箱剩余：${this.purifierWaterLevel}/${this.maxPurifierWater}）`, 'small');
     }
   }
 

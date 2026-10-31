@@ -32,7 +32,7 @@ export class StorageSystem {
   expandCapacity(extraSlots = 16) {
     this.bonusCapacity += extraSlots;
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`📦 营地储物空间成功扩容 +${extraSlots} 格！(当前总容量: ${this.maxCapacity})`);
+      this.game.ui.showToast(`📦 营地储物空间成功扩容 +${extraSlots} 格！(当前总容量: ${this.maxCapacity})`, 'medium');
     }
     return this.maxCapacity;
   }
@@ -52,7 +52,7 @@ export class StorageSystem {
     // 若储物箱尚未存放该物品，检查是否达到种类上限
     if (!this.storageInventory[itemKey] && this.usedSlots >= this.maxCapacity) {
       if (this.game.ui.showToast) {
-        this.game.ui.showToast(`❌ 储物箱已满 (${this.usedSlots}/${this.maxCapacity})，请使用【仓储扩容蓝图】提升容量！`);
+        this.game.ui.showToast(`❌ 储物箱已满 (${this.usedSlots}/${this.maxCapacity})，请使用【仓储扩容蓝图】提升容量！`, 'medium');
       }
       return false;
     }
@@ -96,7 +96,7 @@ export class StorageSystem {
       soundEngine.playItemDrop();
       this.game.ui.renderInventory();
       if (this.game.ui.showToast) {
-        this.game.ui.showToast(`📦 一键归仓成功！已将 ${totalDeposited} 件建材存入营地储物箱。`);
+        this.game.ui.showToast(`📦 一键归仓成功！已将 ${totalDeposited} 件建材存入营地储物箱。`, 'medium');
       }
     }
     return totalDeposited;
@@ -110,7 +110,7 @@ export class StorageSystem {
 
     // 检查玩家背包是否能容纳
     if (this.game.ui.isInventoryFull && this.game.ui.isInventoryFull(itemKey)) {
-      this.game.ui.showToast('❌ 行囊已满，无法携带更多不同种类的物品！');
+      this.game.ui.showToast('❌ 行囊已满，无法携带更多不同种类的物品！', 'medium');
       return false;
     }
 

@@ -523,7 +523,7 @@ export class WildlifeCombatSystem {
 
     if (!hasBow) {
       if (game && game.ui) {
-        game.ui.showToast('❌ 背包中尚未持有【简易猎弓 🏹】！请前往合成台使用 [加厚兽皮 + 坚韧木棍] 制作！');
+        game.ui.showToast('❌ 背包中尚未持有【简易猎弓 🏹】！请前往合成台使用 [加厚兽皮 + 坚韧木棍] 制作！', 'medium');
       }
       return false;
     }
@@ -549,9 +549,9 @@ export class WildlifeCombatSystem {
 
     if (game && game.ui) {
       if (this.combatMode === 'ranged') {
-        game.ui.showToast(`🏹 已切换至【远程猎弓模式】！剩余羽箭: ${arrowCount} 支，按 [F] 射击，按 [R] 切回近战！`);
+        game.ui.showToast(`🏹 已切换至【远程猎弓模式】！剩余羽箭: ${arrowCount} 支，按 [F] 射击，按 [R] 切回近战！`, 'medium');
       } else {
-        game.ui.showToast('🗡️ 已切换至【近战长矛模式】！按 [F] 扇形挥刺！');
+        game.ui.showToast('🗡️ 已切换至【近战长矛模式】！按 [F] 扇形挥刺！', 'medium');
       }
     }
     return true;
@@ -567,7 +567,7 @@ export class WildlifeCombatSystem {
 
     if (arrowCount <= 0) {
       if (game.ui) {
-        game.ui.showToast('❌ 箭袋已空！缺少【燧石羽箭 🏹】！请前往合成台使用 [海蚀碎石 + 干燥树皮] 制作羽箭！');
+        game.ui.showToast('❌ 箭袋已空！缺少【燧石羽箭 🏹】！请前往合成台使用 [海蚀碎石 + 干燥树皮] 制作羽箭！', 'medium');
       }
       return false;
     }
@@ -715,7 +715,7 @@ export class WildlifeCombatSystem {
           hitMob.state = 'CHASE';
           soundEngine.playMonsterGrowl();
           if (this.game && this.game.ui) {
-            this.game.ui.showToast(`🎯 远距命中！【${hitMob.name}】被羽箭激怒，正发出低吼朝你狂奔扑来！`);
+            this.game.ui.showToast(`🎯 远距命中！【${hitMob.name}】被羽箭激怒，正发出低吼朝你狂奔扑来！`, 'medium');
           }
         }
         continue;
@@ -925,7 +925,7 @@ export class WildlifeCombatSystem {
           if (mob.stunGroup) mob.stunGroup.visible = true;
 
           if (this.game && this.game.ui) {
-            this.game.ui.showToast(`🪤 咔嚓！【${mob.name}】踩中捕兽夹！被铁齿死死钳住，陷入 4 秒禁锢破绽！`);
+            this.game.ui.showToast(`🪤 咔嚓！【${mob.name}】踩中捕兽夹！被铁齿死死钳住，陷入 4 秒禁锢破绽！`, 'medium');
           }
           break;
         }
@@ -963,7 +963,7 @@ export class WildlifeCombatSystem {
             if (mob.stunGroup) mob.stunGroup.visible = true;
 
             if (this.game && this.game.ui) {
-              this.game.ui.showToast(`🛡️ 轰！【${mob.name}】猛烈撞上防兽尖木拒马！受到 50 点反震重创陷入眩晕！`);
+              this.game.ui.showToast(`🛡️ 轰！【${mob.name}】猛烈撞上防兽尖木拒马！受到 50 点反震重创陷入眩晕！`, 'medium');
             }
 
             // 拒马耐久耗尽粉碎
@@ -971,7 +971,7 @@ export class WildlifeCombatSystem {
               this.group.remove(sp.group);
               this.spikes.splice(i, 1);
               if (this.game && this.game.ui) {
-                this.game.ui.showToast('⚠️ 防兽尖木拒马在野兽剧烈撞击下破碎散架！');
+                this.game.ui.showToast('⚠️ 防兽尖木拒马在野兽剧烈撞击下破碎散架！', 'medium');
               }
             }
             break;
@@ -1027,7 +1027,7 @@ export class WildlifeCombatSystem {
           '⚠️ “嘘……！等等！海风里有粗重的喘息声……！\n丛林深处有凶猛的野兽正悄悄朝营火逼近！\n快检查周围布置的【齿状捕兽夹 🪤】与【防兽尖木拒马 🪵】，备好长矛与猎弓！不要让营火熄灭！”'
         );
       } else if (game.ui) {
-        game.ui.showToast('🐺【夜幕危机】黑暗的林间传来阵阵低吼，有野兽正悄悄逼近营地篝火！');
+        game.ui.showToast('🐺【夜幕危机】黑暗的林间传来阵阵低吼，有野兽正悄悄逼近营地篝火！', 'important');
       }
     }
   }
@@ -1120,7 +1120,7 @@ export class WildlifeCombatSystem {
     if (hitCount > 0) {
       soundEngine.playHitImpact();
       if (game.ui) {
-        game.ui.showToast(`💥 ${weaponName} 命中目标！造成 ${damage} 点打击伤害！`);
+        game.ui.showToast(`💥 ${weaponName} 命中目标！造成 ${damage} 点打击伤害！`, 'small');
       }
     }
 
@@ -1144,7 +1144,7 @@ export class WildlifeCombatSystem {
       actualDmg = Math.round(damage * 2.0);
       this.spawnDamageNumber(mob.group.position, `CRIT -${actualDmg}!!`, '#f1c40f');
       if (this.game && this.game.ui) {
-        this.game.ui.showToast(`🎯 【破绽暴击】长矛精准贯穿弱点！造成 ${actualDmg} 点双倍暴击伤害！`);
+        this.game.ui.showToast(`🎯 【破绽暴击】长矛精准贯穿弱点！造成 ${actualDmg} 点双倍暴击伤害！`, 'small');
       }
       // 暴击打断眩晕并造成超大击退
       knockbackDist *= 1.8;
@@ -1218,7 +1218,7 @@ export class WildlifeCombatSystem {
     }, 50);
 
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`🏆 成功击败【${mob.name}】！战利品掉落在附近！`);
+      this.game.ui.showToast(`🏆 成功击败【${mob.name}】！战利品掉落在附近！`, 'medium');
     }
   }
 
@@ -1298,7 +1298,7 @@ export class WildlifeCombatSystem {
         });
 
         if (this.game && this.game.ui) {
-          this.game.ui.showToast(`🎒 拾取战利品：【${receivedNames.join('、')}】！`);
+          this.game.ui.showToast(`🎒 拾取战利品：【${receivedNames.join('、')}】！`, 'small');
         }
         return true;
       }
@@ -1411,7 +1411,7 @@ export class WildlifeCombatSystem {
             mob.chargeDistanceTraveled = 0;
             soundEngine.playAttackSwish();
             if (game.ui) {
-              game.ui.showToast('🚨 野猪发起凶猛冲撞！按【空格 Space】跳跃或侧闪避险！');
+              game.ui.showToast('🚨 野猪发起凶猛冲撞！按【空格 Space】跳跃或侧闪避险！', 'important');
             }
           }
           break;
@@ -1447,7 +1447,7 @@ export class WildlifeCombatSystem {
               soundEngine.playAttackSwish();
               this.spawnDamageNumber(playerPos, '💨 DODGE!', '#00d2d3');
               if (game.ui) {
-                game.ui.showToast('✨ 完美跳跃！擦着野猪獠牙极限闪避！');
+                game.ui.showToast('✨ 完美跳跃！擦着野猪獠牙极限闪避！', 'small');
               }
             } else {
               // 未能闪避，遭受重创挑飞
@@ -1476,7 +1476,7 @@ export class WildlifeCombatSystem {
             mob.stunTimer = 2.8; // 破绽大硬直 2.8 秒！
             if (mob.stunGroup) mob.stunGroup.visible = true;
             if (game.ui) {
-              game.ui.showToast('🎯 野猪撞晕陷入破绽！立即长矛突刺触发【100% 暴击】！');
+              game.ui.showToast('🎯 野猪撞晕陷入破绽！立即长矛突刺触发【100% 暴击】！', 'important');
             }
           }
           break;
@@ -1679,7 +1679,7 @@ export class WildlifeCombatSystem {
     let actualDmg = overrideDmg !== null ? overrideDmg : mob.attackDamage;
     if (hasShield) {
       actualDmg = Math.round(actualDmg * 0.5); // 减免 50%
-      if (game.ui) game.ui.showToast(`🛡️ 【坚甲木盾】成功格挡！减免了 50% 伤害！`);
+      if (game.ui) game.ui.showToast(`🛡️ 【坚甲木盾】成功格挡！减免了 50% 伤害！`, 'small');
     }
 
     // 检查神宠忠诚猎犬贝拉护主减伤特权 (减免 20%)
@@ -1687,7 +1687,7 @@ export class WildlifeCombatSystem {
       const petRed = game.petCompanion.getDamageReduction();
       if (petRed > 0) {
         actualDmg = Math.round(actualDmg * (1 - petRed));
-        if (game.ui) game.ui.showToast(`🐕 【忠诚猎犬贝拉】发出震慑狂吠护主！免伤 20%！`);
+        if (game.ui) game.ui.showToast(`🐕 【忠诚猎犬贝拉】发出震慑狂吠护主！免伤 20%！`, 'small');
       }
     }
 
@@ -1697,12 +1697,12 @@ export class WildlifeCombatSystem {
 
     if (game.ui) {
       const attackName = overrideDmg ? '致命猛烈冲撞' : '猛烈突击';
-      game.ui.showToast(`⚠️ 遭受【${mob.name}】${attackName}！生命 -${actualDmg}！`);
+      game.ui.showToast(`⚠️ 遭受【${mob.name}】${attackName}！生命 -${actualDmg}！`, 'important');
     }
 
     // 玩家濒死警告
     if (game.survival.life <= 20 && game.ui) {
-      game.ui.showToast(`🚨 生命值告急！请迅速撤回营火安全区或食用食物急救！`);
+      game.ui.showToast(`🚨 生命值告急！请迅速撤回营火安全区或食用食物急救！`, 'important');
     }
   }
 }

@@ -391,11 +391,11 @@ class Game {
     const previousIsland = this.currentIslandId;
     soundEngine.playPlaceFurniture();
     if (islandId === 'ancient_temple') {
-      this.ui.showToast('🏛️ 穿越青蓝秘境漩涡……踏入远古神殿独立地宫！');
+      this.ui.showToast('🏛️ 穿越青蓝秘境漩涡……踏入远古神殿独立地宫！', 'medium');
     } else if (previousIsland === 'ancient_temple') {
-      this.ui.showToast('🌀 踏入青蓝符文传送阵……返回海岛主地图！');
+      this.ui.showToast('🌀 踏入青蓝符文传送阵……返回海岛主地图！', 'medium');
     } else {
-      this.ui.showToast('⛵ 扬帆起航！破浪驶向远方海域……');
+      this.ui.showToast('⛵ 扬帆起航！破浪驶向远方海域……', 'medium');
     }
     this.ui.createTransitionFade();
 
@@ -515,7 +515,7 @@ class Game {
             }
           }
 
-          this.ui.showToast('🏛️ 穿过符文传送光阵，回到了后山海风之中！');
+          this.ui.showToast('🏛️ 穿过符文传送光阵，回到了后山海风之中！', 'medium');
         } else {
           // 传送到西南出航湾码头栈桥
           this.player.position.set(-22, 0.05, 38.0);
@@ -537,7 +537,7 @@ class Game {
               '探险学者雷蒙德随同木筏平安抵达成主岛避风家园！\n\n雷蒙德推了推眼镜，惊叹道：“天呐……这里简直是世外桃源！我已经把随身的工匠工具箱安置在大本营，今后每日拂晓我都将为你加工【重型方木】与【铁钉】！\n另外，我在沉船研究航海图时，标定出了远海火山孤峰【海蚀矿石岛 (Quarry Isle)】的航线，已录入海图！\n不过……营地现在多了一张嘴吃饭，请务必保证淡水供给，并为我在营地多造一张【原木单人床】！”\n\n营地总人口升至 3 人，每日晨报产出升级！'
             );
           } else {
-            this.ui.showToast('⛵ 顺利返航，回到了避风家园主岛！');
+            this.ui.showToast('⛵ 顺利返航，回到了避风家园主岛！', 'medium');
           }
         }
       }
@@ -573,7 +573,7 @@ class Game {
       // 0.1 拾取浮木岛资源
       const picked = this.timberIsleScene.checkPickup(playerPos, (itemType, resName) => {
         this.ui.addInventory(itemType, 1);
-        this.ui.showToast(`拾取了【${resName}】！`);
+        this.ui.showToast(`拾取了【${resName}】！`, 'small');
       });
       if (picked) return;
 
@@ -602,7 +602,7 @@ class Game {
       // 0.5.1 开采或拾取矿石岛资源
       const mined = this.quarryIsleScene.checkMineOrPickup(playerPos, (itemType, resName) => {
         this.ui.addInventory(itemType, 1);
-        this.ui.showToast(`成功获取了【${resName}】！`);
+        this.ui.showToast(`成功获取了【${resName}】！`, 'small');
       });
       if (mined) return;
 
@@ -653,20 +653,20 @@ class Game {
             }
           });
           if (mineRes && mineRes.broken) {
-            this.ui.showToast(`⛏️ 轰然击碎了【${mineRes.name}】！开采出大量燧石原矿与富铁矿石！`);
+            this.ui.showToast(`⛏️ 轰然击碎了【${mineRes.name}】！开采出大量燧石原矿与富铁矿石！`, 'small');
           } else if (mineRes) {
-            this.ui.showToast(`🔨 奋力敲凿【${mineRes.name}】！碎石四溅！(岩脉耐久余 ${mineRes.remainingHp})`);
+            this.ui.showToast(`🔨 奋力敲凿【${mineRes.name}】！碎石四溅！(岩脉耐久余 ${mineRes.remainingHp})`, 'small');
           }
           return;
         } else {
-          this.ui.showToast(`🪨【${nearMineable.name}】坚不可摧！需在合成台研制【重装石锤 🔨】或【骨柄石镐 ⛏️】方可敲凿开采！`);
+          this.ui.showToast(`🪨【${nearMineable.name}】坚不可摧！需在合成台研制【重装石锤 🔨】或【骨柄石镐 ⛏️】方可敲凿开采！`, 'medium');
           return;
         }
       }
 
       const picked = this.beachResources.checkPickup(playerPos, (itemType, resName) => {
         this.ui.addInventory(itemType, 1);
-        this.ui.showToast(`拾取了【${resName}】！`);
+        this.ui.showToast(`拾取了【${resName}】！`, 'small');
         if (this.story && this.story.onGatherResource) {
           this.story.onGatherResource(itemType);
         }
@@ -678,7 +678,7 @@ class Game {
     if (this.flotsamSalvage) {
       const salvaged = this.flotsamSalvage.checkSalvage(playerPos, (itemType, flotsamName) => {
         this.ui.addInventory(itemType, 1);
-        this.ui.showToast(`打捞获得了【${flotsamName}】！`);
+        this.ui.showToast(`打捞获得了【${flotsamName}】！`, 'small');
         if (this.story && this.story.onGatherResource) {
           this.story.onGatherResource(itemType);
         }
@@ -692,7 +692,7 @@ class Game {
       this.survival.water = Math.min(100, this.survival.water + 35);
       this.ui.updateSurvivalHUD();
       soundEngine.playSplash();
-      this.ui.showToast('💧 痛快地饮用了清凉甘甜的溪水！水壶已灌满！');
+      this.ui.showToast('💧 痛快地饮用了清凉甘甜的溪水！水壶已灌满！', 'small');
       if (this.story && this.story.onDrinkWater) {
         this.story.onDrinkWater();
       }
@@ -752,7 +752,7 @@ class Game {
       // 4.4.4 南岸打捞浮标岸边滑轮锚桩 (-20.2, 0.02, 33.2)
       if (playerPos.distanceTo(anchors.buoyWinch) < 2.8) {
         if (this.flotsamSalvage && this.flotsamSalvage.hasAutoSalvageBuoy) {
-          this.ui.showToast('⚓ 近海【自动打捞浮标网】正在持续运转中，每 30 秒自动捕获海难物资入库！');
+          this.ui.showToast('⚓ 近海【自动打捞浮标网】正在持续运转中，每 30 秒自动捕获海难物资入库！', 'medium');
         } else {
           // 未解锁时，引导打开商城直接购买部署
           if (this.shopManager) this.shopManager.open();
@@ -819,7 +819,7 @@ class Game {
           if (this.saveSystem) {
             this.saveSystem.saveGame('sleep_overnight_bed');
           }
-          this.ui.showToast('🛏️ 在亲手搭建的原木单人床上熟睡了一夜……疲劳全消！');
+          this.ui.showToast('🛏️ 在亲手搭建的原木单人床上熟睡了一夜……疲劳全消！', 'medium');
           return;
         }
       }
@@ -874,7 +874,7 @@ class Game {
           if (this.templePuzzle && !this.templePuzzle.vaultClaimed) {
             this.templePuzzle.claimTempleVault();
           } else {
-            this.ui.showToast('👑 远古波塞冬金冠已入囊，王座永受神光护佑！');
+            this.ui.showToast('👑 远古波塞冬金冠已入囊，王座永受神光护佑！', 'medium');
           }
         } else {
           this.ui.showDialog('🔒 玄铁门扉紧锁', '深渊密室的玄铁石门紧闭！\n请先前往中央【星辰日冕祭坛】参悟三色棱镜对焦与九宫太阳图腾机关，轰开大门！');
@@ -1073,9 +1073,9 @@ class Game {
       if (hasAxe) {
         const res = this.trees.chopTree(nearestTree);
         if (res && res.felled) {
-          this.ui.showToast(`🪓 奋力砍倒了【${res.name}】！爆出重型建筑圆木 🪵 与木材方料！`);
+          this.ui.showToast(`🪓 奋力砍倒了【${res.name}】！爆出重型建筑圆木 🪵 与木材方料！`, 'small');
         } else if (res) {
-          this.ui.showToast(`🪓 挥舞石斧劈击【${res.name}】！(再砍 ${res.remainingHp} 斧将伐倒)`);
+          this.ui.showToast(`🪓 挥舞石斧劈击【${res.name}】！(再砍 ${res.remainingHp} 斧将伐倒)`, 'small');
         }
         return;
       }

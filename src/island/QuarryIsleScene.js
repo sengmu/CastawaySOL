@@ -325,7 +325,7 @@ export class QuarryIsleScene {
         // 若为大型露天矿脉且无采矿镐
         if (item.isVein && !hasPickaxe) {
           if (this.game && this.game.ui) {
-            this.game.ui.showToast(`⚠️ 矿脉坚硬无比！需在背包中装备【采矿石镐】方能凿取！`);
+            this.game.ui.showToast(`⚠️ 矿脉坚硬无比！需在背包中装备【采矿石镐】方能凿取！`, 'medium');
           }
           return null;
         }
@@ -344,7 +344,7 @@ export class QuarryIsleScene {
   claimOutpost() {
     if (this.outpostClaimed) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('🚩 此处已建成为避风家园【矿业开采前哨站】！');
+        this.game.ui.showToast('🚩 此处已建成为避风家园【矿业开采前哨站】！', 'medium');
       }
       return;
     }

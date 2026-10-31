@@ -561,3 +561,52 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
 1. 删除 IconRegistry 中带「黏土图标第二批」注释的两段。
 2. 在 InteractionFeedbackSystem 中删除 `CONTEXT_EMOJI_ICON` 和 `contextIconHTML`，把 `contextIconHTML(target.icon)` 改回 `target.icon`。
 3. 按上表删除 `public/icons/items/` 里新增的 35 个文件。
+## Android 重新打包（2026-10-31）
+
+- **前端构建和同步**：先运行 `npm run build`，dist 里有 72 个图标；再运行 `npx cap sync android`，同步完成，`android/app/src/main/assets/public/icons` 下也是 72 个。这两个目录都是生成物，被 git 忽略。
+- **本机打包**：没有完成。这台 Windows 机器上没有 JDK（也没有 `JAVA_HOME`），没有 Android SDK（没有 `ANDROID_HOME`，也没有 `android/local.properties`），也没有 adb，所以无法在本机运行 `android\gradlew assembleDebug`。按要求没有自行安装工具链。
+- **项目现有的打包方式**：GitHub Actions `.github/workflows/build-apk.yml`。推送到 main 后会自动构建，环境是 JDK 21 + Android SDK 36，产物是 debug APK。提交 `bc411bb`（黏土图标）对应 run #14，状态为 success，链接：https://github.com/sengmu/CastawaySOL/actions/runs/41208260514
+- **版本**：包名 `com.castawaysol.game`，versionName 1.0.12，versionCode 12（见 android/app/build.gradle）。
+- **安装到手机**：需要先在 Actions 页面登录 GitHub，下载 run #14 的 APK 产物，存到 `E:\CastawaySOL\apks\`，再装到 Seeker（拷到手机直接安装，或装 platform-tools 后用 `adb install -r`）。旧包（app-debug.apk、v1.0.7/8/11 的 zip）都还在 `E:\CastawaySOL\apks\`，没有被覆盖。
+- **adb 安装方法**：platform-tools 装在 `E:\CastawaySOL\tools\platform-tools\`（在仓库外）。Seeker 用 USB 连接并允许调试后，运行 `E:\CastawaySOL\tools\platform-tools\adb.exe install -r <APK路径>`。注意：CI 每次打包都会随机生成 debug 签名（仓库里没有提交 keystore），覆盖安装手机上已有的 CI 包时，可能报 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`。这种情况不要卸载旧版（会丢存档），要先固定签名。
+- **2026-10-31 22:15 安装记录**：1.0.12 用的是 CI 自动生成的 debug 签名，和手机上的旧版签名不同。征得用户同意（接受丢档）后，已卸载旧版 1.0.11 再重装。CI 没有固定 keystore，以后两次 CI 包签名不同的话，覆盖安装还会报 INSTALL_FAILED_UPDATE_INCOMPATIBLE。
+## 提示系统优化（2026-10-31）
+
+**目标**：游戏里的提示（toast、横幅）太密，真机上一次会叠 3–4 条，挡住屏幕上方。改完以后同一时间最多 1 条主横幅，其余排队；提示分三档，可在菜单里调强度。只改显示，不改游戏逻辑。
+
+**改动文件**
+- 新增 `src/ui/NoticeCenter.js`：提示队列的核心，样式也在这里，运行时写进 `<style id="notice-center-css">`。
+- `src/ui/UIManager.js`：
+  - `showToast(text, type, level)` 和 `showBubbleNotice(text, options, level)` 改为交给 `this._notice()`（NoticeCenter）处理。
+  - 删掉旧的 `_presentToast/_renderToastItem/_scheduleToast/_dismissToast`，`_toastKind` 保留用来判断颜色。
+  - 菜单抽屉加了「提示」一行：完整 / 精简 / 仅重要。
+  - `addInventory` 获得物品时，带上 `{ level:'small', item, count }`。
+- `src/systems/StorySystem.js`：任务进度用 `{ level: medium, group:'quest' }`，新篇章用 important。
+- 另外 18 个文件的 showToast / showBubbleNotice 调用只追加了 level 参数。
+
+**规则**
+- 同一时间最多 1 条横幅：普通 2 秒，重要 3 秒。排队超过 4 条时，丢弃最旧的低优先级提示。
+- 重要提示插队，正在显示的非重要横幅 0.4 秒后让位。
+- small：在快捷栏对应格子上方弹出「图标 +数量」，没有对应格子就弹在背包按钮下方，1.2 秒淡出。没有物品 id 的 small 提示显示成顶部单行窄胶囊（12px）。物品图标刚弹出后 1 秒内，重复的「拾取了【同名】」文字不再显示。
+- medium：普通横幅。`group:'quest'` 的提示只保留最新一条。
+- important：危险、受伤、失温、夜袭、矿机出块、收获 $SOL、支付成功、鱼咬钩、新篇章等。
+- 相同文案或同一物品，3 秒内合并计数（×N / +N）。
+- 对话框或弹窗打开时（body 上有 `hud-dialog-open` / `hud-modal-open`），提示暂停并隐藏，计时冻结，关闭后继续。
+- 横幅最大宽度为 `min(520px, 60vw)`，横屏时还受「状态卡与按钮组之间的空隙」限制。
+- 提示强度存在 localStorage 的 `castaway_notice_mode` 键里：full / lite（默认）/ important。完整 = 全部弹横幅；精简 = small 走图标或胶囊、任务提示合并；仅重要 = 只显示 important。
+
+**调用点归类**：共 170 处，small 53、medium 104（其中 StorySystem 那 1 处在新篇章时按 important 处理）、important 13。另外设置面板「提示强度」的确认提示算 1 处 important。没写 level 的调用默认按 medium 处理，旧写法 `showToast(text)` / `showToast(text,'ok')` 都兼容。
+
+**验证**（headless Edge 914x411，DPR 2.625，触控，vite preview）：
+- 连续触发 6 条不同提示，同时可见横幅最多 1 条。显示顺序：A → 矿机（重要，插队）→ B → 任务（两条任务只留了最新一条）。物品走了图标弹出。
+- 合并计数：同一物品 3 次显示 +3，带黏土图标；相同文案 3 次显示 ×3。
+- 三档开关：完整时 small 弹横幅；仅重要时 medium 和 small 都不显示，important 照常显示；精简时 small 走图标。
+- 对话框打开时隐藏并暂停，关闭后继续显示下一条。
+- 菜单里三个按钮都是 64x44、13px，右边距 24px，设置能写进 localStorage。
+- 横幅不压任务条，也不压摇杆。
+- 控制台 0 报错，资源 0 个 404。
+
+**回滚**：备份在 `E:\CastawaySOL\_backup_toast_20261031\src`（改动前的整个 src）。
+- 整体回滚：把备份 src 拷回，删掉 `src/ui/NoticeCenter.js`。
+- 只回滚显示逻辑：只恢复 `src/ui/UIManager.js` 并删掉 NoticeCenter.js。其他文件里多出来的 level 参数会被旧实现忽略，不影响运行。
+- 也可以用 `git revert <本次提交>`。

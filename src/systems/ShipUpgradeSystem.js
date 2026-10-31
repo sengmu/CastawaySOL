@@ -109,12 +109,12 @@ export class ShipUpgradeSystem {
     // 检查货仓容量限制
     const maxSlots = this.getMaxCargoSlots();
     if (maxSlots <= 0) {
-      this.game.ui.showToast('⚠️ 当前船只暂未配置随船货仓！请前往船坞升级至【T2 龙骨风帆艇】！');
+      this.game.ui.showToast('⚠️ 当前船只暂未配置随船货仓！请前往船坞升级至【T2 龙骨风帆艇】！', 'medium');
       return false;
     }
 
     if (!this.cargoInventory[itemKey] && this.getUsedCargoSlots() >= maxSlots) {
-      this.game.ui.showToast(`❌ 随船货仓已满 (${this.getUsedCargoSlots()}/${maxSlots})！升级船体可扩充货位！`);
+      this.game.ui.showToast(`❌ 随船货仓已满 (${this.getUsedCargoSlots()}/${maxSlots})！升级船体可扩充货位！`, 'medium');
       return false;
     }
 
@@ -136,7 +136,7 @@ export class ShipUpgradeSystem {
 
     // 检查背包容量
     if (this.game.ui.isInventoryFull && this.game.ui.isInventoryFull(itemKey)) {
-      this.game.ui.showToast('❌ 随身行囊已满，无法容纳更多物品！');
+      this.game.ui.showToast('❌ 随身行囊已满，无法容纳更多物品！', 'medium');
       return false;
     }
 
@@ -170,7 +170,7 @@ export class ShipUpgradeSystem {
     }
 
     if (movedTotal > 0 && this.game.ui) {
-      this.game.ui.showToast(`📦 成功将 ${movedTotal} 件随船货物一键卸载并入库【营地储物箱】！`);
+      this.game.ui.showToast(`📦 成功将 ${movedTotal} 件随船货物一键卸载并入库【营地储物箱】！`, 'medium');
       soundEngine.playPlaceFurniture();
     }
     return movedTotal;
@@ -180,7 +180,7 @@ export class ShipUpgradeSystem {
   performSolUpgrade() {
     const nextTier = this.getNextTier();
     if (!nextTier || !nextTier.solCost) {
-      if (this.game && this.game.ui) this.game.ui.showToast('已达到最高探索舰等级！');
+      if (this.game && this.game.ui) this.game.ui.showToast('已达到最高探索舰等级！', 'medium');
       return false;
     }
 
@@ -188,7 +188,7 @@ export class ShipUpgradeSystem {
     const solCount = inv['sol_token'] || 0;
     if (solCount < nextTier.solCost) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast(`🪙 所持 $SOL 不足 (需要 ${nextTier.solCost} $SOL，当前持有 ${solCount} $SOL)！请先至营地矿机出块收取！`);
+        this.game.ui.showToast(`🪙 所持 $SOL 不足 (需要 ${nextTier.solCost} $SOL，当前持有 ${solCount} $SOL)！请先至营地矿机出块收取！`, 'medium');
       }
       return false;
     }
@@ -261,7 +261,7 @@ export class ShipUpgradeSystem {
     const check = this.checkCanUpgrade();
     if (!check.ok) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('❌ 升级资材不足！请根据工程图纸准备充足材料！');
+        this.game.ui.showToast('❌ 升级资材不足！请根据工程图纸准备充足材料！', 'medium');
       }
       return false;
     }
@@ -346,7 +346,7 @@ export class ShipUpgradeSystem {
     }
 
     if (this.game && this.game.ui) {
-      this.game.ui.showToast(`🎣 【船尾深海拖网】起航归港：起获了 ${rewardName} x${rewardCount}！已收入随船仓！`);
+      this.game.ui.showToast(`🎣 【船尾深海拖网】起航归港：起获了 ${rewardName} x${rewardCount}！已收入随船仓！`, 'small');
     }
 
     return { key: rewardKey, count: rewardCount, name: rewardName };

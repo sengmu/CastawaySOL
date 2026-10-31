@@ -8,6 +8,7 @@ import { haptics } from '../core/HapticFeedback.js';
 import { createElement, Backpack, Hammer, BookOpen, Maximize, Minimize, MoreHorizontal, Wallet, Zap, ArrowUp, Droplets, MessageCircle, Gem, Mountain, Sailboat, PawPrint, Heart, Fish, Flame, Bed, Trees, Drumstick, Menu } from 'lucide';
 import { VISUAL_QUALITY_KEY } from '../core/VisualQuality.js';
 import { iconHTML } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
+import { NoticeCenter, NOTICE_MODES } from './NoticeCenter.js'; // 提示系统优化（2026-10-31）
 
 function hudIcon(definition) {
   const svg = createElement(definition);
@@ -952,6 +953,7 @@ export class UIManager {
       <button class="hud-nav-btn hud-nav-sol" id="btn-solana">🟣 SOL 钱包连接</button>
       <button class="hud-nav-btn" id="btn-fullscreen" title="进入全屏沉浸模式" aria-label="全屏">⛶ <span class="hud-nav-desktop-label">全屏</span></button>
       <div class="hud-drawer-quality" role="group" aria-label="画质设置"><span class="hud-drawer-qlabel">画质</span><button type="button" class="quality-opt" data-quality="low" aria-pressed="false">低</button><button type="button" class="quality-opt" data-quality="medium" aria-pressed="false">中</button><button type="button" class="quality-opt" data-quality="high" aria-pressed="false">高</button></div>
+      <div class="hud-drawer-quality hud-drawer-notice" role="group" aria-label="提示强度"><span class="hud-drawer-qlabel">提示</span><button type="button" class="notice-opt" data-notice="full" aria-pressed="false">完整</button><button type="button" class="notice-opt" data-notice="lite" aria-pressed="false">精简</button><button type="button" class="notice-opt" data-notice="important" aria-pressed="false">仅重要</button></div>
     `;
     document.body.appendChild(drawer);
 
@@ -1107,7 +1109,7 @@ export class UIManager {
       const res = this.survival.drinkCanteen();
       soundEngine.playItemDrop();
       this.updateSurvivalHUD();
-      this.showToast(res.msg);
+      this.showToast(res.msg, 'medium');
       if (res.success && window.__game && window.__game.story && window.__game.story.onDrinkWater) {
         window.__game.story.onDrinkWater();
       }
@@ -1207,7 +1209,7 @@ export class UIManager {
         if (g && g.miningRig) {
           this.openMiningRigModal(g.miningRig);
         } else {
-          this.showToast('⛏️ 正在连接营地 DePIN 绿色解密矿机……');
+          this.showToast('⛏️ 正在连接营地 DePIN 绿色解密矿机……', 'medium');
         }
       });
     }
@@ -1256,9 +1258,27 @@ export class UIManager {
         const quality = btn.dataset.quality;
         try { window.localStorage.setItem(VISUAL_QUALITY_KEY, quality); } catch (e) { /* 隐私模式下无法保存 */ }
         this.syncQualityButtons(quality);
-        this.showToast(`✅ 画质已设为「${btn.textContent}」，重新打开游戏后生效`, 'ok');
+        this.showToast(`✅ 画质已设为「${btn.textContent}」，重新打开游戏后生效`, 'ok', 'medium');
       });
     });
+    // 提示系统优化（2026-10-31）：菜单里的「提示强度」完整 / 精简 / 仅重要（默认精简，存 localStorage）
+    const noticeLabels = { full: '完整', lite: '精简', important: '仅重要' };
+    const syncNotice = () => {
+      const m = this._notice().mode;
+      secondaryNav.querySelectorAll('.notice-opt').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.notice === m)));
+    };
+    secondaryNav.querySelectorAll('.notice-opt').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        haptics.light();
+        const mode = btn.dataset.notice;
+        if (!NOTICE_MODES.includes(mode)) return;
+        this._notice().setMode(mode);
+        syncNotice();
+        this.showToast(`✅ 提示强度：${noticeLabels[mode]}`, 'ok', 'important');
+      });
+    });
+    syncNotice();
     document.getElementById('btn-open-shop').addEventListener('click', () => {
       haptics.light();
       this.openShopModal();
@@ -1290,7 +1310,7 @@ export class UIManager {
     // UI 重叠优化：点遮罩（任意处）同样关闭对话框；点任务条用提示显示完整任务
     if (this.dialogScrim) this.dialogScrim.addEventListener('click', (event) => { event.stopPropagation(); this.dialogBox.click(); });
     const questEl = document.getElementById('quest-banner');
-    if (questEl) questEl.addEventListener('click', () => { haptics.light(); this.showToast(this.currentQuest, 'quest'); });
+    if (questEl) questEl.addEventListener('click', () => { haptics.light(); this.showToast(this.currentQuest, 'quest', 'medium'); });
 
     // 初始化 Solana 钱包按钮状态
     this.updateSolanaBtn();
@@ -1305,19 +1325,19 @@ export class UIManager {
       const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
       if (req) {
         req.call(docEl).then(() => {
-          this.showToast('📱 已开启全屏沉浸式探索模式');
+          this.showToast('📱 已开启全屏沉浸式探索模式', 'medium');
           if (screen.orientation && screen.orientation.lock) {
             screen.orientation.lock('landscape').catch(() => {});
           }
         }).catch(() => {
-          this.showToast('提示：可将本游戏添加到手机桌面主屏幕以开启最佳原生全屏体验');
+          this.showToast('提示：可将本游戏添加到手机桌面主屏幕以开启最佳原生全屏体验', 'medium');
         });
       }
     } else {
       const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
       if (exit) {
         exit.call(document).then(() => {
-          this.showToast('已退出全屏');
+          this.showToast('已退出全屏', 'medium');
           if (screen.orientation && screen.orientation.unlock) {
             try { screen.orientation.unlock(); } catch (e) {}
           }
@@ -1623,39 +1643,20 @@ export class UIManager {
     if (tag.hidden !== hidden) tag.hidden = hidden;
   }
 
-  // UI 第二步优化：提示队列——最多同时 3 条，按成功/失败/获得/普通分颜色；相同消息合并计数，排队时加快轮转，连续拾取不丢消息
-  // 兼容旧调用 showToast(text)；可选第二参数 type: 'ok' | 'fail' | 'gain' | 'info'
-  showToast(text, type) {
-    const msg = formatKeyHints(text == null ? '' : String(text)).trim();
-    if (!msg || !this.toast) return;
-    const active = this._toastActive || (this._toastActive = []);
-    const pending = this._toastPending || (this._toastPending = []);
-    const same = active.find((t) => t.msg === msg);
-    if (same) {
-      same.count += 1;
-      this._renderToastItem(same);
-      this._scheduleToast(same, 2800);
-      return;
-    }
-    const queued = pending.find((t) => t.msg === msg);
-    if (queued) { queued.count += 1; return; }
-    const item = { msg, kind: type || this._toastKind(msg), count: 1, el: null, timer: null, until: 0 };
-    if (active.length >= 3) {
-      pending.push(item);
-      if (pending.length > 30) pending.shift();
-      const oldest = active[0];
-      if (oldest && oldest.until - performance.now() > 1200) this._scheduleToast(oldest, 1200);
-      return;
-    }
-    this._presentToast(item);
+  // 提示系统优化（2026-10-31）：交给 NoticeCenter（同时 1 条横幅 + 排队、三档 small/medium/important、3 秒合并计数、对话框打开时暂停）
+  // 兼容旧调用 showToast(text) / showToast(text, type)；新增 level：showToast(text, 'small') / showToast(text, 'ok', 'important') / showToast(text, { type, level, item, count, group })
+  showToast(text, type, level) {
+    this._notice().push(text, type, level);
   }
 
-  // showBubbleNotice 补全（2026-10-31）：FishingSystem/CookingSystem 调用的气泡提示，复用 showToast 提示队列（最多 3 条、分颜色、合并重复）
-  // 兼容 showBubbleNotice(text)、showBubbleNotice(text, 'ok'|'fail'|'gain'|'info')、showBubbleNotice(text, { type })；其余参数（时长、图标等）忽略
-  showBubbleNotice(text, options) {
-    const type = typeof options === 'string' ? options : (options && typeof options === 'object' ? options.type : undefined);
-    const valid = type === 'ok' || type === 'fail' || type === 'gain' || type === 'info';
-    this.showToast(text, valid ? type : undefined);
+  // 兼容 showBubbleNotice(text)、(text, 'ok'|'fail'|'gain'|'info')、(text, 'small'|'medium'|'important')、(text, { type, level })；时长、图标等参数忽略
+  showBubbleNotice(text, options, level) {
+    this._notice().push(text, options, level);
+  }
+
+  _notice() {
+    if (!this.notices) this.notices = new NoticeCenter(this, formatKeyHints);
+    return this.notices;
   }
 
   _toastKind(msg) {
@@ -1665,42 +1666,6 @@ export class UIManager {
     return 'info';
   }
 
-  _presentToast(item) {
-    const el = document.createElement('div');
-    el.className = `toast-item toast-${item.kind}`;
-    item.el = el;
-    this._renderToastItem(item);
-    this.toast.appendChild(el);
-    this._toastActive.push(item);
-    this._scheduleToast(item, this._toastPending.length ? 1600 : 2800);
-  }
-
-  _renderToastItem(item) {
-    if (!item.el) return;
-    item.el.textContent = item.msg;
-    if (item.count > 1) {
-      const count = document.createElement('span');
-      count.className = 'toast-count';
-      count.textContent = `×${item.count}`;
-      item.el.appendChild(count);
-    }
-  }
-
-  _scheduleToast(item, ms) {
-    if (!item) return;
-    clearTimeout(item.timer);
-    item.until = performance.now() + ms;
-    item.timer = setTimeout(() => this._dismissToast(item), ms);
-  }
-
-  _dismissToast(item) {
-    clearTimeout(item.timer);
-    const index = this._toastActive.indexOf(item);
-    if (index >= 0) this._toastActive.splice(index, 1);
-    if (item.el) item.el.remove();
-    const next = this._toastPending.shift();
-    if (next) this._presentToast(next);
-  }
   // UI 重叠优化（2026-10-31）：把顶栏按钮组宽度/底边写进 CSS 变量（任务条、提示、对话框、抽屉据此避让）；标记对话框/面板打开状态
   _initOverlapGuards(topNav, dashboard) {
     const root = document.documentElement;
@@ -1805,13 +1770,13 @@ export class UIManager {
   // 扩充行囊容量
   expandInventory(extraSlots = 10) {
     this.bonusInventorySlots += extraSlots;
-    this.showToast(`🎒 随身行囊成功扩容 +${extraSlots} 格！(当前总容量: ${this.maxInventorySlots})`);
+    this.showToast(`🎒 随身行囊成功扩容 +${extraSlots} 格！(当前总容量: ${this.maxInventorySlots})`, 'medium');
     return this.maxInventorySlots;
   }
 
   addInventory(type, count = 1) {
     if (this.isInventoryFull(type)) {
-      this.showToast(`❌ 行囊已满 (${this.usedInventorySlots}/${this.maxInventorySlots})！请将物资存入营地木箱或使用【行囊扩容】！`);
+      this.showToast(`❌ 行囊已满 (${this.usedInventorySlots}/${this.maxInventorySlots})！请将物资存入营地木箱或使用【行囊扩容】！`, 'medium');
       return false;
     }
     this.inventory[type] = (this.inventory[type] || 0) + count;
@@ -1819,7 +1784,7 @@ export class UIManager {
     this.bottomBar.querySelectorAll('[data-id]').forEach(slot => {
       if (slot.dataset.id === type) slot.classList.add('received');
     });
-    this.showToast(`获得了【${this.getItemName(type)}】x${count}！`);
+    this.showToast(`获得了【${this.getItemName(type)}】x${count}！`, { level: 'small', item: type, count });
     return true;
   }
 
@@ -2211,9 +2176,9 @@ export class UIManager {
       // 首次探明全新蓝图：触发胜利金光音效与专属高光通知
       if (isNewDiscovery) {
         soundEngine.playVictory();
-        this.showToast(`✨【图鉴大突破】探明全新蓝图：成功融合【${prodName}】！`);
+        this.showToast(`✨【图鉴大突破】探明全新蓝图：成功融合【${prodName}】！`, 'medium');
       } else {
-        this.showToast(`✨ 成功融合制作【${prodName}】！`);
+        this.showToast(`✨ 成功融合制作【${prodName}】！`, 'medium');
       }
 
       this.openMergeModal();
@@ -2225,7 +2190,7 @@ export class UIManager {
     } else {
       soundEngine.playMonsterGrowl();
       haptics.light();
-      this.showToast('💨 融合未产生有效化学反应！原料已返还，尝试其他道具组合吧！');
+      this.showToast('💨 融合未产生有效化学反应！原料已返还，尝试其他道具组合吧！', 'medium');
       this.mergeSlots = [null, null];
       this.openMergeModal();
     }
@@ -2385,11 +2350,11 @@ export class UIManager {
           const res = await solanaBridge.connectWallet('mwa');
           btnMwa.disabled = false;
           if (res.success) {
-            this.showToast(`🎉 钱包已通过 ${res.type} 成功接入！`);
+            this.showToast(`🎉 钱包已通过 ${res.type} 成功接入！`, 'medium');
             this.updateSolanaBtn();
             renderModal();
           } else {
-            this.showToast(`提示: ${res.message}`);
+            this.showToast(`提示: ${res.message}`, 'medium');
             renderModal();
           }
         };
@@ -2399,7 +2364,7 @@ export class UIManager {
       if (btnGuest) {
         btnGuest.onclick = async () => {
           const res = await solanaBridge.connectWallet('guest');
-          this.showToast('👤 已切换至游客试玩模式');
+          this.showToast('👤 已切换至游客试玩模式', 'medium');
           this.updateSolanaBtn();
           renderModal();
         };
@@ -2415,10 +2380,10 @@ export class UIManager {
           if (res.success) {
             soundEngine.playPlaceFurniture();
             this.addInventory('sea_shell', 100);
-            this.showToast(res.hardwareSigned ? '🌟 恭喜！已使用 Seeker 硬件私钥完成第 ' + this.survival.day + ' 天链上打卡！(+100 贝壳)' : '✅ 完成今日打卡存证！(+100 贝壳)');
+            this.showToast(res.hardwareSigned ? '🌟 恭喜！已使用 Seeker 硬件私钥完成第 ' + this.survival.day + ' 天链上打卡！(+100 贝壳)' : '✅ 完成今日打卡存证！(+100 贝壳)', 'medium');
             renderModal();
           } else {
-            this.showToast(`打卡未完成: ${res.message || '用户取消'}`);
+            this.showToast(`打卡未完成: ${res.message || '用户取消'}`, 'medium');
             renderModal();
           }
         };
@@ -2433,11 +2398,11 @@ export class UIManager {
           btnAirdrop.disabled = false;
           if (res.success) {
             soundEngine.playPlaceFurniture();
-            this.showToast(`🎉 成功领取 1.0 SOL Devnet 测试币！余额: ${res.balance.toFixed(3)} SOL`);
+            this.showToast(`🎉 成功领取 1.0 SOL Devnet 测试币！余额: ${res.balance.toFixed(3)} SOL`, 'important');
             this.updateSolanaBtn();
             renderModal();
           } else {
-            this.showToast(`空投提示: ${res.message}`);
+            this.showToast(`空投提示: ${res.message}`, 'medium');
           }
         };
       }
@@ -2446,7 +2411,7 @@ export class UIManager {
       if (btnDisconnect) {
         btnDisconnect.onclick = async () => {
           await solanaBridge.disconnect();
-          this.showToast('已断开钱包连接');
+          this.showToast('已断开钱包连接', 'medium');
           this.updateSolanaBtn();
           renderModal();
         };
@@ -2565,7 +2530,7 @@ export class UIManager {
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
         navigator.clipboard?.writeText(cert.mintId);
-        this.showToast(`已复制本地纪念证书编号: ${cert.mintId}！`);
+        this.showToast(`已复制本地纪念证书编号: ${cert.mintId}！`, 'medium');
       });
     }
 
@@ -2580,7 +2545,7 @@ export class UIManager {
     if (stayBtn) {
       stayBtn.addEventListener('click', () => {
         this.modalBackdrop.style.display = 'none';
-        this.showToast('继续留岛漫游，享受无拘无束的海岛慢生活吧！');
+        this.showToast('继续留岛漫游，享受无拘无束的海岛慢生活吧！', 'medium');
       });
     }
 
@@ -2605,66 +2570,66 @@ export class UIManager {
       this.inventory.apple -= 1;
       this.survival.consume({ hunger: 20, life: 5 });
       soundEngine.playItemDrop();
-      this.showToast('🍎 咬下一口清脆甘甜的苹果，饥饿+20，生命+5！');
+      this.showToast('🍎 咬下一口清脆甘甜的苹果，饥饿+20，生命+5！', 'small');
     } else if (id === 'coconut') {
       this.inventory.coconut -= 1;
       this.survival.consume({ hunger: 15, water: 25, life: 8 });
       soundEngine.playItemDrop();
-      this.showToast('🥥 喝尽清甜椰子水，饥饿+15，饮水+25，生命+8！');
+      this.showToast('🥥 喝尽清甜椰子水，饥饿+15，饮水+25，生命+8！', 'small');
     } else if (id === 'fish') {
       this.inventory.fish -= 1;
       this.survival.consume({ hunger: 25, life: 8 });
       soundEngine.playItemDrop();
-      this.showToast('🐟 生吃了条鱼，饥饿+25（去中央篝火烤熟营养加倍）！');
+      this.showToast('🐟 生吃了条鱼，饥饿+25（去中央篝火烤熟营养加倍）！', 'small');
     } else if (id === 'baked_fish') {
       this.inventory.baked_fish -= 1;
       this.survival.consume({ hunger: 65, life: 25, fatigue: -15 });
       soundEngine.playCooking();
-      this.showToast('🍱 享用了外焦里嫩的烤大鱼！饥饿+65，生命+25，疲劳-15！');
+      this.showToast('🍱 享用了外焦里嫩的烤大鱼！饥饿+65，生命+25，疲劳-15！', 'small');
     } else if (id === 'baked_apple') {
       this.inventory.baked_apple -= 1;
       this.survival.consume({ hunger: 35, water: 10, life: 15 });
       soundEngine.playCooking();
-      this.showToast('🥧 享用了热气腾腾的烤苹果！饥饿+35，饮水+10，生命+15！');
+      this.showToast('🥧 享用了热气腾腾的烤苹果！饥饿+35，饮水+10，生命+15！', 'small');
     } else if (id === 'canteen_clean_water') {
       this.inventory.canteen_clean_water -= 1;
       this.survival.consume({ water: 50, life: 20 });
       this.survival.refillCanteen();
       soundEngine.playSplash();
-      this.showToast('💧 畅饮了甘甜冰冽的纯净水！水分大幅回满，水壶已灌满！');
+      this.showToast('💧 畅饮了甘甜冰冽的纯净水！水分大幅回满，水壶已灌满！', 'small');
     } else if (id === 'raw_meat') {
       this.inventory.raw_meat -= 1;
       this.survival.consume({ hunger: 30, life: 5 });
       soundEngine.playItemDrop();
-      this.showToast('🥩 生嚼了野兽肉，饥饿+30，生命+5（前往营火烤熟更美味！）');
+      this.showToast('🥩 生嚼了野兽肉，饥饿+30，生命+5（前往营火烤熟更美味！）', 'small');
     } else if (id === 'cooked_meat') {
       this.inventory.cooked_meat -= 1;
       this.survival.consume({ hunger: 75, life: 35, fatigue: -20 });
       soundEngine.playCooking();
-      this.showToast('🍖 享用了香烤野味排骨大餐！外酥里嫩，饥饿+75，生命+35，疲劳-20！');
+      this.showToast('🍖 享用了香烤野味排骨大餐！外酥里嫩，饥饿+75，生命+35，疲劳-20！', 'small');
     } else if (id === 'crab_meat') {
       this.inventory.crab_meat -= 1;
       this.survival.consume({ hunger: 25, life: 8 });
       soundEngine.playItemDrop();
-      this.showToast('🦀 品尝了新鲜红蟹肉，饥饿+25，生命+8！');
+      this.showToast('🦀 品尝了新鲜红蟹肉，饥饿+25，生命+8！', 'small');
     } else if (id === 'cooked_crab') {
       this.inventory.cooked_crab -= 1;
       this.survival.consume({ hunger: 55, life: 25, fatigue: -10 });
       soundEngine.playCooking();
-      this.showToast('🦀 享用了炭烤极品红蟹！鲜甜多汁，饥饿+55，生命+25，疲劳-10！');
+      this.showToast('🦀 享用了炭烤极品红蟹！鲜甜多汁，饥饿+55，生命+25，疲劳-10！', 'small');
     } else if (id === 'large_backpack') {
       this.inventory.large_backpack -= 1;
       this.bonusInventorySlots = (this.bonusInventorySlots || 0) + 4;
       soundEngine.playPlaceFurniture();
-      this.showToast('🎒 装备了【拓荒者大皮包】！随身行囊存储容量永久扩充 +4 格！');
+      this.showToast('🎒 装备了【拓荒者大皮包】！随身行囊存储容量永久扩充 +4 格！', 'medium');
     } else if (id === 'beast_trap') {
       if (window.__game && window.__game.wildlifeCombat) {
         this.inventory.beast_trap -= 1;
         window.__game.wildlifeCombat.placeTrapAtPlayer();
         soundEngine.playPlaceFurniture();
-        this.showToast('🪤 成功在脚下布置【齿状捕兽夹】！踏入的野兽将被禁锢 4 秒并遭受致命破绽！');
+        this.showToast('🪤 成功在脚下布置【齿状捕兽夹】！踏入的野兽将被禁锢 4 秒并遭受致命破绽！', 'medium');
       } else {
-        this.showToast('当前无法布置捕兽夹！');
+        this.showToast('当前无法布置捕兽夹！', 'medium');
         return;
       }
     } else if (id === 'wooden_spikes') {
@@ -2672,36 +2637,36 @@ export class UIManager {
         this.inventory.wooden_spikes -= 1;
         window.__game.wildlifeCombat.placeSpikesAtPlayer();
         soundEngine.playPlaceFurniture();
-        this.showToast('🪵 成功在脚下筑起【防兽尖木拒马】！可阻挡野兽冲撞并反震 50 点伤害！');
+        this.showToast('🪵 成功在脚下筑起【防兽尖木拒马】！可阻挡野兽冲撞并反震 50 点伤害！', 'medium');
       } else {
-        this.showToast('当前无法扎制拒马！');
+        this.showToast('当前无法扎制拒马！', 'medium');
         return;
       }
     } else if (id === 'golden_coconut') {
       this.inventory.golden_coconut -= 1;
       this.survival.consume({ hunger: 45, water: 50, life: 25, fatigue: -30 });
       soundEngine.playSplash();
-      this.showToast('🥥✨ 痛饮了小猴采摘的黄金海岛椰！饥饿+45，水分+50，疲劳消除-30！');
+      this.showToast('🥥✨ 痛饮了小猴采摘的黄金海岛椰！饥饿+45，水分+50，疲劳消除-30！', 'small');
     } else if (id === 'bird_egg') {
       this.inventory.bird_egg -= 1;
       this.survival.consume({ hunger: 30, life: 15 });
       soundEngine.playCooking();
-      this.showToast('🥚 品尝了富含优质蛋白的林间海鸟蛋！饥饿+30，生命+15！');
+      this.showToast('🥚 品尝了富含优质蛋白的林间海鸟蛋！饥饿+30，生命+15！', 'small');
     } else if (id === 'sea_crab') {
       this.inventory.sea_crab -= 1;
       this.survival.consume({ hunger: 25, life: 8 });
       soundEngine.playItemDrop();
-      this.showToast('🦀 生吃了退潮捕获的海蟹（去营火熏烤风味更佳）！饥饿+25，生命+8！');
+      this.showToast('🦀 生吃了退潮捕获的海蟹（去营火熏烤风味更佳）！饥饿+25，生命+8！', 'small');
     } else if (id === 'sardine') {
       this.inventory.sardine -= 1;
       this.survival.consume({ hunger: 20, life: 6 });
       soundEngine.playItemDrop();
-      this.showToast('🐟 生吃了肥美的小沙丁鱼！饥饿+20，生命+6！');
+      this.showToast('🐟 生吃了肥美的小沙丁鱼！饥饿+20，生命+6！', 'small');
     } else if (id === 'smoked_fish') {
       this.inventory.smoked_fish -= 1;
       this.survival.consume({ hunger: 80, life: 35, fatigue: -25 });
       soundEngine.playCooking();
-      this.showToast('🍱✨ 享用了极品熏鱼干！远洋特权军粮，饥饿+80，生命+35，疲劳大减-25！');
+      this.showToast('🍱✨ 享用了极品熏鱼干！远洋特权军粮，饥饿+80，生命+35，疲劳大减-25！', 'small');
     } else if (id === 'bone_armor') {
       this.inventory.bone_armor -= 1;
       this.hasBoneArmorEquipped = true;
@@ -2710,27 +2675,27 @@ export class UIManager {
         this.survival.consume({ life: 25 });
       }
       soundEngine.playPlaceFurniture();
-      this.showToast('🦺 成功穿戴【甲壳兽皮胸甲】！生命上限永久提升至 125，并获得冲撞霸体抗性！');
+      this.showToast('🦺 成功穿戴【甲壳兽皮胸甲】！生命上限永久提升至 125，并获得冲撞霸体抗性！', 'medium');
     } else if (id === 'herbal_paste') {
       this.inventory.herbal_paste -= 1;
       this.survival.consume({ life: 45, fatigue: -10 });
       soundEngine.playCooking();
-      this.showToast('🩹 涂抹了【止血树脂敷膏】！创伤迅速愈合，生命值大幅恢复 +45，疲劳-10！');
+      this.showToast('🩹 涂抹了【止血树脂敷膏】！创伤迅速愈合，生命值大幅恢复 +45，疲劳-10！', 'small');
     } else if (id === 'energy_drink') {
       this.inventory.energy_drink -= 1;
       this.survival.consume({ hunger: 30, water: 50, fatigue: -35 });
       soundEngine.playSplash();
-      this.showToast('🧃 痛饮了【清甜鲜萃果浆】！饥饿+30，饮水+50，疲劳大减-35！');
+      this.showToast('🧃 痛饮了【清甜鲜萃果浆】！饥饿+30，饮水+50，疲劳大减-35！', 'small');
     } else if (id === 'bamboo_canteen') {
       this.inventory.bamboo_canteen -= 1;
       this.survival.consume({ water: 45, life: 10 });
       soundEngine.playSplash();
-      this.showToast('🍶 痛饮了便携水壶中的甘泉！饮水+45，生命+10！');
+      this.showToast('🍶 痛饮了便携水壶中的甘泉！饮水+45，生命+10！', 'small');
     } else if (id === 'fire_arrow') {
-      this.showToast('🏹🔥【烈焰爆燃箭】：持有猎弓按 [R] 即可作为特殊贯穿弹药射出！');
+      this.showToast('🏹🔥【烈焰爆燃箭】：持有猎弓按 [R] 即可作为特殊贯穿弹药射出！', 'medium');
       return;
     } else {
-      this.showToast(`这是重要材料【${this.getItemName(id)}】，点击右上角【🔨合成台】进行组合融合！`);
+      this.showToast(`这是重要材料【${this.getItemName(id)}】，点击右上角【🔨合成台】进行组合融合！`, 'medium');
       return;
     }
 
@@ -2873,9 +2838,9 @@ export class UIManager {
             }
           });
           if (moved > 0) {
-            this.showToast(`📦 已将 ${moved} 件建材资材规整归入营地储物箱！`);
+            this.showToast(`📦 已将 ${moved} 件建材资材规整归入营地储物箱！`, 'medium');
           } else {
-            this.showToast('背包中暂无未归档的建筑材料。');
+            this.showToast('背包中暂无未归档的建筑材料。', 'medium');
           }
           renderContents();
         });
@@ -3338,7 +3303,7 @@ export class UIManager {
           monkeyHelper.mode = monkeyHelper.mode === 'follow' ? 'stay' : 'follow';
           haptics.medium();
           soundEngine.playPlaceFurniture();
-          this.showToast(monkeyHelper.mode === 'follow' ? '🐾 小猴已进入跟随探索模式！' : '⏸️ 小猴正在原地待命休息！');
+          this.showToast(monkeyHelper.mode === 'follow' ? '🐾 小猴已进入跟随探索模式！' : '⏸️ 小猴正在原地待命休息！', 'medium');
           render();
         });
       }
@@ -3792,7 +3757,7 @@ export class UIManager {
           miningRig.claimSolTokens();
           soundEngine.playItemDrop();
           haptics.heavy();
-          this.showToast(`🎉 成功收获 ${claimedAmt} 枚 $SOL 算力收益！`);
+          this.showToast(`🎉 成功收获 ${claimedAmt} 枚 $SOL 算力收益！`, 'important');
           render();
         });
       }
@@ -4042,9 +4007,9 @@ export class UIManager {
           const res = petCompanion.unlockWithCoins(id);
           if (res.ok) {
             petCompanion.setActivePet(id);
-            this.showToast(res.msg);
+            this.showToast(res.msg, 'medium');
           } else {
-            this.showToast(`⚠️ ${res.msg}`);
+            this.showToast(`⚠️ ${res.msg}`, 'medium');
           }
           render();
         });
@@ -4059,7 +4024,7 @@ export class UIManager {
             this.game.shopManager.open();
           } else {
             petCompanion.unlockWithSol(id);
-            this.showToast(`⚡ 成功激活【${petCompanion.getPetSpec(id).name}】随行特权！`);
+            this.showToast(`⚡ 成功激活【${petCompanion.getPetSpec(id).name}】随行特权！`, 'medium');
           }
         });
       });
@@ -4101,7 +4066,7 @@ export class UIManager {
           const foodKey = btn.getAttribute('data-food');
           const res = petCompanion.feedPet(currentFeedingPetId, foodKey);
           if (res.ok) {
-            this.showToast(res.msg);
+            this.showToast(res.msg, 'medium');
           }
           render();
         });
@@ -4690,7 +4655,7 @@ export class UIManager {
         const targetId = btn.getAttribute('data-id');
         const check = nauticalChart.checkSupplies(targetId);
         if (!check.ok) {
-          this.showToast(`❌ 无法起航：${check.reason}`);
+          this.showToast(`❌ 无法起航：${check.reason}`, 'medium');
           return;
         }
 
@@ -4701,7 +4666,7 @@ export class UIManager {
         if (window.__game && window.__game.travelToIsland) {
           window.__game.travelToIsland(targetId);
         } else {
-          this.showToast(`⛵ 正在扬帆驶向【${nauticalChart.islands[targetId].name}】……`);
+          this.showToast(`⛵ 正在扬帆驶向【${nauticalChart.islands[targetId].name}】……`, 'medium');
         }
       });
     });

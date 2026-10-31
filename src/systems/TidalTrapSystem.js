@@ -190,7 +190,7 @@ export class TidalTrapSystem {
   harvestTrap() {
     const total = this.getTotalCatches();
     if (total <= 0) {
-      this.game.ui.showToast('🦀 捕蟹笼空空如也，请投入诱饵静待下一次退潮！');
+      this.game.ui.showToast('🦀 捕蟹笼空空如也，请投入诱饵静待下一次退潮！', 'medium');
       return false;
     }
 
@@ -231,7 +231,7 @@ export class TidalTrapSystem {
     this.game.ui.renderInventory();
     haptics.medium();
     soundEngine.playItemDrop();
-    this.game.ui.showToast(`🪱 成功投入诱饵【${this.game.ui.getItemName(itemKey)}】！未来 3 次潮汐起获率暴涨 200%！`);
+    this.game.ui.showToast(`🪱 成功投入诱饵【${this.game.ui.getItemName(itemKey)}】！未来 3 次潮汐起获率暴涨 200%！`, 'medium');
 
     return true;
   }
@@ -240,14 +240,14 @@ export class TidalTrapSystem {
   startSmoking(itemKey, count = 1) {
     const inv = this.game.ui.inventory;
     if ((inv[itemKey] || 0) < count) {
-      this.game.ui.showToast('行囊中原料不足！');
+      this.game.ui.showToast('行囊中原料不足！', 'medium');
       return false;
     }
 
     // 检查燃料：需要 1 份树枝或树皮引火
     const hasFuel = (inv['tree_branch'] || 0) > 0 || (inv['tree_bark'] || 0) > 0 || (inv['kindling'] || 0) > 0;
     if (!hasFuel) {
-      this.game.ui.showToast('🔥 熏烤需要引火燃料！请备好【树枝/树皮/引火物】投入炉坑！');
+      this.game.ui.showToast('🔥 熏烤需要引火燃料！请备好【树枝/树皮/引火物】投入炉坑！', 'medium');
       return false;
     }
 
@@ -284,7 +284,7 @@ export class TidalTrapSystem {
     this.game.ui.renderInventory();
     haptics.success();
     soundEngine.playCooking();
-    this.game.ui.showToast(`🔥 熏烤架已点燃！正在将【${this.game.ui.getItemName(itemKey)}】熏制风干为永久保质军粮！`);
+    this.game.ui.showToast(`🔥 熏烤架已点燃！正在将【${this.game.ui.getItemName(itemKey)}】熏制风干为永久保质军粮！`, 'medium');
 
     return true;
   }
@@ -292,7 +292,7 @@ export class TidalTrapSystem {
   // 收取熏制好的成品
   collectFinishedProducts() {
     if (this.finishedItems.length === 0) {
-      this.game.ui.showToast('熏烤架上暂无已风干熏好的食物！');
+      this.game.ui.showToast('熏烤架上暂无已风干熏好的食物！', 'medium');
       return false;
     }
 
@@ -358,7 +358,7 @@ export class TidalTrapSystem {
         }
 
         if (this.game && this.game.ui) {
-          this.game.ui.showToast('✨ 熏烤风干完成！请前往营火旁熏架收取【熏鱼/熏蟹】！');
+          this.game.ui.showToast('✨ 熏烤风干完成！请前往营火旁熏架收取【熏鱼/熏蟹】！', 'medium');
         }
       }
     }
