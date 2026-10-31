@@ -1420,7 +1420,12 @@ export class UIManager {
       text.textContent = '互动';
       cap.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
     }
-    const contextIcons = { gem: Gem, sos: Mountain, raft: Sailboat, monkey: PawPrint, partner: Heart, fishing: Fish, cooking: Flame, sleep: Bed, tree: Trees, villager: MessageCircle, pet_nest: PawPrint, sheep_pouch: Backpack, mining_rig: Zap };
+    const contextIcons = {
+      gem: Gem, sos: Mountain, raft: Sailboat, monkey: PawPrint, partner: Heart,
+      fishing: Fish, cooking: Flame, sleep: Bed, tree: Trees, villager: MessageCircle,
+      pet_nest: PawPrint, sheep_pouch: Backpack, mining_rig: Zap,
+      temple_enter: Mountain, temple_portal: Sailboat, temple_altar: Gem, temple_vault: Gem
+    };
     icon.innerHTML = hudIcon(contextIcons[type] || MessageCircle);
   }
 

@@ -37,6 +37,7 @@ import { TemplePuzzleSystem } from './systems/TemplePuzzleSystem.js';
 import { modelLoader } from './core/ModelLoader.js';
 import { soundEngine } from './core/AudioSystem.js';
 import { resolveVisualQuality, applyPostOverlay } from './core/VisualQuality.js';
+import { InteractionFeedbackSystem } from './systems/InteractionFeedbackSystem.js';
 
 class Game {
   constructor() {
@@ -189,13 +190,16 @@ class Game {
       this.saveSystem.startAutoSave(60000);
     }
 
-    // 15. 启动时钟与渲染循环
+    // 15. 初始化全沉浸式【可交互感知系统】(3D 地面柔光环 + HUD 动态情境胶囊)
+    this.interactionFeedback = new InteractionFeedbackSystem(this);
+
+    // 16. 启动时钟与渲染循环
     this.clock = new THREE.Clock();
     this.animate();
     window.__game = this;
     window.THREE = THREE;
 
-    // 16. 实时联动 Survival Kids 经典主线任务目标 Banner
+    // 17. 实时联动 Survival Kids 经典主线任务目标 Banner
     if (this.ui) {
       this.ui.updateObjective(this.story.getQuestBannerText());
     }
@@ -1444,6 +1448,11 @@ class Game {
     } else {
       this.ui.setContextAction('default');
       this.ui.hideInteraction();
+    }
+
+    // 更新可交互感知系统 (3D 地面柔光指示环 + HUD 动态情境胶囊)
+    if (this.interactionFeedback) {
+      this.interactionFeedback.update(delta);
     }
 
     this.renderer.render(this.scene, this.camera);
