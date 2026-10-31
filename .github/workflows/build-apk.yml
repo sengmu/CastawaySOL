@@ -21,16 +21,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
 
       - name: 安装项目依赖
-        run: npm ci
-
-      - name: 编译 Vite 前端高能资产
-        run: npm run build
-
-      - name: 同步资产至 Android 原生工程
-        run: npx cap sync android
+        run: npm install
 
       - name: 设置 JDK 17
         uses: actions/setup-java@v4
@@ -38,6 +31,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
+
+      - name: 编译 Vite 前端高能资产
+        run: npm run build
+
+      - name: 同步资产至 Android 原生工程
+        run: npx @capacitor/cli sync android
 
       - name: 赋予 Gradle 包装器执行权限
         run: chmod +x android/gradlew

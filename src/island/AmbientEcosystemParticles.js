@@ -42,12 +42,12 @@ export class AmbientEcosystemParticles {
     this.leafMesh.castShadow = false;
     this.leafMesh.receiveShadow = false;
 
-    // 预设主要树林活跃区域 (西北果园区、营地周边苹果树、东侧林带)
+    // 预设主要树林活跃区域 (营地苹果树绿障、西北果园区、东北悬崖雪松林)
     const forestZones = [
-      { cx: -18.0, cz: -10.0, radius: 8.0, spawnY: 4.8 }, // 西北丰盛果林
-      { cx: -3.8, cz: -3.0, radius: 4.5, spawnY: 4.2 },   // 营地西侧苹果树
-      { cx: 8.5, cz: -5.0, radius: 5.5, spawnY: 4.4 },    // 东侧林地小径
-      { cx: -8.0, cz: 20.0, radius: 5.0, spawnY: 4.2 }    // 东南草坪点缀
+      { cx: -17.0, cz: 20.0, radius: 6.0, spawnY: 4.6 }, // 营地后方苹果果林
+      { cx: -16.0, cz: -3.0, radius: 7.5, spawnY: 4.8 }, // 西北丰盛果林小径
+      { cx: 22.0, cz: -22.0, radius: 8.0, spawnY: 6.0 }, // 东北雪松深林
+      { cx: 5.0, cz: 6.0, radius: 5.0, spawnY: 4.2 }     // 中央小溪漫步林带
     ];
 
     this.leavesData = [];

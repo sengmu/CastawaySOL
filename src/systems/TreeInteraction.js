@@ -13,54 +13,92 @@ export class TreeInteraction {
     this.group = new THREE.Group();
     this.scene.add(this.group);
 
-    // 预设丰富热带海岛植被生态网络 (环绕营地、果林小径与海滩椰影)
+    // =========================================================================
+    // 全岛植被生态美学重构（四大主题林区 + 组团式景观设计）
+    // 1. 南岸与环岛海湾【热带海岛椰林弧带】（双株高低相伴，优美倾斜，海风椰影）
+    // 2. 营地生活区【温馨苹果树绿障与花境】（半月形环抱避风，留通透看海视线走廊）
+    // 3. 西北内陆【丰盛生态果园区与小径】（错落有致的林荫步道，采摘探索）
+    // 4. 东北悬崖天际线【高耸苍翠雪松群】（阶梯垂直纵深，与飞瀑绝美映衬）
+    // =========================================================================
     this.treePositions = [
-      // 1. 营地与出生点核心景观 (主角在 Z=4 朝向负Z，果树与海岛椰林分立两侧，视野通透明朗)
-      { id: 'apple_tree', pos: new THREE.Vector3(-3.8, 0, -3.0), scale: 1.1 },    // 左前方丰硕苹果树
-      { id: 'palm_tree', pos: new THREE.Vector3(4.2, 0, -2.5), scale: 1.12 },     // 右前方热带海岛椰子树
-      { id: 'apple_tree', pos: new THREE.Vector3(-8.5, 0, -5.5), scale: 1.1 },     // 西侧营地旁苹果树
-      { id: 'camellia_bush', pos: new THREE.Vector3(-2.2, 0, 0.8), scale: 0.95 },  // 近景山茶花灌木
-      { id: 'azalea_bush', pos: new THREE.Vector3(2.6, 0, 0.6), scale: 0.95 },     // 近景杜鹃花灌木
+      // -----------------------------------------------------------------------
+      // 【林区 1：南岸沙滩与出航湾·热带椰林优美弧带】
+      // 依海岸线走向排布，双株/三株错落组团，主树挺拔微倾(1.25x)，伴生树娇小微俯(0.88x)
+      // -----------------------------------------------------------------------
+      // 组团 A：出航码头西侧岬角景观（西侧海岸屏障）
+      { id: 'palm_tree', pos: new THREE.Vector3(-28.5, -0.2, 33.5), scale: 1.25, rotY: 0.6 },
+      { id: 'palm_tree', pos: new THREE.Vector3(-26.8, -0.2, 35.0), scale: 0.90, rotY: -0.8 },
+      { id: 'camellia_bush', pos: new THREE.Vector3(-27.6, -0.2, 34.0), scale: 0.95 },
 
-      // 2. 东侧小溪与绿荫林带 (热带果树与海岛灌木交相辉映)
-      { id: 'apple_tree', pos: new THREE.Vector3(8.5, 0, -6.5), scale: 1.12 },
-      { id: 'palm_tree', pos: new THREE.Vector3(6.2, 0, -11.0), scale: 1.08 },
-      { id: 'apple_tree', pos: new THREE.Vector3(10.5, 0, 1.5), scale: 1.08 },
-      { id: 'azalea_bush', pos: new THREE.Vector3(7.2, 0, -2.5), scale: 0.9 },
+      // 组团 B：南岸出生浅滩与木筏西侧（主视角左侧画框树景）
+      { id: 'palm_tree', pos: new THREE.Vector3(-18.5, -0.15, 37.0), scale: 1.22, rotY: 0.3 },
+      { id: 'palm_tree', pos: new THREE.Vector3(-16.8, -0.15, 38.6), scale: 0.85, rotY: 1.1 },
 
-      // 3. 西北丰盛果园区 (排布整齐的自然果林)
-      { id: 'apple_tree', pos: new THREE.Vector3(-19, 0, 16), scale: 1.1 },
-      { id: 'apple_tree', pos: new THREE.Vector3(-18.0, 0, -2.5), scale: 1.15 },
-      { id: 'apple_tree', pos: new THREE.Vector3(-15.0, 0, -7.0), scale: 1.08 },
-      { id: 'apple_tree', pos: new THREE.Vector3(-20.5, 0, -8.0), scale: 1.12 },
-      { id: 'apple_tree', pos: new THREE.Vector3(-16.0, 0, -14.0), scale: 1.05 },
-      { id: 'apple_tree', pos: new THREE.Vector3(-22.0, 0, -15.5), scale: 1.1 },
-      { id: 'camellia_bush', pos: new THREE.Vector3(-11.5, 0, -2.0), scale: 0.92 },
+      // 组团 C：南岸求生步道东侧迎宾椰树（通向营地的林荫入口）
+      { id: 'palm_tree', pos: new THREE.Vector3(-4.5, -0.12, 37.5), scale: 1.28, rotY: -0.4 },
+      { id: 'palm_tree', pos: new THREE.Vector3(-3.0, -0.12, 39.0), scale: 0.88, rotY: 0.9 },
+      { id: 'azalea_bush', pos: new THREE.Vector3(-3.8, -0.12, 38.2), scale: 0.92 },
 
-      // 4. 东北高台雪松深林 (高耸挺拔的雪松掩映原木营地，自然错落形成深林天际线)
-      { id: 'cedar_tree', pos: new THREE.Vector3(14.0, 1.8, -25.0), scale: 1.3 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(18.5, 1.8, -23.5), scale: 1.25 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(25.0, 1.8, -24.5), scale: 1.35 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(30.0, 1.8, -21.0), scale: 1.2 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(34.0, 1.8, -25.0), scale: 1.3 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(21.0, 1.8, -27.0), scale: 1.28 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(28.5, 1.8, -16.5), scale: 1.18 },
+      // 组团 D：东南黄金浅滩双椰伴生（主视角右侧画框树景）
+      { id: 'palm_tree', pos: new THREE.Vector3(7.5, -0.2, 34.5), scale: 1.26, rotY: 0.8 },
+      { id: 'palm_tree', pos: new THREE.Vector3(9.2, -0.2, 33.0), scale: 0.92, rotY: -0.5 },
 
-      // 5. 东南与西南海岸开阔草坪点缀
-      { id: 'apple_tree', pos: new THREE.Vector3(-8, 0, 20), scale: 1.05 },
-      { id: 'palm_tree', pos: new THREE.Vector3(9.0, 0, 12.0), scale: 1.1 },
-      { id: 'apple_tree', pos: new THREE.Vector3(15.0, 0, 8.5), scale: 1.08 },
-      { id: 'azalea_bush', pos: new THREE.Vector3(-4.0, 0, 9.5), scale: 0.9 },
+      // 组团 E：东海角沙滩椰影
+      { id: 'palm_tree', pos: new THREE.Vector3(18.5, -0.2, 30.5), scale: 1.18, rotY: -0.9 },
+      { id: 'palm_tree', pos: new THREE.Vector3(26.0, -0.2, 24.5), scale: 1.15, rotY: 0.4 },
 
-      // 6. 南岸与环岛沙滩热带椰林带 (海滩微风拂面，椰影婆娑)
-      { id: 'palm_tree', pos: new THREE.Vector3(-6, 0, 30), scale: 1.1 },
-      { id: 'palm_tree', pos: new THREE.Vector3(3.5, -0.2, 30), scale: 1.08 },
-      { id: 'palm_tree', pos: new THREE.Vector3(12.0, -0.2, 31), scale: 1.15 },
-      { id: 'palm_tree', pos: new THREE.Vector3(-14, 0, 32), scale: 1.12 },
-      { id: 'palm_tree', pos: new THREE.Vector3(-22, -0.2, 30), scale: 1.15 },
-      { id: 'palm_tree', pos: new THREE.Vector3(-30, -0.2, 25), scale: 1.08 },
-      { id: 'palm_tree', pos: new THREE.Vector3(22.0, -0.2, 28), scale: 1.12 },
-      { id: 'palm_tree', pos: new THREE.Vector3(30.0, -0.2, 22), scale: 1.05 }
+      // -----------------------------------------------------------------------
+      // 【林区 2：营地生活区·温馨半月形苹果果林与花境】
+      // 营地核心位于 X:-12~-17, Z:23~25（火塘/帐篷/净水台）
+      // 树木从北侧、西北侧呈半月弧形环抱，遮阴挡风，但南向完全开阔留出看海通廊
+      // -----------------------------------------------------------------------
+      // 组团 F：营地西侧生活遮阴大苹果树群（大中小三株生动伴生）
+      { id: 'apple_tree', pos: new THREE.Vector3(-21.5, 0, 23.5), scale: 1.25 },
+      { id: 'apple_tree', pos: new THREE.Vector3(-20.0, 0, 21.0), scale: 0.92 },
+      { id: 'camellia_bush', pos: new THREE.Vector3(-21.0, 0, 22.2), scale: 0.95 },
+
+      // 组团 G：营地北侧背风森林屏障（火塘正后方绿意画壁）
+      { id: 'apple_tree', pos: new THREE.Vector3(-14.5, 0, 18.0), scale: 1.28 },
+      { id: 'apple_tree', pos: new THREE.Vector3(-11.5, 0, 17.0), scale: 0.95 },
+      { id: 'azalea_bush', pos: new THREE.Vector3(-13.0, 0, 17.5), scale: 1.0 },
+
+      // 组团 H：营地东侧迎客果树与花境（告示牌与储物箱旁，点缀生机）
+      { id: 'apple_tree', pos: new THREE.Vector3(-6.5, 0, 21.5), scale: 1.18 },
+      { id: 'camellia_bush', pos: new THREE.Vector3(-5.2, 0, 23.0), scale: 0.9 },
+      { id: 'azalea_bush', pos: new THREE.Vector3(-7.5, 0, 24.5), scale: 0.9 },
+
+      // -----------------------------------------------------------------------
+      // 【林区 3：中央草坪与西北自然果林小径】
+      // 串联营地向北探索的视觉延伸，杜绝混杂椰树，纯粹温润的果树林荫带
+      // -----------------------------------------------------------------------
+      // 组团 I：小岛中央绿地过渡双树
+      { id: 'apple_tree', pos: new THREE.Vector3(-2.5, 0, 10.5), scale: 1.15 },
+      { id: 'apple_tree', pos: new THREE.Vector3(3.5, 0, 8.5), scale: 1.1 },
+      { id: 'azalea_bush', pos: new THREE.Vector3(0.5, 0, 9.5), scale: 0.95 },
+
+      // 组团 J：西北深入果园林荫密林
+      { id: 'apple_tree', pos: new THREE.Vector3(-12.5, 0, 4.0), scale: 1.22 },
+      { id: 'apple_tree', pos: new THREE.Vector3(-16.0, 0, 2.5), scale: 0.95 },
+      { id: 'apple_tree', pos: new THREE.Vector3(-19.5, 0, -4.5), scale: 1.25 },
+      { id: 'apple_tree', pos: new THREE.Vector3(-17.0, 0, -8.0), scale: 1.05 },
+      { id: 'camellia_bush', pos: new THREE.Vector3(-14.0, 0, -2.0), scale: 0.95 },
+
+      // 组团 K：小溪南岸幽静水畔果树
+      { id: 'apple_tree', pos: new THREE.Vector3(8.5, 0, -2.5), scale: 1.18 },
+      { id: 'apple_tree', pos: new THREE.Vector3(12.0, 0, -5.0), scale: 0.95 },
+      { id: 'azalea_bush', pos: new THREE.Vector3(10.2, 0, -3.8), scale: 0.9 },
+
+      // -----------------------------------------------------------------------
+      // 【林区 4：东北高地悬崖平台·挺拔雪松天际线】
+      // 位于高台(Y=1.8)，阶梯式高低排布(1.15x ~ 1.45x)，气势庄严挺拔，与瀑布同框
+      // -----------------------------------------------------------------------
+      { id: 'cedar_tree', pos: new THREE.Vector3(14.0, 1.8, -25.5), scale: 1.45 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(18.0, 1.8, -27.0), scale: 1.25 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(22.5, 1.8, -24.0), scale: 1.38 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(27.0, 1.8, -26.5), scale: 1.42 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(31.5, 1.8, -22.5), scale: 1.28 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(35.5, 1.8, -25.0), scale: 1.35 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(25.0, 1.8, -17.5), scale: 1.18 }
     ];
 
     this.initTrees();
@@ -88,6 +126,9 @@ export class TreeInteraction {
 
       const wrapper = new THREE.Group();
       wrapper.position.copy(conf.pos);
+      if (typeof conf.rotY === 'number') {
+        wrapper.rotation.y = conf.rotY;
+      }
       wrapper.userData.movementRadius = 0.5 * (conf.scale || 1);
       wrapper.add(model);
 

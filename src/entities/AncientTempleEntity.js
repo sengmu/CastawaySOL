@@ -1,23 +1,27 @@
-// CastawaySOL - 后山神秘古代神殿 3D 实体与遗迹场景 (Ancient Temple Entity)
+// CastawaySOL - 后山神殿入口遗迹·秘境传送光门 (Ancient Temple Gateway & Vortex Portal)
 // 位于主岛后山北部高地 (0, 0, -26)
-// 包含：三层古老青苔台阶、4 根发光符文石柱、太阳神兽雕像、密封玄铁青铜石门与日冕交互祭坛
+// 方案 A 定位：作为通往地下独立副本【AncientTempleScene】的秘境传送大门
+// 包含：三层古老青苔台阶、4 根发光符文石柱、太阳神兽雕像、深邃青蓝空间传送漩涡与导引信标石台
 import * as THREE from 'three';
 
 export class AncientTempleEntity {
   constructor(scene) {
     this.scene = scene;
     this.group = new THREE.Group();
-    this.group.name = 'ancient-temple-group';
+    this.group.name = 'ancient-temple-gateway-group';
 
     // 锚点位于后山北侧山麓台地
     this.anchorPosition = new THREE.Vector3(0, 0, -26);
     this.group.position.copy(this.anchorPosition);
 
-    // 交互点祭坛位置 (世界坐标: 0, 0.4, -22.5)
+    // 传送光门交互导引点位置 (世界坐标: 0, 0.4, -22.5)
     this.altarWorldPos = new THREE.Vector3(0, 0.4, -22.5);
 
-    this.isDoorOpen = false;
+    this.isDoorOpen = true; // 秘境传送门常驻流转开启
     this.doorMesh = null;
+    this.portalVortexMesh = null;
+    this.portalRings = [];
+    this.portalLight = null;
     this.altarGlowMesh = null;
     this.crystalLight = null;
 
@@ -26,7 +30,7 @@ export class AncientTempleEntity {
   }
 
   buildTempleArchitecture() {
-    // 材质定义：古代青灰石料、青苔石砖与发光金珀
+    // 材质定义：古代青灰石料、青苔石砖与发光金珀、青蓝传送灵光
     const stoneMat = new THREE.MeshStandardMaterial({
       color: 0x576574,
       roughness: 0.85,
@@ -48,11 +52,18 @@ export class AncientTempleEntity {
       roughness: 0.2
     });
 
-    const bronzeDoorMat = new THREE.MeshStandardMaterial({
-      color: 0x2c3a47,
-      metalness: 0.7,
-      roughness: 0.35,
-      flatShading: true
+    const portalVortexMat = new THREE.MeshBasicMaterial({
+      color: 0x00cec9,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide
+    });
+
+    const portalEnergyMat = new THREE.MeshBasicMaterial({
+      color: 0x74b9ff,
+      transparent: true,
+      opacity: 0.65,
+      side: THREE.DoubleSide
     });
 
     // 1. 三层渐进式青苔石阶基座
@@ -132,42 +143,62 @@ export class AncientTempleEntity {
       this.group.add(ring);
     });
 
-    // 5. 密封玄铁青铜石门 (可向两侧滑动或升起)
-    const doorGeo = new THREE.BoxGeometry(5.2, 5.2, 0.6);
-    this.doorMesh = new THREE.Mesh(doorGeo, bronzeDoorMat);
-    this.doorMesh.position.set(0, baseTopY + 2.6, -4.6);
-    this.doorMesh.castShadow = true;
-    this.group.add(this.doorMesh);
+    // 5. 方案 A：门框内【深邃时空传送漩涡】(Vortex Portal Gateway)
+    // 门洞内深渊背景
+    const portalBackdropGeo = new THREE.PlaneGeometry(4.8, 5.6);
+    const portalBackdropMat = new THREE.MeshBasicMaterial({ color: 0x050c18, side: THREE.DoubleSide });
+    const portalBackdrop = new THREE.Mesh(portalBackdropGeo, portalBackdropMat);
+    portalBackdrop.position.set(0, baseTopY + 2.8, -4.55);
+    this.group.add(portalBackdrop);
 
-    // 石门中央巨大太阳图腾纹路
-    const doorSunGeo = new THREE.RingGeometry(0.4, 1.0, 12);
-    const doorSun = new THREE.Mesh(doorSunGeo, runeMat);
-    doorSun.position.set(0, baseTopY + 2.6, -4.28);
-    this.group.add(doorSun);
+    // 旋转的青蓝流光传送漩涡盘
+    const vortexGeo = new THREE.CircleGeometry(2.2, 32);
+    this.portalVortexMesh = new THREE.Mesh(vortexGeo, portalVortexMat);
+    this.portalVortexMesh.position.set(0, baseTopY + 2.8, -4.5);
+    this.group.add(this.portalVortexMesh);
 
-    // 6. 前台日冕石盘与交互石碑 (交互核心点)
-    const altarBaseGeo = new THREE.CylinderGeometry(1.4, 1.8, 0.8, 8);
-    const altarBase = new THREE.Mesh(altarBaseGeo, stoneMat);
-    altarBase.position.set(0, baseTopY + 0.4, 3.5);
-    altarBase.castShadow = true;
-    this.group.add(altarBase);
+    // 双层同心流光光环
+    const ringInnerGeo = new THREE.RingGeometry(1.0, 1.4, 24);
+    const ringInner = new THREE.Mesh(ringInnerGeo, portalEnergyMat);
+    ringInner.position.set(0, baseTopY + 2.8, -4.48);
+    this.group.add(ringInner);
+    this.portalRings.push(ringInner);
 
-    // 日冕光环盘
-    const dialGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.2, 16);
-    const dialMat = new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.3, metalness: 0.8 });
-    const dial = new THREE.Mesh(dialGeo, dialMat);
-    dial.position.set(0, baseTopY + 0.9, 3.5);
-    this.group.add(dial);
+    const ringOuterGeo = new THREE.RingGeometry(1.7, 2.1, 24);
+    const ringOuter = new THREE.Mesh(ringOuterGeo, runeMat);
+    ringOuter.position.set(0, baseTopY + 2.8, -4.46);
+    this.group.add(ringOuter);
+    this.portalRings.push(ringOuter);
 
-    // 日冕中央跳动的金光聚能水晶
-    const crystalGeo = new THREE.OctahedronGeometry(0.38, 0);
-    this.altarGlowMesh = new THREE.Mesh(crystalGeo, runeMat);
-    this.altarGlowMesh.position.set(0, baseTopY + 1.45, 3.5);
+    // 传送漩涡神秘青蓝点光源
+    this.portalLight = new THREE.PointLight(0x00cec9, 3.0, 16, 1.8);
+    this.portalLight.position.set(0, baseTopY + 2.8, -3.8);
+    this.group.add(this.portalLight);
+
+    // 6. 前台【秘境传送导引石碑】(Portal Beacon Pedestal)
+    // 剔除地表重复日冕，塑造成接引探险者的传送石台
+    const pedestalGeo = new THREE.CylinderGeometry(1.2, 1.5, 0.7, 8);
+    const pedestal = new THREE.Mesh(pedestalGeo, stoneMat);
+    pedestal.position.set(0, baseTopY + 0.35, 3.5);
+    pedestal.castShadow = true;
+    this.group.add(pedestal);
+
+    // 导引台面上的符文星盘
+    const starDialGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.15, 16);
+    const starDialMat = new THREE.MeshStandardMaterial({ color: 0x1e272e, roughness: 0.3, metalness: 0.8 });
+    const starDial = new THREE.Mesh(starDialGeo, starDialMat);
+    starDial.position.set(0, baseTopY + 0.75, 3.5);
+    this.group.add(starDial);
+
+    // 中央悬浮跳动的空间信标灵石
+    const beaconGeo = new THREE.OctahedronGeometry(0.35, 0);
+    this.altarGlowMesh = new THREE.Mesh(beaconGeo, runeMat);
+    this.altarGlowMesh.position.set(0, baseTopY + 1.35, 3.5);
     this.group.add(this.altarGlowMesh);
 
-    // 暖金色点光源
-    this.crystalLight = new THREE.PointLight(0xffaa00, 2.2, 14, 1.5);
-    this.crystalLight.position.set(0, baseTopY + 1.6, 3.5);
+    // 温暖的导引金光点光源
+    this.crystalLight = new THREE.PointLight(0xffaa00, 2.0, 12, 1.5);
+    this.crystalLight.position.set(0, baseTopY + 1.5, 3.5);
     this.group.add(this.crystalLight);
 
     // 7. 左右两尊远古太阳守护兽雕像
@@ -211,21 +242,34 @@ export class AncientTempleEntity {
     this.group.add(beastGroup);
   }
 
-  // 打开古代石门 (滑升动画)
+  // 打开古代石门 (方案 A 保持兼容，增强传送漩涡光辉)
   openTempleDoor() {
     this.isDoorOpen = true;
-    if (this.doorMesh) {
-      // 门缓缓升入顶槽
-      this.doorMesh.position.y += 5.5;
+    if (this.portalLight) {
+      this.portalLight.intensity = 4.5;
+      this.portalLight.distance = 22;
     }
   }
 
-  // 帧动画更新水晶浮动与光晕
+  // 帧动画更新：传送旋涡旋转、符文光圈对冲与信标浮动
   update(delta) {
+    // 1. 传送漩涡流光旋转
+    if (this.portalVortexMesh) {
+      this.portalVortexMesh.rotation.z += delta * 1.2;
+    }
+    if (this.portalRings && this.portalRings.length >= 2) {
+      this.portalRings[0].rotation.z -= delta * 1.8;
+      this.portalRings[1].rotation.z += delta * 0.9;
+    }
+    if (this.portalLight) {
+      this.portalLight.intensity = 2.8 + Math.sin(Date.now() * 0.005) * 0.6;
+    }
+
+    // 2. 导引信标悬浮与光晕呼吸
     if (this.altarGlowMesh) {
       this.altarGlowMesh.rotation.y += delta * 1.5;
       this.altarGlowMesh.rotation.z += delta * 0.8;
-      this.altarGlowMesh.position.y = 3 * 0.45 + 1.45 + Math.sin(Date.now() * 0.003) * 0.08;
+      this.altarGlowMesh.position.y = 3 * 0.45 + 1.35 + Math.sin(Date.now() * 0.003) * 0.08;
     }
     if (this.crystalLight) {
       this.crystalLight.intensity = 2.0 + Math.sin(Date.now() * 0.004) * 0.5;
