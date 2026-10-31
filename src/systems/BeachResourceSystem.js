@@ -36,10 +36,14 @@ export class BeachResourceSystem {
       // 3.5 主岛后山与海蚀崖壁玄武岩富铁矿脉露头 (需使用石镐/石锤敲凿开采)
       { type: 'iron_vein', name: '玄武岩铁矿脉', pos: new THREE.Vector3(17.2, 0.4, -16.5), scale: 1.3, isMineable: true, hp: 3 },
       { type: 'iron_vein', name: '海蚀赤铁矿矿床', pos: new THREE.Vector3(-15.5, 0.2, 11.5), scale: 1.25, isMineable: true, hp: 3 },
+      { type: 'iron_vein', name: '沙滩富铁玄武岩', pos: new THREE.Vector3(14.5, 0.1, 26.0), scale: 1.2, isMineable: true, hp: 3 },
 
-      // 3.6 主岛后山高台与秘境高能硅晶矿脉 (DePIN 挖矿核心原料，爆出未解密硅晶原石 sol_crystal)
+      // 3.6 全岛 DePIN 高能硅晶矿脉群 (虚拟货币挖矿核心动力源，爆出未解密硅晶原石 sol_crystal)
       { type: 'sol_vein', name: '高能硅晶矿脉', pos: new THREE.Vector3(26.5, 1.8, -19.5), scale: 1.35, isMineable: true, hp: 3 },
       { type: 'sol_vein', name: '秘境硅晶矿床', pos: new THREE.Vector3(-24.5, 0.4, -10.5), scale: 1.3, isMineable: true, hp: 3 },
+      { type: 'sol_vein', name: '南岸入海高能硅晶露头', pos: new THREE.Vector3(-8.5, 0.1, 28.5), scale: 1.25, isMineable: true, hp: 3 },
+      { type: 'sol_vein', name: '西岬角幽紫硅晶簇', pos: new THREE.Vector3(-28.0, 0.2, 18.0), scale: 1.3, isMineable: true, hp: 3 },
+      { type: 'sol_vein', name: '东林幽境高能矿床', pos: new THREE.Vector3(22.0, 0.3, 8.5), scale: 1.25, isMineable: true, hp: 3 },
 
       // 4. 搁浅海难物资漂流木箱 (破损无线电、干燥电池、铁钉)
       { type: 'driftwood_chest', name: '搁浅物资箱', pos: new THREE.Vector3(-18.5, 0.2, 17.5), scale: 1.0, items: ['broken_radio', 'battery', 'nail'] },

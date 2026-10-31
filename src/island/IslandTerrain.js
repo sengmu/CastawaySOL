@@ -326,18 +326,20 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     this.waterMesh.receiveShadow = true;
     this.group.add(this.waterMesh);
 
-    // 动态波光浮层 (微漫反射水光)
-    const foamTex = this.waterTex.clone();
-    foamTex.repeat.set(20, 20); // 波光纹理平铺（原 48，约 8.8 米一格 → 约 21 米一格，更大块稀疏）
-    const foamMat = new THREE.MeshBasicMaterial({
-      map: foamTex,
-      transparent: true,
-      opacity: 0.16, // 原 0.32→0.2→0.16，让水面更平静
-      depthWrite: false
-    });
-    this.foamMesh = new THREE.Mesh(waterGeo, foamMat);
-    this.foamMesh.position.y = -0.33;
-    this.group.add(this.foamMesh);
+    // 动态波光浮层：移动端直接剔除 420m 巨大半透明双层 Overdraw，水面更纯净透亮且大幅降低显存带宽
+    if (!this.quality || this.quality.pixelRatioCap > 1.25) {
+      const foamTex = this.waterTex.clone();
+      foamTex.repeat.set(20, 20);
+      const foamMat = new THREE.MeshBasicMaterial({
+        map: foamTex,
+        transparent: true,
+        opacity: 0.16,
+        depthWrite: false
+      });
+      this.foamMesh = new THREE.Mesh(waterGeo, foamMat);
+      this.foamMesh.position.y = -0.33;
+      this.group.add(this.foamMesh);
+    }
   }
 
   // 1.5 海岛海滩专属：环岛动态拍岸白色微浪碎花带 (Shoreline White Foam Strip)

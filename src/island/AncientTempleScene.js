@@ -73,27 +73,32 @@ export class AncientTempleScene {
     const leftWallGeo = new THREE.BoxGeometry(2, 12, 54);
     const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
     leftWall.position.set(-16, 5.4, 0);
+    leftWall.userData.movementBox = true;
     this.group.add(leftWall);
 
     // 右护墙
     const rightWall = new THREE.Mesh(leftWallGeo, wallMat);
     rightWall.position.set(16, 5.4, 0);
+    rightWall.userData.movementBox = true;
     this.group.add(rightWall);
 
     // 南侧入口后墙 (留有 6 米宽的大拱门)
     const southWallMat = wallMat;
     const southPillarL = new THREE.Mesh(new THREE.BoxGeometry(13, 12, 2), southWallMat);
     southPillarL.position.set(-9.5, 5.4, 26);
+    southPillarL.userData.movementBox = true;
     this.group.add(southPillarL);
 
     const southPillarR = new THREE.Mesh(new THREE.BoxGeometry(13, 12, 2), southWallMat);
     southPillarR.position.set(9.5, 5.4, 26);
+    southPillarR.userData.movementBox = true;
     this.group.add(southPillarR);
 
     // 北侧殿堂终焉绝壁 (后墙)
     const northWallGeo = new THREE.BoxGeometry(32, 12, 2);
     const northWall = new THREE.Mesh(northWallGeo, wallMat);
     northWall.position.set(0, 5.4, -26);
+    northWall.userData.movementBox = true;
     this.group.add(northWall);
 
     // 殿堂两侧整齐排列的 8 根古代符文巨石立柱
@@ -117,6 +122,7 @@ export class AncientTempleScene {
     pillarPositions.forEach(([px, pz]) => {
       const pGroup = new THREE.Group();
       pGroup.position.set(px, 5.5, pz);
+      pGroup.userData.movementRadius = 1.2;
 
       const pMesh = new THREE.Mesh(pillarGeo, wallMat);
       pMesh.castShadow = true;
@@ -266,10 +272,12 @@ export class AncientTempleScene {
     const partitionMat = new THREE.MeshStandardMaterial({ color: 0x2f3640, roughness: 0.9 });
     const partLeft = new THREE.Mesh(partitionGeo, partitionMat);
     partLeft.position.set(-10, 5, -13);
+    partLeft.userData.movementBox = true;
     this.group.add(partLeft);
 
     const partRight = new THREE.Mesh(partitionGeo, partitionMat);
     partRight.position.set(10, 5, -13);
+    partRight.userData.movementBox = true;
     this.group.add(partRight);
 
     // 中间可升降滑动的玄铁青铜大门 (宽 8m, 高 6.5m)
@@ -283,6 +291,7 @@ export class AncientTempleScene {
     });
     this.innerDoorMesh = new THREE.Mesh(doorGeo, doorMat);
     this.innerDoorMesh.position.set(0, 3.25, -13);
+    this.innerDoorMesh.userData.movementBox = true;
     this.group.add(this.innerDoorMesh);
 
     // 后殿波塞冬黄金王座与台阶 (位于 Z = -22)
@@ -338,6 +347,7 @@ export class AncientTempleScene {
     this.isInnerGateOpen = true;
     if (this.innerDoorMesh) {
       this.innerDoorMesh.position.y = 9.5; // 升起至门框上方洞口
+      this.innerDoorMesh.userData.movementBox = false; // 解除阻挡
     }
     soundEngine.playTreeShake(); // 巨石沉重升腾声
     haptics.heavy();

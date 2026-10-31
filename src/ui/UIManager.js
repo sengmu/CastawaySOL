@@ -853,10 +853,13 @@ export class UIManager {
     `);
     document.body.appendChild(dashboard);
 
-    // 2. 右上角功能系统三联按钮 (含移动端一键全屏沉浸切换)
+    // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 $SOL 资产）
     const topNav = document.createElement('div');
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
+      <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900; border:1px solid rgba(255,255,255,0.7); box-shadow:0 0 16px rgba(20,241,149,0.5);" aria-label="矿机中枢">
+        ⛏️ <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0 $SOL</span>
+      </button>
       <button class="hud-nav-btn" id="btn-open-inv" aria-label="背包">🎒 <span class="hud-nav-desktop-label">背包</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
     `;
@@ -1101,6 +1104,20 @@ export class UIManager {
     document.addEventListener('fullscreenchange', () => this.updateFullscreenBtn());
     document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenBtn());
 
+    // 顶部 DePIN 矿机中枢一键打开
+    const quickMiningBtn = document.getElementById('btn-quick-mining');
+    if (quickMiningBtn) {
+      quickMiningBtn.addEventListener('click', () => {
+        haptics.medium();
+        const g = window.__game;
+        if (g && g.miningRig) {
+          this.openMiningRigModal(g.miningRig);
+        } else {
+          this.showToast('⛏️ 正在连接营地 DePIN 绿色解密矿机……');
+        }
+      });
+    }
+
     document.getElementById('btn-open-inv').addEventListener('click', () => {
       haptics.light();
       this.openInventoryModal();
@@ -1173,6 +1190,9 @@ export class UIManager {
       this.dialogBox.style.display = 'none';
       soundEngine.playAnimalVoice();
     });
+
+    // 初始化 Solana 钱包按钮状态
+    this.updateSolanaBtn();
   }
 
   // 移动端全屏沉浸与横屏锁定切换
@@ -1290,6 +1310,16 @@ export class UIManager {
       this._hudWrite('weather-text', `${wIcons[ws.currentWeather] || '☀️'} ${wNames[ws.currentWeather] || '晴'} ${temp}°C${isHypo ? ' ⚠️失温' : ''}`, (v) => { weatherEl.textContent = v; });
       this._hudWrite('weather-bg', isHypo ? 'rgba(235, 77, 75, 0.3)' : (ws.currentWeather === 'rain' || ws.currentWeather === 'typhoon' ? 'rgba(9, 132, 227, 0.3)' : 'rgba(0, 206, 201, 0.2)'), (v) => { weatherEl.style.background = v; });
       this._hudWrite('weather-color', isHypo ? '#ff7675' : '#00cec9', (v) => { weatherEl.style.color = v; });
+    }
+
+    // 动态刷新顶部 $SOL 资产与矿机待领取状态
+    const solHud = this._hudEl('txt-hud-sol-token');
+    if (solHud) {
+      const solCount = (this.inventory ? this.inventory['sol_token'] : 0) || 0;
+      const g = window.__game;
+      const unclaimed = (g && g.miningRig) ? g.miningRig.unclaimedSol : 0;
+      const solStr = unclaimed > 0 ? `${solCount} $SOL (🎁+${unclaimed})` : `${solCount} $SOL`;
+      this._hudWrite('hud-sol-token', solStr, (v) => { solHud.textContent = v; });
     }
 
     const sips = this.survival.canteenSips;
@@ -2059,13 +2089,195 @@ export class UIManager {
     this.modalBackdrop.style.display = 'flex';
   }
 
-  async handleSolanaWallet() {
-    const res = await solanaBridge.connectWallet();
-    if (res.success) {
-      const btn = document.getElementById('btn-solana');
-      btn.innerHTML = hudIcon(Wallet) + (res.isGuest ? '游客试玩' : res.address.slice(0, 4) + '...' + res.address.slice(-4));
-      this.showToast(res.isGuest ? '已进入游客试玩模式' : `Solana 钱包已接入: ${res.address}`);
+  updateSolanaBtn() {
+    const btn = document.getElementById('btn-solana');
+    if (!btn) return;
+    if (solanaBridge.isConnected && solanaBridge.walletAddress) {
+      const addrShort = solanaBridge.walletAddress.slice(0, 4) + '...' + solanaBridge.walletAddress.slice(-4);
+      const balStr = solanaBridge.isGuest ? '游客' : `${solanaBridge.balance.toFixed(2)} SOL`;
+      const devTag = solanaBridge.isMWA ? '📱' : '🟣';
+      btn.innerHTML = `${devTag} ${addrShort} (${balStr})`;
+      btn.style.background = 'linear-gradient(135deg, rgba(153, 69, 255, 0.4), rgba(20, 241, 149, 0.4))';
+      btn.style.border = '1px solid #14F195';
+    } else {
+      btn.innerHTML = '🟣 SOL 钱包连接';
+      btn.style.background = '';
+      btn.style.border = '';
     }
+  }
+
+  async handleSolanaWallet() {
+    this.openSolanaModal();
+  }
+
+  // Solana Seeker Web3 专属控制台与硬件级交互面板
+  openSolanaModal() {
+    soundEngine.playPlaceFurniture();
+    document.getElementById('modal-title').innerHTML = `🟣 Solana Seeker · Web3 硬件控制台`;
+    const body = document.getElementById('modal-body');
+
+    const renderModal = () => {
+      const isConn = solanaBridge.isConnected;
+      const addr = solanaBridge.walletAddress || '未连接';
+      const balance = solanaBridge.balance.toFixed(3);
+      const isMwa = solanaBridge.isMWA;
+      const isGuest = solanaBridge.isGuest;
+      const isSeeker = solanaBridge.isSeeker;
+      const checkins = solanaBridge.getCheckinRecords();
+
+      const typeLabel = isMwa ? '📱 Solana Mobile (Seed Vault / MWA)' : (isGuest ? '👤 游客体验模式' : '💻 浏览器插件 (Phantom/Backpack)');
+      const statusBadge = isConn ? `<span style="background:#2ed573; color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:bold;">已接入</span>` : `<span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:bold;">未连接</span>`;
+
+      let checkinListHtml = '';
+      if (checkins.length > 0) {
+        checkinListHtml = checkins.slice(0, 3).map(c => `
+          <div style="background:rgba(255,255,255,0.06); border-radius:8px; padding:6px 10px; margin-top:5px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="color:#14F195; font-weight:bold;">第 ${c.day} 天签到</span>
+              <span style="color:rgba(255,255,255,0.5); margin-left:6px;">${new Date(c.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div style="color:${c.isHardwareSigned ? '#9945FF' : '#fffa65'}; font-weight:bold;">
+              ${c.isHardwareSigned ? '📱 硬件签名认证' : '✍️ 签名存证'}
+            </div>
+          </div>
+        `).join('');
+      } else {
+        checkinListHtml = `<div style="color:rgba(255,255,255,0.4); font-size:12px; padding:6px 0;">暂无链上签到存证，点击下方按钮完成今日求生打卡</div>`;
+      }
+
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; font-family:-apple-system, BlinkMacSystemFont, sans-serif; color:#ffffff;">
+          <!-- 顶部状态卡 -->
+          <div style="background:linear-gradient(135deg, rgba(153, 69, 255, 0.15), rgba(20, 241, 149, 0.15)); border:1px solid rgba(20, 241, 149, 0.35); border-radius:14px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:18px;">📱</span>
+                <span style="font-size:14px; font-weight:800; color:#14F195;">${isSeeker ? 'Solana Seeker 专属认证' : 'Solana Mobile Stack'}</span>
+              </div>
+              ${statusBadge}
+            </div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; flex-direction:column; gap:4px;">
+              <div>网络环境：<strong style="color:#ffffff;">Solana Devnet (开发网)</strong></div>
+              <div>连接通道：<strong style="color:#14F195;">${typeLabel}</strong></div>
+              <div>钱包地址：<code style="background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px; color:#ffeaa7; word-break:break-all;">${addr}</code></div>
+              ${isConn && !isGuest ? `<div>Devnet 余额：<strong style="color:#fffa65; font-size:14px;">${balance} SOL</strong></div>` : ''}
+            </div>
+          </div>
+
+          <!-- 核心操作按键 -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${!isConn ? `
+              <button id="btn-mwa-connect" style="background:linear-gradient(135deg, #9945FF, #7d2ae8); color:#fff; border:none; border-radius:12px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(153,69,255,0.4);">
+                📱 唤起 Seed Vault / 移动钱包 (MWA)
+              </button>
+              <button id="btn-guest-connect" style="background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;">
+                👤 免钱包一键试玩 (游客模式)
+              </button>
+            ` : `
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button id="btn-seeker-checkin" style="background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(20,241,149,0.35);">
+                  📝 链上生存打卡 (+100🐚)
+                </button>
+                <button id="btn-devnet-airdrop" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(153,69,255,0.35);">
+                  🪂 申请 1 SOL 测试币
+                </button>
+              </div>
+              <button id="btn-disconnect-wallet" style="background:rgba(235, 77, 75, 0.15); border:1px solid rgba(235, 77, 75, 0.4); color:#ff7675; border-radius:10px; padding:7px 10px; font-size:12px; cursor:pointer; margin-top:2px;">
+                断开当前钱包连接
+              </button>
+            `}
+          </div>
+
+          <!-- 链上生存签到存证记录 -->
+          <div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 14px;">
+            <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.85); display:flex; justify-content:space-between;">
+              <span>📜 Seeker 链上签到与存证</span>
+              <span style="font-size:11px; color:#14F195;">Seed Vault 保护</span>
+            </div>
+            ${checkinListHtml}
+          </div>
+        </div>
+      `;
+
+      // 绑定弹窗内按钮事件
+      const btnMwa = document.getElementById('btn-mwa-connect');
+      if (btnMwa) {
+        btnMwa.onclick = async () => {
+          btnMwa.disabled = true;
+          btnMwa.innerText = '📱 正在唤起手机钱包授权...';
+          const res = await solanaBridge.connectWallet('mwa');
+          btnMwa.disabled = false;
+          if (res.success) {
+            this.showToast(`🎉 钱包已通过 ${res.type} 成功接入！`);
+            this.updateSolanaBtn();
+            renderModal();
+          } else {
+            this.showToast(`提示: ${res.message}`);
+            renderModal();
+          }
+        };
+      }
+
+      const btnGuest = document.getElementById('btn-guest-connect');
+      if (btnGuest) {
+        btnGuest.onclick = async () => {
+          const res = await solanaBridge.connectWallet('guest');
+          this.showToast('👤 已切换至游客试玩模式');
+          this.updateSolanaBtn();
+          renderModal();
+        };
+      }
+
+      const btnCheckin = document.getElementById('btn-seeker-checkin');
+      if (btnCheckin) {
+        btnCheckin.onclick = async () => {
+          btnCheckin.disabled = true;
+          btnCheckin.innerText = '✍️ 签名确认中...';
+          const res = await solanaBridge.signSurvivalCheckin(this.survival.day, this.survival.steps);
+          btnCheckin.disabled = false;
+          if (res.success) {
+            soundEngine.playPlaceFurniture();
+            this.addInventory('sea_shell', 100);
+            this.showToast(res.hardwareSigned ? '🌟 恭喜！已使用 Seeker 硬件私钥完成第 ' + this.survival.day + ' 天链上打卡！(+100 贝壳)' : '✅ 完成今日打卡存证！(+100 贝壳)');
+            renderModal();
+          } else {
+            this.showToast(`打卡未完成: ${res.message || '用户取消'}`);
+            renderModal();
+          }
+        };
+      }
+
+      const btnAirdrop = document.getElementById('btn-devnet-airdrop');
+      if (btnAirdrop) {
+        btnAirdrop.onclick = async () => {
+          btnAirdrop.disabled = true;
+          btnAirdrop.innerText = '🪂 申请 Devnet 空投中...';
+          const res = await solanaBridge.requestAirdrop();
+          btnAirdrop.disabled = false;
+          if (res.success) {
+            soundEngine.playPlaceFurniture();
+            this.showToast(`🎉 成功领取 1.0 SOL Devnet 测试币！余额: ${res.balance.toFixed(3)} SOL`);
+            this.updateSolanaBtn();
+            renderModal();
+          } else {
+            this.showToast(`空投提示: ${res.message}`);
+          }
+        };
+      }
+
+      const btnDisconnect = document.getElementById('btn-disconnect-wallet');
+      if (btnDisconnect) {
+        btnDisconnect.onclick = async () => {
+          await solanaBridge.disconnect();
+          this.showToast('已断开钱包连接');
+          this.updateSolanaBtn();
+          renderModal();
+        };
+      }
+    };
+
+    renderModal();
+    this.modalBackdrop.style.display = 'flex';
   }
 
   async triggerEndingScreen(endingId, data = {}) {

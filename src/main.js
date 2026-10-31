@@ -1,3 +1,8 @@
+import { Buffer } from 'buffer';
+if (typeof window !== 'undefined' && !window.Buffer) {
+  window.Buffer = Buffer;
+}
+
 import { populateOpening, placeOpeningAsset } from './core/OpeningAssets.js';
 import { ISLAND_LAYOUT, distanceXZ } from './core/IslandLayout.js';
 import * as THREE from 'three';
@@ -36,22 +41,26 @@ import { AncientTempleScene } from './island/AncientTempleScene.js';
 import { TemplePuzzleSystem } from './systems/TemplePuzzleSystem.js';
 import { modelLoader } from './core/ModelLoader.js';
 import { soundEngine } from './core/AudioSystem.js';
-import { resolveVisualQuality, applyPostOverlay } from './core/VisualQuality.js';
+import { resolveVisualQuality, applyPostOverlay, isMobileDevice } from './core/VisualQuality.js';
 import { InteractionFeedbackSystem } from './systems/InteractionFeedbackSystem.js';
 
 class Game {
   constructor() {
     this.container = document.getElementById('app');
 
-    // 1. 初始化 Three.js 渲染管线
+    // 1. 初始化 Three.js 渲染管线 (移动端由高物理PPI屏幕自然呈现抗锯齿，免去昂贵的硬件 MSAA 带宽抢占)
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: !isMobileDevice,
+      powerPreference: 'high-performance',
+      stencil: false // 关闭不必要的模版缓冲
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     // 画质档位：低档关闭后期叠加并降低像素比/阴影精度，默认中档（详见 core/VisualQuality.js）
     this.visualQuality = resolveVisualQuality();
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.visualQuality.pixelRatioCap));
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = this.visualQuality.enableShadows !== false;
     this.renderer.shadowMap.type = this.visualQuality.softShadows ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1209,6 +1218,9 @@ class Game {
     if (this.ancientTemple) {
       this.ancientTemple.update(delta);
     }
+    if (this.ancientTempleScene) {
+      this.ancientTempleScene.update(delta);
+    }
 
     // 动态智能情境感知与 UI 气泡提示
     const playerPos = this.player.position;
@@ -1237,6 +1249,9 @@ class Game {
         this.ui.hideInteraction();
       }
 
+      if (this.interactionFeedback) {
+        this.interactionFeedback.update(delta);
+      }
       this.renderer.render(this.scene, this.camera);
       return;
     }
@@ -1271,6 +1286,9 @@ class Game {
         this.ui.hideInteraction();
       }
 
+      if (this.interactionFeedback) {
+        this.interactionFeedback.update(delta);
+      }
       this.renderer.render(this.scene, this.camera);
       return;
     }
@@ -1319,12 +1337,10 @@ class Game {
       if (distToPortal < 3.2) {
         this.ui.setContextAction('temple_portal');
         this.ui.showInteraction('按 [E] 穿越青蓝光阵返回【海岛主地图】');
-        return;
       } else if (distToAltar < 3.8) {
         this.ui.setContextAction('temple_altar');
         const stageName = this.templePuzzle ? (this.templePuzzle.stage === 0 ? '第一重·星辰光棱镜对焦' : this.templePuzzle.stage === 1 ? '第二重·太阳图腾矩阵翻转' : '第三重·深渊密室黄金宝藏') : '密室机关';
         this.ui.showInteraction(`按 [E] 参悟【星辰日冕】机关解谜（${stageName}）`);
-        return;
       } else if (distToVault < 3.8) {
         this.ui.setContextAction('temple_vault');
         if (this.ancientTempleScene && this.ancientTempleScene.isInnerGateOpen) {
@@ -1333,12 +1349,16 @@ class Game {
         } else {
           this.ui.showInteraction('🔒 前方玄铁大门紧闭，请先参悟前殿日冕机关');
         }
-        return;
       } else {
         this.ui.setContextAction('default');
         this.ui.showInteraction('🏛️ 漫步在古老神秘的地下神殿……');
-        return;
       }
+
+      if (this.interactionFeedback) {
+        this.interactionFeedback.update(delta);
+      }
+      this.renderer.render(this.scene, this.camera);
+      return;
     }
 
     if (nearTyphoonLoot) {

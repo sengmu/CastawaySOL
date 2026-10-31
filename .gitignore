@@ -17,6 +17,7 @@ Thumbs.db
 
 # 测试与审计临时图片 (仅忽略根目录生成的临时截图)
 /*.png
+tools/*.png
 *.cjs
 
 # Android 构建产物与缓存

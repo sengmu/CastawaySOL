@@ -16,6 +16,10 @@
     "@capacitor/android": "^8.6.0",
     "@capacitor/cli": "^8.6.0",
     "@capacitor/core": "^8.6.0",
+    "@solana-mobile/wallet-adapter-mobile": "^3.0.0",
+    "@solana/wallet-adapter-base": "^0.9.28",
+    "@solana/web3.js": "^3.1.1",
+    "buffer": "^6.0.3",
     "lucide": "^0.454.0",
     "three": "^0.170.0"
   },

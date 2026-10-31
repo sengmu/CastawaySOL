@@ -9,11 +9,12 @@ export const isMobileDevice = typeof navigator !== 'undefined' && (
 );
 
 const PRESETS = {
-  // 移动端专用均衡配置：1.15 DPR 像素开销减少42%，1024 硬件4-tap PCF阴影，满帧60FPS
+  // 移动端专用满帧配置：0.92 DPR + 关闭昂贵的全局 ShadowPass，彻底告别掉帧与发热
   low: {
     name: 'low',
-    pixelRatioCap: 1.0,
-    shadowMapSize: 1024,
+    pixelRatioCap: 0.85,
+    shadowMapSize: 512,
+    enableShadows: false,
     softShadows: false,
     postOverlay: false,
     colorGrade: false,
@@ -21,18 +22,20 @@ const PRESETS = {
   },
   medium: {
     name: 'medium',
-    pixelRatioCap: isMobileDevice ? 1.15 : 1.5,
-    shadowMapSize: isMobileDevice ? 1024 : 2048,
-    softShadows: !isMobileDevice, // 手机端使用硬件快速 PCFShadowMap，避免移动 GPU 昂贵的跨纹素模糊过滤
+    pixelRatioCap: isMobileDevice ? 0.95 : 1.5,
+    shadowMapSize: isMobileDevice ? 512 : 2048,
+    enableShadows: !isMobileDevice, // 手机端关闭昂贵的全图二次几何阴影渲染通道，由环境光+地表微阴影呈现立体感
+    softShadows: false,
     postOverlay: true,
     colorGrade: false,
     waveOctaves: 2
   },
   high: {
     name: 'high',
-    pixelRatioCap: isMobileDevice ? 1.35 : 2.0,
-    shadowMapSize: 2048,
-    softShadows: true,
+    pixelRatioCap: isMobileDevice ? 1.05 : 2.0,
+    shadowMapSize: isMobileDevice ? 1024 : 2048,
+    enableShadows: true,
+    softShadows: !isMobileDevice,
     postOverlay: true,
     colorGrade: true,
     waveOctaves: 3
