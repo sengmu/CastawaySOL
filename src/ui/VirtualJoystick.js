@@ -13,11 +13,13 @@ export class VirtualJoystick {
     this.touchId = null;
     this.active = false;
 
-    // 摇杆物理尺寸参数 (自适应屏幕高低分屏)
+    // 摇杆物理尺寸参数 (竖屏直径上限 min(30vw, 120px)，即最大半径 60px)
     this.isSmallScreen = (typeof window !== 'undefined' && window.innerWidth <= 640);
-    this.baseRadius = this.isSmallScreen ? 56 : 68;      // 底盘半径
-    this.maxRadius = this.isSmallScreen ? 50 : 62;       // 最大推移半径
-    this.thumbRadius = this.isSmallScreen ? 22 : 27;     // 摇杆球半径
+    const maxAllowedRadius = (typeof window !== 'undefined') ? Math.min(window.innerWidth * 0.15, 60) : 56;
+    const isPortrait = typeof window !== 'undefined' && window.innerWidth < window.innerHeight;
+    this.baseRadius = isPortrait ? Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius) : Math.min(90, window.innerHeight * 0.13); // 底盘半径
+    this.maxRadius = this.baseRadius * 0.88;             // 最大推移半径
+    this.thumbRadius = this.baseRadius * 0.42;           // 摇杆球半径
     this.deadZone = 0.08;                                // 死区防指尖微颤 (0~1)
     this.followThreshold = this.maxRadius * 1.35;        // 动态跟随阈值
 
@@ -35,20 +37,65 @@ export class VirtualJoystick {
     });
   }
 
-  // 计算屏幕左下角的默认静息驻留位
+  // 计算屏幕左下角的默认静息驻留位（支持竖屏与横屏单手拇指人体工程学优化）
   updateDefaultAnchor() {
-    const isSmall = window.innerWidth <= 640;
-    const offsetLeft = isSmall ? 85 : 105;
-    const offsetBottom = isSmall ? 85 : 105;
-
+    const isPortrait = window.innerWidth < window.innerHeight;
     // 结合 CSS safe-area-inset
     const sal = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sal')) || 0;
     const sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
 
+    // 严密贴合安全区：左侧与底部保留舒适留白
+    const safeLeftMargin = Math.max(16, sal + 8);
+    const safeBottomMargin = Math.max(16, sab + 8);
+
+    // 动态限制底盘半径
+    if (isPortrait && typeof window !== 'undefined') {
+      const maxAllowedRadius = Math.min(window.innerWidth * 0.15, 60);
+      this.baseRadius = Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius);
+      this.maxRadius = this.baseRadius * 0.88;
+      this.thumbRadius = this.baseRadius * 0.42;
+      if (this.base) {
+        this.base.style.width = `${this.baseRadius * 2}px`;
+        this.base.style.height = `${this.baseRadius * 2}px`;
+      }
+    } else {
+      // 横屏下基座半径约 48~52px（直径约 100px），精巧舒适不挡视野
+      this.baseRadius = Math.min(52, Math.max(44, window.innerHeight * 0.13));
+      this.maxRadius = this.baseRadius * 0.88;
+      this.thumbRadius = this.baseRadius * 0.42;
+      if (this.base) {
+        this.base.style.width = `${this.baseRadius * 2}px`;
+        this.base.style.height = `${this.baseRadius * 2}px`;
+        const ring = this.base.firstElementChild;
+        if (ring) {
+          ring.style.width = `${this.baseRadius * 1.4}px`;
+          ring.style.height = `${this.baseRadius * 1.4}px`;
+        }
+      }
+      if (this.thumb) {
+        this.thumb.style.width = `${this.thumbRadius * 2}px`;
+        this.thumb.style.height = `${this.thumbRadius * 2}px`;
+      }
+    }
+
+    // 横屏下摇杆垂直中心距底边贴合左手拇指自然握持区（距底约 75~85px），与右侧动作区对称，绝不浮到屏幕中上方
+    const centerYFromBottom = isPortrait ? (Math.max(16, sab) + this.baseRadius) : (safeBottomMargin + this.baseRadius + 14);
+    const centerXFromLeft = isPortrait ? (Math.max(12, sal) + this.baseRadius + 6) : (safeLeftMargin + this.baseRadius + 18);
+
     this.defaultAnchor = {
-      x: offsetLeft + Math.max(16, sal),
-      y: window.innerHeight - (offsetBottom + Math.max(16, sab))
+      x: centerXFromLeft,
+      y: window.innerHeight - centerYFromBottom
     };
+
+    if (this.touchZone) {
+      // 触控感应区：覆盖左侧舒适操作区，避开顶部导航
+      const topOffset = isPortrait ? Math.max(140, window.innerHeight * 0.35) : Math.max(55, window.innerHeight * 0.22);
+      const zoneHeight = window.innerHeight - topOffset;
+      const zoneWidth = isPortrait ? 58 : 48;
+      this.touchZone.style.top = topOffset + 'px';
+      this.touchZone.style.height = zoneHeight + 'px';
+      this.touchZone.style.width = zoneWidth + 'vw';
+    }
 
     if (!this.active) {
       this.setVisualPosition(this.defaultAnchor.x, this.defaultAnchor.y, false);

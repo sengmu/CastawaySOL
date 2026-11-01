@@ -358,7 +358,7 @@ export class ShopManager {
               </span>
             </div>
             <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px;">
-              支持 $SOL 算力代币免充值兑换与微支付结账 · 探索即是挖矿，特权全线畅享
+              支持荒岛算力代币免充值兑换与微支付结账 · 探索即是挖矿，特权全线畅享
             </div>
           </div>
         </div>
@@ -378,9 +378,9 @@ export class ShopManager {
             </span>
           </div>
           <div style="background: rgba(20, 241, 149, 0.15); border: 1px solid rgba(20, 241, 149, 0.3); border-radius: 6px; padding: 2px 8px; color: #14f195; font-weight: 800; font-family: monospace; display: flex; align-items: center; gap: 4px;">
-            <span>🪙 挖矿持有:</span>
+            <span>🪙 算力代币:</span>
             <span style="font-size: 13px; color: #fff;">${playerTokens}</span>
-            <span>SOL代币</span>
+            <span>枚</span>
             <span style="color: rgba(255,255,255,0.4); margin: 0 2px;">|</span>
             <span style="color: #c7ecee; font-size: 11px;">#${totalBlocks} 区块</span>
           </div>
@@ -443,7 +443,7 @@ export class ShopManager {
                   ${p.priceToken ? `
                     <span style="font-size: 11px; color: rgba(255,255,255,0.4);">或</span>
                     <span style="font-size: 11px; font-weight: 800; color: #ffeaa7; font-family: monospace; background: rgba(253, 203, 110, 0.12); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(253, 203, 110, 0.25);">
-                      🪙 ${p.priceToken} 代币
+                      🪙 ${p.priceToken} 算力代币
                     </span>
                   ` : ''}
                 </div>
@@ -474,23 +474,23 @@ export class ShopManager {
                         cursor: ${canAffordTokens ? 'pointer' : 'not-allowed'};
                         box-shadow: ${canAffordTokens ? '0 4px 10px rgba(0, 206, 201, 0.3)' : 'none'};
                         transition: transform 0.1s;
-                      " title="${canAffordTokens ? '使用挖矿产出的 $SOL 算力代币免充值兑换' : `代币不足 (还差 ${(p.priceToken || 0) - playerTokens} 枚)，去营地矿机出块！`}">
-                        🪙 代币兑换
+                      " title="${canAffordTokens ? '使用营地矿机出块获得的荒岛算力代币免充值兑换' : `代币不足 (还差 ${(p.priceToken || 0) - playerTokens} 枚)，去营地矿机出块！`}">
+                        🪙 算力代币兑换
                       </button>
                     ` : ''}
-                    <button class="shop-buy-btn" data-id="${p.id}" style="
-                      background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
-                      border: none;
-                      color: #0b101b;
+                    <button class="shop-buy-btn" data-id="${p.id}" ${Boolean(solanaBridge.treasuryAddress) ? '' : 'disabled'} style="
+                      background: ${Boolean(solanaBridge.treasuryAddress) ? 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)' : 'rgba(255,255,255,0.08)'};
+                      border: ${Boolean(solanaBridge.treasuryAddress) ? 'none' : '1px solid rgba(255,255,255,0.15)'};
+                      color: ${Boolean(solanaBridge.treasuryAddress) ? '#0b101b' : 'rgba(255,255,255,0.35)'};
                       padding: 6px 12px;
                       border-radius: 8px;
                       font-size: 11px;
                       font-weight: 900;
-                      cursor: pointer;
-                      box-shadow: 0 4px 12px rgba(153, 69, 255, 0.4);
+                      cursor: ${Boolean(solanaBridge.treasuryAddress) ? 'pointer' : 'not-allowed'};
+                      box-shadow: ${Boolean(solanaBridge.treasuryAddress) ? '0 4px 12px rgba(153, 69, 255, 0.4)' : 'none'};
                       transition: transform 0.1s;
-                    ">
-                      SOL 结账
+                    " title="${Boolean(solanaBridge.treasuryAddress) ? `使用 Solana 钱包支付 ${p.priceSOL} SOL` : '官方收款地址未配置，支付通道已安全关闭'}">
+                      ${Boolean(solanaBridge.treasuryAddress) ? 'SOL 结账' : '暂未开放'}
                     </button>
                   </div>
                 `}
@@ -503,7 +503,7 @@ export class ShopManager {
       <!-- 底部安全与背书声明 -->
       <div style="padding: 12px 20px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: rgba(255,255,255,0.5);">
         <span>🔒 具备安全本地沙盒与 Schema 自动落盘机制</span>
-        <span>支持 $SOL 算力代币与 Devnet 极速模拟测试</span>
+        <span>支持荒岛算力代币兑换与 Devnet 极速模拟测试</span>
       </div>
     `;
 
@@ -553,7 +553,7 @@ export class ShopManager {
       const inv = this.game.ui.inventory;
       const reqTokens = product.priceToken || 999;
       if ((inv['sol_token'] || 0) < reqTokens) {
-        if (toast) toast.showToast(`行囊中 $SOL 算力代币不足 (需 ${reqTokens} 枚)！前往营地矿机出块！`, 'medium');
+        if (toast) toast.showToast(`行囊中算力代币不足 (需 ${reqTokens} 枚)！前往营地矿机出块！`, 'medium');
         return;
       }
 
@@ -561,18 +561,29 @@ export class ShopManager {
       if (inv['sol_token'] <= 0) delete inv['sol_token'];
       this.game.ui.renderInventory();
 
+      // 消费 15% 注入母晶池
+      if (this.game && this.game.miningRig && this.game.miningRig.onSinkSpent) {
+        this.game.miningRig.onSinkSpent(reqTokens, 'shop');
+      }
+
+      // 先持久化扣费
+      if (this.game.saveSystem) {
+        this.game.saveSystem.saveGame('token_purchase_commit');
+      }
+
       const msg = product.onPurchase();
       soundEngine.playLevelUp();
+
+      // 再持久化特权状态
+      if (this.game.saveSystem) {
+        this.game.saveSystem.saveGame('token_purchase');
+      }
 
       if (toast) {
         toast.showDialog(
           '🎉 算力代币兑换成功！',
-          `成功消耗 ${reqTokens} 枚【$SOL 算力代币】兑换【${product.title}】！\n\n${msg}\n\n• 当前剩余算力代币: ${inv['sol_token'] || 0} 枚\n• 闭环达成: 零充值纯靠探索与 DePIN 矿场畅享特权！`
+          `成功消耗 ${reqTokens} 枚【荒岛算力代币】兑换【${product.title}】！\n\n${msg}\n\n• 当前剩余算力代币: ${inv['sol_token'] || 0} 枚\n• 闭环达成: 零充值纯靠探索与 DePIN 矿场畅享特权！`
         );
-      }
-
-      if (this.game.saveSystem) {
-        this.game.saveSystem.saveGame('token_purchase');
       }
       this.render();
       return;
@@ -581,28 +592,59 @@ export class ShopManager {
     // 2. 传统 SOL 钱包微支付流程
     soundEngine.playPlaceFurniture();
 
-    if (toast) {
-      toast.showToast(`⏳ 正在通过 Solana 网络发起 ${product.priceSOL} SOL 微支付订单...`, 'medium');
+    if (!solanaBridge.treasuryAddress) {
+      if (toast) toast.showToast('官方收款地址未配置，支付功能已安全禁用', 'important');
+      return;
     }
 
-    // 模拟链上广播并秒级完成确认 (0.8 秒沉浸体验)
-    setTimeout(() => {
-      const txHash = '5' + Array.from({length: 8}, () => Math.random().toString(36).substring(2, 6)).join('') + '...sol';
-      const msg = product.onPurchase();
+    if (!solanaBridge.isConnected) {
+      if (toast) toast.showToast('请先连接 Solana 钱包或启动游客试玩', 'medium');
+      this.game.ui.openSolanaModal();
+      return;
+    }
 
-      soundEngine.playLevelUp();
+    if (toast) {
+      toast.showToast(`⏳ 正在请求钱包签署 ${product.priceSOL} SOL 支付交易...`, 'medium');
+    }
 
-      if (toast) {
-        toast.showToast(`🎉 支付成功！TX: [${txHash}]\n${msg}`, 'important');
+    try {
+      const txResult = await solanaBridge.sendPaymentTransaction(product.priceSOL);
+      if (!txResult.success) {
+        if (toast) toast.showToast(`❌ 支付未完成: ${txResult.message}`, 'important');
+        return;
       }
 
-      // 自动保存游戏存档，锁定购买状态
+      // 付费授予必须先持久化后发放 (Persist before grant)
+      // 1. 交易确认后先将支付凭证落盘提交
+      if (this.game.saveSystem) {
+        const commitSave = this.game.saveSystem.saveGame('shop_purchase_commit');
+        if (!commitSave || !commitSave.success) {
+          console.error('❌ [ShopManager] 购买确认存档失败，拒绝授予特权:', commitSave?.msg);
+          if (toast) toast.showToast('⚠️ 存档异常：为保障资产安全，特权暂缓发放，请联系支持', 'important');
+          return;
+        }
+      }
+
+      // 2. 存档正常后，再行使特权发放
+      const txShort = String(txResult.signature).slice(0, 10) + '...';
+      const msg = product.onPurchase();
+
+      // 3. 再次保存锁定已发放的特权状态
       if (this.game.saveSystem) {
         this.game.saveSystem.saveGame('shop_purchase');
       }
 
+      soundEngine.playLevelUp();
+
+      if (toast) {
+        toast.showToast(`🎉 支付成功！TX: [${txShort}]\n${msg}`, 'important');
+      }
+
       // 重新渲染面板
       this.render();
-    }, 800);
+    } catch (err) {
+      console.error('支付处理异常:', err);
+      if (toast) toast.showToast(`支付异常: ${err.message || '未知错误'}`, 'important');
+    }
   }
 }

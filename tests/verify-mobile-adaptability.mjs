@@ -6,7 +6,9 @@ import path from 'node:path';
 
 console.log('📱 开始执行 CastawaySOL 移动端全面适配专项测试套件...\n');
 
-const projectRoot = path.resolve('E:/CastawaySOL/island-game');
+import { fileURLToPath } from 'node:url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname, '..');
 
 // 1. 验证 index.html 不再阻断竖屏手机
 console.log('▶ [1/4] 验证 index.html 解除竖屏硬阻断...');

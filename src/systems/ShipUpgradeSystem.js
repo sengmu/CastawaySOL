@@ -36,8 +36,8 @@ export const VESSEL_TIERS = {
       nail: 4,       // 铁钉 x4
       ivy: 3         // 坚韧藤蔓 x3
     },
-    solCost: 8, // 或消耗 8 枚 $SOL 代币黑市蓝图一键快造
-    upgradeBonusDesc: '适航范围提升至 7.5 海里、解锁 4 格随船货运木箱、远海出航补给消耗减半！支持 8 $SOL 黑市图纸一键快造！'
+    solCost: 8, // 或消耗 8 枚算力代币黑市蓝图一键快造
+    upgradeBonusDesc: '适航范围提升至 7.5 海里、解锁 4 格随船货运木箱、远海出航补给消耗减半！支持 8 算力代币黑市图纸一键快造！'
   },
   tier_3: {
     id: 'tier_3',
@@ -58,8 +58,8 @@ export const VESSEL_TIERS = {
       nail: 6,        // 铁钉 x6
       stone_chunk: 4  // 玄武原石压舱物 x4
     },
-    solCost: 18, // 或消耗 18 枚 $SOL 代币黑市蓝图一键快造
-    upgradeBonusDesc: '航程上限跃升至 18.0 海里、随船货仓扩至 8 格、远航干粮淡水完全免消耗、解锁返航自动渔网！支持 18 $SOL 黑市图纸一键快造！'
+    solCost: 18, // 或消耗 18 枚算力代币黑市蓝图一键快造
+    upgradeBonusDesc: '航程上限跃升至 18.0 海里、随船货仓扩至 8 格、远航干粮淡水完全免消耗、解锁返航自动渔网！支持 18 算力代币黑市图纸一键快造！'
   }
 };
 
@@ -176,7 +176,7 @@ export class ShipUpgradeSystem {
     return movedTotal;
   }
 
-  // 使用 $SOL 算力代币黑市蓝图一键快造升级
+  // 使用算力代币黑市蓝图一键快造升级
   performSolUpgrade() {
     const nextTier = this.getNextTier();
     if (!nextTier || !nextTier.solCost) {
@@ -188,13 +188,18 @@ export class ShipUpgradeSystem {
     const solCount = inv['sol_token'] || 0;
     if (solCount < nextTier.solCost) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast(`🪙 所持 $SOL 不足 (需要 ${nextTier.solCost} $SOL，当前持有 ${solCount} $SOL)！请先至营地矿机出块收取！`, 'medium');
+        this.game.ui.showToast(`🪙 所持算力代币不足 (需要 ${nextTier.solCost} 算力代币，当前持有 ${solCount} 算力代币)！请先至营地矿机出块收取！`, 'medium');
       }
       return false;
     }
 
     inv['sol_token'] -= nextTier.solCost;
     if (inv['sol_token'] <= 0) delete inv['sol_token'];
+
+    // 消费 15% 注入母晶池
+    if (this.game && this.game.miningRig && this.game.miningRig.onSinkSpent) {
+      this.game.miningRig.onSinkSpent(nextTier.solCost, 'ship');
+    }
 
     // 提升等级
     this.currentTierLevel = nextTier.level;
@@ -208,7 +213,7 @@ export class ShipUpgradeSystem {
       soundEngine.playLevelUp();
       this.game.ui.showDialog(
         `🚢 恭喜！出海座驾成功升级为【${nextTier.name}】！`,
-        `🎉 消耗 ${nextTier.solCost} 枚 $SOL 算力代币成功激活黑市高级出海蓝图！\n\n• 当前座驾等级: ${nextTier.title}\n• 适航航程: 达到 ${nextTier.maxDistanceKm} 海里\n• 随船货仓: 拥有 ${nextTier.cargoSlots} 格防潮货运位\n• 适航特性: ${nextTier.upgradeBonusDesc}`
+        `🎉 消耗 ${nextTier.solCost} 枚荒岛算力代币成功激活黑市高级出海蓝图！\n\n• 当前座驾等级: ${nextTier.title}\n• 适航航程: 达到 ${nextTier.maxDistanceKm} 海里\n• 随船货仓: 拥有 ${nextTier.cargoSlots} 格防潮货运位\n• 适航特性: ${nextTier.upgradeBonusDesc}`
       );
     }
     return true;

@@ -1,3 +1,5 @@
+import { DevMetricsOverlay } from './ui/DevMetricsOverlay.js';
+import { SceneContactShadows } from './core/SceneContactShadows.js';
 import { Buffer } from 'buffer';
 if (typeof window !== 'undefined' && !window.Buffer) {
   window.Buffer = Buffer;
@@ -31,6 +33,8 @@ import { QuarryIsleScene } from './island/QuarryIsleScene.js';
 import { WildlifeCombatSystem } from './systems/WildlifeCombatSystem.js';
 import { SaveSystem } from './systems/SaveSystem.js';
 import { ShopManager } from './ui/ShopManager.js';
+import { solanaBridge } from './core/SolanaBridge.js';
+import { TREASURY_ADDRESS } from './config/payment.js';
 import { MonkeyHelperSystem } from './systems/MonkeyHelperSystem.js';
 import { TidalTrapSystem } from './systems/TidalTrapSystem.js';
 import { MiningRigSystem } from './systems/MiningRigSystem.js';
@@ -46,13 +50,14 @@ import { InteractionFeedbackSystem } from './systems/InteractionFeedbackSystem.j
 
 class Game {
   constructor() {
+    window.__game = this;
     this.container = document.getElementById('app');
 
     // 1. 初始化 Three.js 渲染管线 (移动端 56° 黄金广角透视，视野开阔通透，饱览热带海天与海岛全貌)
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(this.getAdaptiveFOV(), window.innerWidth / window.innerHeight, 0.1, 1000);
     this.renderer = new THREE.WebGLRenderer({
-      antialias: !isMobileDevice,
+      antialias: true, // 手机与桌面统一开启硬件 MSAA 抗锯齿
       powerPreference: 'high-performance',
       stencil: false // 关闭不必要的模版缓冲
     });
@@ -63,11 +68,12 @@ class Game {
     this.renderer.shadowMap.enabled = this.visualQuality.enableShadows !== false;
     this.renderer.shadowMap.type = this.visualQuality.softShadows ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08; // 原 1.12，水面高光增强后略降，避免沙滩过曝
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
+    this.renderer.toneMappingExposure = 1.1; // 采用 NeutralToneMapping + 1.1 曝光，去平并还原真实海岛自然光照层次
 
     this.container.appendChild(this.renderer.domElement);
     this.postOverlay = applyPostOverlay(this.container, this.visualQuality, this.renderer.domElement);
+    this.devMetrics = new DevMetricsOverlay(this.renderer);
 
     // 2. 昼夜循环与光照
     this.dayNight = new DayNightCycle(this.scene, this.renderer, this.visualQuality);
@@ -76,6 +82,9 @@ class Game {
     this.terrain = new IslandTerrain(this.scene, this.visualQuality);
     // 雾色与水面天空反射色随昼夜模式联动
     this.dayNight.attachWater(this.terrain.waterUniforms);
+    if (this.terrain.skyUniforms) {
+      this.dayNight.attachSky(this.terrain.skyUniforms);
+    }
 
     // 4. CastawaySOL 四维生存系统 (生命/饱食/饮水/疲劳，步数结算)
     this.survival = new SurvivalSystem(
@@ -103,6 +112,10 @@ class Game {
 
     // 7.5 海滩自然散落物资与海蚀礁石系统 (保证燧石、漂流木、大礁石、物资箱真实可达)
     this.beachResources = new BeachResourceSystem(this.scene);
+
+    // 7.6 全场景假阴影 InstancedMesh（树木、石头、营地设施、村民、野兽）
+    this.contactShadows = new SceneContactShadows(this.scene);
+    this.initSceneContactShadows();
 
     // 7.8 海面漂流物动态打捞系统 (潮汐涌浪、浮木板、金属桶与淡水罐)
     this.flotsamSalvage = new FlotsamSalvageSystem(this.scene, this);
@@ -143,8 +156,10 @@ class Game {
     // 10.8 引入版本化安全存档系统 (SaveSystem v1)
     this.saveSystem = new SaveSystem(this);
 
-    // 10.9 商业化特权与 Solana 商城系统
+    // 10.9 商业化特权与 Solana 商城系统 (接入官方收款地址配置)
     this.shopManager = new ShopManager(this);
+    this.solanaBridge = solanaBridge;
+    this.solanaBridge.setTreasuryAddress(TREASURY_ADDRESS);
 
     // 11. 初始化营地标志性建筑、篝火与 Survival Kids 逃脱地标
     this.initLandmarks();
@@ -172,6 +187,9 @@ class Game {
     this.weatherSystem = new WeatherSurvivalSystem(this);
     this.ancientTemple = new AncientTempleEntity(this.scene);
     this.ancientTempleScene = new AncientTempleScene(this.scene, this);
+    if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
+    if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
+    if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
     this.templePuzzle = new TemplePuzzleSystem(this);
 
     // 12. 键盘交互与战斗快捷键 (E键互动，F键挥矛/射击，R键切换近战与远程模式)
@@ -211,6 +229,7 @@ class Game {
     // 17. 实时联动 Survival Kids 经典主线任务目标 Banner
     if (this.ui) {
       this.ui.updateObjective(this.story.getQuestBannerText());
+      this.ui.updateTutorial(this.story.getOnboardingHint(), this.story.onboardingStep, 4);
     }
   }
 
@@ -229,10 +248,10 @@ class Game {
     this.flameMesh.position.y = 0.8;
     this.campfireGroup.add(this.flameMesh);
 
-    // 暖光点光源
+    // 暖光点光源（永久关闭 castShadow 避免移动端重复阴影 Pass）
     this.campfireLight = new THREE.PointLight(0xff7722, 2.5, 9);
     this.campfireLight.position.set(0, 0.6, 0);
-    this.campfireLight.castShadow = true;
+    this.campfireLight.castShadow = false;
     this.campfireGroup.add(this.campfireLight);
 
     this.scene.add(this.campfireGroup);
@@ -337,6 +356,24 @@ class Game {
       { id: 'moon_gem', name: '远古·圆月苍翠宝石', pos: new THREE.Vector3(-20, 0.5, -18), color: 0x20bf6b, picked: false }
     ];
 
+    // 创建宝石发光光晕圆形渐变贴图
+    const createGlowTexture = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext("2d");
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255, 255, 255, 1.0)");
+      grad.addColorStop(0.3, "rgba(255, 255, 255, 0.6)");
+      grad.addColorStop(0.7, "rgba(255, 255, 255, 0.15)");
+      grad.addColorStop(1, "rgba(255, 255, 255, 0.0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      const tex = new THREE.CanvasTexture(canvas);
+      return tex;
+    };
+    const glowTexture = createGlowTexture();
+
     this.gemMeshes = [];
     this.gemObjects.forEach((gem) => {
       const gGroup = new THREE.Group();
@@ -348,19 +385,28 @@ class Game {
         roughness: 0.15,
         metalness: 0.8,
         emissive: gem.color,
-        emissiveIntensity: 0.6
+        emissiveIntensity: 1.2
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.castShadow = true;
       gGroup.add(mesh);
 
-      // 发光点光源
-      const light = new THREE.PointLight(gem.color, 1.5, 4.0);
-      light.position.set(0, 0.2, 0);
-      gGroup.add(light);
+      // 砍点光源：宝石改用 emissive + 加法混合光晕 Sprite
+      const spriteMat = new THREE.SpriteMaterial({
+        map: glowTexture,
+        color: gem.color,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.85
+      });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(1.6, 1.6, 1.6);
+      sprite.position.set(0, 0.2, 0);
+      gGroup.add(sprite);
 
       this.landmarksGroup.add(gGroup);
-      this.gemMeshes.push({ info: gem, group: gGroup, mesh: mesh });
+      this.gemMeshes.push({ info: gem, group: gGroup, mesh: mesh, glowSprite: sprite });
     });
   }
 
@@ -447,7 +493,7 @@ class Game {
         this.timberIsleScene.setVisible(true);
 
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
-        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
+        if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
 
         // 传送到浮木岛沙滩码头
         this.player.position.set(0, 0.4, 11);
@@ -467,7 +513,7 @@ class Game {
         this.quarryIsleScene.setVisible(true);
 
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
-        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
+        if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
 
         // 传送到矿石岛滩头
         this.player.position.set(0, 0.4, 11.5);
@@ -494,7 +540,7 @@ class Game {
           this.renderer.setClearColor(0x76c4e0);
         }
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
-        if (this.scene) this.scene.fog = new THREE.FogExp2(0xb8e9f8, 0.0032);
+        if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
 
         // 判断返航来源：若从古代神殿出来，传送到后山神殿大门前；若从海上归来，传送到西南码头
         if (previousIsland === 'ancient_temple') {
@@ -547,6 +593,63 @@ class Game {
   }
 
   // 统一响应玩家动作触发 (支持点击虚拟轮盘主按键或键盘E/F)
+  // 电影级睡眠与过夜休整 (Sleep & Dawn Awakening Routine)
+  triggerSleepRoutine(source = "tent") {
+    if (this._isSleeping) return;
+    this._isSleeping = true;
+
+    if (this.player && this.player.resetInput) this.player.resetInput();
+
+    const isBed = source === "bed";
+    const sleepIcon = isBed ? "🛏️" : "⛺";
+    const sleepTitle = isBed ? "原木单人床休息中……" : "避风帐篷过夜中……";
+
+    if (this.ui && this.ui.triggerSleepFade) {
+      this.ui.triggerSleepFade(sleepIcon, sleepTitle, () => {
+        this.survival.sleepOvernight();
+        this.ui.updateSurvivalHUD();
+        soundEngine.playPlaceFurniture();
+
+        if (this.weatherSystem) {
+          this.weatherSystem.isWet = false;
+          this.weatherSystem.bodyTemp = 37.0;
+        }
+
+        if (this.campFacilities) {
+          this.campFacilities.onDayPassed();
+        }
+
+        if (this.miningRig && this.miningRig.onNewDay) {
+          this.miningRig.onNewDay(this.survival.day);
+        }
+
+        const dn = this.dayNight || this.dayNightCycle;
+        if (dn && dn.setMode) {
+          dn.setMode("sunrise");
+        }
+
+        if (this.saveSystem) {
+          this.saveSystem.saveGame(isBed ? "sleep_overnight_bed" : "sleep_overnight_tent");
+        }
+
+        const toastMsg = isBed
+          ? `🛏️ 在亲手搭建的原木单人床上熟睡了一夜……天亮了！迎来第 ${this.survival.day} 天，疲劳全消！`
+          : `⛺ 在避风帐篷中沉沉睡去……伴随着晨曦醒来！迎来第 ${this.survival.day} 天，精力充沛！`;
+        this.ui.showToast(toastMsg, "important");
+
+        this._isSleeping = false;
+      });
+    } else {
+      this.survival.sleepOvernight();
+      this.ui.updateSurvivalHUD();
+      soundEngine.playPlaceFurniture();
+      if (this.campFacilities) this.campFacilities.onDayPassed();
+      if (this.saveSystem) this.saveSystem.saveGame("sleep_overnight");
+      this.ui.showToast(`⛺ 熟睡了一夜，迎来第 ${this.survival.day} 天！`, "important");
+      this._isSleeping = false;
+    }
+  }
+
   handlePlayerAction(action) {
     // 优先响应战斗攻击刺击
     if (action === 'attack') {
@@ -706,7 +809,9 @@ class Game {
     }
 
     // 3. 检查是否在近海/栈桥边缘准备钓鱼
-    if (this.fishing.isNearWater(playerPos)) {
+    const atSosLandmark = distanceXZ(playerPos, ISLAND_LAYOUT.sos) < 4.8;
+    const atShipyard = this.dockShipEntity ? this.dockShipEntity.isNearShipyard(playerPos, 5.2) : distanceXZ(playerPos, ISLAND_LAYOUT.raft) < 5.0;
+    if (this.fishing.isNearWater(playerPos) && !atSosLandmark && !atShipyard) {
       this.fishing.handleAction();
       return;
     }
@@ -721,6 +826,13 @@ class Game {
     const distToCampChest = Math.hypot(playerPos.x - (-14.5), playerPos.z - 23.5);
     if (distToCampChest < 2.5 && this.storageSystem) {
       this.storageSystem.openStorage('camp_default_chest');
+      return;
+    }
+
+    // 4.35 优先检测是否在露营帐篷旁准备过夜睡觉 (ISLAND_LAYOUT.tent: [-17, 0, 23])
+    const distToTentCamp = distanceXZ(playerPos, ISLAND_LAYOUT.tent);
+    if (distToTentCamp < 4.5) {
+      this.triggerSleepRoutine("tent");
       return;
     }
 
@@ -751,10 +863,11 @@ class Game {
 
       // 4.4.4 南岸打捞浮标岸边滑轮锚桩 (-20.2, 0.02, 33.2)
       if (playerPos.distanceTo(anchors.buoyWinch) < 2.8) {
-        if (this.flotsamSalvage && this.flotsamSalvage.hasAutoSalvageBuoy) {
-          this.ui.showToast('⚓ 近海【自动打捞浮标网】正在持续运转中，每 30 秒自动捕获海难物资入库！', 'medium');
+        if (this.ui && this.ui.openAutoSalvageModal) {
+          this.ui.openAutoSalvageModal(this.flotsamSalvage);
+        } else if (this.flotsamSalvage && this.flotsamSalvage.hasAutoSalvageBuoy) {
+          this.ui.showToast('⚓ 近海【自动打捞浮标网】持续运转中！', 'medium');
         } else {
-          // 未解锁时，引导打开商城直接购买部署
           if (this.shopManager) this.shopManager.open();
           else if (this.ui) this.ui.openShopModal();
         }
@@ -775,7 +888,7 @@ class Game {
     }
 
     // 4.4.6.2 营地荒岛绿色解密矿机 (-10.5, 0.05, 20.0)
-    if (this.miningRig && playerPos.distanceTo(this.miningRig.anchor) < 2.6) {
+    if (this.miningRig && playerPos.distanceTo(this.miningRig.anchor) < 3.2) {
       if (this.ui) this.ui.openMiningRigModal(this.miningRig);
       return;
     }
@@ -810,16 +923,7 @@ class Game {
             return;
           }
         } else if (facility.isBed) {
-          this.survival.sleepOvernight();
-          this.ui.updateSurvivalHUD();
-          soundEngine.playPlaceFurniture();
-          if (this.campFacilities) {
-            this.campFacilities.onDayPassed();
-          }
-          if (this.saveSystem) {
-            this.saveSystem.saveGame('sleep_overnight_bed');
-          }
-          this.ui.showToast('🛏️ 在亲手搭建的原木单人床上熟睡了一夜……疲劳全消！', 'medium');
+          this.triggerSleepRoutine("bed");
           return;
         }
       }
@@ -831,7 +935,7 @@ class Game {
       if (this.weatherSystem) {
         if (!this.weatherSystem.hasFireShelter) {
           const inv = this.ui.inventory;
-          const stoneCount = (inv['flint'] || 0) + (inv['rock'] || 0);
+          const stoneCount = (inv['stone_chunk'] || 0) + (inv['flint'] || 0) + (inv['rock'] || 0);
           const barkCount = inv['tree_bark'] || 0;
           if (stoneCount >= 3 && barkCount >= 2) {
             const res = this.weatherSystem.buildFireShelter();
@@ -887,18 +991,10 @@ class Game {
       return;
     }
 
-    // 5. 检查是否在露营帐篷旁准备过夜睡觉 (-16, 0, -8)
+    // 5. 检查是否在露营帐篷旁准备过夜睡觉
     const distToTent = distanceXZ(playerPos, ISLAND_LAYOUT.tent);
-    if (distToTent < 4.0) {
-      this.survival.sleepOvernight();
-      this.ui.updateSurvivalHUD();
-      soundEngine.playPlaceFurniture();
-      if (this.campFacilities) {
-        this.campFacilities.onDayPassed();
-      }
-      if (this.saveSystem) {
-        this.saveSystem.saveGame('sleep_overnight');
-      }
+    if (distToTent < 4.5) {
+      this.triggerSleepRoutine("tent");
       return;
     }
 
@@ -906,10 +1002,36 @@ class Game {
     const distToSos = distanceXZ(playerPos, ISLAND_LAYOUT.sos);
     if (distToSos < 4.8) {
       if (!this.story.sosBuilt) {
+        // E1 经济修补：真实校验与扣除材料（海蚀碎石 x2，先校验、不足拒绝且不扣、足额一次扣清）
+        const inv = this.ui.inventory;
+        const stoneCount = (inv['stone_chunk'] || 0) + (inv['rock'] || 0) + (inv['flint'] || 0);
+        if (stoneCount < 2) {
+          this.ui.showDialog(
+            '🪨 南岸沙滩 S.O.S 呼救地标',
+            '在开阔的平坦沙滩上搬运巨石排布【S.O.S】求救符号需要准备：\n\n' +
+            '• 【海蚀碎石/燧石 (Stone Chunk)】x2 (当前持有: ' + stoneCount + ')\n\n' +
+            '在海滩礁石带或退潮浅滩拾取碎石后，靠近按【E】即可拼装成型！'
+          );
+          return;
+        }
+
+        // 先校验通过，足额一次扣清
+        let needStone = 2;
+        for (const k of ['stone_chunk', 'rock', 'flint']) {
+          if (!inv[k]) continue;
+          const take = Math.min(inv[k], needStone);
+          inv[k] -= take;
+          needStone -= take;
+          if (inv[k] <= 0) delete inv[k];
+          if (needStone <= 0) break;
+        }
+        this.ui.renderInventory();
+
         this.story.buildSosSign();
         this.sosGroup.visible = true;
         this.sosChalk.visible = false;
         soundEngine.playPlaceFurniture();
+        if (this.saveSystem) this.saveSystem.saveGame('build_sos');
         return;
       } else {
         // 已建成：使用收音机架设天线搜索无线电频率
@@ -933,7 +1055,28 @@ class Game {
     const isNearDock = this.dockShipEntity ? this.dockShipEntity.isNearShipyard(playerPos, 5.2) : (distanceXZ(playerPos, ISLAND_LAYOUT.raft) < 5.0);
     if (isNearDock) {
       if (!this.story.raftBuilt) {
-        if (this.ui.inventory['raft'] > 0 || this.ui.inventory['escape_raft'] > 0 || (this.ui.inventory['lumber'] >= 4 && this.ui.inventory['nail'] >= 2 && this.ui.inventory['ivy'] >= 2)) {
+        // E1 经济修补：先校验、不足拒绝且不扣、足额一次扣清
+        const inv = this.ui.inventory;
+        const hasDirectRaft = (inv['raft'] || 0) > 0 || (inv['escape_raft'] || 0) > 0;
+        const hasMaterials = (inv['lumber'] || 0) >= 4 && (inv['nail'] || 0) >= 2 && (inv['ivy'] || 0) >= 2;
+
+        if (hasDirectRaft || hasMaterials) {
+          if ((inv['raft'] || 0) > 0) {
+            inv['raft']--;
+            if (inv['raft'] <= 0) delete inv['raft'];
+          } else if ((inv['escape_raft'] || 0) > 0) {
+            inv['escape_raft']--;
+            if (inv['escape_raft'] <= 0) delete inv['escape_raft'];
+          } else {
+            inv['lumber'] -= 4;
+            inv['nail'] -= 2;
+            inv['ivy'] -= 2;
+            if (inv['lumber'] <= 0) delete inv['lumber'];
+            if (inv['nail'] <= 0) delete inv['nail'];
+            if (inv['ivy'] <= 0) delete inv['ivy'];
+          }
+          this.ui.renderInventory();
+
           this.story.buildRaft();
           if (this.dockShipEntity && this.dockShipEntity.vesselGroup) {
             this.dockShipEntity.vesselGroup.visible = true;
@@ -941,6 +1084,7 @@ class Game {
           }
           this.raftGroup.visible = false;
           soundEngine.playCooking(); // 锻造造船声效
+          if (this.saveSystem) this.saveSystem.saveGame('build_raft');
           this.ui.showDialog(
             '🎉 造船船坞大功告成 · 首艘出海木筏下水！',
             '经过细心打磨与藤蔓绑扎，第一艘【T1 简易捆扎原木筏】成功推入海浪！\n\n' +
@@ -950,7 +1094,14 @@ class Game {
             this.nauticalChart.openChartModal();
           }
         } else {
-          this.ui.showDialog('西南码头 · 远洋船坞', '⛵ 这里是平静适航的入海浅滩与船坞工程台！\n在合成台准备【4 根方木 + 2 枚铁钉 + 2 根藤蔓】合成首艘【求生大木筏】后，可在此下海扬帆远航与升级船体！');
+          this.ui.showDialog(
+            '⚓ 浅滩造船台 · 首艘出海大木筏建造',
+            '在浅滩下水组装出海大木筏需要准备以下建材：\n\n' +
+            '• 【加粗重型圆木 (Lumber)】x4 (当前持有: ' + (inv['lumber'] || 0) + ')\n' +
+            '• 【加固铁钉 (Nail)】x2 (当前持有: ' + (inv['nail'] || 0) + ')\n' +
+            '• 【坚韧藤蔓 (Ivy)】x2 (当前持有: ' + (inv['ivy'] || 0) + ')\n\n' +
+            '【或】：在合成台直接拼装制作出成品【大木筏】后前来下水！'
+          );
         }
         return;
       } else {
@@ -987,7 +1138,7 @@ class Game {
           const foodKey = ['apple', 'baked_apple', 'baked_fish', 'fish', 'coconut'].find(k => (inv[k] || 0) > 0);
           if (foodKey) {
             inv[foodKey]--;
-            this.ui.renderInventoryGrid();
+            this.ui.renderInventory();
             this.story.befriendMonkey();
             soundEngine.playPlaceFurniture();
           } else {
@@ -1011,16 +1162,22 @@ class Game {
       if (nearestVillager.id === 'second_kid') {
         if (!this.story.secondKidAwake) {
           const inv = this.ui.inventory;
-          const hasWater = this.survival.canteenCount > 0;
+          const hasWater = (this.survival.canteenSips || this.survival.canteenCount || 0) > 0;
           const foodKey = ['baked_fish', 'baked_apple', 'apple'].find(k => (inv[k] || 0) > 0);
 
           if (hasWater || foodKey) {
-            if (hasWater) this.survival.canteenCount = Math.max(0, this.survival.canteenCount - 1);
+            if (hasWater) {
+              if (typeof this.survival.canteenSips === 'number' && this.survival.canteenSips > 0) {
+                this.survival.canteenSips--;
+              } else if (typeof this.survival.canteenCount === 'number' && this.survival.canteenCount > 0) {
+                this.survival.canteenCount--;
+              }
+            }
             else if (foodKey) inv[foodKey]--;
 
             this.story.secondKidAwake = true;
             this.story.secondKidAffection = 80;
-            this.ui.renderInventoryGrid();
+            this.ui.renderInventory();
             this.ui.updateSurvivalHUD();
             soundEngine.playPlaceFurniture();
             this.ui.showDialog(nearestVillager.name, '✨ 你轻轻将温水与食物喂入少女干裂的唇齿中……\n少女长睫轻颤，缓缓睁开了清澈的双眸：“唔……是你救了我吗？我叫艾莉……谢谢你……在这个孤岛上能遇见你，真的太好了！”\n【💖 好感度提升至 80！】');
@@ -1035,7 +1192,7 @@ class Game {
           const giftKey = ['baked_fish', 'apple', 'baked_apple', 'cherry_blossom_petal', 'coconut'].find(k => (inv[k] || 0) > 0);
           if (giftKey) {
             inv[giftKey]--;
-            this.ui.renderInventoryGrid();
+            this.ui.renderInventory();
             this.story.secondKidAffection = Math.min(250, this.story.secondKidAffection + 25);
             soundEngine.playPlaceFurniture();
             const currentJob = this.campFacilities ? this.campFacilities.getResidentJob('second_kid') : null;
@@ -1089,10 +1246,27 @@ class Game {
     }
   }
 
+  getAdaptiveFOV() {
+    const aspect = window.innerWidth / window.innerHeight;
+    // 竖屏（aspect < 1.0）动态扩展垂直视角，兼顾视野开阔度与广角边缘畸变
+    if (aspect < 0.6) {
+      return 68; // 常见 9:16 ~ 9:20 手机竖屏
+    } else if (aspect < 1.0) {
+      return 62; // 平板或折叠屏竖屏
+    }
+    return 56;   // 横屏基准视角
+  }
+
   onWindowResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+    const aspect = window.innerWidth / window.innerHeight;
+    this.camera.aspect = aspect;
+    this.camera.fov = this.getAdaptiveFOV();
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (this.player && typeof this.player.onOrientationChange === 'function') {
+      this.player.onOrientationChange(aspect < 1.0);
+    }
   }
 
   animate() {
@@ -1102,31 +1276,38 @@ class Game {
     // 更新各个子系统
     this.terrain.update(delta);
     this.player.update(delta);
+    const playerPos = this.player.position;
 
     // 动态更新阴影中心紧随玩家核心视野，实现次世代丝滑软阴影
     if (this.dayNight) {
       this.dayNight.update(delta, this.player.position);
     }
 
-    // 键盘移动步数衰减结算与潮汐推进
+    // 键盘移动步数衰减结算与潮汐推进 (F1: 统一生存步口径，消除帧率耦合)
     if (this.player.isMoving) {
-      this.survival.recordMovement(0.08);
+      const stepDelta = delta * 4.8;
+      const stepsAdded = this.survival.recordMovement(stepDelta);
       if (this.campFacilities) {
-        this.campFacilities.recordMovement(0.08);
+        this.campFacilities.recordMovement(stepDelta);
       }
       if (this.tidalTrap) {
-        this.tidalTrap.advanceTide(1);
+        this.tidalTrap.advanceTide(stepDelta);
       }
-      if (this.trees && this.trees.recordMovement) {
-        this.trees.recordMovement(1);
-      }
-      if (this.beachResources && this.beachResources.recordMovement) {
-        this.beachResources.recordMovement(1);
-      }
-      if (this.miningRig && this.miningRig.recordMovement) {
-        this.miningRig.recordMovement(1);
+      if (stepsAdded > 0) {
+        if (this.trees && this.trees.recordMovement) {
+          this.trees.recordMovement(stepsAdded);
+        }
+        if (this.beachResources && this.beachResources.recordMovement) {
+          this.beachResources.recordMovement(stepsAdded);
+        }
+        if (this.miningRig && this.miningRig.recordMovement) {
+          this.miningRig.recordMovement(stepsAdded);
+        }
       }
       this.ui.updateSurvivalHUD();
+    }
+    if (this.ui && this.ui.updateHUDMovementState) {
+      this.ui.updateHUDMovementState(this.player.isMoving);
     }
 
     // 更新伙伴与村民 (注入 story 驱动猴子跟随与第二幸存者状态)
@@ -1230,14 +1411,19 @@ class Game {
       this.weatherSystem.update(delta);
     }
     if (this.ancientTemple) {
-      this.ancientTemple.update(delta);
+      this.ancientTemple.update(delta, playerPos);
+    }
+    if (this.terrain && this.terrain.updateCaveLight) {
+      this.terrain.updateCaveLight(playerPos);
+    }
+    if (this.dockShipEntity && this.dockShipEntity.updateLightsByDistance) {
+      this.dockShipEntity.updateLightsByDistance(playerPos);
     }
     if (this.ancientTempleScene) {
       this.ancientTempleScene.update(delta);
     }
 
     // 动态智能情境感知与 UI 气泡提示
-    const playerPos = this.player.position;
 
     // === 0. 浮木岛专属感知提示 ===
     if (this.currentIslandId === 'timber_isle') {
@@ -1266,7 +1452,11 @@ class Game {
       if (this.interactionFeedback) {
         this.interactionFeedback.update(delta);
       }
-      this.renderer.render(this.scene, this.camera);
+      if (this.contactShadows) {
+      this.contactShadows.update();
+    }
+    this.renderer.render(this.scene, this.camera);
+    if (this.devMetrics) this.devMetrics.update();
       return;
     }
 
@@ -1303,12 +1493,16 @@ class Game {
       if (this.interactionFeedback) {
         this.interactionFeedback.update(delta);
       }
-      this.renderer.render(this.scene, this.camera);
+      if (this.contactShadows) {
+      this.contactShadows.update();
+    }
+    this.renderer.render(this.scene, this.camera);
+    if (this.devMetrics) this.devMetrics.update();
       return;
     }
     const isWater = this.fishing.isNearWater(playerPos);
     const isFire = this.cooking.isNearCampfire(playerPos);
-    const isTent = distanceXZ(playerPos, ISLAND_LAYOUT.tent) < 4.0;
+    const isTent = distanceXZ(playerPos, ISLAND_LAYOUT.tent) < 4.5;
     const isSos = distanceXZ(playerPos, ISLAND_LAYOUT.sos) < 4.8;
     const isRaft = distanceXZ(playerPos, ISLAND_LAYOUT.raft) < 5.0;
     const nearestVillager = this.villagers.getNearestVillager(playerPos, 3.5);
@@ -1371,7 +1565,11 @@ class Game {
       if (this.interactionFeedback) {
         this.interactionFeedback.update(delta);
       }
-      this.renderer.render(this.scene, this.camera);
+      if (this.contactShadows) {
+      this.contactShadows.update();
+    }
+    this.renderer.render(this.scene, this.camera);
+    if (this.devMetrics) this.devMetrics.update();
       return;
     }
 
@@ -1403,7 +1601,7 @@ class Game {
     } else if (isMiningRig) {
       this.ui.setContextAction('mining_rig');
       const hasUnclaimed = this.miningRig.unclaimedSol > 0;
-      this.ui.showInteraction(hasUnclaimed ? `按 [E] 操作【绿色解密矿机】(🪙 有 ${this.miningRig.unclaimedSol} 枚 $SOL 待收取!)` : `按 [E] 操作【绿色解密矿机】(${this.miningRig.isActive ? '⚡正在高速哈希解密中' : '💤待装填硅晶原石'})`);
+      this.ui.showInteraction(hasUnclaimed ? `按 [E] 操作【绿色解密矿机】(🪙 有 ${this.miningRig.unclaimedSol} 枚算力代币待收取!)` : `按 [E] 操作【绿色解密矿机】(${this.miningRig.isActive ? '⚡正在高速哈希解密中' : '💤待装填硅晶原石'})`);
     } else if (isPetNest) {
       this.ui.setContextAction('pet_nest');
       const activePet = this.petCompanion ? this.petCompanion.getActivePet() : null;
@@ -1431,7 +1629,7 @@ class Game {
     } else if (isBuoyWinch) {
       this.ui.setContextAction('default');
       const hasBuoy = this.flotsamSalvage && this.flotsamSalvage.hasAutoSalvageBuoy;
-      this.ui.showInteraction(hasBuoy ? '按 [E] 检视【近海自动打捞浮标网】(运转中)' : '按 [E] 在南岸部署【近海自动打捞浮标网】');
+      this.ui.showInteraction('按 [E] 打开【近海打捞滑轮浮标网与集捞工坊】');
     } else if (nearestFacility) {
       if (nearestFacility.isStorage) {
         this.ui.setContextAction('storage');
@@ -1533,8 +1731,75 @@ class Game {
       this.interactionFeedback.update(delta);
     }
 
+    if (this.contactShadows) {
+      this.contactShadows.update();
+    }
     this.renderer.render(this.scene, this.camera);
+    if (this.devMetrics) this.devMetrics.update();
   }
+
+  // 初始化全场景椭圆接触阴影实例
+  initSceneContactShadows() {
+    if (!this.contactShadows) return;
+
+    // 1. 静态树木与灌木
+    if (this.trees && this.trees.treePositions) {
+      this.trees.treePositions.forEach(tp => {
+        const isPalm = tp.id === "palm_tree";
+        const isCedar = tp.id === "cedar_tree";
+        const isBush = tp.id.includes("bush");
+        const rx = isPalm ? 1.4 : (isCedar ? 1.6 : (isBush ? 0.9 : 1.3));
+        const rz = isPalm ? 1.2 : rx;
+        const scale = tp.scale || 1.0;
+        this.contactShadows.addStatic(tp.pos.x, tp.pos.y, tp.pos.z, rx * scale, rz * scale);
+      });
+    }
+
+    // 2. 静态大石头、矿石脉、漂流木
+    if (this.beachResources && this.beachResources.fixedSpawns) {
+      this.beachResources.fixedSpawns.forEach(res => {
+        const isRock = res.type.includes("rock") || res.type.includes("vein");
+        const isBranch = res.type === "tree_branch";
+        const rx = isRock ? 1.2 * (res.scale || 1.0) : (isBranch ? 0.8 : 0.6);
+        const rz = isRock ? 1.0 * (res.scale || 1.0) : (isBranch ? 0.4 : 0.6);
+        this.contactShadows.addStatic(res.pos.x, res.pos.y, res.pos.z, rx, rz);
+      });
+    }
+
+    // 3. 营地关键地标设施 (帐篷、篝火、告示板、大木筏等)
+    if (typeof ISLAND_LAYOUT !== "undefined") {
+      if (ISLAND_LAYOUT.campfire) this.contactShadows.addStatic(ISLAND_LAYOUT.campfire[0], ISLAND_LAYOUT.campfire[1], ISLAND_LAYOUT.campfire[2], 1.5, 1.5);
+      if (ISLAND_LAYOUT.tent) this.contactShadows.addStatic(ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1], ISLAND_LAYOUT.tent[2], 2.8, 2.2);
+      if (ISLAND_LAYOUT.raft) this.contactShadows.addStatic(ISLAND_LAYOUT.raft[0], ISLAND_LAYOUT.raft[1], ISLAND_LAYOUT.raft[2], 2.6, 1.8);
+      if (ISLAND_LAYOUT.sos) this.contactShadows.addStatic(ISLAND_LAYOUT.sos[0], ISLAND_LAYOUT.sos[1], ISLAND_LAYOUT.sos[2], 3.2, 1.6);
+    }
+
+    // 4. 动态村民（小猴、第二伙伴艾莉等）
+    if (this.villagers && this.villagers.villagers) {
+      this.villagers.villagers.forEach(v => {
+        this.contactShadows.registerDynamic(() => ({
+          pos: v.mesh ? v.mesh.position : v.group?.position,
+          radiusX: 0.55,
+          radiusZ: 0.55,
+          visible: v.group ? v.group.visible : true
+        }));
+      });
+    }
+
+    // 5. 动态野生动物（沙滩巨蟹、丛林野猪等）
+    if (this.wildlifeCombat && this.wildlifeCombat.wildlifeList) {
+      this.wildlifeCombat.wildlifeList.forEach(w => {
+        this.contactShadows.registerDynamic(() => ({
+          pos: w.mesh ? w.mesh.position : (w.group ? w.group.position : null),
+          radiusX: w.type === "boar" ? 0.9 : 0.7,
+          radiusZ: w.type === "boar" ? 1.3 : 0.7,
+          visible: !w.isDead && (w.group ? w.group.visible : true)
+        }));
+      });
+    }
+  }
+
+
 }
 
 window.addEventListener('DOMContentLoaded', () => {

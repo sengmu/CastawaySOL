@@ -195,6 +195,7 @@ export class IslandTerrain {
       offset: { value: 15 },
       exponent: { value: 0.65 }
     };
+    this.skyUniforms = uniforms;
     const skyMat = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -203,6 +204,7 @@ export class IslandTerrain {
       depthWrite: false
     });
     const sky = new THREE.Mesh(skyGeo, skyMat);
+    this.skyMesh = sky;
     this.group.add(sky);
   }
 
@@ -672,10 +674,12 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     crystal.castShadow = true;
     caveGroup.add(crystal);
 
-    // 洞窟内幽蓝探险微光
+    // 洞窟内幽蓝探险微光（默认可见性按距离控制）
     const caveLight = new THREE.PointLight(0x40e0d0, 1.4, 8.5);
     caveLight.position.set(0, 1.2, -4.2);
+    caveLight.visible = false;
     caveGroup.add(caveLight);
+    this.caveLight = caveLight;
 
     this.group.add(caveGroup);
   }
@@ -1415,3 +1419,15 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     }
   }
 }
+
+// 距离动态剔除海蚀洞点光源
+IslandTerrain.prototype.updateCaveLight = function(playerPos) {
+  if (!this.caveLight) return;
+  if (!playerPos) {
+    this.caveLight.visible = false;
+    return;
+  }
+  // 海蚀洞绝对坐标: (16.0, 0, 31.0)
+  const dist = Math.hypot(playerPos.x - 16.0, playerPos.z - 31.0);
+  this.caveLight.visible = (dist < 18.0);
+};

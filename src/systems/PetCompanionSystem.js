@@ -177,6 +177,7 @@ export class PetCompanionSystem {
     if (!this.game || !this.game.scene) return;
     this.nightVisionLight = new THREE.PointLight(0xa29bfe, 0, 12, 1.5);
     this.nightVisionLight.position.set(0, 1.5, 0);
+    this.nightVisionLight.visible = false;
     this.game.scene.add(this.nightVisionLight);
   }
 
@@ -398,11 +399,15 @@ export class PetCompanionSystem {
       const isNight = this.game.dayNight ? (this.game.dayNight.isNight || false) : false;
 
       if (isCatActive && isNight) {
+        this.nightVisionLight.visible = true;
         this.nightVisionLight.intensity = THREE.MathUtils.lerp(this.nightVisionLight.intensity, 1.8, delta * 3.0);
         this.nightVisionLight.position.copy(this.game.player.position);
         this.nightVisionLight.position.y += 1.2;
       } else {
         this.nightVisionLight.intensity = THREE.MathUtils.lerp(this.nightVisionLight.intensity, 0, delta * 5.0);
+        if (this.nightVisionLight.intensity < 0.02) {
+          this.nightVisionLight.visible = false;
+        }
       }
     }
 

@@ -84,9 +84,8 @@ export class ModelLoader {
               if (child.isMesh && child.material) {
                 const mats = Array.isArray(child.material) ? child.material : [child.material];
                 mats.forEach(mat => {
-                  mat.roughness = 0.35;
                   mat.metalness = 0.0;
-                  mat.emissive = new THREE.Color(0x222222);
+                  mat.emissive = new THREE.Color(0x000000);
                 });
               }
             });
@@ -122,10 +121,9 @@ export class ModelLoader {
                 const isLeaf = nameLower.includes('leaf') || nameLower.includes('bush') || nameLower.includes('foliage');
                 const isTrunk = nameLower.includes('trunk') || nameLower.includes('bark') || nameLower.includes('stump') || nameLower.includes('branch');
 
-                // 卡通微漫反射材质基准
-                mat.roughness = 0.45;
+                // 卡通微漫反射材质基准（统一自发光改回黑色，保留模型原始粗糙度）
                 mat.metalness = 0.0;
-                mat.emissive = new THREE.Color(0x282828);
+                mat.emissive = new THREE.Color(0x000000);
 
                 let mapSrc = '';
                 const isWoodBench = urlLower.includes('ftrwoodbench') || urlLower.includes('woodbench');
@@ -139,7 +137,7 @@ export class ModelLoader {
                 } else if (mat.map) {
                   mat.map.colorSpace = THREE.SRGBColorSpace;
                   mat.map.anisotropy = 8;
-                  mat.color.setScalar(1.22);
+                  mat.color.setScalar(1.0);
                   mapSrc = (mat.map.image && (mat.map.image.src || mat.map.image.currentSrc) || '').toLowerCase();
                 } else {
                   if (urlLower.includes('wood') || urlLower.includes('bench') || urlLower.includes('table') || urlLower.includes('ftr')) {
@@ -151,15 +149,14 @@ export class ModelLoader {
 
                 // 角色通透瓷润渲染
                 if (isCharacter) {
-                  mat.roughness = 0.32;
                   mat.metalness = 0.0;
-                  mat.emissive = new THREE.Color(0x3e3c36);
+                  mat.emissive = new THREE.Color(0x000000);
                   if (mat.map) {
-                    mat.color.setScalar(1.36);
+                    mat.color.setScalar(1.0);
                   }
                   if (nameLower.includes('eye')) {
                     mat.roughness = 0.15;
-                    mat.emissive = new THREE.Color(0x202020);
+                    mat.emissive = new THREE.Color(0x000000);
                   }
                 }
 
@@ -274,6 +271,9 @@ export class ModelLoader {
                   mat.depthWrite = true;
                   mat.side = THREE.DoubleSide;
 
+                  if (isLeaf || nameLower.includes('leaf') || nameLower.includes('bush') || nameLower.includes('bloom')) {
+                    mat.alphaToCoverage = true;
+                  }
                   // 当材质拥有 alphaMap 且有 alphaTest 时，为其提供镂空投影
                   if (mat.alphaMap) {
                     child.customDepthMaterial = new THREE.MeshDepthMaterial({
@@ -323,10 +323,10 @@ export class ModelLoader {
                       color: isSakura ? (isBack ? 0xf29cb2 : 0xffc8d8) : (isBack ? 0x48b820 : 0x6ed92e),
                       alphaMap: isBack ? opBack : opLeaf,
                       alphaTest: 0.18,
+                      alphaToCoverage: true,
                       side: THREE.DoubleSide,
-                      roughness: 0.42,
                       metalness: 0.0,
-                      emissive: isSakura ? new THREE.Color(0x280e18) : (isBack ? new THREE.Color(0x14340a) : new THREE.Color(0x1e480e))
+                      emissive: new THREE.Color(0x000000)
                     });
                     const m = new THREE.Mesh(geo, mat);
                     m.name = child.name;

@@ -58,10 +58,12 @@ export class PlayerController {
     this.rotation = Math.PI;       // 角色背对镜头向北
     this.targetRotation = Math.PI;
     this.cameraAngleH = 0;
-    this.cameraAngleV = 0.58;      // 33° 黄金舒缓平视微俯角
+    this.cameraAngleV = (typeof window !== 'undefined' && window.innerWidth < window.innerHeight) ? 0.40 : 0.58;
     this.baseCameraDistance = 8.8; // 8.8 米宏大开阔黄金基准视距
-    this.cameraDistance = 8.8;
-    this.targetCameraDistance = 8.8;
+    this.isPortrait = (typeof window !== 'undefined' && window.innerWidth < window.innerHeight);
+    const initialDist = this.isPortrait ? (this.baseCameraDistance * 1.25) : this.baseCameraDistance;
+    this.cameraDistance = initialDist;
+    this.targetCameraDistance = initialDist;
     this.cameraVelH = 0;           // 偏航角平滑旋转阻尼速度
     this.cameraVelV = 0;           // 俯仰角平滑旋转阻尼速度
     this.cameraTarget = new THREE.Vector3(this.position.x, this.position.y + 1.7, this.position.z - 2.2);
@@ -874,7 +876,8 @@ export class PlayerController {
 
     // 2. 视距平滑过渡 (Smooth Zoom Lerp) + 移动与疾跑时动态广角后拉 (探索视野大 25%)
     const speedPullback = this.isMoving ? (this.isRunning ? 1.5 : 0.85) : 0.0;
-    const desiredDistance = this.targetCameraDistance + speedPullback;
+    const portraitOffset = this.isPortrait ? 1.8 : 0.0;
+    const desiredDistance = this.targetCameraDistance + speedPullback + portraitOffset;
     this.cameraDistance = THREE.MathUtils.lerp(this.cameraDistance, desiredDistance, Math.min(1.0, 8.0 * delta));
 
     const horizontalDist = this.cameraDistance * Math.cos(this.cameraAngleV);
@@ -887,13 +890,20 @@ export class PlayerController {
     this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 12.0 * delta);
 
     // 黄金视距重构：视点居中小猫上身，将主角提升至屏幕黄金分割点（垂直约 45% 适中高度），不再沉底或被底部UI遮挡
-    const forwardLookZ = -0.6;
+    const forwardLookZ = this.isPortrait ? -2.0 : -0.6;
     const lookTargetY = this.position.y + 0.95;
     this.cameraTarget.lerp(new THREE.Vector3(this.position.x, lookTargetY, this.position.z + forwardLookZ), 12.0 * delta);
     this.camera.lookAt(this.cameraTarget);
   }
 
   // 跨场景或传送时瞬时对齐相机机位与朝向，彻底杜绝角度残留与视角穿帮
+  onOrientationChange(isPortrait) {
+    this.isPortrait = isPortrait;
+    // 竖屏切换时平滑推拉基准相机视距
+    const base = isPortrait ? (this.baseCameraDistance * 1.25) : this.baseCameraDistance;
+    this.targetCameraDistance = THREE.MathUtils.clamp(this.targetCameraDistance, base * 0.8, base * 1.8);
+  }
+
   snapCamera(angleH = 0, angleV = 0.50, distance = 11.0) {
     this.cameraAngleH = angleH;
     this.cameraAngleV = angleV;

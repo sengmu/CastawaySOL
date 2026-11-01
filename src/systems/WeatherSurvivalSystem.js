@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
+import { ISLAND_LAYOUT, distanceXZ } from '../core/IslandLayout.js';
 
 export const WEATHER_TYPES = {
   clear: {
@@ -75,6 +76,7 @@ export class WeatherSurvivalSystem {
     this.rainCount = 420;
     this.lightningLight = null;
     this.lightningTimer = 0.0;
+    this.lightningFlash = 0.0;
 
     // 屏幕寒颤暗角 Vignette
     this.initHypothermiaVignette();
@@ -120,6 +122,7 @@ export class WeatherSurvivalSystem {
   initLightningLight() {
     this.lightningLight = new THREE.PointLight(0xffffff, 0, 120, 1.2);
     this.lightningLight.position.set(0, 45, 0);
+    this.lightningLight.visible = false;
     this.game.scene.add(this.lightningLight);
   }
 
@@ -261,21 +264,22 @@ export class WeatherSurvivalSystem {
   // 搭建营地防风避雨篝火石棚
   buildFireShelter() {
     const inv = this.game.ui ? this.game.ui.inventory : {};
-    const stoneCount = (inv['flint'] || 0) + (inv['rock'] || 0);
+    const stoneCount = (inv['stone_chunk'] || 0) + (inv['rock'] || 0) + (inv['flint'] || 0);
     const barkCount = inv['tree_bark'] || 0;
 
     if (stoneCount < 3 || barkCount < 2) {
-      return { ok: false, msg: '材料不足！需要【石料/燧石 x3】+【坚固树皮 x2】搭建防雨石棚' };
+      return { ok: false, msg: '材料不足！需要【海蚀碎石/燧石 x3】+【坚固树皮 x2】搭建防雨石棚' };
     }
 
-    // 扣减材料
+    // 先校验通过，足额一次扣清
     let neededStone = 3;
-    if (inv['rock'] >= neededStone) {
-      inv['rock'] -= neededStone;
-    } else {
-      neededStone -= (inv['rock'] || 0);
-      delete inv['rock'];
-      inv['flint'] -= neededStone;
+    for (const k of ['stone_chunk', 'rock', 'flint']) {
+      if (!inv[k]) continue;
+      const take = Math.min(inv[k], neededStone);
+      inv[k] -= take;
+      neededStone -= take;
+      if (inv[k] <= 0) delete inv[k];
+      if (neededStone <= 0) break;
     }
     inv['tree_bark'] -= 2;
     if (inv['tree_bark'] <= 0) delete inv['tree_bark'];
@@ -327,29 +331,42 @@ export class WeatherSurvivalSystem {
       }
     }
 
-    // 3. 台风雷暴闪电特效
-    if (isTyphoon && this.lightningLight) {
+    // 3. 台风雷暴闪电特效（改用瞬间拉高半球光/环境光实现，点光源保持 visible=false）
+    if (isTyphoon) {
       this.lightningTimer -= delta;
       if (this.lightningTimer <= 0) {
         this.lightningTimer = 4.0 + Math.random() * 7.0;
-        this.lightningLight.intensity = 8.5; // 瞬间强白光雷暴闪烁
+        this.lightningFlash = 2.4; // 瞬间强白光雷暴闪烁增益
         soundEngine.playTreeShake(); // 伴随雷鸣震颤
         haptics.heavy();
+      } else if (this.lightningFlash > 0.01) {
+        this.lightningFlash = THREE.MathUtils.lerp(this.lightningFlash, 0, delta * 9.0);
       } else {
-        this.lightningLight.intensity = THREE.MathUtils.lerp(this.lightningLight.intensity, 0, delta * 8.0);
+        this.lightningFlash = 0.0;
       }
+
+      if (this.game && this.game.dayNight) {
+        if (this.game.dayNight.hemiLight) {
+          this.game.dayNight.hemiLight.intensity = this.game.dayNight.baseHemiIntensity + this.lightningFlash * 1.5;
+        }
+        if (this.game.dayNight.ambientLight) {
+          this.game.dayNight.ambientLight.intensity = this.game.dayNight.baseAmbientIntensity + this.lightningFlash * 1.8;
+        }
+      }
+    } else if (this.lightningFlash > 0.0) {
+      this.lightningFlash = 0.0;
     }
 
     // 4. 真实失温与取暖结算
     if (this.game && this.game.player && this.game.survival) {
       const pPos = this.game.player.position;
-      // 检查是否靠近营火 ((-7, 0, -4) 距离 < 3.2 米)
-      const distToFire = Math.hypot(pPos.x - (-7), pPos.z - (-4));
-      const isNearFire = distToFire < 3.2;
+      // 检查是否靠近营火 (营火基准点 ISLAND_LAYOUT.campfire 距离 < 3.6 米)
+      const distToFire = distanceXZ(pPos, ISLAND_LAYOUT.campfire);
+      const isNearFire = distToFire < 3.6;
 
-      // 检查是否处于帐篷内 ((-16, 0, -8) 距离 < 3.8 米)
-      const distToTent = Math.hypot(pPos.x - (-16), pPos.z - (-8));
-      const isInTent = distToTent < 3.8;
+      // 检查是否处于营地帐篷内 (ISLAND_LAYOUT.tent 距离 < 4.5 米)
+      const distToTent = distanceXZ(pPos, ISLAND_LAYOUT.tent);
+      const isInTent = distToTent < 4.5;
 
       const spec = WEATHER_TYPES[this.currentWeather];
       let drainRate = spec.tempDrain;

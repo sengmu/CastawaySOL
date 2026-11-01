@@ -19,6 +19,38 @@ function contextIconHTML(emoji) {
   return path ? iconHTML(path, 30, { eager: true }) : emoji;
 }
 
+function formatActionText(raw) {
+  if (!raw) return '探索';
+  let str = String(raw).trim();
+
+  // 动作动词智能提纯（主交互按钮是圆形胶囊，只容纳 2~4 字核心动作，实体全名与详情在上方 context-tag 展示）
+  if (/开采|敲凿|采矿/.test(str)) return '开采';
+  if (/砍伐|伐木/.test(str)) return '砍伐';
+  if (/采摘|摇晃/.test(str)) return '采摘';
+  if (/打捞/.test(str)) return '打捞';
+  if (/拾取/.test(str)) return '拾取';
+  if (/饮水|取水|甘泉/.test(str)) return '饮水';
+  if (/烹饪|烘烤|烤火|取暖/.test(str)) return '烹饪';
+  if (/睡觉|过夜|休息/.test(str)) return '过夜';
+  if (/交谈|对话|聊天/.test(str)) return '对话';
+  if (/投喂/.test(str)) return '投喂';
+  if (/起竿|抛竿|垂钓|钓鱼/.test(str)) return '垂钓';
+  if (/出海|扬帆|登船|木筏/.test(str)) return '出海';
+  if (/搭建|组装|建造|架设/.test(str)) return '建造';
+  if (/存取|储物|木箱/.test(str)) return '储物';
+  if (/排班|告示|经营/.test(str)) return '经营';
+  if (/空投|特权|补给/.test(str)) return '补给';
+  if (/解密|参悟|调查/.test(str)) return '调查';
+  if (/开启|神藏/.test(str)) return '开启';
+  if (/攻击|突击|迎战/.test(str)) return '攻击';
+
+  const first = str.split(/[\s/]/)[0];
+  if (first && first.length >= 2 && first.length <= 4) {
+    return first;
+  }
+  return str.slice(0, 4);
+}
+
 export class InteractionFeedbackSystem {
   constructor(game) {
     this.game = game;
@@ -328,7 +360,7 @@ export class InteractionFeedbackSystem {
     // 5.4 营地中央篝火
     const distToFire = distanceXZ(playerPos, ISLAND_LAYOUT.campfire);
     if (distToFire < 3.2) {
-      const hasAxeOrStone = (inv['rock'] || 0) + (inv['flint'] || 0) >= 3;
+      const hasAxeOrStone = (inv['stone_chunk'] || 0) + (inv['rock'] || 0) + (inv['flint'] || 0) >= 3;
       const fireText = (game.weatherSystem && !game.weatherSystem.hasFireShelter && hasAxeOrStone)
         ? '搭建避雨石棚 / 烤火'
         : '烘烤取暖 / 烹饪';
@@ -469,7 +501,7 @@ export class InteractionFeedbackSystem {
 
         // 注入高亮动画与情境信息
         if (this.actionIcon) this.actionIcon.innerHTML = contextIconHTML(target.icon); // 黏土图标第二批
-        if (this.actionText) this.actionText.textContent = target.text;
+        if (this.actionText) this.actionText.textContent = formatActionText(target.text);
 
         // 按钮高亮脉冲并赋予醒目质感
         this.actionBtn.style.opacity = '1';

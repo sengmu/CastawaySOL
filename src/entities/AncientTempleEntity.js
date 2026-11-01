@@ -8,6 +8,7 @@ export class AncientTempleEntity {
   constructor(scene) {
     this.scene = scene;
     this.group = new THREE.Group();
+    this.player = null;
     this.group.name = 'ancient-temple-gateway-group';
 
     // 锚点位于后山北侧山麓台地
@@ -172,6 +173,7 @@ export class AncientTempleEntity {
 
     // 传送漩涡神秘青蓝点光源
     this.portalLight = new THREE.PointLight(0x00cec9, 3.0, 16, 1.8);
+    this.portalLight.visible = false;
     this.portalLight.position.set(0, baseTopY + 2.8, -3.8);
     this.group.add(this.portalLight);
 
@@ -198,6 +200,7 @@ export class AncientTempleEntity {
 
     // 温暖的导引金光点光源
     this.crystalLight = new THREE.PointLight(0xffaa00, 2.0, 12, 1.5);
+    this.crystalLight.visible = false;
     this.crystalLight.position.set(0, baseTopY + 1.5, 3.5);
     this.group.add(this.crystalLight);
 
@@ -252,7 +255,13 @@ export class AncientTempleEntity {
   }
 
   // 帧动画更新：传送旋涡旋转、符文光圈对冲与信标浮动
-  update(delta) {
+  update(delta, playerPos = null) {
+    // 动态按距离开关点光（距离神殿大于 22 米时关闭点光，避免手机端同时可见过多点光）
+    const pPos = playerPos || (this.player ? this.player.position : null);
+    const templePos = this.group.position;
+    const distToTemple = pPos ? Math.hypot(pPos.x - templePos.x, pPos.z - templePos.z) : 999;
+    const isNearby = distToTemple < 22.0;
+
     // 1. 传送漩涡流光旋转
     if (this.portalVortexMesh) {
       this.portalVortexMesh.rotation.z += delta * 1.2;
@@ -262,7 +271,12 @@ export class AncientTempleEntity {
       this.portalRings[1].rotation.z += delta * 0.9;
     }
     if (this.portalLight) {
-      this.portalLight.intensity = 2.8 + Math.sin(Date.now() * 0.005) * 0.6;
+      if (isNearby) {
+        this.portalLight.visible = true;
+        this.portalLight.intensity = 2.8 + Math.sin(Date.now() * 0.005) * 0.6;
+      } else {
+        this.portalLight.visible = false;
+      }
     }
 
     // 2. 导引信标悬浮与光晕呼吸
@@ -272,7 +286,12 @@ export class AncientTempleEntity {
       this.altarGlowMesh.position.y = 3 * 0.45 + 1.35 + Math.sin(Date.now() * 0.003) * 0.08;
     }
     if (this.crystalLight) {
-      this.crystalLight.intensity = 2.0 + Math.sin(Date.now() * 0.004) * 0.5;
+      if (isNearby) {
+        this.crystalLight.visible = true;
+        this.crystalLight.intensity = 2.0 + Math.sin(Date.now() * 0.004) * 0.5;
+      } else {
+        this.crystalLight.visible = false;
+      }
     }
   }
 }

@@ -1,0 +1,247 @@
+{
+  "started": "2026-11-01T17:01:34.312Z",
+  "steps": [
+    {
+      "chapter": 0,
+      "step": "collect_driftwood",
+      "inventory": {
+        "apple": 1
+      },
+      "action": "picked beach branch",
+      "next": "find_food_water"
+    },
+    {
+      "chapter": 0,
+      "step": "find_food_water",
+      "inventory": {
+        "apple": 1,
+        "tree_branch": 1
+      },
+      "action": "ate starter apple",
+      "next": "find_campsite"
+    },
+    {
+      "chapter": 0,
+      "step": "find_campsite",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 1
+      },
+      "action": "walked to campsite",
+      "next": "craft_kindling"
+    },
+    {
+      "chapter": 1,
+      "step": "craft_kindling",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 1
+      },
+      "action": "crafted through merge action",
+      "next": "cook_hot_food"
+    },
+    {
+      "chapter": 1,
+      "step": "cook_hot_food",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 8,
+        "stone_chunk": 4,
+        "broken_radio": 1,
+        "battery": 1,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1
+      },
+      "action": "cooked at campfire",
+      "next": "craft_axe"
+    },
+    {
+      "chapter": 1,
+      "step": "craft_axe",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 8,
+        "stone_chunk": 4,
+        "broken_radio": 1,
+        "battery": 1,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 1
+      },
+      "action": "crafted through merge action",
+      "next": "chase_monkey"
+    },
+    {
+      "chapter": 2,
+      "step": "chase_monkey",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 7,
+        "stone_chunk": 3,
+        "broken_radio": 1,
+        "battery": 1,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 1,
+        "stone_axe": 1
+      },
+      "action": "followed monkey location",
+      "next": "befriend_monkey"
+    },
+    {
+      "chapter": 2,
+      "step": "befriend_monkey",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 7,
+        "stone_chunk": 3,
+        "broken_radio": 1,
+        "battery": 1,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 1,
+        "stone_axe": 1
+      },
+      "action": "interacted with monkey",
+      "next": "fix_radio"
+    },
+    {
+      "chapter": 3,
+      "step": "fix_radio",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 7,
+        "stone_chunk": 3,
+        "broken_radio": 1,
+        "battery": 1,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 0,
+        "stone_axe": 1
+      },
+      "action": "merged recovered radio parts",
+      "next": "radio_contact"
+    },
+    {
+      "chapter": 3,
+      "step": "radio_contact",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 7,
+        "stone_chunk": 3,
+        "broken_radio": 0,
+        "battery": 0,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 0,
+        "stone_axe": 1,
+        "workradio": 1
+      },
+      "action": "built SOS and contacted radio",
+      "next": "build_raft"
+    },
+    {
+      "chapter": 4,
+      "step": "build_raft",
+      "inventory": {
+        "apple": 0,
+        "tree_branch": 7,
+        "stone_chunk": 1,
+        "broken_radio": 0,
+        "battery": 0,
+        "nail": 3,
+        "tree_sap": 6,
+        "coconut": 10,
+        "tree_bark": 0,
+        "kindling": 1,
+        "baked_apple": 0,
+        "stone_axe": 1,
+        "workradio": 1
+      },
+      "action": "raft diagnostic {\"inventory\":{\"lumber\":0,\"ivy\":0,\"nail\":1},\"trees\":39,\"felled\":2,\"stages\":[{\"phase\":\"chop\",\"tree\":\"海滩椰子树\",\"felled\":true,\"lumber\":2,\"drops\":{\"tree_branch\":5,\"tree_bark\":2,\"wood_plank\":1,\"tree_sap\":1,\"coconut\":1}},{\"phase\":\"chop\",\"tree\":\"海滩椰子树\",\"felled\":true,\"lumber\":4,\"drops\":{\"tree_branch\":7,\"tree_bark\":2,\"wood_plank\":1,\"tree_sap\":2,\"coconut\":3}}]}",
+      "next": "rescue_partner"
+    },
+    {
+      "chapter": 4,
+      "step": "rescue_partner",
+      "inventory": {
+        "apple": 0,
+        "stone_chunk": 1,
+        "broken_radio": 0,
+        "battery": 0,
+        "nail": 1,
+        "coconut": 16,
+        "baked_apple": 0,
+        "stone_axe": 1,
+        "workradio": 1
+      },
+      "action": "fed partner through interaction",
+      "next": "care_partner"
+    },
+    {
+      "chapter": 5,
+      "step": "care_partner",
+      "inventory": {
+        "apple": 0,
+        "stone_chunk": 1,
+        "broken_radio": 0,
+        "battery": 0,
+        "nail": 1,
+        "coconut": 16,
+        "baked_apple": 0,
+        "stone_axe": 1,
+        "workradio": 1
+      },
+      "action": "fed partner through interaction",
+      "next": "collect_gems"
+    },
+    {
+      "chapter": 5,
+      "step": "collect_gems",
+      "inventory": {
+        "apple": 0,
+        "stone_chunk": 1,
+        "broken_radio": 0,
+        "battery": 0,
+        "nail": 1,
+        "coconut": 15,
+        "baked_apple": 0,
+        "stone_axe": 1,
+        "workradio": 1
+      },
+      "action": "visited gem pickup locations",
+      "next": "final_escape"
+    }
+  ],
+  "checkpoints": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "errors": [],
+  "knownRed": [
+    "final_escape"
+  ],
+  "status": "passed_except_known_red"
+}

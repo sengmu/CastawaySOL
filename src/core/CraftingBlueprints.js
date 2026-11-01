@@ -189,6 +189,39 @@ export const CRAFTING_BLUEPRINTS = [
     hint: '紧实树皮内层以藤蔓缠裹锁紧的水囊',
     desc: '可在营地净水滴滤台取水装满，外出探索随时补充 50 点饮水！'
   },
+  {
+    id: 'geo_scanner_mk1',
+    category: 'tools',
+    a: 'copper_ore',
+    b: 'battery',
+    result: 'geo_scanner_mk1',
+    count: 1,
+    name: '地质共振扫描仪 Mk1 📡',
+    hint: '孔雀铜矿与蓄电电池连接，制成初阶地脉行波探测仪',
+    desc: '在矿机控制台安装后，每轮可勘探出 1 条包含主矿脉的行或列！'
+  },
+  {
+    id: 'geo_scanner_mk2',
+    category: 'tools',
+    a: 'geo_scanner_mk1',
+    b: 'iron_ingot',
+    result: 'geo_scanner_mk2',
+    count: 1,
+    name: '精密共振扫描仪 Mk2 🛰️',
+    hint: '精炼铁锭加固外壳并扩充振荡器',
+    desc: '在矿机控制台安装后，每轮锁定 4 个高能候选格，大幅提升勘探中签率！'
+  },
+  {
+    id: 'geo_scanner_mk3',
+    category: 'tools',
+    a: 'geo_scanner_mk2',
+    b: 'treasure_map_piece',
+    result: 'geo_scanner_mk3',
+    count: 1,
+    name: '全域量子扫描仪 Mk3 🌌',
+    hint: '古藏宝图古老地脉坐标与精密扫描仪融合',
+    desc: '在矿机控制台安装后，精确透视 3 个热脉格，主脉预测准确率达 80%！'
+  },
 
   // ================= 3. 烹饪与野外医疗 (Cooking & Medical) =================
   {
@@ -256,6 +289,17 @@ export const CRAFTING_BLUEPRINTS = [
     name: '清甜鲜萃果浆 🧃',
     hint: '破开椰子倒入酸甜苹果肉融合捣匀',
     desc: '神清气爽！恢复 30 饥饿、50 饮水，并瞬间降低 35 疲劳！'
+  },
+  {
+    id: 'resonance_crab_pot',
+    category: 'medical_food',
+    a: 'cooked_crab',
+    b: 'coconut',
+    result: 'resonance_crab_pot',
+    count: 1,
+    name: '共振浓香椰子蟹煲 🍲✨',
+    hint: '香烤极品红蟹与海岛椰汁温火炖煮',
+    desc: '食用后获得「晶爆」灵感：接下来 3 轮共振勘探晶爆触发概率提升 1.5 倍！'
   },
 
   // ================= 4. 营建与逃脱主线 (Base & Escape) =================

@@ -26,6 +26,7 @@ export class DockShipEntity {
     this.group.add(this.slipwayGroup);
 
     this.beaconMesh = null;
+    this.badgeLight = null;
     this.lanternLight = null;
 
     this.initShipyardSlipway();
@@ -123,7 +124,9 @@ export class DockShipEntity {
     // 蓝金点光源
     const badgeLight = new THREE.PointLight(0x00cec9, 1.2, 5.0);
     badgeLight.position.set(0, 0, 0);
+    badgeLight.visible = false;
     badgeGroup.add(badgeLight);
+    this.badgeLight = badgeLight;
 
     this.beaconMesh = badgeGroup;
     this.slipwayGroup.add(badgeGroup);
@@ -334,6 +337,7 @@ export class DockShipEntity {
 
     this.lanternLight = new THREE.PointLight(0xfffa65, 2.2, 10.0);
     this.lanternLight.position.set(0, 0, -0.4);
+    this.lanternLight.visible = false;
     lanternGroup.add(this.lanternLight);
 
     this.vesselGroup.add(lanternGroup);
@@ -394,3 +398,17 @@ export class DockShipEntity {
     this.group.visible = visible;
   }
 }
+
+// 距离动态剔除码头与船只点光源
+DockShipEntity.prototype.updateLightsByDistance = function(playerPos) {
+  if (!playerPos) {
+    if (this.badgeLight) this.badgeLight.visible = false;
+    if (this.lanternLight) this.lanternLight.visible = false;
+    return;
+  }
+  // 码头滑道坐标: (-22.0, 0, 36.5)
+  const dist = Math.hypot(playerPos.x - (-22.0), playerPos.z - 36.5);
+  const isNearby = (dist < 18.0);
+  if (this.badgeLight) this.badgeLight.visible = isNearby;
+  if (this.lanternLight) this.lanternLight.visible = (isNearby && this.vesselGroup.visible);
+};

@@ -408,4 +408,35 @@ export class QuarryIsleScene {
       }
     }
   }
+
+  // 序列化与持久化支持
+  serialize() {
+    return {
+      outpostClaimed: this.outpostClaimed,
+      collectedResourceIds: this.islandResources.filter(r => r.collected).map(r => r.id)
+    };
+  }
+
+  // 反序列化恢复
+  deserialize(data) {
+    if (!data) return;
+    if (data.outpostClaimed !== undefined) {
+      this.outpostClaimed = Boolean(data.outpostClaimed);
+      if (this.outpostClaimed && this.flagMat) {
+        this.flagMat.color.set(0xe67e22);
+      }
+    }
+    if (Array.isArray(data.collectedResourceIds)) {
+      const set = new Set(data.collectedResourceIds);
+      this.islandResources.forEach(item => {
+        if (set.has(item.id)) {
+          item.collected = true;
+          if (item.group) {
+            item.group.visible = false;
+          }
+        }
+      });
+    }
+  }
+
 }

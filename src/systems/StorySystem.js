@@ -10,6 +10,9 @@ export class StorySystem {
     // 当前主线章节与子步骤索引
     this.currentChapterId = 0;
     this.currentStepIndex = 0;
+    this.onboardingStep = 0;
+    this.onboardingDismissed = false;
+    this.lastOnboardingPosition = null;
 
     // 真实主动行为记录标记 (Action-based Milestones)
     this.hasGatheredBranch = false;        // 真实拾取/采集了木棍
@@ -61,7 +64,7 @@ export class StorySystem {
             type: 'position',
             desc: '沿沙滩向内陆探索，寻找椰林后方的帐篷营地！',
             checkPosition: (playerPos) => distanceXZ(playerPos, ISLAND_LAYOUT.tent) < 5.0,
-            hint: '从南岸向西北走，寻找营地帐篷 (-16, 0, -8) 与跳动的篝火'
+            hint: '从南岸向西北走，寻找营地帐篷 (-17, 0, 23) 与跳动的篝火'
           }
         ]
       },
@@ -80,7 +83,7 @@ export class StorySystem {
             id: 'cook_hot_food',
             type: 'action',
             desc: '靠近营地篝火按【E】，用引火物烘烤鲜鱼或采集的苹果！',
-            hint: '持食材靠近营地中央篝火 (-7, 0, -4) 按 E 键烹饪热食'
+            hint: '持食材靠近营地中央篝火 (-12, 0, 24) 按 E 键烹饪热食'
           },
           {
             id: 'craft_axe',
@@ -113,7 +116,7 @@ export class StorySystem {
       },
       {
         id: 3,
-        title: '第三章：电波呼救与邻岛信号',
+        title: '第三章：无线通讯与邻岛求救',
         subtitle: '收音机求救 · 浮木岛的呼号',
         steps: [
           {
@@ -128,49 +131,56 @@ export class StorySystem {
             desc: '手持收音机前往南岸 S.O.S 地标按【E】架设天线，接收邻岛求救信号！',
             checkState: () => this.radioBroadcasted,
             hint: '在南岸沙滩巨石 S.O.S 处按 E 键调谐收音机频段'
-          },
-          {
-            id: 'build_raft',
-            type: 'state',
-            desc: '在西南浅滩造好【求生大木筏】，展开海图备足水粮，准备出海营救同伴！',
-            checkState: () => this.raftBuilt,
-            hint: '准备4根木材+2铁钉+2藤蔓在浅滩建造大木筏'
           }
         ]
       },
       {
         id: 4,
-        title: '第四章：暴风雨洗礼与第二幸存者',
-        subtitle: '命运相遇的羁绊',
+        title: '第四章：筹备远航与出海营救',
+        subtitle: '乘风破浪 · 搜救同伴与浮木岛开拓',
         steps: [
+          {
+            id: 'build_raft',
+            type: 'state',
+            desc: '在西南浅滩造好【求生大木筏】，准备扬帆出海展开营救！',
+            checkState: () => this.raftBuilt,
+            hint: '准备4根木材+2铁钉+2藤蔓在浅滩建造大木筏'
+          },
           {
             id: 'rescue_partner',
             type: 'state',
             desc: '在东北悬崖高台木屋旁巡查，发现昏迷的第二幸存者，按【E】紧急救援！',
             checkState: () => this.secondKidAwake,
             hint: '前往东北侧山顶别墅高台 (25, 1.8, -19) 救治昏迷同伴'
-          },
+          }
+        ]
+      },
+      {
+        id: 5,
+        title: '第五章：扩大生产与海岛家园',
+        subtitle: '营地扩建与群岛前哨',
+        steps: [
           {
             id: 'care_partner',
             type: 'state',
             desc: '给同伴投喂清水与鲜美烤鱼，将彼此的好感度培养至 100 以上！',
             checkState: () => this.secondKidAffection >= 100,
             hint: '每日与同伴对话互动并赠送美食增加好感度'
-          }
-        ]
-      },
-      {
-        id: 5,
-        title: '第五章：远古遗迹与终极生还',
-        subtitle: '解开神殿谜题，逃出生天',
-        steps: [
+          },
           {
             id: 'collect_gems',
             type: 'state',
             desc: '探索全岛采集 3 颗神秘古代宝石（星形宝石、菱形宝石、圆月宝石）！',
             checkState: () => this.gemsCollected.size >= 3,
             hint: '在山麓洞穴、高台树林与神殿石雕处探索获取宝石'
-          },
+          }
+        ]
+      },
+      {
+        id: 6,
+        title: '第六章：远古遗迹与终极生还',
+        subtitle: '解开神殿谜题，逃出生天',
+        steps: [
           {
             id: 'final_escape',
             type: 'state',
@@ -200,8 +210,49 @@ export class StorySystem {
     return `🚩 [${chapter.title}] ${step.desc}`;
   }
 
+  getOnboardingHint() {
+    if (this.onboardingDismissed || this.onboardingStep >= ONBOARDING_STEPS.length) return null;
+    return ONBOARDING_STEPS[this.onboardingStep];
+  }
+
+  _completeOnboardingThrough(stepIndex) {
+    if (this.onboardingDismissed || this.onboardingStep > stepIndex) return;
+    this.onboardingStep = stepIndex + 1;
+    this._refreshOnboarding();
+  }
+
+  _refreshOnboarding() {
+    this._renderOnboarding();
+    queueMicrotask(() => this.game?.saveSystem?.saveGame?.('onboarding_progress'));
+  }
+
+  _renderOnboarding() {
+    const hint = this.getOnboardingHint();
+    this.game?.ui?.updateTutorial?.(hint, this.onboardingStep, ONBOARDING_STEPS.length);
+  }
+
+  dismissOnboarding() {
+    if (this.onboardingDismissed || this.onboardingStep >= ONBOARDING_STEPS.length) return;
+    this.onboardingDismissed = true;
+    this._refreshOnboarding();
+  }
+
+  onInventoryOpened() {
+    this._completeOnboardingThrough(2);
+  }
+
   // 帧更新循环：仅检测地理位置到达与明确的状态变更，严禁被动读取背包跳关！
   update(playerPos, inventory, survivalStats) {
+    if (!this.onboardingDismissed && this.onboardingStep === 0 && playerPos) {
+      if (this.lastOnboardingPosition) {
+        const dx = playerPos.x - this.lastOnboardingPosition[0];
+        const dz = (playerPos.z || 0) - this.lastOnboardingPosition[1];
+        if (Math.hypot(dx, dz) >= 0.75) {
+          this._completeOnboardingThrough(0);
+        }
+      }
+      this.lastOnboardingPosition = [playerPos.x, playerPos.z || 0];
+    }
     if (this.endedEndingId || this.isAdvancing) return;
 
     const currentStep = this.getCurrentStep();
@@ -231,7 +282,8 @@ export class StorySystem {
 
   // 真实采集/拾取了自然资源
   onGatherResource(itemType) {
-    if (this.currentChapterId === 0 && this.currentStepIndex === 0) {
+    if (itemType === 'tree_branch' || itemType === 'driftwood') this._completeOnboardingThrough(1);
+    if (this.getCurrentStep()?.id === 'collect_driftwood') {
       if (itemType === 'tree_branch' || itemType === 'driftwood') {
         this.hasGatheredBranch = true;
         this.advanceStep();
@@ -241,7 +293,8 @@ export class StorySystem {
 
   // 真实食用了食物
   onConsumeFood(foodId) {
-    if (this.currentChapterId === 0 && this.currentStepIndex === 1) {
+    this._completeOnboardingThrough(3);
+    if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
       this.advanceStep();
     }
@@ -249,7 +302,8 @@ export class StorySystem {
 
   // 真实饮用了淡水泉水或水壶
   onDrinkWater() {
-    if (this.currentChapterId === 0 && this.currentStepIndex === 1) {
+    this._completeOnboardingThrough(3);
+    if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
       this.advanceStep();
     }
@@ -257,20 +311,21 @@ export class StorySystem {
 
   // 真实在合成台完成了道具制作
   onCraftItem(product) {
-    if (this.currentChapterId === 1 && this.currentStepIndex === 0 && product === 'kindling') {
+    const curStepId = this.getCurrentStep()?.id;
+    if (curStepId === 'craft_kindling' && product === 'kindling') {
       this.hasCraftedKindling = true;
       this.advanceStep();
-    } else if (this.currentChapterId === 1 && this.currentStepIndex === 2 && product === 'stone_axe') {
+    } else if (curStepId === 'craft_axe' && product === 'stone_axe') {
       this.hasCraftedAxe = true;
       this.advanceStep();
-    } else if (this.currentChapterId === 3 && this.currentStepIndex === 0 && product === 'workradio') {
+    } else if (curStepId === 'fix_radio' && product === 'workradio') {
       this.advanceStep();
     }
   }
 
   // 真实在篝火完成了烹饪
   onCookFood() {
-    if (this.currentChapterId === 1 && this.currentStepIndex === 1) {
+    if (this.getCurrentStep()?.id === 'cook_hot_food') {
       this.hasCookedFood = true;
       this.advanceStep();
     }
@@ -279,7 +334,7 @@ export class StorySystem {
   // 真实完成了无线电架设调谐并收到邻岛呼救
   onRadioContact() {
     this.radioBroadcasted = true;
-    if (this.currentChapterId === 3 && this.currentStepIndex === 1) {
+    if (this.getCurrentStep()?.id === 'radio_contact') {
       this.advanceStep();
     }
   }
@@ -330,7 +385,7 @@ export class StorySystem {
     if (this.game && this.game.ui) {
       this.game.ui.showDialog('🐒 伙伴加入：小猴子 Bub', '你递给小猴子香甜的果实，它开心地手舞足蹈，翻了个跟头跳上了你的肩膀！\n小猴子正式成为你的荒岛忠实伙伴！它将在探索中为你搜寻稀有道具！');
     }
-    if (this.currentChapterId === 2 && this.currentStepIndex === 1) {
+    if (this.getCurrentStep()?.id === 'befriend_monkey') {
       this.advanceStep();
     }
   }
@@ -341,18 +396,15 @@ export class StorySystem {
     if (this.game && this.game.ui) {
       this.game.ui.showDialog('🪨 沙滩 SOS 地标拼装完成！', '你搬运大量海滩巨石与白色贝壳，在平坦南岸沙滩上拼出了直径十余米的巨型【S.O.S】求救符号！\n配合修好的收音机广播，空中搜救机将能一眼看见！');
     }
-    if (this.currentChapterId === 3 && this.currentStepIndex === 1) {
-      this.advanceStep();
-    }
   }
 
   // 建造救生大木筏
   buildRaft() {
     this.raftBuilt = true;
     if (this.game && this.game.ui) {
-      this.game.ui.showDialog('⛵ 求生大木筏建造完成！', '经过精密的木工捆绑与打钉加固，一艘坚不可摧的双桅求生大木筏在南岸西侧码头赫然成型！\n现在具备横渡深海逃离荒岛的航海载具！');
+      this.game.ui.showDialog('⛵ 求生大木筏建造完成！', '经过精密的木工捆绑与打钉加固，一艘坚不可摧的双桅求生大木筏在南岸西侧码头赫然成型！\n现在具备横渡深海探索邻岛的航海载具！');
     }
-    if (this.currentChapterId === 3 && this.currentStepIndex === 1) {
+    if (this.getCurrentStep()?.id === 'build_raft') {
       this.advanceStep();
     }
   }
@@ -390,7 +442,9 @@ export class StorySystem {
       radioBroadcasted: this.radioBroadcasted,
       raftBuilt: this.raftBuilt,
       gemsCollected: Array.from(this.gemsCollected),
-      endedEndingId: this.endedEndingId
+      endedEndingId: this.endedEndingId,
+      onboardingStep: this.onboardingStep,
+      onboardingDismissed: this.onboardingDismissed
     };
   }
 
@@ -413,5 +467,17 @@ export class StorySystem {
     if (typeof data.raftBuilt === 'boolean') this.raftBuilt = data.raftBuilt;
     if (Array.isArray(data.gemsCollected)) this.gemsCollected = new Set(data.gemsCollected);
     if (data.endedEndingId) this.endedEndingId = data.endedEndingId;
+    if (typeof data.onboardingStep === 'number') this.onboardingStep = Math.max(0, Math.min(ONBOARDING_STEPS.length, data.onboardingStep));
+    else if ((data.currentChapterId || 0) > 0 || (data.currentStepIndex || 0) > 0 || data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite) this.onboardingStep = ONBOARDING_STEPS.length;
+    if (typeof data.onboardingDismissed === 'boolean') this.onboardingDismissed = data.onboardingDismissed;
+    else if ((data.currentChapterId || 0) > 0 || (data.currentStepIndex || 0) > 0 || data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite) this.onboardingDismissed = true;
+    this._renderOnboarding();
   }
 }
+
+const ONBOARDING_STEPS = [
+  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动黑猫；电脑上也可以用 WASD 或方向键。' },
+  { id: 'gather', title: '拾取漂流物', text: '走近发亮的树枝，点击右侧互动按钮；电脑上按 E 拾取。' },
+  { id: 'inventory', title: '查看随身行囊', text: '点击右上角行囊，查看刚捡到的材料和随身食物。' },
+  { id: 'consume', title: '补充体力', text: '在行囊中选择苹果并点击使用；也可以到溪边互动饮水。' }
+];

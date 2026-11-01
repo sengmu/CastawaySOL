@@ -1,0 +1,423 @@
+{
+  "schemaVersion": 2,
+  "timestamp": 1793552960868,
+  "player": {
+    "position": [
+      0,
+      -0.12,
+      39.5
+    ],
+    "rotation": 3.141592653589793
+  },
+  "survival": {
+    "life": 100,
+    "hunger": 65,
+    "water": 50,
+    "fatigue": 35,
+    "day": 1,
+    "steps": 0,
+    "canteenSips": 3,
+    "isDead": false
+  },
+  "inventory": {
+    "apple": 0,
+    "tree_branch": 7,
+    "stone_chunk": 1,
+    "broken_radio": 0,
+    "battery": 0,
+    "nail": 3,
+    "coconut": 5,
+    "tree_sap": 3,
+    "tree_bark": 0,
+    "kindling": 1,
+    "baked_apple": 1,
+    "stone_axe": 1,
+    "workradio": 1
+  },
+  "bonusInventorySlots": 0,
+  "storage": {
+    "storageInventory": {
+      "wood_plank": 1,
+      "tree_branch": 2
+    },
+    "bonusCapacity": 0
+  },
+  "campFacilities": {
+    "purifierWaterLevel": 3,
+    "maxPurifierWater": 6,
+    "isAutoProductionActive": false,
+    "residentJobs": {
+      "second_kid": "salvager"
+    },
+    "refineryLevel": 0,
+    "refineryQueue": 0
+  },
+  "nauticalChart": {
+    "currentIslandId": "home_island",
+    "islands": {
+      "home_island": {
+        "id": "home_island",
+        "name": "避风家园主岛 (Home Island)",
+        "badge": "🏠 核心大本营",
+        "desc": "平静安全的求生母港，坐落着温馨的露营帐篷、飞瀑清泉、营地储物箱与净水设施。",
+        "climate": "四季温和 · 资源均衡",
+        "dangerLevel": "安全 (0★)",
+        "distanceKm": 0,
+        "requiredSupplies": {
+          "food": 0,
+          "water": 0
+        },
+        "discovered": true,
+        "outpostBuilt": true,
+        "thumbnailIcon": "🏝️"
+      },
+      "timber_isle": {
+        "id": "timber_isle",
+        "name": "漂流浮木岛 (Timber Isle)",
+        "badge": "🪵 木料富集 · 邻岛求救源",
+        "desc": "位于东北洋流交汇处的沉船沙洲，遍布被海浪冲刷上岸的高阶原木方料与板条箱，并传出受困幸存者断续的无线电呼救信号！",
+        "climate": "潮汐汹涌 · 漂流物富集",
+        "dangerLevel": "轻度危险 (1★)",
+        "distanceKm": 2.8,
+        "requiredSupplies": {
+          "food": 1,
+          "water": 1
+        },
+        "discovered": true,
+        "outpostBuilt": false,
+        "thumbnailIcon": "🪵"
+      },
+      "quarry_isle": {
+        "id": "quarry_isle",
+        "name": "海蚀矿石岛 (Quarry Isle)",
+        "badge": "🪨 玄武岩矿脉 · 待探索",
+        "desc": "远海火山海蚀孤峰，岩壁密布坚硬的玄武岩、铜铁矿露头与硫磺泉眼，是打造高阶工具与坚固防御前哨的必经之地。",
+        "climate": "狂风骤雨 · 峭壁险峻",
+        "dangerLevel": "中度危险 (2★)",
+        "distanceKm": 5.6,
+        "requiredSupplies": {
+          "food": 2,
+          "water": 2
+        },
+        "discovered": false,
+        "outpostBuilt": false,
+        "thumbnailIcon": "🌋"
+      }
+    }
+  },
+  "vesselUpgrade": {
+    "currentTierLevel": 1,
+    "cargoInventory": {}
+  },
+  "monkeyHelper": {
+    "affinity": 60,
+    "energy": 80,
+    "mode": "follow"
+  },
+  "tidalTrap": {
+    "trapCatches": {
+      "sea_crab": 1,
+      "sardine": 2
+    },
+    "trapBait": null,
+    "trapBaitCount": 0,
+    "finishedItems": []
+  },
+  "petCompanion": {
+    "unlockedPets": [
+      "bub_monkey"
+    ],
+    "activePetId": "bub_monkey",
+    "petStates": {
+      "bub_monkey": {
+        "energy": 80,
+        "affinity": 60
+      },
+      "bella_dog": {
+        "energy": 100,
+        "affinity": 70
+      },
+      "raymond_cat": {
+        "energy": 100,
+        "affinity": 70
+      },
+      "dom_sheep": {
+        "energy": 100,
+        "affinity": 70
+      }
+    },
+    "sheepPouchInventory": {}
+  },
+  "weather": {
+    "currentWeather": "clear",
+    "weatherTimer": 180,
+    "bodyTemp": 37,
+    "hasFireShelter": false,
+    "hasOilskinCloak": false
+  },
+  "templePuzzle": {
+    "stage": 0,
+    "isDoorOpened": false,
+    "vaultClaimed": false,
+    "prismAngles": {
+      "red": 0,
+      "green": 0,
+      "blue": 0
+    },
+    "matrix": [
+      [
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        0,
+        1
+      ]
+    ]
+  },
+  "ancientTempleScene": {
+    "isInnerGateOpen": false,
+    "vaultClaimed": false
+  },
+  "timberIsle": {
+    "survivorRescued": false,
+    "outpostClaimed": false,
+    "collectedResourceIds": []
+  },
+  "raymondSettled": false,
+  "currentIslandId": "main_island",
+  "story": {
+    "currentChapterId": 4,
+    "currentStepIndex": 0,
+    "hasGatheredBranch": true,
+    "hasConsumedFoodOrWater": true,
+    "hasReachedCampsite": true,
+    "hasCraftedKindling": true,
+    "hasCookedFood": true,
+    "hasCraftedAxe": true,
+    "monkeyBefriended": true,
+    "secondKidFound": false,
+    "secondKidAwake": false,
+    "secondKidAffection": 50,
+    "sosBuilt": true,
+    "radioBroadcasted": true,
+    "raftBuilt": false,
+    "gemsCollected": [],
+    "endedEndingId": null,
+    "onboardingStep": 4,
+    "onboardingDismissed": false
+  },
+  "miningRig": {
+    "loadedCrystals": 1,
+    "unclaimedSol": 0,
+    "totalBlocksMined": 0,
+    "totalSolMined": 0,
+    "batteryPower": 75,
+    "hashProgress": 0,
+    "isOverclocked": false,
+    "hasLithiumPack": false,
+    "rigMode": "decrypt",
+    "rigLevel": 1,
+    "loadedPureCrystals": 0,
+    "shardCount": 0,
+    "solDust": 0,
+    "scannerLevel": 0,
+    "resonance": {
+      "roundId": 1,
+      "phase": "OPEN",
+      "progress": 0,
+      "revealTimer": 0,
+      "seedCommit": "",
+      "deploy": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "committed": false,
+      "committedShares": 0,
+      "committedDeploy": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "lastResult": null,
+      "history": [],
+      "calib": 0,
+      "freeShares": 3,
+      "freeGrantDay": 1,
+      "freeGrantTs": 1793552758685,
+      "freeGrantSteps": 0,
+      "buff": {
+        "id": null,
+        "roundsLeft": 0
+      },
+      "autoRepeat": {
+        "pattern": null,
+        "roundsLeft": 0
+      }
+    },
+    "motherlode": {
+      "pool": 0,
+      "injected": 0,
+      "paid": 0,
+      "burned": 0,
+      "hallOfFame": []
+    },
+    "season": {
+      "id": 1,
+      "rs": 0,
+      "countedToday": 0,
+      "utcDay": 1
+    }
+  },
+  "quarryIsle": {
+    "outpostClaimed": false,
+    "collectedResourceIds": []
+  },
+  "flotsamSalvage": {
+    "collectedIds": [],
+    "hasAutoSalvageBuoy": false,
+    "tier": 1,
+    "totalSalvaged": 0
+  },
+  "rigMode": "decrypt",
+  "rigLevel": 1,
+  "loadedPureCrystals": 0,
+  "shardCount": 0,
+  "solDust": 0,
+  "scannerLevel": 0,
+  "resonance": {
+    "roundId": 1,
+    "phase": "idle",
+    "progress": 0,
+    "revealTimer": 0,
+    "seedCommit": "",
+    "board": [],
+    "deploy": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "committed": false,
+    "lastResult": null,
+    "history": [],
+    "calib": 0,
+    "freeShares": 3,
+    "freeGrantDay": 1,
+    "freeGrantTs": 1793552795342,
+    "freeGrantSteps": 0,
+    "buff": {
+      "id": null,
+      "roundsLeft": 0
+    },
+    "autoRepeat": {
+      "pattern": null,
+      "roundsLeft": 0
+    }
+  },
+  "motherlode": {
+    "pool": 0,
+    "injected": 0,
+    "paid": 0,
+    "burned": 0,
+    "hallOfFame": []
+  },
+  "season": {
+    "id": 1,
+    "rs": 0,
+    "countedToday": 0,
+    "utcDay": 20758
+  },
+  "world": {
+    "collectedBeachResources": [
+      "res_0",
+      "res_1",
+      "res_2",
+      "res_3",
+      "res_4",
+      "res_5",
+      "res_6",
+      "res_7",
+      "res_20",
+      "res_21"
+    ],
+    "collectedFlotsam": [],
+    "collectedGems": [],
+    "sosBuilt": true,
+    "raftBuilt": false
+  },
+  "furniture": []
+}

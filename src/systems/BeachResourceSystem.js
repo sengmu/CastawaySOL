@@ -246,7 +246,7 @@ export class BeachResourceSystem {
     if (res.hp <= 0) {
       // 成功击碎巨石/矿床！
       res.collected = true;
-      res.regrowthSteps = 150; // 150 步后地壳岩脉重新隆起
+      res.regrowthSteps = 600; // 600 生存步后地壳岩脉重新隆起 (约 3 分钟)
       res.group.visible = false;
       soundEngine.playPlaceFurniture();
 
@@ -286,6 +286,50 @@ export class BeachResourceSystem {
           res.group.visible = true;
         }
       }
+    }
+
+    // 潮汐退潮 10% 几率在浅滩涌现微光晶簇彩蛋 (每 120 步检定)
+    this.tideStepTimer = (this.tideStepTimer || 0) + stepCount;
+    if (this.tideStepTimer >= 120) {
+      this.tideStepTimer = 0;
+      if (Math.random() < 0.10) {
+        this.spawnTidalCrystal();
+      }
+    }
+  }
+
+  // 潮汐退潮浅滩晶簇彩蛋 (退潮时 10% 几率在浅滩涌现)
+  spawnTidalCrystal() {
+    let tidalRes = this.resources.find(r => r.type === 'tidal_crystal');
+    if (!tidalRes) {
+      const pos = new THREE.Vector3(2.5, 0.05, 36.0);
+      const group = new THREE.Group();
+      group.position.copy(pos);
+      const geo = new THREE.DodecahedronGeometry(0.28, 0);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x9945ff,
+        emissive: 0x14f195,
+        emissiveIntensity: 0.6,
+        roughness: 0.2
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.y = 0.15;
+      group.add(mesh);
+      this.scene.add(group);
+
+      tidalRes = {
+        type: 'tidal_crystal',
+        name: '浅滩退潮微光晶簇',
+        pos,
+        group,
+        mesh,
+        items: ['sol_crystal'],
+        collected: false
+      };
+      this.resources.push(tidalRes);
+    } else {
+      tidalRes.collected = false;
+      if (tidalRes.group) tidalRes.group.visible = true;
     }
   }
 

@@ -2,11 +2,12 @@
 // 结合荒岛废土朋克与 Solana 绿色公链生态：
 // 1. 实体建筑：利用漂流木架、沉船太阳能硅晶板、收音机芯片与铜线组装的手搓解密矿机；
 // 2. 算力驱动：消耗【未解密硅晶原石 sol_crystal】，结合白天日光太阳能与生物质蓄电池发电；
-// 3. 出块结算：移动步数与实时时间推进哈希运算，出块产出【$SOL 算力代币 sol_token】。
+// 3. 出块结算：移动步数与实时时间推进哈希运算，出块产出【荒岛算力代币 sol_token】。
 
 import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
+import { ODDS_TABLE, genRoundSeed, genCluster, genNpcBoard, settle } from './resonance/ResonanceEngine.js';
 
 export class MiningRigSystem {
   constructor(game) {
@@ -19,7 +20,7 @@ export class MiningRigSystem {
     this.isActive = false;               // 是否正在通电哈希计算中
     this.hashrate = 85.5;               // 基础算力 (MH/s)
     this.totalBlocksMined = 0;           // 历史已验证区块总数
-    this.totalSolMined = 0;             // 历史挖出 $SOL 代币总数
+    this.totalSolMined = 0;             // 历史挖出算力代币总数
 
     // 矿仓与燃料
     this.loadedCrystals = 1;            // 初始已预装 1 块硅晶原石体验
@@ -38,7 +39,54 @@ export class MiningRigSystem {
     this.lastTapTime = 0;
 
     // 待领取的产出槽
-    this.unclaimedSol = 0;              // 待收取的 $SOL 算力代币
+    this.unclaimedSol = 0;              // 待收取的算力代币
+
+    // 矿脉共振勘探系统字段 (Resonance Mode)
+    this.rigMode = 'decrypt';           // 'decrypt' | 'resonance'
+    this.rigLevel = 1;
+    this.loadedPureCrystals = 0;
+    this.shardCount = 0;
+    this.solDust = 0;
+    this.scannerLevel = 0;
+    this.T_base = 120;
+
+    this.resonance = {
+      roundId: 1,
+      phase: 'OPEN',
+      progress: 0,
+      revealTimer: 0,
+      seedCommit: '',
+      board: null,
+      cluster: null,
+      deploy: new Array(25).fill(0),
+      committed: false,
+      committedShares: 0,
+      committedDeploy: new Array(25).fill(0),
+      lastResult: null,
+      history: [],
+      calib: 0,
+      freeShares: 3,
+      freeGrantDay: 1,
+      freeGrantTs: Date.now(),
+      freeGrantSteps: 0,
+      buff: { id: null, roundsLeft: 0 },
+      autoRepeat: { pattern: null, roundsLeft: 0 }
+    };
+
+    this.motherlode = {
+      pool: 0,
+      injected: 0,
+      paid: 0,
+      burned: 0,
+      hallOfFame: []
+    };
+
+    this.season = {
+      id: 1,
+      rs: 0,
+      countedToday: 0,
+      utcDay: 1
+    };
 
     // 出块 3D 粒子对象池
     this.burstCoinPool = [];
@@ -346,6 +394,7 @@ export class MiningRigSystem {
     this.isOverclocked = true;
     this.hashSpeed = 30;
     this.hashrate = 171.0;
+    this.T_base = 90; // 共振轮次缩短至 90 秒
   }
 
   // 解锁航天级固态锂电池组
@@ -355,8 +404,370 @@ export class MiningRigSystem {
     this.batteryPower = 200;
   }
 
+  setMode(mode) {
+    if (mode !== 'decrypt' && mode !== 'resonance') return;
+    this.rigMode = mode;
+    if (this.game) this.game.rigMode = mode;
+  }
+
+  getCapacityU() {
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    return levelInfo.u;
+  }
+
+  ensureResonanceRound() {
+    if (!this.resonance.cluster) {
+      const saveSeed = this.game?.saveSystem?.saveSeed || 'castaway';
+      this.resonance.cluster = genCluster(saveSeed, this.resonance.roundId);
+      this.resonance.seedCommit = genRoundSeed(saveSeed, this.resonance.roundId);
+      const isDay = this.isDaytime();
+      const phaseMult = isDay ? 1.0 : (this.game?.dayNight?.currentMode === 'dawn' ? 1.25 : 0.6);
+      const weatherMult = ODDS_TABLE.WEATHER_MULTIPLIERS[this.game?.weatherSystem?.currentWeather] || 1.0;
+      this.resonance.board = genNpcBoard(this.resonance.seedCommit, this.getCapacityU(), phaseMult, weatherMult, 1.0, this.resonance.cluster);
+    }
+  }
+
+  // 部署份额
+  placeShares(sq, n = 1) {
+    if (this.resonance.phase !== 'OPEN') {
+      return { ok: false, msg: '当前轮次已锁定或正在揭晓中，无法调整部署！' };
+    }
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    const k = levelInfo.k;
+    const C = levelInfo.C;
+
+    // 当前已选格子集合
+    const activeSquares = this.resonance.deploy.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+    const isNewSquare = !activeSquares.includes(sq);
+
+    if (n > 0) {
+      if (isNewSquare && activeSquares.length >= k) {
+        return { ok: false, msg: `当前等级仅支持同时勘探 ${k} 个矿格！升级矿机可扩充格数` };
+      }
+      const curTotal = this.resonance.deploy.reduce((a, b) => a + b, 0);
+      if (curTotal + n > C) {
+        return { ok: false, msg: `单轮投入已达当前矿机上限 (${C} 份额)！` };
+      }
+      // 检查可用料仓 (免费份额优先，原石其次)
+      const available = this.resonance.freeShares + this.loadedCrystals;
+      const pendingTotal = curTotal + n - (this.resonance.committedShares || 0);
+      if (pendingTotal > available) {
+        return { ok: false, msg: `料仓原石不足 (可用: ${available} 份)！请先补充原石` };
+      }
+      this.resonance.deploy[sq] = (this.resonance.deploy[sq] || 0) + n;
+    } else if (n < 0) {
+      if (this.resonance.committed) {
+        return { ok: false, msg: '本轮部署已确认提交，不可撤回，仅可继续追加！' };
+      }
+      const cur = this.resonance.deploy[sq] || 0;
+      this.resonance.deploy[sq] = Math.max(0, cur + n);
+    }
+    return { ok: true, deploy: this.resonance.deploy };
+  }
+
+  // 一键均分
+  autoSplitEven() {
+    if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
+    if (this.resonance.committed) return { ok: false, msg: '已提交不可均分' };
+
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    const C = levelInfo.C;
+    const available = Math.min(C, this.resonance.freeShares + this.loadedCrystals);
+    if (available <= 0) return { ok: false, msg: '料仓晶石不足' };
+
+    let activeSquares = this.resonance.deploy.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+    if (activeSquares.length === 0) {
+      this.ensureResonanceRound();
+      if (this.scannerLevel >= 2 && this.resonance.cluster) {
+        activeSquares = this.resonance.cluster.heatIndices.slice(0, levelInfo.k);
+      } else {
+        activeSquares = [12, 11, 13].slice(0, levelInfo.k);
+      }
+    }
+
+    this.resonance.deploy.fill(0);
+    const perSq = Math.floor(available / activeSquares.length);
+    const rem = available % activeSquares.length;
+    activeSquares.forEach((sq, idx) => {
+      this.resonance.deploy[sq] = perSq + (idx === 0 ? rem : 0);
+    });
+    return { ok: true, deploy: this.resonance.deploy };
+  }
+
+  // All-in 单格集中投入
+  allIn(sq) {
+    if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
+    if (this.resonance.committed) return { ok: false, msg: '已提交不可修改' };
+
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    const C = levelInfo.C;
+    const available = Math.min(C, this.resonance.freeShares + this.loadedCrystals);
+    if (available <= 0) return { ok: false, msg: '料仓晶石不足' };
+
+    this.resonance.deploy.fill(0);
+    this.resonance.deploy[sq] = available;
+    return { ok: true, deploy: this.resonance.deploy };
+  }
+
+  // 确认提交本轮部署
+  commitDeployment() {
+    if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
+    const alreadyCommitted = this.resonance.committedShares || 0;
+    const totalShares = this.resonance.deploy.reduce((a, b) => a + b, 0);
+    if (totalShares <= 0) return { ok: false, msg: '请先在矿格中分配晶石份额！' };
+    if (totalShares <= alreadyCommitted) return { ok: false, msg: '本轮部署已全部提交！' };
+
+    // 扣除料仓与免费份额
+    let remainToDeduct = totalShares - alreadyCommitted;
+    if (remainToDeduct > this.resonance.freeShares + this.loadedCrystals) {
+      return { ok: false, msg: '料仓原石不足，无法确认新增份额！' };
+    }
+    if (this.resonance.freeShares > 0) {
+      const takeFree = Math.min(this.resonance.freeShares, remainToDeduct);
+      this.resonance.freeShares -= takeFree;
+      remainToDeduct -= takeFree;
+    }
+    if (remainToDeduct > 0) {
+      this.loadedCrystals = Math.max(0, this.loadedCrystals - remainToDeduct);
+    }
+
+    this.resonance.committed = true;
+    this.resonance.committedShares = totalShares;
+    this.resonance.committedDeploy = [...this.resonance.deploy];
+    soundEngine.playPlaceFurniture();
+    haptics.medium();
+
+    if (this.game?.saveSystem) {
+      this.game.saveSystem.saveGame('resonance_commit');
+    }
+    return { ok: true, totalShares };
+  }
+
+  // 装载高纯度精炼硅晶 (单格折算 2.5 份高权重份额)
+  loadPureCrystal(count = 1) {
+    const inv = this.game?.ui?.inventory;
+    if (!inv || (inv['sol_crystal_pure'] || 0) < count) {
+      if (this.game?.ui) this.game.ui.showToast('背包中高纯度精炼硅晶不足！', 'medium');
+      return false;
+    }
+    if (this.loadedPureCrystals + count > this.maxCrystalCapacity) {
+      if (this.game?.ui) this.game.ui.showToast('矿机纯晶装载已达上限！', 'medium');
+      return false;
+    }
+    inv['sol_crystal_pure'] -= count;
+    if (inv['sol_crystal_pure'] <= 0) delete inv['sol_crystal_pure'];
+    this.loadedPureCrystals += count;
+    if (this.game?.ui) {
+      this.game.ui.renderInventory();
+      this.game.ui.showToast(`✨ 成功装载 ${count} 块高纯度硅晶 (单格折算 2.5 份高权重份额)！`, 'small');
+    }
+    return true;
+  }
+
+  // 安装地质扫描仪
+  installScanner(level) {
+    const itemKey = `geo_scanner_mk${level}`;
+    const inv = this.game?.ui?.inventory;
+    if (!inv || (inv[itemKey] || 0) <= 0) {
+      return { ok: false, msg: `背包中缺少【${itemKey}】！需在合成台研制` };
+    }
+    const fee = level === 1 ? 0 : (level === 2 ? 25 : 70);
+    if (fee > 0 && (inv['sol_token'] || 0) < fee) {
+      return { ok: false, msg: `装机算力代币不足 (需要 ${fee} 算力代币)！` };
+    }
+
+    inv[itemKey]--;
+    if (inv[itemKey] <= 0) delete inv[itemKey];
+    if (fee > 0) {
+      inv['sol_token'] -= fee;
+      if (inv['sol_token'] <= 0) delete inv['sol_token'];
+      this.onSinkSpent(fee, 'scanner');
+    }
+
+    this.scannerLevel = Math.max(this.scannerLevel, level);
+    if (this.game?.ui) {
+      this.game.ui.renderInventory();
+      this.game.ui.showToast(`🛰️ 成功安装【地质共振扫描仪 Mk${level}】！地脉透视增强！`, 'important');
+    }
+    if (this.game?.saveSystem) {
+      this.game.saveSystem.saveGame('install_scanner');
+    }
+    return { ok: true, level: this.scannerLevel };
+  }
+
+  // 应用料理增益
+  applyResonanceBuff(id) {
+    if (id === 'energy_drink') {
+      this.resonance.buff = { id: 'energy_drink', name: '专注', roundsLeft: 2 };
+    } else if (id === 'smoked_fish') {
+      this.resonance.buff = { id: 'smoked_fish', name: '稳手', roundsLeft: 3 };
+    } else if (id === 'resonance_crab_pot') {
+      this.resonance.buff = { id: 'resonance_crab_pot', name: '晶爆', roundsLeft: 3 };
+    }
+  }
+
+  // 消费 15% 自动注入母晶池
+  onSinkSpent(amount, source = 'general') {
+    if (typeof amount !== 'number' || amount <= 0) return;
+    const inject = Math.round(amount * 0.15);
+    if (inject > 0) {
+      this.motherlode.injected += inject;
+      this.motherlode.pool = Math.min(ODDS_TABLE.MAX_MOTHERLODE_POOL, this.motherlode.pool + inject);
+    }
+  }
+
+  // 跨游戏日发放免费份额（防刷睡：需同时满足新自然日 + 实际间隔>=15分钟 + 期间步数>=200）
+  onNewDay(currentDay) {
+    const now = Date.now();
+    const r = this.resonance;
+    const isNewDay = currentDay > (r.freeGrantDay || 0);
+    const hasEnoughTime = (now - (r.freeGrantTs || 0)) >= 15 * 60 * 1000;
+    const currentSteps = this.game?.survival?.steps || 0;
+    const hasEnoughSteps = (currentSteps - (r.freeGrantSteps || 0)) >= 200;
+
+    if (isNewDay && hasEnoughTime && hasEnoughSteps) {
+      r.freeGrantDay = currentDay;
+      r.freeGrantTs = now;
+      r.freeGrantSteps = currentSteps;
+      r.freeShares = Math.min(6, (r.freeShares || 0) + 3);
+      if (this.game?.ui) {
+        this.game.ui.showToast('🌅 新的一天！地脉感应发放 3 份免费共振勘探份额！', 'medium');
+      }
+    }
+  }
+
+  advanceResonanceProgress(dProg) {
+    this.ensureResonanceRound();
+
+    if (this.resonance.phase === 'OPEN') {
+      this.resonance.progress = Math.min(100, this.resonance.progress + dProg);
+      if (this.resonance.progress >= 80) {
+        this.resonance.phase = 'LOCK';
+        // 锁定计算结果并落盘
+        const res = settle(this.resonance.board, this.resonance.committedDeploy, this.motherlode.pool, {
+          u: this.getCapacityU(),
+          roundSeed: this.resonance.seedCommit,
+          cluster: this.resonance.cluster,
+          buffId: this.resonance.buff ? this.resonance.buff.id : null,
+          weather: this.game?.weatherSystem?.currentWeather || 'clear',
+          currentCalib: this.resonance.calib
+        });
+        this.resonance.lastResult = res;
+        if (this.game?.saveSystem) {
+          this.game.saveSystem.saveGame('resonance_lock');
+        }
+      }
+    } else if (this.resonance.phase === 'LOCK') {
+      this.resonance.progress = Math.min(100, this.resonance.progress + dProg);
+      if (this.resonance.progress >= 100) {
+        this.resonance.phase = 'REVEAL';
+        this.resonance.revealTimer = (this.resonance.lastResult?.motherlode?.won) ? 10.0 : 7.5;
+      }
+    }
+  }
+
+  tickResonance(delta) {
+    const isDay = this.isDaytime();
+    if (!isDay && this.batteryPower > 0) {
+      this.batteryPower = Math.max(0, this.batteryPower - delta * 0.2);
+    }
+
+    if (this.resonance.phase === 'REVEAL') {
+      this.resonance.revealTimer -= delta;
+      if (this.resonance.revealTimer <= 0) {
+        this.settleResonanceRound();
+      }
+      return;
+    }
+
+    const powerMultiplier = isDay ? 1.0 : (this.batteryPower > 0 ? 0.8 : 0.5);
+    const T_base = this.isOverclocked ? 90 : 120;
+    const dProg = delta * (100.0 / T_base) * powerMultiplier;
+    this.advanceResonanceProgress(dProg);
+  }
+
+  settleResonanceRound() {
+    const res = this.resonance.lastResult;
+    if (!res || this.resonance.phase !== 'REVEAL') return { ok: false, msg: '当前没有待结算的共振结果' };
+    const before = this.serialize();
+    if (res) {
+      this.unclaimedSol += res.payout;
+      this.totalSolMined += res.payout;
+      this.shardCount += res.shards;
+      this.resonance.calib = res.calib;
+
+      // 4 残晶折算 1 晶石
+      while (this.shardCount >= 4 && this.loadedCrystals < this.maxCrystalCapacity) {
+        this.shardCount -= 4;
+        this.loadedCrystals++;
+      }
+
+      this.motherlode.pool = res.motherlode.nextPool;
+      if (res.motherlode.won) {
+        this.unclaimedSol += res.motherlode.playerTake;
+        this.totalSolMined += res.motherlode.playerTake;
+        this.motherlode.paid += res.motherlode.playerTake;
+        this.motherlode.burned += res.motherlode.npcBurned;
+        this.motherlode.hallOfFame.unshift({
+          roundId: this.resonance.roundId,
+          playerTake: res.motherlode.playerTake,
+          poolSize: res.motherlode.nextPool + res.motherlode.playerTake,
+          ts: Date.now()
+        });
+        if (this.motherlode.hallOfFame.length > 20) this.motherlode.hallOfFame.pop();
+      }
+
+      this.totalBlocksMined++;
+      this.resonance.history.unshift({
+        roundId: this.resonance.roundId,
+        winningSquare: res.winningSquare,
+        hit: res.hit,
+        payout: res.payout,
+        crit: res.crit.name,
+        shards: res.shards
+      });
+      if (this.resonance.history.length > 50) this.resonance.history.pop();
+
+      // 记录共振勘探赛季积分 (RS)
+      const s_W = (res.winningSquare >= 0) ? (this.resonance.deploy[res.winningSquare] || 0) : 0;
+      const totalInSquare = s_W + (this.resonance.board ? (this.resonance.board[res.winningSquare] || 0) : 0);
+      const roundRS = res.hit ? (10 + Math.round(20 * (s_W / Math.max(1, totalInSquare)))) : (this.resonance.deploy.some(v => v > 0) ? 2 : 0);
+      this.season.rs = (this.season.rs || 0) + roundRS;
+      if (this.game?.solanaBridge?.submitResonanceProof) {
+        this.game.solanaBridge.submitResonanceProof(this.season.rs, this.resonance.roundId);
+      }
+
+    }
+
+    // 重置进入下一轮
+    this.resonance.roundId++;
+    this.resonance.progress = 0;
+    this.resonance.phase = 'OPEN';
+    this.resonance.deploy = new Array(25).fill(0);
+    this.resonance.committed = false;
+    this.resonance.committedShares = 0;
+    this.resonance.committedDeploy = new Array(25).fill(0);
+    this.resonance.cluster = null;
+    this.resonance.board = null;
+    this.resonance.lastResult = null;
+
+    const saved = this.game?.saveSystem?.saveGame?.('resonance_settle');
+    if (saved && saved.success === false) {
+      this.deserialize(before);
+      return { ok: false, msg: saved.msg || '结算存档失败，请稍后重试' };
+    }
+    if (this.game?.solanaBridge) {
+      this.game.solanaBridge.submitMiningProof(this.totalBlocksMined, this.totalSolMined);
+    }
+    return { ok: true };
+  }
+
   // 步数驱动：玩家在海岛上探索跑图产生的感应电能与时间潮汐推进
   recordMovement(stepCount = 1) {
+    if (this.rigMode === 'resonance') {
+      this.advanceResonanceProgress(stepCount * 0.6);
+      return;
+    }
     if (this.loadedCrystals <= 0) return;
 
     // 每移动 10 步推进一格哈希运算
@@ -366,6 +777,12 @@ export class MiningRigSystem {
 
   // 手动狂暴增压点按 (Tap-to-Boost / Manual Turbo)
   triggerManualBoost() {
+    if (this.rigMode === 'resonance') {
+      if (this.game && this.game.ui) {
+        this.game.ui.showToast('共振勘探模式下禁用狂暴增压，请根据地脉节奏部署', 'small');
+      }
+      return false;
+    }
     if (this.loadedCrystals <= 0) {
       if (this.game && this.game.ui) {
         this.game.ui.showToast('⚠️ 矿机晶石仓为空，请先装填【未解密硅晶原石】！', 'medium');
@@ -409,12 +826,6 @@ export class MiningRigSystem {
     this.isActive = true;
     this.hashProgress += amount;
 
-    // 检查蓄电池消耗（若没有阳光则缓慢消耗蓄电池）
-    const isDay = this.isDaytime();
-    if (!isDay && this.batteryPower > 0) {
-      this.batteryPower = Math.max(0, this.batteryPower - 0.05);
-    }
-
     // 满 100% 成功出块 (Block Validated)
     if (this.hashProgress >= 100) {
       this.hashProgress = 0;
@@ -423,7 +834,7 @@ export class MiningRigSystem {
       // 消耗 1 块硅晶原石
       this.loadedCrystals--;
 
-      // 产出 1~2 枚 $SOL 算力代币 (超频状态下有 45% 几率狂暴暴击 +1)
+      // 产出 1~2 枚算力代币 (超频状态下有 45% 几率狂暴暴击 +1)
       const isCrit = (this.turboTimer > 0) && (Math.random() < 0.45);
       const baseReward = 1 + (Math.random() < 0.35 ? 1 : 0);
       const reward = baseReward + (isCrit ? 1 : 0);
@@ -444,7 +855,7 @@ export class MiningRigSystem {
       haptics.success();
       if (this.game && this.game.ui) {
         const critTag = isCrit ? ' 💥【超频狂暴暴击双倍】' : '';
-        this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！${critTag} 产出【$SOL 算力代币】x${reward}！`, 'important');
+        this.game.ui.showToast(`⛏️✨ 恭喜！矿机成功验证新区块 #${this.totalBlocksMined}！${critTag} 产出【算力代币】x${reward}！`, 'important');
       }
 
       if (this.loadedCrystals <= 0) {
@@ -455,14 +866,21 @@ export class MiningRigSystem {
 
   // 判定当前海岛是否为白天 (日出至日落，享有太阳能 100% 绿色增益)
   isDaytime() {
-    if (this.game && this.game.weatherSystem) {
-      return !this.game.weatherSystem.isNight;
+    if (this.game && this.game.dayNight) {
+      const mode = this.game.dayNight.currentMode;
+      return mode === 'day' || mode === 'dawn';
     }
     return true;
   }
 
-  // 一键收取已挖出的 $SOL 算力代币
+  // 一键收取已挖出的算力代币
   claimSolTokens() {
+    // 4 残晶自动折算为 1 晶石入料仓
+    while (this.shardCount >= 4 && this.loadedCrystals < this.maxCrystalCapacity) {
+      this.shardCount -= 4;
+      this.loadedCrystals++;
+    }
+
     if (this.unclaimedSol <= 0) {
       this.game.ui.showToast('矿机产出槽空空如也，静待下一个区块验证出块！', 'medium');
       return false;
@@ -478,8 +896,8 @@ export class MiningRigSystem {
     soundEngine.playItemDrop();
 
     this.game.ui.showDialog(
-      '🪙 $SOL 算力代币收取成功！',
-      `成功从营地绿色矿机中收取 ${count} 枚【$SOL 算力代币】！\n\n• 当前背包持有: ${inv['sol_token']} 枚\n• 累计验证区块: ${this.totalBlocksMined} 个\n\n【提示：前往【黑市算力特权】可兑换稀有出海造船图纸与自动化特权，成绩已同步至 Solana 赛季榜！】`
+      '🪙 荒岛算力代币收取成功！',
+      `成功从营地绿色矿机中收取 ${count} 枚【荒岛算力代币 (sol_token)】！\n\n• 当前背包持有: ${inv['sol_token']} 枚\n• 累计验证区块: ${this.totalBlocksMined} 个\n• 残晶储备: ${this.shardCount} 枚 (每满 4 枚自动凝聚为硅晶原石)\n\n【提示：前往【海岛补给与算力黑市】可兑换稀有出海造船图纸与自动化特权，成绩已同步至 Solana 赛季榜！】`
     );
 
     return true;
@@ -487,14 +905,15 @@ export class MiningRigSystem {
 
   // 每帧动画动效与算力推进
   update(delta) {
+    if (this.rigMode === 'resonance') {
+      this.tickResonance(delta);
+      return;
+    }
+
     const isDay = this.isDaytime();
-    // 1. 狂暴超频计时器衰减
-    if (this.turboTimer > 0) {
-      this.turboTimer -= delta;
-      if (this.turboTimer <= 0) {
-        this.turboTimer = 0;
-        this.manualTapCombo = 0;
-      }
+    // F4: 夜间平滑按秒耗电: 0.2%/秒
+    if (!isDay && this.batteryPower > 0) {
+      this.batteryPower = Math.max(0, this.batteryPower - delta * 0.2);
     }
 
     // 基础能源与超频倍率
@@ -625,7 +1044,41 @@ export class MiningRigSystem {
       batteryPower: this.batteryPower,
       hashProgress: this.hashProgress,
       isOverclocked: this.isOverclocked,
-      hasLithiumPack: this.hasLithiumPack
+      hasLithiumPack: this.hasLithiumPack,
+      rigMode: this.rigMode,
+      rigLevel: this.rigLevel,
+      loadedPureCrystals: this.loadedPureCrystals,
+      shardCount: this.shardCount,
+      solDust: this.solDust,
+      scannerLevel: this.scannerLevel,
+      resonance: {
+        roundId: this.resonance.roundId,
+        phase: this.resonance.phase,
+        progress: this.resonance.progress,
+        revealTimer: this.resonance.revealTimer,
+        seedCommit: this.resonance.seedCommit,
+        deploy: [...this.resonance.deploy],
+        committed: this.resonance.committed,
+        committedShares: this.resonance.committedShares || 0,
+        committedDeploy: [...(this.resonance.committedDeploy || new Array(25).fill(0))],
+        lastResult: this.resonance.lastResult,
+        history: [...this.resonance.history],
+        calib: this.resonance.calib,
+        freeShares: this.resonance.freeShares,
+        freeGrantDay: this.resonance.freeGrantDay,
+        freeGrantTs: this.resonance.freeGrantTs,
+        freeGrantSteps: this.resonance.freeGrantSteps,
+        buff: { ...this.resonance.buff },
+        autoRepeat: { ...this.resonance.autoRepeat }
+      },
+      motherlode: {
+        pool: this.motherlode.pool,
+        injected: this.motherlode.injected,
+        paid: this.motherlode.paid,
+        burned: this.motherlode.burned,
+        hallOfFame: [...this.motherlode.hallOfFame]
+      },
+      season: { ...this.season }
     };
   }
 
@@ -643,6 +1096,57 @@ export class MiningRigSystem {
     }
     if (data.hasLithiumPack) {
       this.unlockLithiumPack();
+    }
+    if (data.rigMode) this.rigMode = data.rigMode;
+    if (data.rigLevel) {
+      this.rigLevel = data.rigLevel;
+      const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel];
+      if (levelInfo) this.maxCrystalCapacity = levelInfo.capacity;
+    }
+    if (typeof data.loadedPureCrystals === 'number') this.loadedPureCrystals = data.loadedPureCrystals;
+    if (typeof data.shardCount === 'number') this.shardCount = data.shardCount;
+    if (typeof data.solDust === 'number') this.solDust = data.solDust;
+    if (typeof data.scannerLevel === 'number') this.scannerLevel = data.scannerLevel;
+
+    if (data.resonance && typeof data.resonance === 'object') {
+      const r = data.resonance;
+      this.resonance.roundId = r.roundId || 1;
+      this.resonance.phase = r.phase || 'OPEN';
+      this.resonance.progress = typeof r.progress === 'number' ? r.progress : 0;
+      this.resonance.revealTimer = typeof r.revealTimer === 'number' ? r.revealTimer : 0;
+      this.resonance.seedCommit = r.seedCommit || '';
+      if (Array.isArray(r.deploy) && r.deploy.length === 25) {
+        this.resonance.deploy = [...r.deploy];
+      }
+      this.resonance.committed = Boolean(r.committed);
+      this.resonance.committedShares = typeof r.committedShares === 'number' ? r.committedShares : (r.committed ? (r.deploy || []).reduce((a, b) => a + b, 0) : 0);
+      if (Array.isArray(r.committedDeploy) && r.committedDeploy.length === 25) {
+        this.resonance.committedDeploy = [...r.committedDeploy];
+      } else if (r.committed) {
+        this.resonance.committedDeploy = [...this.resonance.deploy];
+      }
+      this.resonance.lastResult = r.lastResult || null;
+      if (Array.isArray(r.history)) this.resonance.history = [...r.history];
+      if (typeof r.calib === 'number') this.resonance.calib = r.calib;
+      if (typeof r.freeShares === 'number') this.resonance.freeShares = r.freeShares;
+      if (typeof r.freeGrantDay === 'number') this.resonance.freeGrantDay = r.freeGrantDay;
+      if (typeof r.freeGrantTs === 'number') this.resonance.freeGrantTs = r.freeGrantTs;
+      if (typeof r.freeGrantSteps === 'number') this.resonance.freeGrantSteps = r.freeGrantSteps;
+      if (r.buff) this.resonance.buff = { ...r.buff };
+      if (r.autoRepeat) this.resonance.autoRepeat = { ...r.autoRepeat };
+    }
+
+    if (data.motherlode && typeof data.motherlode === 'object') {
+      const m = data.motherlode;
+      this.motherlode.pool = typeof m.pool === 'number' ? m.pool : 0;
+      this.motherlode.injected = typeof m.injected === 'number' ? m.injected : 0;
+      this.motherlode.paid = typeof m.paid === 'number' ? m.paid : 0;
+      this.motherlode.burned = typeof m.burned === 'number' ? m.burned : 0;
+      if (Array.isArray(m.hallOfFame)) this.motherlode.hallOfFame = [...m.hallOfFame];
+    }
+
+    if (data.season && typeof data.season === 'object') {
+      this.season = { ...this.season, ...data.season };
     }
   }
 }

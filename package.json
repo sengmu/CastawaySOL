@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "build:android": "vite build && cap sync android",
     "cap:sync": "cap sync android",
-    "cap:open": "cap open android"
+    "cap:open": "cap open android",
+    "verify:golden": "node tools/verify-golden-path.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

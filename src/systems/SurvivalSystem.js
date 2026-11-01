@@ -21,13 +21,16 @@ export class SurvivalSystem {
   }
 
   // 玩家移动触发步数结算 (对齐 CastawaySOL: 每 5 步 +1% 疲劳，时段平滑衰减)
+  // 返回本次累积产生的新增生存步数 (整型 >= 0，消除帧率耦合)
   recordMovement(distance) {
-    if (this.isDead) return;
+    if (this.isDead) return 0;
     this.stepAccumulator += distance;
 
-    if (this.stepAccumulator >= 1.5) { // 约 1 步
+    let stepsAdded = 0;
+    while (this.stepAccumulator >= 1.5) { // 累积满 1.5 记 1 个生存步
       this.steps++;
-      this.stepAccumulator = 0;
+      this.stepAccumulator -= 1.5;
+      stepsAdded++;
 
       // 每 5 步 +1% 疲劳 (出战暖绒金羊时享受疲劳累积减半)
       let fatigueInterval = 5;
@@ -59,6 +62,7 @@ export class SurvivalSystem {
 
       this.notify();
     }
+    return stepsAdded;
   }
 
   // 饮用水壶

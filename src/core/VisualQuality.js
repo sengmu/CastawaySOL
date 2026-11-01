@@ -22,7 +22,7 @@ const PRESETS = {
   },
   medium: {
     name: 'medium',
-    pixelRatioCap: isMobileDevice ? 0.95 : 1.5,
+    pixelRatioCap: isMobileDevice ? 1.4 : 1.5,
     shadowMapSize: isMobileDevice ? 512 : 2048,
     enableShadows: !isMobileDevice, // 手机端关闭昂贵的全图二次几何阴影渲染通道，由环境光+地表微阴影呈现立体感
     softShadows: false,
@@ -32,7 +32,7 @@ const PRESETS = {
   },
   high: {
     name: 'high',
-    pixelRatioCap: isMobileDevice ? 1.05 : 2.0,
+    pixelRatioCap: isMobileDevice ? 1.75 : 2.0,
     shadowMapSize: isMobileDevice ? 1024 : 2048,
     enableShadows: true,
     softShadows: !isMobileDevice,

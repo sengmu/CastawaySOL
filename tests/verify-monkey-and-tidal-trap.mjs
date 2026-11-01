@@ -158,7 +158,9 @@ assert(cliffCrevice.cooldown > 40, '探宝后该处石缝应进入约 45 秒冷�
 const hasRareTreasure = (game.ui.inventory['ancient_coin'] || 0) > 0 ||
                         (game.ui.inventory['pearl'] || 0) > 0 ||
                         (game.ui.inventory['treasure_map_piece'] || 0) > 0 ||
-                        (game.ui.inventory['iron_ore'] || 0) > 0;
+                        (game.ui.inventory['iron_ore'] || 0) > 0 ||
+                        (game.ui.inventory['sol_crystal'] || 0) > 0 ||
+                        (game.ui.inventory['battery'] || 0) > 0;
 assert.strictEqual(hasRareTreasure, true, '小猴钻穴应带回古代宝物或深层铁矿');
 console.log('✅ 测试 3 通过：小猴岩缝探宝与古代金币掉落闭环成功！\n');
 

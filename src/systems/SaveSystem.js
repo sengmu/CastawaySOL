@@ -2,7 +2,7 @@
 // 统一管理玩家状态、生存指标、行囊物品、主线剧情、地图资源与建筑家具
 // 支持版本迁移 (Schema Migration)、备份恢复与写保护 (失败不覆盖旧数据)
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 export const SAVE_KEY_PRIMARY = 'castaway_sol_savegame';
 export const SAVE_KEY_BACKUP = 'castaway_sol_savegame_backup';
 
@@ -101,6 +101,47 @@ export class SaveSystem {
       raymondSettled: Boolean(this.game.raymondSettled),
       currentIslandId: this.game.currentIslandId || 'main_island',
       story: story && story.serialize ? story.serialize() : null,
+      miningRig: this.game.miningRig && this.game.miningRig.serialize ? this.game.miningRig.serialize() : null,
+      quarryIsle: this.game.quarryIsleScene && this.game.quarryIsleScene.serialize ? this.game.quarryIsleScene.serialize() : null,
+      flotsamSalvage: flotsam && flotsam.serialize ? flotsam.serialize() : null,
+      rigMode: this.game.rigMode || 'decrypt',
+      rigLevel: this.game.rigLevel || 1,
+      loadedPureCrystals: this.game.loadedPureCrystals || 0,
+      shardCount: this.game.shardCount || 0,
+      solDust: this.game.solDust || 0,
+      scannerLevel: this.game.scannerLevel || 0,
+      resonance: (this.game.resonance = this.game.resonance ? { ...this.game.resonance } : {
+        roundId: 1,
+        phase: 'idle',
+        progress: 0,
+        revealTimer: 0,
+        seedCommit: '',
+        board: [],
+        deploy: new Array(25).fill(0),
+        committed: false,
+        lastResult: null,
+        history: [],
+        calib: 0,
+        freeShares: 3,
+        freeGrantDay: 1,
+        freeGrantTs: Date.now(),
+        freeGrantSteps: 0,
+        buff: { id: null, roundsLeft: 0 },
+        autoRepeat: { pattern: null, roundsLeft: 0 }
+      }),
+      motherlode: this.game.motherlode ? { ...this.game.motherlode } : {
+        pool: 0,
+        injected: 0,
+        paid: 0,
+        burned: 0,
+        hallOfFame: []
+      },
+      season: this.game.season ? { ...this.game.season } : {
+        id: 1,
+        rs: 0,
+        countedToday: 0,
+        utcDay: Math.floor(Date.now() / 86400000)
+      },
       world: {
         collectedBeachResources: beach && beach.serialize ? beach.serialize().collectedIds : [],
         collectedFlotsam: flotsam && flotsam.serialize ? flotsam.serialize().collectedIds : [],
@@ -114,14 +155,66 @@ export class SaveSystem {
     return snapshot;
   }
 
-  // 严格验证存档数据结构的完整性 (防止损坏数据覆盖正常存档)
+  // 严格验证存档数据结构的完整性 (防止损坏数据覆盖正常存档，拦截 NaN 与负数值)
   validateSaveData(data) {
     if (!data || typeof data !== 'object') return false;
     if (typeof data.schemaVersion !== 'number') return false;
     if (!data.player || !Array.isArray(data.player.position) || data.player.position.length !== 3) return false;
-    if (!data.survival || typeof data.survival.life !== 'number') return false;
+
+    // 检查玩家坐标与生存数值有效性
+    for (const val of data.player.position) {
+      if (typeof val !== 'number' || Number.isNaN(val)) return false;
+    }
+
+    if (!data.survival || typeof data.survival !== 'object') return false;
+    const { life, hunger, water, fatigue, day, steps } = data.survival;
+    const survivalFields = [life, hunger, water, fatigue, day, steps];
+    for (const num of survivalFields) {
+      if (num !== undefined) {
+        if (typeof num !== 'number' || Number.isNaN(num) || num < 0) return false;
+      }
+    }
+    if (typeof life !== 'number' || Number.isNaN(life) || life < 0) return false;
+
+    // 检查背包与剧情
     if (!data.inventory || typeof data.inventory !== 'object') return false;
-    if (!data.story || typeof data.story.currentChapterId !== 'number') return false;
+    for (const itemKey of Object.keys(data.inventory)) {
+      const count = data.inventory[itemKey];
+      if (typeof count !== 'number' || Number.isNaN(count) || count < 0) return false;
+    }
+
+    if (!data.story || typeof data.story.currentChapterId !== 'number' || Number.isNaN(data.story.currentChapterId) || data.story.currentChapterId < 0) {
+      return false;
+    }
+
+    // 检查矿机与共振数值 (若存在，拦截 NaN 与负数)
+    if (data.miningRig && typeof data.miningRig === 'object') {
+      const { loadedCrystals, unclaimedSol, totalBlocksMined, totalSolMined } = data.miningRig;
+      for (const val of [loadedCrystals, unclaimedSol, totalBlocksMined, totalSolMined]) {
+        if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
+      }
+    }
+
+    for (const key of ['loadedPureCrystals', 'shardCount', 'solDust', 'scannerLevel', 'rigLevel']) {
+      if (data[key] !== undefined) {
+        if (typeof data[key] !== 'number' || Number.isNaN(data[key]) || data[key] < 0) return false;
+      }
+    }
+
+    if (data.resonance && typeof data.resonance === 'object') {
+      for (const rk of ['roundId', 'progress', 'revealTimer', 'calib', 'freeShares']) {
+        const val = data.resonance[rk];
+        if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
+      }
+    }
+
+    if (data.motherlode && typeof data.motherlode === 'object') {
+      for (const mk of ['pool', 'injected', 'paid', 'burned']) {
+        const val = data.motherlode[mk];
+        if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
+      }
+    }
+
     return true;
   }
 
@@ -138,9 +231,102 @@ export class SaveSystem {
       version = 1;
     }
 
-    // 若有未来版本，依序推进 (e.g. version < 2 -> v1ToV2)
+    // v1 -> v2 (接入 miningRig, quarryIsle, 全量 flotsam 与共振完整默认字段)
+    if (version < 2) {
+      data = this.migrateV1ToV2(data);
+      version = 2;
+    }
 
     data.schemaVersion = CURRENT_SCHEMA_VERSION;
+    return data;
+  }
+
+  // v1 -> v2 迁移管道：补充 miningRig、quarryIsle、flotsamSalvage 与完整共振协议默认字段 (design §7)
+  migrateV1ToV2(v1Data) {
+    const data = { ...v1Data };
+    data.schemaVersion = 2;
+
+    // 1. 默认 miningRig 状态恢复或兜底
+    if (!data.miningRig) {
+      data.miningRig = {
+        loadedCrystals: 1,
+        unclaimedSol: 0,
+        totalBlocksMined: 0,
+        totalSolMined: 0,
+        batteryPower: 75,
+        hashProgress: 0,
+        isOverclocked: false,
+        hasLithiumPack: false
+      };
+    }
+
+    // 2. 默认 quarryIsle 状态
+    if (!data.quarryIsle) {
+      data.quarryIsle = {
+        outpostClaimed: false,
+        collectedResourceIds: []
+      };
+    }
+
+    // 3. 默认 flotsamSalvage 状态 (从 world.collectedFlotsam 升级)
+    if (!data.flotsamSalvage) {
+      data.flotsamSalvage = {
+        collectedIds: (data.world && data.world.collectedFlotsam) ? [...data.world.collectedFlotsam] : [],
+        hasAutoSalvageBuoy: false,
+        tier: 1,
+        totalSalvaged: 0
+      };
+    }
+
+    // 4. 共振完整字段 (依据 design-resonance.md §7)
+    if (data.rigMode === undefined) data.rigMode = 'decrypt';
+    if (data.rigLevel === undefined) data.rigLevel = 1;
+    if (data.loadedPureCrystals === undefined) data.loadedPureCrystals = 0;
+    if (data.shardCount === undefined) data.shardCount = 0;
+    if (data.solDust === undefined) data.solDust = 0;
+    if (data.scannerLevel === undefined) data.scannerLevel = 0;
+
+    if (!data.resonance) {
+      data.resonance = {
+        roundId: 1,
+        phase: 'idle',
+        progress: 0,
+        revealTimer: 0,
+        seedCommit: '',
+        board: [],
+        deploy: new Array(25).fill(0),
+        committed: false,
+        lastResult: null,
+        history: [], // limit 50
+        calib: 0,
+        freeShares: 3,
+        freeGrantDay: data.survival?.day || 1,
+        freeGrantTs: Date.now(),
+        freeGrantSteps: 0,
+        buff: { id: null, roundsLeft: 0 },
+        autoRepeat: { pattern: null, roundsLeft: 0 }
+      };
+    }
+
+    if (!data.motherlode) {
+      data.motherlode = {
+        pool: 0,
+        injected: 0,
+        paid: 0,
+        burned: 0,
+        hallOfFame: [] // limit 20
+      };
+    }
+
+    if (!data.season) {
+      data.season = {
+        id: 1,
+        rs: 0,
+        countedToday: 0,
+        utcDay: Math.floor(Date.now() / 86400000)
+      };
+    }
+
     return data;
   }
 
@@ -431,12 +617,37 @@ export class SaveSystem {
       });
     }
 
-    // 5.5 恢复海面漂流物打捞状态
-    if (data.world && data.world.collectedFlotsam && this.game.flotsamSalvage) {
-      this.game.flotsamSalvage.deserialize({
-        collectedIds: data.world.collectedFlotsam
-      });
+    // 5.4 恢复矿石岛资源与前哨状态
+    if (data.quarryIsle && this.game.quarryIsleScene) {
+      this.game.quarryIsleScene.deserialize(data.quarryIsle);
     }
+
+    // 5.5 恢复海面漂流物打捞状态 (优先全量 flotsamSalvage，兼顾兼容 world.collectedFlotsam)
+    if (this.game.flotsamSalvage) {
+      if (data.flotsamSalvage) {
+        this.game.flotsamSalvage.deserialize(data.flotsamSalvage);
+      } else if (data.world && data.world.collectedFlotsam) {
+        this.game.flotsamSalvage.deserialize({
+          collectedIds: data.world.collectedFlotsam
+        });
+      }
+    }
+
+    // 5.6 恢复 DePIN 绿色解密矿机状态
+    if (data.miningRig && this.game.miningRig) {
+      this.game.miningRig.deserialize(data.miningRig);
+    }
+
+    // 5.7 恢复共振字段状态
+    if (data.rigMode !== undefined) this.game.rigMode = data.rigMode;
+    if (data.rigLevel !== undefined) this.game.rigLevel = data.rigLevel;
+    if (data.loadedPureCrystals !== undefined) this.game.loadedPureCrystals = data.loadedPureCrystals;
+    if (data.shardCount !== undefined) this.game.shardCount = data.shardCount;
+    if (data.solDust !== undefined) this.game.solDust = data.solDust;
+    if (data.scannerLevel !== undefined) this.game.scannerLevel = data.scannerLevel;
+    if (data.resonance) this.game.resonance = { ...data.resonance };
+    if (data.motherlode) this.game.motherlode = { ...data.motherlode };
+    if (data.season) this.game.season = { ...data.season };
 
     // 6. 恢复宝石拾取状态
     if (data.world && Array.isArray(data.world.collectedGems) && this.game.gemObjects) {
@@ -479,4 +690,29 @@ export class SaveSystem {
       return { success: false, error: e };
     }
   }
+
+  // 导出存档为 JSON 字符串
+  exportSave() {
+    const snapshot = this.createSnapshot();
+    if (!snapshot) return null;
+    return JSON.stringify(snapshot, null, 2);
+  }
+
+  // 导入 JSON 存档并应用到当前游戏，返回是否成功及快照
+  importSave(jsonStr) {
+    try {
+      if (typeof jsonStr !== 'string') return { success: false, error: 'Invalid input string' };
+      const parsed = JSON.parse(jsonStr);
+      const migrated = this.migrate(parsed);
+      if (!this.validateSaveData(migrated)) {
+        return { success: false, error: 'Validation failed for imported save data' };
+      }
+      this.applyDataToGame(migrated);
+      localStorage.setItem(SAVE_KEY_PRIMARY, JSON.stringify(migrated));
+      return { success: true, data: migrated };
+    } catch (e) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }
+
 }

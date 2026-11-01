@@ -20,6 +20,8 @@ export class FlotsamSalvageSystem {
     this.buoyGroup = null;
     this.autoSalvageTimer = 0;
     this.AUTO_SALVAGE_INTERVAL = 30.0; // 浮标每 30 秒自动捕获并归仓一件漂流物
+    this.tier = 1;
+    this.totalSalvaged = 0;
 
     // 初始海面浮动预设点 (位于南岸浅海与出航湾附近 Z: 26 ~ 38, X: -22 ~ 18)
     this.flotsamTypes = [
@@ -75,6 +77,33 @@ export class FlotsamSalvageSystem {
 
   setGame(game) {
     this.game = game;
+  }
+
+
+  // 升级浮标索道与打捞仓
+  upgradeTier() {
+    if (!this.hasAutoSalvageBuoy) {
+      this.unlockAutoSalvageBuoy();
+      return { success: true, tier: 1 };
+    }
+    if (this.tier >= 3) {
+      return { success: false, msg: "已达到最高 T3 工业级磁吸打捞！" };
+    }
+    this.tier++;
+    if (this.tier === 2) {
+      this.AUTO_SALVAGE_INTERVAL = 18.0;
+    } else if (this.tier === 3) {
+      this.AUTO_SALVAGE_INTERVAL = 10.0;
+    }
+    return { success: true, tier: this.tier };
+  }
+
+  getStats() {
+    return {
+      tier: this.tier || 1,
+      interval: this.AUTO_SALVAGE_INTERVAL,
+      totalSalvaged: this.totalSalvaged || 0
+    };
   }
 
   // 解锁并部署近海自动打捞浮标网
@@ -256,11 +285,13 @@ export class FlotsamSalvageSystem {
 
     uncollected.collected = true;
     uncollected.group.visible = false;
+    this.totalSalvaged = (this.totalSalvaged || 0) + 1;
 
-    // 材料存入储物箱
+    // 材料存入储物箱 (FIX-1: 自动打捞路径严禁产出晶石 sol_crystal，仅自然手动打捞可获得)
     if (this.game && this.game.storageSystem) {
       const storage = this.game.storageSystem.storageInventory;
       uncollected.spec.drops.forEach(itemKey => {
+        if (itemKey === 'sol_crystal') return;
         storage[itemKey] = (storage[itemKey] || 0) + 1;
       });
       if (this.game.ui) {
@@ -325,7 +356,9 @@ export class FlotsamSalvageSystem {
   serialize() {
     return {
       collectedIds: this.flotsamList.filter(f => f.collected).map(f => f.id),
-      hasAutoSalvageBuoy: this.hasAutoSalvageBuoy
+      hasAutoSalvageBuoy: this.hasAutoSalvageBuoy,
+      tier: this.tier || 1,
+      totalSalvaged: this.totalSalvaged || 0
     };
   }
 
@@ -344,6 +377,13 @@ export class FlotsamSalvageSystem {
     if (data.hasAutoSalvageBuoy) {
       this.hasAutoSalvageBuoy = true;
       this.deployBuoyMesh();
+    }
+    if (data.tier) {
+      this.tier = data.tier;
+      this.AUTO_SALVAGE_INTERVAL = this.tier === 3 ? 10.0 : (this.tier === 2 ? 18.0 : 30.0);
+    }
+    if (typeof data.totalSalvaged === "number") {
+      this.totalSalvaged = data.totalSalvaged;
     }
   }
 }

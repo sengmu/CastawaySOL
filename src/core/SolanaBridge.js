@@ -15,7 +15,7 @@ import {
 
 // 安装针对 Android WebView / Capacitor 环境的 MWA 协议桥接补丁
 function installMwaWebViewBridge() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !window.location || typeof window.location.assign !== 'function') return;
   if (window.__mwa_bridge_installed) return;
   window.__mwa_bridge_installed = true;
 
@@ -52,14 +52,154 @@ export class SolanaBridge {
     this.adapter = null;
     this.leaderboard = [];
 
+    // 官方国库/收款地址配置项 (默认为空；为空时严格禁用真实与沙盒支付通道，绝不使用占位假地址)
+    this.treasuryAddress = null;
+
     // 检测是否为 Seeker / 原生移动设备环境
     this.isSeeker = this.detectSeekerDevice();
+
+    // 监听与外部通信事件绑定
+    this.bindEvents();
 
     // 初始化 MWA 适配器
     this.initMWA();
 
     // 载入本地缓存状态
     this.loadState();
+  }
+
+  // 切换网络 (devnet | testnet - 主网已全局锁死拦截)
+  setNetwork(net = 'devnet') {
+    if (net === 'mainnet' || net === 'mainnet-beta') {
+      console.warn('⛔ [SolanaBridge] 主网已锁死，禁止接入 mainnet');
+      throw new Error('主网已锁死禁用，仅支持 Devnet / Testnet');
+    }
+    if (this.network === net) return;
+    this.network = net;
+    this.rpcUrl = clusterApiUrl(net);
+    this.connection = new Connection(this.rpcUrl, 'confirmed');
+    console.log(`🌐 [SolanaBridge] 网络已切换至: ${net}`);
+    this.fetchBalance();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+    }
+  }
+
+  // 配置官方国库/收款地址
+  setTreasuryAddress(address) {
+    if (!address || typeof address !== 'string' || !address.trim()) {
+      this.treasuryAddress = null;
+      return;
+    }
+    try {
+      new PublicKey(address.trim());
+      this.treasuryAddress = address.trim();
+    } catch (e) {
+      console.warn('⚠️ [SolanaBridge] 收款地址格式无效:', address);
+      this.treasuryAddress = null;
+    }
+  }
+
+  getTreasuryAddress() {
+    return this.treasuryAddress;
+  }
+
+  // 获取可用钱包提供商清单及当前可用性状态
+  getAvailableWallets() {
+    const list = [];
+    const hasWindow = typeof window !== 'undefined';
+
+    // 1. Solana Mobile Wallet Adapter (Seed Vault / Mobile Wallet)
+    const isMobile = this.detectMobileDevice();
+    list.push({
+      id: 'mwa',
+      name: 'Seed Vault / 原生移动钱包',
+      icon: '📱',
+      badge: 'Solana Mobile',
+      available: Boolean(this.adapter && (isMobile || this.isSeeker)),
+      recommended: this.isSeeker || isMobile,
+      description: '支持 Solana Seeker / Saga 原生硬件私钥库与移动钱包授权'
+    });
+
+    // 2. Phantom 钱包 (浏览器插件或深度注入)
+    const hasPhantom = hasWindow && Boolean(window.phantom?.solana?.isPhantom || window.solana?.isPhantom);
+    list.push({
+      id: 'phantom',
+      name: 'Phantom 钱包',
+      icon: '👻',
+      badge: hasPhantom ? '已就绪' : '扩展插件',
+      available: hasPhantom,
+      recommended: !this.isSeeker && !isMobile && hasPhantom,
+      description: '主流 Solana 官方扩展钱包，支持即时签名与资产查验'
+    });
+
+    // 3. Backpack 钱包
+    const hasBackpack = hasWindow && Boolean(window.backpack?.isBackpack);
+    list.push({
+      id: 'backpack',
+      name: 'Backpack 钱包',
+      icon: '🎒',
+      badge: hasBackpack ? '已就绪' : 'xNFT 钱包',
+      available: hasBackpack,
+      recommended: false,
+      description: '新一代加密资产与 xNFT 原生应用钱包'
+    });
+
+    // 4. 通用 Injected 扩展钱包
+    const hasGeneralInjected = hasWindow && Boolean(window.solana && !hasPhantom);
+    if (hasGeneralInjected) {
+      list.push({
+        id: 'injected',
+        name: 'Injected Solana 钱包',
+        icon: '💻',
+        badge: '浏览器注入',
+        available: true,
+        recommended: false,
+        description: '标准 EIP/Solana 浏览器注入式钱包'
+      });
+    }
+
+    // 5. 游客体验模式
+    list.push({
+      id: 'guest',
+      name: '免钱包游客试玩',
+      icon: '👤',
+      badge: '离线沙盒',
+      available: true,
+      recommended: false,
+      description: '生成确定性本地沙盒密钥，无门槛体验荒岛求生与矿机出块'
+    });
+
+    return list;
+  }
+
+  detectMobileDevice() {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent.toLowerCase();
+    return /android|iphone|ipad|ipod|mobile/i.test(ua) || (typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform()));
+  }
+
+  bindEvents() {
+    if (typeof window === 'undefined') return;
+
+    // 监听注入式钱包账户切换与断开
+    if (window.solana && typeof window.solana.on === 'function') {
+      window.solana.on('accountChanged', (publicKey) => {
+        if (publicKey) {
+          console.log('🔄 [SolanaBridge] 监测到钱包账户变更:', publicKey.toBase58());
+          this.publicKey = publicKey;
+          this.walletAddress = publicKey.toBase58();
+          this.fetchBalance();
+          window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+        } else {
+          this.disconnect();
+        }
+      });
+      window.solana.on('disconnect', () => {
+        console.log('🔌 [SolanaBridge] 钱包已断开连接');
+        this.disconnect();
+      });
+    }
   }
 
   detectSeekerDevice() {
@@ -92,6 +232,7 @@ export class SolanaBridge {
 
   loadState() {
     try {
+      if (typeof localStorage === 'undefined') return;
       const saved = localStorage.getItem('castaway_sol_wallet');
       if (saved) {
         const data = JSON.parse(saved);
@@ -145,12 +286,42 @@ export class SolanaBridge {
     }
   }
 
-  // 连接 Solana 钱包 (MWA 优先唤起 Seed Vault / Phantom -> Injected -> 游客模拟)
+  // 连接指定类型的钱包 ('mwa' | 'phantom' | 'backpack' | 'injected' | 'guest' | 'auto')
   async connectWallet(preferType = 'auto') {
-    // 1. 尝试使用 Solana Mobile Wallet Adapter (唤起真机 Seed Vault / Phantom / Backpack)
-    if (this.adapter && (preferType === 'mwa' || preferType === 'auto')) {
+    const hasWindow = typeof window !== 'undefined';
+
+    // 1. 游客模式直连
+    if (preferType === 'guest') {
+      const randomHex = Array.from({ length: 4 }, () => Math.random().toString(36).substring(2, 6)).join('');
+      this.walletAddress = `SEEKER_${randomHex.toUpperCase()}`;
+      this.publicKey = null;
+      this.isConnected = true;
+      this.isMWA = false;
+      this.isGuest = true;
+      this.balance = 5.0; // 游客试玩赠送虚拟试玩币
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('castaway_sol_wallet', JSON.stringify({
+          address: this.walletAddress,
+          isMWA: false,
+          isGuest: true
+        }));
+      }
+      if (hasWindow) {
+        window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+      }
+      return {
+        success: true,
+        address: this.walletAddress,
+        isGuest: true,
+        type: '免钱包游客试玩',
+        balance: this.balance
+      };
+    }
+
+    // 2. 指定或优先尝试 Solana Mobile Wallet Adapter (MWA)
+    if (this.adapter && (preferType === 'mwa' || (preferType === 'auto' && (this.isSeeker || this.detectMobileDevice())))) {
       try {
-        console.log('📱 正在通过 Solana Mobile Wallet Adapter (MWA) 唤起原生钱包...');
+        console.log('📱 [SolanaBridge] 正在通过 MWA 唤起移动钱包 / Seed Vault...');
         await this.adapter.connect();
         if (this.adapter.publicKey) {
           this.publicKey = this.adapter.publicKey;
@@ -158,19 +329,21 @@ export class SolanaBridge {
           this.isConnected = true;
           this.isMWA = true;
           this.isGuest = false;
-          localStorage.setItem('castaway_sol_wallet', JSON.stringify({
-            address: this.walletAddress,
-            isMWA: true,
-            isGuest: false
-          }));
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('castaway_sol_wallet', JSON.stringify({
+              address: this.walletAddress,
+              isMWA: true,
+              isGuest: false
+            }));
+          }
           await this.fetchBalance();
-          if (typeof window !== 'undefined') {
+          if (hasWindow) {
             window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
           }
           return {
             success: true,
             address: this.walletAddress,
-            type: 'MWA (Solana Mobile / Seed Vault)',
+            type: 'Solana Mobile (Seed Vault)',
             balance: this.balance
           };
         }
@@ -180,7 +353,7 @@ export class SolanaBridge {
           const errMsg = mwaErr.message || '';
           let userTip = '连接未完成或已被取消';
           if (errMsg.includes('ERROR_WALLET_NOT_FOUND') || errMsg.includes('no installed wallet')) {
-            userTip = '未检测到可用钱包，请确保已安装 Phantom 并在弹出菜单中授权';
+            userTip = '未检测到可用手机钱包，请安装 Phantom 或使用免钱包试玩';
           } else if (errMsg.includes('rejected') || errMsg.includes('cancelled') || errMsg.includes('User rejected')) {
             userTip = '您已取消本次钱包授权';
           }
@@ -189,53 +362,224 @@ export class SolanaBridge {
       }
     }
 
-    // 2. 尝试标准浏览器注入式钱包 (如桌面 Chrome Phantom / Backpack 插件)
-    if (typeof window !== 'undefined' && window.solana && (preferType === 'injected' || preferType === 'auto')) {
-      try {
-        console.log('💻 正在尝试连接浏览器扩展钱包...');
-        const resp = await window.solana.connect();
-        this.walletAddress = resp.publicKey.toString();
-        this.publicKey = new PublicKey(this.walletAddress);
-        this.isConnected = true;
-        this.isMWA = false;
-        this.isGuest = false;
-        localStorage.setItem('castaway_sol_wallet', JSON.stringify({
-          address: this.walletAddress,
-          isMWA: false,
-          isGuest: false
-        }));
-        await this.fetchBalance();
-        return {
-          success: true,
-          address: this.walletAddress,
-          type: 'Browser Injected (Phantom)',
-          balance: this.balance
-        };
-      } catch (extErr) {
-        console.warn('浏览器插件钱包连接异常:', extErr);
+    // 3. Phantom 钱包扩展
+    if (hasWindow && (preferType === 'phantom' || preferType === 'auto')) {
+      const phantomProvider = window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null);
+      if (phantomProvider) {
+        try {
+          console.log('👻 [SolanaBridge] 尝试连接 Phantom 钱包...');
+          const resp = await phantomProvider.connect();
+          const pubkey = resp.publicKey || phantomProvider.publicKey;
+          if (pubkey) {
+            this.publicKey = pubkey;
+            this.walletAddress = pubkey.toBase58();
+            this.isConnected = true;
+            this.isMWA = false;
+            this.isGuest = false;
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('castaway_sol_wallet', JSON.stringify({
+                address: this.walletAddress,
+                isMWA: false,
+                isGuest: false
+              }));
+            }
+            await this.fetchBalance();
+            window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+            return {
+              success: true,
+              address: this.walletAddress,
+              type: 'Phantom 钱包',
+              balance: this.balance
+            };
+          }
+        } catch (phantomErr) {
+          console.warn('Phantom 连接异常:', phantomErr);
+          if (preferType === 'phantom') {
+            return { success: false, message: phantomErr.message || '用户取消连接' };
+          }
+        }
+      } else if (preferType === 'phantom') {
+        return { success: false, message: '未检测到 Phantom 浏览器扩展插件' };
       }
     }
 
-    // 3. 降级为游客试玩模式 (生成确定性本地公钥，免安装即玩)
-    const randomHex = Array.from({ length: 4 }, () => Math.random().toString(36).substring(2, 6)).join('');
-    this.walletAddress = `SEEKER_${randomHex.toUpperCase()}`;
-    this.publicKey = null;
-    this.isConnected = true;
-    this.isMWA = false;
-    this.isGuest = true;
-    this.balance = 5.0; // 游客试玩赠送虚拟试玩币
-    localStorage.setItem('castaway_sol_wallet', JSON.stringify({
-      address: this.walletAddress,
-      isMWA: false,
-      isGuest: true
-    }));
-    return {
-      success: true,
-      address: this.walletAddress,
-      isGuest: true,
-      type: 'Guest Mode (游客试玩模式)',
-      balance: this.balance
-    };
+    // 4. Backpack 钱包扩展
+    if (hasWindow && (preferType === 'backpack' || preferType === 'auto')) {
+      const backpackProvider = window.backpack;
+      if (backpackProvider && backpackProvider.isBackpack) {
+        try {
+          console.log('🎒 [SolanaBridge] 尝试连接 Backpack 钱包...');
+          const resp = await backpackProvider.connect();
+          const pubkey = resp.publicKey || backpackProvider.publicKey;
+          if (pubkey) {
+            this.publicKey = pubkey;
+            this.walletAddress = pubkey.toBase58();
+            this.isConnected = true;
+            this.isMWA = false;
+            this.isGuest = false;
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('castaway_sol_wallet', JSON.stringify({
+                address: this.walletAddress,
+                isMWA: false,
+                isGuest: false
+              }));
+            }
+            await this.fetchBalance();
+            window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+            return {
+              success: true,
+              address: this.walletAddress,
+              type: 'Backpack 钱包',
+              balance: this.balance
+            };
+          }
+        } catch (bpErr) {
+          console.warn('Backpack 连接异常:', bpErr);
+          if (preferType === 'backpack') {
+            return { success: false, message: bpErr.message || '用户取消连接' };
+          }
+        }
+      } else if (preferType === 'backpack') {
+        return { success: false, message: '未检测到 Backpack 浏览器扩展插件' };
+      }
+    }
+
+    // 5. 通用 Injected 钱包 (window.solana)
+    if (hasWindow && window.solana && (preferType === 'injected' || preferType === 'auto')) {
+      try {
+        console.log('💻 [SolanaBridge] 尝试连接 Injected 钱包...');
+        const resp = await window.solana.connect();
+        const pubkey = resp.publicKey || window.solana.publicKey;
+        if (pubkey) {
+          this.publicKey = pubkey;
+          this.walletAddress = pubkey.toBase58 ? pubkey.toBase58() : pubkey.toString();
+          this.isConnected = true;
+          this.isMWA = false;
+          this.isGuest = false;
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('castaway_sol_wallet', JSON.stringify({
+              address: this.walletAddress,
+              isMWA: false,
+              isGuest: false
+            }));
+          }
+          await this.fetchBalance();
+          window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+          return {
+            success: true,
+            address: this.walletAddress,
+            type: '浏览器扩展钱包',
+            balance: this.balance
+          };
+        }
+      } catch (extErr) {
+        console.warn('Injected 连接异常:', extErr);
+      }
+    }
+
+    // 兜底降级为游客试玩模式
+    return this.connectWallet('guest');
+  }
+
+  // 复制当前钱包地址到剪贴板
+  async copyWalletAddress() {
+    if (!this.walletAddress) return { success: false, message: '暂无钱包地址' };
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(this.walletAddress);
+        return { success: true, message: '地址已复制到剪贴板' };
+      }
+      return { success: true, message: this.walletAddress };
+    } catch (e) {
+      return { success: false, message: '复制失败，请手动长按复制' };
+    }
+  }
+
+  // 发起 SOL 真实支付交易 (支持 MWA 硬件签名与 Injected 钱包)
+  async sendPaymentTransaction(amountSOL, recipientAddress = this.treasuryAddress) {
+    if (!recipientAddress || typeof recipientAddress !== 'string' || !recipientAddress.trim()) {
+      return { success: false, message: '官方收款地址未配置，支付功能已安全禁用' };
+    }
+    let recipientPubkey;
+    try {
+      recipientPubkey = new PublicKey(recipientAddress.trim());
+    } catch (e) {
+      return { success: false, message: '官方收款地址无效，支付功能已安全禁用' };
+    }
+
+    if (!this.isConnected) {
+      return { success: false, message: '请先连接钱包' };
+    }
+
+    // 游客模式直接扣除本地虚拟余额
+    if (this.isGuest || !this.publicKey) {
+      if (this.balance < amountSOL) {
+        return { success: false, message: `游客余额不足 (需 ${amountSOL} SOL，当前 ${this.balance.toFixed(2)} SOL)` };
+      }
+      this.balance = Math.max(0, this.balance - amountSOL);
+      const simulatedTx = 'GUEST_TX_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      console.log(`💳 [SolanaBridge] 游客模式虚拟支付完成: ${amountSOL} SOL, TX: ${simulatedTx}`);
+      return {
+        success: true,
+        signature: simulatedTx,
+        isGuest: true,
+        remainingBalance: this.balance
+      };
+    }
+
+    // 真实链上支付交易构建与发送
+    try {
+      console.log(`💳 [SolanaBridge] 构建链上转账交易: ${amountSOL} SOL -> ${recipientAddress}...`);
+      const lamports = Math.round(amountSOL * LAMPORTS_PER_SOL);
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: this.publicKey,
+          toPubkey: recipientPubkey,
+          lamports: lamports
+        })
+      );
+
+      const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.publicKey;
+
+      let signature = '';
+
+      // 1. 通过 MWA 发送并签名交易
+      if (this.isMWA && this.adapter && this.adapter.connected) {
+        console.log('📱 正在通过 MWA 请求钱包对交易签名并广播...');
+        signature = await this.adapter.sendTransaction(transaction, this.connection);
+      } else if (typeof window !== 'undefined' && window.solana?.sendTransaction) {
+        // 2. 通过 Injected 钱包发送交易
+        console.log('💻 正在通过浏览器钱包扩展发送交易...');
+        signature = await window.solana.sendTransaction(transaction, this.connection);
+      } else {
+        throw new Error('未找到可用交易签名通道');
+      }
+
+      console.log('⏳ 交易已广播，等待链上确认... 签名:', signature);
+      await this.connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight
+      }, 'confirmed');
+
+      console.log('✅ 交易已被网络确认！');
+      await this.fetchBalance();
+
+      return {
+        success: true,
+        signature,
+        isGuest: false,
+        remainingBalance: this.balance
+      };
+    } catch (err) {
+      console.error('❌ 发送支付交易失败:', err);
+      return {
+        success: false,
+        message: err.message || '支付被取消或网络错误'
+      };
+    }
   }
 
   // 断开连接
@@ -251,7 +595,12 @@ export class SolanaBridge {
     this.isMWA = false;
     this.isGuest = false;
     this.balance = 0;
-    localStorage.removeItem('castaway_sol_wallet');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('castaway_sol_wallet');
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+    }
   }
 
   // 链上生存打卡签到 (调用硬件私钥对签到存证签名)
@@ -313,6 +662,7 @@ export class SolanaBridge {
 
   saveCheckinRecord(record) {
     try {
+      if (typeof localStorage === 'undefined') return;
       const records = JSON.parse(localStorage.getItem('castaway_sol_checkins') || '[]');
       records.unshift(record);
       if (records.length > 20) records.pop();
@@ -322,6 +672,7 @@ export class SolanaBridge {
 
   getCheckinRecords() {
     try {
+      if (typeof localStorage === 'undefined') return [];
       return JSON.parse(localStorage.getItem('castaway_sol_checkins') || '[]');
     } catch (e) {
       return [];
@@ -390,6 +741,30 @@ export class SolanaBridge {
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return { wallet: this.walletAddress || "Guest_Miner", blocks: 0, totalSol: 0, isSeeker: this.isSeeker };
+  }
+
+  // 提交共振勘探赛季证明 (仅作本地与测试网成就排行记录，不发放真实代币)
+  submitResonanceProof(rsScore, roundId) {
+    const proof = {
+      wallet: this.walletAddress || "Guest_Resonator",
+      rs: rsScore,
+      roundId: roundId,
+      timestamp: Date.now(),
+      isSeeker: this.isSeeker
+    };
+    try {
+      localStorage.setItem('castaway_sol_resonance_proof', JSON.stringify(proof));
+    } catch (e) {}
+    console.log("📡 [SolanaBridge] 共振勘探成绩存证更新:", proof);
+    return proof;
+  }
+
+  getResonanceStats() {
+    try {
+      const raw = localStorage.getItem('castaway_sol_resonance_proof');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { wallet: this.walletAddress || "Guest_Resonator", rs: 0, roundId: 0, isSeeker: this.isSeeker };
   }
 }
 

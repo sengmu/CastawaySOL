@@ -48,6 +48,10 @@ export class CampFacilitiesSystem {
     this.residentJobs = {
       second_kid: 'salvager'
     };
+
+    // 纯晶精炼炉系统 (Refinery System: 2原石 + 1树脂 -> 1高纯度硅晶 2.5份额)
+    this.refineryLevel = 0; // 0: 未建造, 1: L1(每日3批), 2: L2(每日6批)
+    this.refineryQueue = 0;
   }
 
   // 为幸存者分配新生产岗位
@@ -277,6 +281,13 @@ export class CampFacilitiesSystem {
           this.purifierWaterLevel = Math.min(this.maxPurifierWater, this.purifierWaterLevel + bonusWater);
           storage['canteen_clean_water'] = (storage['canteen_clean_water'] || 0) + 1;
           reports.push(`👧 【艾莉·${job.name}】细心维护滴滤台，额外蓄水 +${bonusWater} 份，并装备纯净水 x1 入库`);
+        } else if (job.id === 'miner') {
+          // F5 补齐实现：硅晶矿脉探采员产出（执照的 x1.5 不作用于晶石）
+          const baseCrystals = 2;
+          const stones = Math.max(1, Math.round(2 * efficiency));
+          storage['sol_crystal'] = (storage['sol_crystal'] || 0) + baseCrystals;
+          storage['stone_chunk'] = (storage['stone_chunk'] || 0) + stones;
+          reports.push(`👧 【艾莉·${job.name}】勘探矿脉，采集入库：硅晶原石 x${baseCrystals}、玄武碎石 x${stones}`);
         }
 
         if (bedCount < 1) {
@@ -306,6 +317,27 @@ export class CampFacilitiesSystem {
 
       if (bedCount < 2) {
         reports.push(`  ↳ ⚠️ 营地床位短缺 (需 2 张床位)！雷蒙德疲倦受挫，生产效率受限`);
+      }
+    }
+
+    // 2.35 纯晶精炼炉连夜淬炼产出 (R9: 2原石 + 1树脂 -> 1高纯度硅晶 2.5份额)
+    if (this.refineryLevel > 0 && storage) {
+      const maxBatches = this.refineryLevel === 1 ? 3 : 6;
+      let batchCount = 0;
+      while (batchCount < maxBatches) {
+        if ((storage['sol_crystal'] || 0) >= 2 && (storage['tree_sap'] || 0) >= 1) {
+          storage['sol_crystal'] -= 2;
+          storage['tree_sap'] -= 1;
+          storage['sol_crystal_pure'] = (storage['sol_crystal_pure'] || 0) + 1;
+          batchCount++;
+          if (storage['sol_crystal'] <= 0) delete storage['sol_crystal'];
+          if (storage['tree_sap'] <= 0) delete storage['tree_sap'];
+        } else {
+          break;
+        }
+      }
+      if (batchCount > 0) {
+        reports.push(`🔥 【纯晶精炼炉 L${this.refineryLevel}】连夜提纯产出：高纯度精炼硅晶 x${batchCount}！`);
       }
     }
 
@@ -340,13 +372,91 @@ export class CampFacilitiesSystem {
     }
   }
 
+  // 建造与升级古法纯晶精炼炉 (L1: 3批/日, L2: 6批/日)
+  buildRefinery() {
+    const nextLevel = this.refineryLevel + 1;
+    if (nextLevel > 2) {
+      if (this.game?.ui) this.game.ui.showToast('精炼炉已达到最高等级！', 'medium');
+      return { ok: false, msg: '已达最高等级' };
+    }
+
+    const inv = this.game?.ui?.inventory || {};
+    const storage = this.game?.storageSystem?.storageInventory || {};
+
+    const costTokens = nextLevel === 1 ? 20 : 50;
+    const costStone = nextLevel === 1 ? 4 : 0;
+    const costIron = nextLevel === 1 ? 2 : 4;
+
+    const curTokens = inv['sol_token'] || 0;
+    if (curTokens < costTokens) {
+      const msg = `建造精炼炉所需算力代币不足 (需要 ${costTokens}，当前持有 ${curTokens})！`;
+      if (this.game?.ui) this.game.ui.showToast(msg, 'medium');
+      return { ok: false, msg };
+    }
+
+    const availStone = (inv['stone_chunk'] || 0) + (storage['stone_chunk'] || 0);
+    const availIron = (inv['iron_ingot'] || 0) + (storage['iron_ingot'] || 0);
+
+    if (availStone < costStone || availIron < costIron) {
+      const msg = `材料不足！需要【算力代币 x${costTokens}】+【碎石 x${costStone}】+【铁锭 x${costIron}】`;
+      if (this.game?.ui) this.game.ui.showToast(msg, 'medium');
+      return { ok: false, msg };
+    }
+
+    inv['sol_token'] -= costTokens;
+    if (inv['sol_token'] <= 0) delete inv['sol_token'];
+
+    let remStone = costStone;
+    if (inv['stone_chunk']) {
+      const take = Math.min(inv['stone_chunk'], remStone);
+      inv['stone_chunk'] -= take;
+      remStone -= take;
+      if (inv['stone_chunk'] <= 0) delete inv['stone_chunk'];
+    }
+    if (remStone > 0 && storage['stone_chunk']) {
+      storage['stone_chunk'] -= remStone;
+      if (storage['stone_chunk'] <= 0) delete storage['stone_chunk'];
+    }
+
+    let remIron = costIron;
+    if (inv['iron_ingot']) {
+      const take = Math.min(inv['iron_ingot'], remIron);
+      inv['iron_ingot'] -= take;
+      remIron -= take;
+      if (inv['iron_ingot'] <= 0) delete inv['iron_ingot'];
+    }
+    if (remIron > 0 && storage['iron_ingot']) {
+      storage['iron_ingot'] -= remIron;
+      if (storage['iron_ingot'] <= 0) delete storage['iron_ingot'];
+    }
+
+    if (this.game?.miningRig?.onSinkSpent) {
+      this.game.miningRig.onSinkSpent(costTokens, 'refinery');
+    }
+
+    this.refineryLevel = nextLevel;
+    soundEngine.playPlaceFurniture();
+    haptics.success();
+
+    if (this.game?.ui) {
+      this.game.ui.renderInventory();
+      this.game.ui.showToast(`🔥 营地【古法纯晶精炼炉 L${this.refineryLevel}】建造成功！`, 'important');
+    }
+    if (this.game?.saveSystem) {
+      this.game.saveSystem.saveGame('build_refinery');
+    }
+    return { ok: true, level: this.refineryLevel };
+  }
+
   // 序列化
   serialize() {
     return {
       purifierWaterLevel: this.purifierWaterLevel,
       maxPurifierWater: this.maxPurifierWater,
       isAutoProductionActive: this.isAutoProductionActive,
-      residentJobs: { ...this.residentJobs }
+      residentJobs: { ...this.residentJobs },
+      refineryLevel: this.refineryLevel,
+      refineryQueue: this.refineryQueue
     };
   }
 
@@ -364,6 +474,12 @@ export class CampFacilitiesSystem {
       }
       if (data.residentJobs && typeof data.residentJobs === 'object') {
         this.residentJobs = { ...data.residentJobs };
+      }
+      if (typeof data.refineryLevel === 'number') {
+        this.refineryLevel = data.refineryLevel;
+      }
+      if (typeof data.refineryQueue === 'number') {
+        this.refineryQueue = data.refineryQueue;
       }
     }
   }

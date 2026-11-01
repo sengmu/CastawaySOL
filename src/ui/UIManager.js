@@ -9,6 +9,9 @@ import { createElement, Backpack, Hammer, BookOpen, Maximize, Minimize, MoreHori
 import { VISUAL_QUALITY_KEY } from '../core/VisualQuality.js';
 import { iconHTML } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
 import { NoticeCenter, NOTICE_MODES } from './NoticeCenter.js'; // 提示系统优化（2026-10-31）
+import cozyPortraitHudCSS from './CozyPortraitHud.css?inline';
+import cozyLandscapeHudCSS from './CozyLandscapeHud.css?inline';
+import { ODDS_TABLE, estimateSquareEV, scannerHints, npcArrival } from '../systems/resonance/ResonanceEngine.js';
 
 function hudIcon(definition) {
   const svg = createElement(definition);
@@ -416,7 +419,25 @@ export class UIManager {
           padding: 8px 16px;
         }
       }
-      .quick-slot:hover, .quick-slot:active {
+      
+      .quick-slot-badge { display: none; }
+      @media (orientation: portrait) {
+        .quick-slot-label { display: none !important; }
+        .quick-slot-badge {
+          display: block !important;
+          position: absolute;
+          top: -3px; right: -3px;
+          background: #00cec9;
+          color: #0b101b;
+          font-size: 9px;
+          font-weight: 900;
+          line-height: 1;
+          padding: 2px 4px;
+          border-radius: 6px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+      }
+.quick-slot:hover, .quick-slot:active {
         background: rgba(255, 255, 255, 0.2); transform: scale(1.04);
       }
 
@@ -883,17 +904,464 @@ export class UIManager {
       .clay-icon { display: inline-block; vertical-align: middle; object-fit: contain; flex-shrink: 0; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.28)); }
       .aux-btn .clay-icon { margin-bottom: 1px; }
       .hud-drawer .clay-nav-icon { margin-right: 2px; }
+      
+      /* 基础跨端支持：竖屏极简状态条与任务条在横屏/默认下的状态 */
+      .portrait-survival-strip { display: none; }
+      .quest-card-container { display: contents; }
+/* ==========================================================================
+         手机竖屏第二轮深度重构 (Mobile Portrait Phase 2 Refinement)
+         实证问题彻底解决：
+         1. 顶部三层打架 -> 极简单行Survival Kids状态条 (天数/天气/四维/水壶)，高度仅约28px
+         2. 右上角图标组与状态条左右分工并列，零重叠
+         3. 任务卡折叠简条 -> 默认单行，可点展开全文；顶部总高度压到12%以内
+         4. Toast通知排队 -> 置于任务条正下方独占一行，文字不截断，可自动占两行
+         5. 底部快捷栏缩小30%并与右侧大胶囊完全解耦避让，结合安全区
+         ========================================================================== */
+      @media (orientation: portrait) {
+        /* --- 1. 顶部状态带：贴顶满宽带 (高 56px + 顶部安全区)，带自身背景与底边框，非悬浮胶囊压画面 --- */
+        .top-dashboard {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          width: 100vw !important;
+          max-width: 100vw !important;
+          height: calc(56px + var(--sat, 0px)) !important;
+          margin: 0 !important;
+          padding-top: var(--sat, 0px) !important;
+          padding-left: calc(max(12px, var(--sal, 0px))) !important;
+          padding-right: calc(max(12px, var(--sar, 0px)) + 160px + 8px) !important;
+          box-sizing: border-box !important;
+          z-index: 120 !important;
+          background: rgba(12, 18, 20, 0.94) !important;
+          backdrop-filter: blur(16px) !important;
+          -webkit-backdrop-filter: blur(16px) !important;
+          border-bottom: 1px solid rgba(229, 211, 163, 0.22) !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+          pointer-events: auto !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          gap: 0 !important;
+          transition: opacity 0.2s ease-out !important;
+        }
+        .dashboard-panel { display: none !important; }
+
+        .portrait-capsule-wrapper {
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          width: 100% !important;
+          height: 56px !important;
+          gap: 2px !important;
+        }
+
+        /* 顶部状态带内部两行层级：第一行生命+水壶，第二行天候+饱水疲三均分，无内层突兀边框与背景 */
+        .portrait-survival-strip {
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          gap: 2px !important;
+          width: 100% !important;
+          height: 100% !important;
+          padding: 2px 0 !important;
+          box-sizing: border-box !important;
+          background: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          color: #f7efd9 !important;
+          font-size: 11px !important;
+          font-weight: 800 !important;
+          white-space: nowrap !important;
+          overflow: visible !important;
+          transition: opacity 0.2s ease-out !important;
+        }
+
+        .strip-row {
+          display: flex !important;
+          align-items: center !important;
+          width: 100% !important;
+        }
+        .strip-row-top {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 8px !important;
+          height: 24px !important;
+          padding-right: 4px !important;
+        }
+        .strip-row-top .strip-life { font-size: 13px !important; }
+        .strip-row-top .strip-life span { font-size: 14px !important; }
+        .strip-row-top .strip-life b { font-size: 14px !important; font-weight: 900 !important; color: #ff7675; }
+
+        .strip-row-bottom {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr 1fr !important;
+          width: 100% !important;
+          justify-items: center !important;
+          align-items: center !important;
+          height: 20px !important;
+        }
+        .strip-row-bottom .strip-item {
+          justify-content: center !important;
+          width: 100% !important;
+        }
+        .portrait-survival-strip.strip-danger-border {
+          border-color: #ff3838 !important;
+          box-shadow: 0 0 14px rgba(255, 56, 56, 0.75), 0 4px 16px rgba(0,0,0,0.5) !important;
+          animation: stripBorderPulse 0.8s infinite alternate !important;
+        }
+        @keyframes stripBorderPulse {
+          0% { border-color: rgba(255, 56, 56, 0.4); box-shadow: 0 0 6px rgba(255, 56, 56, 0.3); }
+          100% { border-color: #ff3838; box-shadow: 0 0 16px rgba(255, 56, 56, 0.9); }
+        }
+        .portrait-survival-strip::-webkit-scrollbar { display: none; }
+        .strip-item {
+          display: flex !important;
+          align-items: center !important;
+          gap: 2px !important;
+          flex-shrink: 0 !important;
+          font-size: 11px !important;
+          line-height: 1 !important;
+        }
+        .strip-stat span { font-size: 11px; }
+        .strip-stat b { font-size: 11px; font-weight: 900; }
+        .strip-stat.strip-low b { color: #ff7675 !important; }
+        .strip-stat.strip-warn b { color: #ff3838 !important; animation: blink 1s infinite alternate; }
+        .strip-stat.strip-zero b { color: #ff1e1e !important; text-shadow: 0 0 8px #ff3838 !important; animation: zeroAlert 0.4s infinite alternate !important; }
+        @keyframes blink { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes zeroAlert { 0% { opacity: 0.4; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1.18); } }
+        
+        .strip-subline {
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          font-size: 11px !important;
+          line-height: 1 !important;
+          color: rgba(229, 211, 163, 0.65) !important;
+          margin-left: 8px !important;
+          padding-left: 0 !important;
+        }
+        .strip-subline .strip-sub-day { color: #ffeaa7; font-size: 11px; }
+        .strip-subline .strip-sub-sep { color: rgba(255,255,255,0.3); font-size: 11px; }
+        .strip-subline .strip-sub-weather { color: #00cec9; font-size: 11px; }
+        .strip-subline .strip-sub-steps { display: none !important; }
+
+        /* --- 2. 顶部右侧导航按键组：收进满宽状态带右端，与带同高居中 (高 48px，gap 8px，右边距 12px) --- */
+        .top-right-group {
+          position: fixed !important;
+          top: calc(var(--sat, 0px) + 4px) !important;
+          right: calc(max(12px, var(--sar, 0px))) !important;
+          left: auto !important;
+          width: 160px !important;
+          max-width: 160px !important;
+          height: 48px !important;
+          z-index: 125 !important;
+          display: flex !important;
+          gap: 8px !important;
+          align-items: center !important;
+          justify-content: flex-end !important;
+          transition: opacity 0.2s ease-out !important;
+        }
+        .top-right-group .hud-nav-btn {
+          min-width: 48px !important;
+          width: 48px !important;
+          min-height: 48px !important;
+          height: 48px !important;
+          padding: 0 !important;
+          border-radius: 12px !important;
+          font-size: 14px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          position: relative !important;
+          box-sizing: border-box !important;
+        }
+        /* 竖屏下按钮本体不印数字 */
+        .top-right-group .hud-nav-desktop-label, 
+        .top-right-group .hud-sol-unit,
+        .top-right-group #txt-hud-sol-token { display: none !important; }
+        
+        .top-right-group #btn-quick-mining {
+          min-width: 48px !important;
+          width: 48px !important;
+          padding: 0 !important;
+          gap: 0 !important;
+        }
+        /* 统一角标为按钮右上角 16px 圆点 */
+        .hud-sol-gift {
+          position: absolute !important;
+          top: -4px !important;
+          right: -4px !important;
+          width: 16px !important;
+          height: 16px !important;
+          border-radius: 50% !important;
+          background: #ff4757 !important;
+          border: 2px solid #fff !important;
+          box-shadow: 0 0 8px rgba(255,71,87,.9) !important;
+          pointer-events: none !important;
+          z-index: 10 !important;
+        }
+
+        /* --- 3. 任务提示简条：置于满宽状态带正下方 (紧贴带底边 56px) --- */
+        .quest-card-container {
+          position: fixed !important;
+          top: calc(var(--sat, 0px) + 56px) !important;
+          left: calc(max(12px, var(--sal, 0px))) !important;
+          right: calc(max(12px, var(--sar, 0px))) !important;
+          z-index: 115 !important;
+          pointer-events: none !important;
+        }
+        .quest-banner {
+          position: relative !important;
+          transform: none !important;
+          left: auto !important;
+          top: auto !important;
+          pointer-events: auto !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          margin: 0 !important;
+          padding: 4px 10px !important;
+          min-height: 28px !important;
+          max-height: 28px !important;
+          height: 28px !important;
+          line-height: 1.25 !important;
+          border-radius: 12px !important;
+          background: rgba(14, 24, 20, 0.96) !important;
+          border: 1.5px solid rgba(255, 234, 167, 0.75) !important;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5) !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+        }
+        .quest-banner .quest-icon { font-size: 13px; flex-shrink: 0; }
+        .quest-banner .quest-text {
+          flex: 1 1 auto;
+          font-size: 11px !important;
+          font-weight: 800 !important;
+          color: #ffffff !important;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+        .quest-banner .quest-toggle-arrow {
+          font-size: 9px;
+          color: #d9c08a;
+          flex-shrink: 0;
+          transition: transform 0.2s;
+        }
+        .quest-banner.expanded {
+          max-height: none !important;
+          height: auto !important;
+          border-color: rgba(255, 234, 167, 0.95) !important;
+          background: rgba(14, 24, 20, 0.98) !important;
+        }
+        .quest-banner.expanded .quest-text {
+          white-space: normal !important;
+          word-break: break-word !important;
+          display: block !important;
+        }
+
+        /* --- 4. 提示固定在状态行下方、宽 min(92vw,380px) 居中、同时最多 1 条 3 秒淡出 --- */
+        .toast-stack {
+          position: fixed !important;
+          top: calc(var(--sat, 0px) + 94px) !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translateX(-50%) !important;
+          width: min(92vw, 380px) !important;
+          max-width: min(92vw, 380px) !important;
+          z-index: 130 !important;
+          pointer-events: none !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 6px !important;
+        }
+        .toast-item {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          padding: 8px 14px !important;
+          border-radius: 12px !important;
+          font-size: 12px !important;
+          line-height: 1.4 !important;
+          text-align: center !important;
+          white-space: normal !important;
+          word-break: break-word !important;
+          display: -webkit-box !important;
+          -webkit-line-clamp: 2 !important;
+          -webkit-box-orient: vertical !important;
+          overflow: hidden !important;
+          text-overflow: clip !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        /* --- 5. 底部双锚：底部安全区一致 (bottom: calc(max(12px, var(--sab, 0px)))) --- */
+        .bottom-quick-bar {
+          position: fixed !important;
+          left: 50% !important;
+          bottom: calc(max(12px, var(--sab, 0px))) !important;
+          transform: translateX(-50%) !important;
+          max-width: calc(100vw - 230px) !important;
+          margin: 0 !important;
+          padding: 3px 6px !important;
+          gap: 8px !important;
+          background: rgba(14, 24, 20, 0.88) !important;
+          border: 1px solid rgba(229, 211, 163, 0.25) !important;
+          border-radius: 12px !important;
+          z-index: 97 !important;
+          display: flex !important;
+        }
+        .quick-slot {
+          min-width: 36px !important;
+          width: 36px !important;
+          min-height: 36px !important;
+          height: 36px !important;
+          padding: 2px !important;
+          font-size: 9px !important;
+          border-radius: 8px !important;
+          box-sizing: border-box !important;
+          position: relative !important;
+        }
+        .quick-slot.quick-canteen-alert {
+          border-color: #ff3838 !important;
+          box-shadow: 0 0 12px rgba(255, 56, 56, 0.8) !important;
+          animation: stripBorderPulse 0.8s infinite alternate !important;
+        }
+        .quick-slot span:first-child { font-size: 16px !important; }
+        .quick-slot span:last-child { display: none !important; }
+
+        /* --- 6. 右下组 grid 两列 48px、gap 8px，主按钮跨两列 104x56 且与上排边缘对齐 --- */
+        .mobile-action-zone {
+          position: fixed !important;
+          right: calc(max(12px, var(--sar, 0px))) !important;
+          bottom: calc(max(12px, var(--sab, 0px))) !important;
+          width: 104px !important;
+          z-index: 98 !important;
+          display: grid !important;
+          grid-template-columns: 48px 48px !important;
+          grid-gap: 8px !important;
+          align-items: center !important;
+          justify-content: end !important;
+          box-sizing: border-box !important;
+        }
+        .aux-action-row {
+          display: contents !important;
+        }
+        .aux-btn {
+          width: 48px !important;
+          height: 48px !important;
+          font-size: 16px !important;
+          border-radius: 12px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-sizing: border-box !important;
+        }
+        #btn-quick-run {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+        }
+        #btn-quick-jump {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+        }
+        #btn-quick-attack:not(.ctx-hidden) {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+        }
+        #btn-quick-attack:not(.ctx-hidden) ~ #btn-quick-run {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+        }
+        .aux-btn .aux-btn-label {
+          display: none !important; /* 小标签放不下只留图标 */
+        }
+        .context-tag {
+          display: none !important;
+        }
+        .main-action-capsule {
+          grid-column: span 2 !important;
+          width: 104px !important;
+          height: 56px !important;
+          min-height: 56px !important;
+          max-height: 56px !important;
+          padding: 4px 6px !important;
+          box-sizing: border-box !important;
+          border-radius: 28px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 2px !important;
+          overflow: hidden !important;
+        }
+        .main-action-capsule #main-action-icon {
+          font-size: 18px !important;
+          line-height: 1 !important;
+        }
+        .main-action-capsule #main-action-text {
+          font-size: clamp(10px, 2.9vw, 12px) !important;
+          font-weight: 900 !important;
+          line-height: 1.15 !important;
+          text-align: center !important;
+          white-space: pre-line !important;
+          display: -webkit-box !important;
+          -webkit-line-clamp: 2 !important;
+          -webkit-box-orient: vertical !important;
+          overflow: hidden !important;
+          word-break: break-all !important;
+          max-width: 100% !important;
+        }
+
+        /* --- 7. 抽屉菜单与弹窗：贴合屏幕与安全区约束 --- */
+        .hud-nav-secondary.hud-drawer, .hud-nav-secondary.hud-drawer.open {
+          width: min(280px, 75vw) !important;
+          top: 0 !important;
+          padding-top: calc(max(12px, var(--sat, 0px))) !important;
+          padding-bottom: calc(max(12px, var(--sab, 0px))) !important;
+        }
+        .modal-card {
+          width: calc(100vw - 16px - var(--sal, 0px) - var(--sar, 0px)) !important;
+          max-width: 480px !important;
+          max-height: calc(100vh - 24px - var(--sat, 0px) - var(--sab, 0px)) !important;
+          border-radius: 18px !important;
+        }
+        .split-modal-layout {
+          flex-direction: column !important;
+          gap: 10px !important;
+        }
+        .animal-dialog {
+          width: calc(100vw - 20px - var(--sal, 0px) - var(--sar, 0px)) !important;
+          max-width: 440px !important;
+          top: auto !important;
+          bottom: calc(max(70px, var(--sab, 0px) + 65px)) !important;
+          max-height: 50vh !important;
+          padding: 10px 14px !important;
+          border-radius: 16px !important;
+        }
+      }
+
     `;
+    style.textContent += cozyPortraitHudCSS;
+    style.textContent += cozyLandscapeHudCSS;
     document.head.appendChild(style);
 
-    // 1. 顶部 CastawaySOL 主仪表盘
+    // 1. 顶部 CastawaySOL 主仪表盘（兼容横屏经典面板 + 竖屏极简单行Survival Kids状态条）
     const dashboard = document.createElement('div');
     dashboard.className = 'top-dashboard';
     dashboard.innerHTML = `
+      <!-- 横屏桌面/平板展示面板 -->
       <div class="dashboard-panel">
         <div class="stats-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="time-tag" id="hud-time">第 1 天 · 0 步</div>
-          <div class="time-tag" id="hud-weather" style="background:rgba(0, 206, 201, 0.2); color:#00cec9; font-weight:800;">☀️ 晴朗 37.0°C</div>
+          <span class="landscape-weather-symbol" aria-hidden="true">☀️</span>
+          <div class="landscape-time-copy"><div class="time-tag" id="hud-time">第 1 天 · 0 步</div>
+          <div class="time-tag" id="hud-weather" style="background:rgba(0, 206, 201, 0.2); color:#00cec9; font-weight:800;">晴朗 37.0°C</div></div>
         </div>
         <div class="gauges-grid">
           <div class="gauge-item">
@@ -914,7 +1382,31 @@ export class UIManager {
           </div>
         </div>
       </div>
-      <div class="quest-banner" id="quest-banner">${formatKeyHints(this.currentQuest)}</div>
+
+      <!-- 竖屏 Survival Kids 经典顶部状态带：两行层级 (第一行生命+天数天气，第二行饱食/水分/疲劳严格三等分) -->
+      <div class="portrait-capsule-wrapper" id="portrait-capsule-wrapper">
+        <div class="portrait-survival-strip" id="portrait-survival-strip">
+          <!-- 第一行：生命数值在左，天数天气弱文本并入右侧 -->
+          <div class="strip-row strip-row-top" id="strip-row-top">
+            <img class="portrait-cat-avatar" src="/ui/cozy/cat-avatar.webp" alt="" aria-hidden="true">
+            <div class="strip-item strip-stat strip-life" title="生命值" aria-label="生命 100">
+              <span class="life-hearts" aria-hidden="true"><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i></span>
+              <b id="strip-val-life">100</b>
+            </div>
+          </div>
+          <!-- 第二行：天候与饱食、水分、疲劳 -->
+          <div class="strip-row strip-row-bottom" id="strip-row-bottom">
+            <div class="strip-subline" id="strip-subline">
+              <span class="strip-weather-icon" id="strip-weather-icon" aria-hidden="true">☀️</span>
+              <span class="strip-weather-copy"><span class="strip-sub-day" id="strip-time">第1天</span><span class="strip-sub-weather" id="strip-weather">晴朗</span></span>
+              <span class="strip-sub-steps" id="strip-steps" style="display:none;">0步</span>
+            </div>
+            <div class="strip-item strip-stat strip-hunger" title="饱食度"><span class="strip-meter-icon" aria-hidden="true">🍗</span><b id="strip-val-hunger">70</b></div>
+            <div class="strip-item strip-stat strip-water" title="饮水度"><span class="strip-meter-icon" aria-hidden="true">💧</span><b id="strip-val-water">70</b></div>
+            <div class="strip-item strip-stat strip-fatigue" title="疲劳度"><span class="strip-meter-icon" aria-hidden="true">⚡</span><b id="strip-val-fatigue">30</b></div>
+          </div>
+        </div>
+      </div>
     `;
     const survivalPanel = dashboard.querySelector('.dashboard-panel');
     survivalPanel.insertAdjacentHTML('beforeend', `
@@ -923,12 +1415,36 @@ export class UIManager {
     `);
     document.body.appendChild(dashboard);
 
+    // 独立任务简条容器（横屏与竖屏统一承载，竖屏默认单行，可点展开全文；无内容时彻底隐藏）
+    const questCard = document.createElement('div');
+    questCard.className = 'quest-card-container';
+    questCard.id = 'quest-card-container';
+    if (!this.currentQuest || !String(this.currentQuest).trim()) {
+      questCard.style.display = 'none';
+    }
+    questCard.innerHTML = `
+      <div class="quest-banner" id="quest-banner" title="点击展开/折叠任务目标" role="button" aria-expanded="false">
+        <span class="quest-icon">📜</span>
+        <span class="quest-text" id="quest-text">${formatKeyHints(this.currentQuest).replace(/^🚩\s*/, '')}</span>
+        <span class="quest-toggle-arrow" id="quest-toggle-arrow">▼</span>
+      </div>
+    `;
+    document.body.appendChild(questCard);
+
+    const tutorialCard = document.createElement('section');
+    tutorialCard.id = 'onboarding-card';
+    tutorialCard.setAttribute('aria-live', 'polite');
+    tutorialCard.style.cssText = 'display:none;position:fixed;z-index:120;top:calc(env(safe-area-inset-top, 0px) + 20%);left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 28px));box-sizing:border-box;padding:13px 15px;border:2px solid rgba(244,231,187,.88);border-radius:18px;background:rgba(28,43,40,.94);color:#fff4dc;box-shadow:0 8px 28px rgba(0,0,0,.3);pointer-events:auto;';
+    tutorialCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><strong id="onboarding-title" style="font-size:15px;flex:1"></strong><span id="onboarding-count" style="font-size:11px;opacity:.78"></span><button id="onboarding-skip" type="button" style="border:1px solid rgba(244,231,187,.6);border-radius:12px;padding:5px 8px;background:rgba(248,238,209,.12);color:#fff4dc;font:inherit;font-size:11px">跳过</button></div><div id="onboarding-text" style="font-size:13px;line-height:1.5"></div>';
+    document.body.appendChild(tutorialCard);
+    tutorialCard.querySelector('#onboarding-skip').addEventListener('click', () => window.__game?.story?.dismissOnboarding?.());
+
     // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 $SOL 资产）
     const topNav = document.createElement('div');
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
       <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900; border:1px solid rgba(255,255,255,0.7); box-shadow:0 0 16px rgba(20,241,149,0.5);" aria-label="矿机中枢">
-        ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:13px; font-weight:900;">$SOL</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
+        ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:12px; font-weight:900; color:rgba(11,16,27,0.75); margin-left:2px;">算力</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
       </button>
       <button class="hud-nav-btn" id="btn-open-inv" aria-label="背包">🎒 <span class="hud-nav-desktop-label">背包</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
@@ -1174,6 +1690,7 @@ export class UIManager {
         e.stopPropagation();
         haptics.light();
         this.player.forceRun = !this.player.forceRun;
+        runBtn.classList.toggle('is-running', this.player.forceRun);
         runBtn.style.background = this.player.forceRun ? 'rgba(0, 184, 148, 0.85)' : 'rgba(18, 24, 28, 0.82)';
         runBtn.style.borderColor = this.player.forceRun ? '#00cec9' : 'rgba(255, 255, 255, 0.28)';
       });
@@ -1185,6 +1702,10 @@ export class UIManager {
       mainActionBtn.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
         haptics.medium();
+        if (this._isWaterDepleted) {
+          drink();
+          return;
+        }
         if (this.onActionCallback) this.onActionCallback('interact');
       });
     }
@@ -1310,7 +1831,27 @@ export class UIManager {
     // UI 重叠优化：点遮罩（任意处）同样关闭对话框；点任务条用提示显示完整任务
     if (this.dialogScrim) this.dialogScrim.addEventListener('click', (event) => { event.stopPropagation(); this.dialogBox.click(); });
     const questEl = document.getElementById('quest-banner');
-    if (questEl) questEl.addEventListener('click', () => { haptics.light(); this.showToast(this.currentQuest, 'quest', 'medium'); });
+    if (questEl) {
+      questEl.addEventListener('click', () => {
+        haptics.light();
+        const isExpanded = questEl.classList.toggle('expanded');
+        questEl.setAttribute('aria-expanded', String(isExpanded));
+        const arrow = document.getElementById('quest-toggle-arrow');
+        if (arrow) arrow.textContent = isExpanded ? '▲' : '▼';
+        // 如果再次点击展开状态，才轻提示
+        if (!isExpanded) {
+          this.showToast(this.currentQuest, 'quest', 'small');
+        }
+      });
+    }
+
+    // 绑定竖屏极简状态条点击水壶直接喝水
+    const auxDrink = document.getElementById('btn-quick-drink');
+    if (auxDrink) auxDrink.addEventListener('click', drink);
+    const stripCanteen = document.getElementById('strip-canteen');
+    if (stripCanteen) {
+      stripCanteen.addEventListener('click', drink);
+    }
 
     // 初始化 Solana 钱包按钮状态
     this.updateSolanaBtn();
@@ -1428,7 +1969,9 @@ export class UIManager {
       const wIcons = { clear: '☀️', cloudy: '⛅', rain: '🌧️', typhoon: '⛈️' };
       const wNames = { clear: '晴朗', cloudy: '多云', rain: '暴雨', typhoon: '台风' };
       const isHypo = ws.bodyTemp < 35.0;
-      this._hudWrite('weather-text', `${wIcons[ws.currentWeather] || '☀️'} ${wNames[ws.currentWeather] || '晴'} ${temp}°C${isHypo ? ' ⚠️失温' : ''}`, (v) => { weatherEl.textContent = v; });
+      this._hudWrite('weather-text', `${wNames[ws.currentWeather] || '晴'} ${temp}°C${isHypo ? ' ⚠️失温' : ''}`, (v) => { weatherEl.textContent = v; });
+      const weatherSymbol = this._hudEl('landscape-weather-symbol') || weatherEl.closest('.stats-header')?.querySelector('.landscape-weather-symbol');
+      if (weatherSymbol) this._hudWrite('landscape-weather-symbol', wIcons[ws.currentWeather] || '☀️', (v) => { weatherSymbol.textContent = v; });
       this._hudWrite('weather-bg', isHypo ? 'rgba(235, 77, 75, 0.3)' : (ws.currentWeather === 'rain' || ws.currentWeather === 'typhoon' ? 'rgba(9, 132, 227, 0.3)' : 'rgba(0, 206, 201, 0.2)'), (v) => { weatherEl.style.background = v; });
       this._hudWrite('weather-color', isHypo ? '#ff7675' : '#00cec9', (v) => { weatherEl.style.color = v; });
     }
@@ -1446,7 +1989,7 @@ export class UIManager {
         const gift = v.split('|')[1];
         if (giftDot) giftDot.hidden = !gift;
         const btn = document.getElementById('btn-quick-mining');
-        if (btn) btn.setAttribute('aria-label', gift ? `矿机中枢：${solCount} $SOL，待领取 ${gift}` : `矿机中枢：${solCount} $SOL`);
+        if (btn) btn.setAttribute('aria-label', gift ? `矿机中枢：${solCount} 算力代币，待领取 ${gift}` : `矿机中枢：${solCount} 算力代币`);
       });
     }
 
@@ -1465,6 +2008,120 @@ export class UIManager {
     if (warning) {
       this._hudWrite('warning-hidden', !message, (v) => { warning.hidden = v; });
       this._hudWrite('warning-text', message, (v) => { warning.textContent = v; });
+    }
+
+    // 动态同步竖屏单行极简状态条 (Survival Kids 极简数值与报警高亮)
+    const stripTime = this._hudEl('strip-time');
+    if (stripTime) this._hudWrite('strip-time', `第${this.survival.day}天`, (v) => { stripTime.textContent = v; });
+    const stripSteps = this._hudEl('strip-steps');
+    if (stripSteps) this._hudWrite('strip-steps', `${this.survival.steps}步`, (v) => { stripSteps.textContent = v; });
+    const stripWeather = this._hudEl('strip-weather');
+    if (stripWeather && this.game && this.game.weatherSystem) {
+      const ws = this.game.weatherSystem;
+      const wIcons = { clear: '☀️', cloudy: '⛅', rain: '🌧️', typhoon: '⛈️' };
+      const wNames = { clear: '晴朗', cloudy: '多云', rain: '下雨', typhoon: '台风' };
+      this._hudWrite('strip-weather', wNames[ws.currentWeather] || '晴朗', (v) => {
+        stripWeather.textContent = v;
+        stripWeather.title = `体温 ${Math.round(ws.bodyTemp)}°C`;
+      });
+      const weatherIcon = this._hudEl('strip-weather-icon');
+      if (weatherIcon) this._hudWrite('strip-weather-icon', wIcons[ws.currentWeather] || '☀️', (v) => { weatherIcon.textContent = v; });
+    }
+    const statKeys = ['life', 'hunger', 'water', 'fatigue'];
+    let hasZeroDanger = (values.life <= 0 || values.water <= 0);
+    statKeys.forEach(k => {
+      const el = this._hudEl(`strip-val-${k}`);
+      if (el) {
+        this._hudWrite(`strip-val-${k}`, String(values[k]), (v) => {
+          el.textContent = v;
+          const parent = el.closest('.strip-stat');
+          if (parent) {
+            parent.classList.toggle('strip-low', low[k]);
+            parent.classList.toggle('strip-warn', warn[k]);
+            parent.classList.toggle('strip-zero', values[k] <= 0);
+            parent.style.setProperty('--fill', `${Math.max(0, Math.min(100, values[k]))}%`);
+            if (k === 'life') {
+              parent.setAttribute('aria-label', `生命 ${values[k]}`);
+              parent.querySelectorAll('.life-hearts i').forEach((heart, index) => {
+                heart.classList.toggle('filled', index < Math.ceil(values[k] / 20));
+              });
+            }
+          }
+        });
+      }
+    });
+    const stripContainer = this._hudEl('portrait-survival-strip');
+    if (stripContainer) {
+      stripContainer.classList.toggle('strip-danger-border', hasZeroDanger);
+    }
+    // 喝水位置纠正：缺水状态同步给快捷栏水壶；水分归零时临时顶替主动作胶囊按钮
+    this._isWaterDepleted = (values.water <= 0);
+    document.getElementById('main-action-btn')?.classList.toggle('is-urgent', this._isWaterDepleted);
+    this.renderQuickBar();
+    if (this._isWaterDepleted) {
+      const capIcon = document.getElementById('main-action-icon');
+      const capText = document.getElementById('main-action-text');
+      const capBtn = document.getElementById('main-action-btn');
+      if (capIcon && capText && capBtn) {
+        capIcon.textContent = '🍶';
+        capText.textContent = '喝水救命';
+        capBtn.style.background = 'linear-gradient(135deg, #d63031, #e17055)';
+        capBtn.style.boxShadow = '0 0 20px rgba(214, 48, 49, 0.8)';
+      }
+    }
+    const stripCanteen = this._hudEl('strip-val-canteen');
+    if (stripCanteen) {
+      this._hudWrite('strip-val-canteen', String(sips), (v) => {
+        stripCanteen.textContent = v;
+        const parent = stripCanteen.closest('.strip-canteen');
+        if (parent) {
+          parent.classList.toggle('strip-empty', sips <= 0);
+        }
+      });
+    }
+  }
+
+  // 状态带显隐行为（第六轮：移动中弱化到约 40%，停止移动约 0.5s 后用约 200ms 平滑恢复；告警/濒死/闪烁强制全显）
+  updateHUDMovementState(isMoving) {
+    const dashboard = this._hudEl('portrait-capsule-wrapper') || document.querySelector('.top-dashboard');
+    if (!dashboard) return;
+
+    // 检查是否有任何一维濒死/归零或处于危险状态 (生命<=25, 水分<=20, 饱食<=20, 疲劳>=80 或归零)
+    const values = this.survival ? {
+      life: Math.max(0, Math.round(this.survival.life)),
+      hunger: Math.max(0, Math.round(this.survival.hunger)),
+      water: Math.max(0, Math.round(this.survival.water)),
+      fatigue: Math.min(100, Math.round(this.survival.fatigue))
+    } : null;
+
+    const hasDanger = values && (
+      values.life <= 25 || values.water <= 20 || values.hunger <= 20 || values.fatigue >= 80 ||
+      values.life <= 0 || values.water <= 0 || values.hunger <= 0
+    );
+
+    const topBar = document.querySelector('.top-dashboard');
+    const topNav = document.querySelector('.top-right-group');
+
+    if (hasDanger) {
+      if (this._hudFadeTimer) { clearTimeout(this._hudFadeTimer); this._hudFadeTimer = null; }
+      if (topBar) topBar.style.opacity = '1.0';
+      if (topNav) topNav.style.opacity = '1.0';
+      return;
+    }
+
+    if (isMoving) {
+      if (this._hudFadeTimer) { clearTimeout(this._hudFadeTimer); this._hudFadeTimer = null; }
+      if (topBar) topBar.style.opacity = '0.4';
+      if (topNav) topNav.style.opacity = '0.4';
+    } else {
+      // 停止移动约 0.5 秒后，用约 200ms 平滑恢复全显
+      if (!this._hudFadeTimer && topBar && topBar.style.opacity === '0.4') {
+        this._hudFadeTimer = setTimeout(() => {
+          this._hudFadeTimer = null;
+          if (topBar) topBar.style.opacity = '1.0';
+          if (topNav) topNav.style.opacity = '1.0';
+        }, 500);
+      }
     }
   }
 
@@ -1605,10 +2262,32 @@ export class UIManager {
 
   updateObjective(text) {
     this.currentQuest = text;
-    const el = document.getElementById('quest-banner');
-    const next = formatKeyHints(text);
-    // UI 第二步优化：任务条只显示一行任务目标；内容没变就不写
-    if (el && el.textContent !== next) el.textContent = next;
+    const banner = document.getElementById('quest-banner');
+    const container = document.getElementById('quest-card-container');
+    const textEl = document.getElementById('quest-text');
+    const hasText = !!(text && String(text).trim());
+    if (container) {
+      container.style.display = hasText ? '' : 'none';
+    }
+    const next = formatKeyHints(text).replace(/^🚩\s*/, '');
+    if (textEl) {
+      if (textEl.textContent !== next) textEl.textContent = next;
+    } else if (banner && banner.textContent !== next) {
+      banner.textContent = next;
+    }
+  }
+
+  updateTutorial(hint, step, total) {
+    const card = document.getElementById('onboarding-card');
+    if (!card) return;
+    card.style.display = hint ? 'block' : 'none';
+    if (!hint) return;
+    const title = card.querySelector('#onboarding-title');
+    const body = card.querySelector('#onboarding-text');
+    const count = card.querySelector('#onboarding-count');
+    if (title) title.textContent = hint.title;
+    if (body) body.textContent = hint.text;
+    if (count) count.textContent = `${Math.min(step + 1, total)}/${total}`;
   }
 
   // UI 第二步优化：靠近物体的情境提示不再占用任务条；主按钮已写动作，只在按钮旁显示很小的名称/状态标签
@@ -1789,29 +2468,68 @@ export class UIManager {
   }
 
   renderQuickBar() {
-    const list = Object.entries(this.inventory)
-      .filter(([k, cnt]) => cnt > 0 && this.isEdible(k)) // UI 第一步：只放可食用/可使用物品
-      .slice(0, 3) // 最多 3 格
-      .map(([k, cnt]) => `
-        <div class="quick-slot" data-id="${k}" title="点击直接食用或使用">
-          <span style="font-size:22px;line-height:1;">${this.getItemIcon(k)}</span>
-          <span>${this.getItemName(k)} <span style="color:#91dbc4;">${cnt}</span></span>
+    const sips = (this.survival && this.survival.canteenSips !== undefined) ? this.survival.canteenSips : 3;
+    const isWaterLow = (this.survival && this.survival.water < 30);
+    const portraitQuickBar = window.matchMedia?.('(orientation: portrait)').matches ?? false;
+    const quickItems = Object.entries(this.inventory)
+      .filter(([k, cnt]) => cnt > 0 && k !== 'canteen_clean_water');
+    const pageCount = Math.max(1, Math.ceil(quickItems.length / 4));
+    this._quickBarPage = Math.min(this._quickBarPage || 0, pageCount - 1);
+    const visibleItems = quickItems.slice(this._quickBarPage * 4, this._quickBarPage * 4 + 4);
+    const selectedQuickItem = visibleItems.some(([id]) => id === this.selectedItemId) ? this.selectedItemId : 'canteen';
+    const canteenSlotHtml = `
+      <div class="quick-slot quick-canteen-slot ${isWaterLow ? 'quick-canteen-alert' : ''} ${selectedQuickItem === 'canteen' ? 'selected' : ''}" data-id="canteen" title="饮用便携水壶 (剩余: ${sips}/3)">
+        <span class="quick-slot-icon" style="line-height:1;">${iconHTML('items/water_bamboo', 36, { eager: true })}</span>
+        <span class="quick-slot-label">水壶 <span style="color:#74b9ff;">${sips}</span></span>
+        <span class="quick-slot-badge">${sips}</span>
+      </div>
+    `;
+
+    const itemSlots = visibleItems.map(([k, cnt]) => `
+        <div class="quick-slot ${selectedQuickItem === k ? 'selected' : ''}" data-id="${k}" title="点击直接食用或使用: ${this.getItemName(k)} (${cnt})">
+          <span class="quick-slot-icon" style="line-height:1;">${this.getItemIcon(k, 36)}</span>
+          <span class="quick-slot-label">${this.getItemName(k)} <span style="color:#91dbc4;">${cnt}</span></span>
+          <span class="quick-slot-badge">${cnt}</span>
         </div>
       `).join('');
-    this.bottomBar.innerHTML = list;
-    this.bottomBar.style.display = list ? '' : 'none'; // 没有可食用物品时整栏隐藏
 
-    this.bottomBar.querySelectorAll('.quick-slot').forEach(el => {
+    const occupiedSlots = 1 + visibleItems.length;
+    const emptySlots = '<div class="quick-slot quick-slot-empty" aria-hidden="true"></div>'.repeat(Math.max(0, 5 - occupiedSlots));
+    this.bottomBar.innerHTML = (portraitQuickBar ? `<button class="quick-page-arrow" type="button" data-page="prev" aria-label="上一页物品" ${this._quickBarPage === 0 ? 'disabled' : ''}>‹</button>` : '')
+      + canteenSlotHtml + itemSlots + emptySlots
+      + (portraitQuickBar ? `<button class="quick-page-arrow" type="button" data-page="next" aria-label="下一页物品" ${this._quickBarPage >= pageCount - 1 ? 'disabled' : ''}>›</button>` : '');
+    this.bottomBar.style.display = '';
+
+    this.bottomBar.querySelectorAll('.quick-page-arrow').forEach(button => {
+      button.addEventListener('click', () => {
+        this._quickBarPage += button.dataset.page === 'next' ? 1 : -1;
+        this.renderQuickBar();
+      });
+    });
+
+    this.bottomBar.querySelectorAll('.quick-slot[data-id]').forEach(el => {
       el.addEventListener('click', () => {
         haptics.medium();
         const id = el.getAttribute('data-id');
-        this.consumeItem(id);
+        this.selectedItemId = id;
+        if (id === 'canteen') {
+          const res = this.survival.drinkCanteen();
+          this.updateSurvivalHUD();
+          this.showToast(res.msg, 'medium');
+          if (res.success && window.__game && window.__game.story && window.__game.story.onDrinkWater) {
+            window.__game.story.onDrinkWater();
+          }
+        } else {
+          this.consumeItem(id);
+          this.renderQuickBar();
+        }
       });
     });
   }
 
   // 16 格专业背包网格弹窗 (横屏自适应双栏)
   openInventoryModal() {
+    window.__game?.story?.onInventoryOpened?.();
     if (this.player && this.player.resetInput) this.player.resetInput();
     document.getElementById('modal-title').textContent = '🎒 探险行囊';
     const body = document.getElementById('modal-body');
@@ -2255,20 +2973,22 @@ export class UIManager {
   // Solana Seeker Web3 专属控制台与硬件级交互面板
   openSolanaModal() {
     soundEngine.playPlaceFurniture();
-    document.getElementById('modal-title').innerHTML = `🟣 Solana Seeker · Web3 硬件控制台`;
+    document.getElementById('modal-title').innerHTML = `🟣 Solana Web3 钱包管理中心`;
     const body = document.getElementById('modal-body');
 
     const renderModal = () => {
       const isConn = solanaBridge.isConnected;
-      const addr = solanaBridge.walletAddress || '未连接';
+      const addr = solanaBridge.walletAddress || '';
       const balance = solanaBridge.balance.toFixed(3);
       const isMwa = solanaBridge.isMWA;
       const isGuest = solanaBridge.isGuest;
       const isSeeker = solanaBridge.isSeeker;
+      const currentNet = solanaBridge.network;
       const checkins = solanaBridge.getCheckinRecords();
+      const availableWallets = solanaBridge.getAvailableWallets();
 
-      const typeLabel = isMwa ? '📱 Solana Mobile (Seed Vault / MWA)' : (isGuest ? '👤 游客体验模式' : '💻 浏览器插件 (Phantom/Backpack)');
-      const statusBadge = isConn ? `<span style="background:#2ed573; color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:bold;">已接入</span>` : `<span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:bold;">未连接</span>`;
+      const typeLabel = isMwa ? '📱 Solana Mobile (Seed Vault)' : (isGuest ? '👤 免钱包游客沙盒' : '💻 浏览器插件 (Phantom/Backpack)');
+      const statusBadge = isConn ? `<span style="background:#2ed573; color:#fff; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 0 10px rgba(46,213,115,0.4);">● 已接入</span>` : `<span style="background:rgba(255,255,255,0.15); color:#cbd5e1; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600;">○ 未连接</span>`;
 
       let checkinListHtml = '';
       if (checkins.length > 0) {
@@ -2279,7 +2999,7 @@ export class UIManager {
               <span style="color:rgba(255,255,255,0.5); margin-left:6px;">${new Date(c.timestamp).toLocaleTimeString()}</span>
             </div>
             <div style="color:${c.isHardwareSigned ? '#9945FF' : '#fffa65'}; font-weight:bold;">
-              ${c.isHardwareSigned ? '📱 硬件签名认证' : '✍️ 签名存证'}
+              ${c.isHardwareSigned ? '📱 硬件签名认证' : (c.isGuest ? '👤 游客存证' : '✍️ 链上签名')}
             </div>
           </div>
         `).join('');
@@ -2287,89 +3007,167 @@ export class UIManager {
         checkinListHtml = `<div style="color:rgba(255,255,255,0.4); font-size:12px; padding:6px 0;">暂无链上签到存证，点击下方按钮完成今日求生打卡</div>`;
       }
 
+      // 钱包选择项列表
+      const walletItemsHtml = availableWallets.map(w => {
+        const isRec = w.recommended;
+        const borderStyle = isRec ? 'border:1.5px solid #14F195; background:rgba(20,241,149,0.08);' : 'border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04);';
+        return `
+          <div class="wallet-option-item" data-wallet="${w.id}" style="${borderStyle} border-radius:12px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s ease;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:22px;">${w.icon}</span>
+              <div>
+                <div style="font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+                  <span>${w.name}</span>
+                  ${isRec ? `<span style="background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; font-size:10px; font-weight:900; padding:1px 6px; border-radius:6px;">推荐</span>` : ''}
+                </div>
+                <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:2px;">${w.description}</div>
+              </div>
+            </div>
+            <div>
+              <span style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); font-size:11px; padding:3px 8px; border-radius:8px;">${w.badge}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
       body.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; font-family:-apple-system, BlinkMacSystemFont, sans-serif; color:#ffffff;">
-          <!-- 顶部状态卡 -->
+        <div style="display:flex; flex-direction:column; gap:12px; font-family:-apple-system, BlinkMacSystemFont, sans-serif; color:#ffffff; max-height:75vh; overflow-y:auto; padding-right:2px;">
+          <!-- 顶部状态卡与网络选择 -->
           <div style="background:linear-gradient(135deg, rgba(153, 69, 255, 0.15), rgba(20, 241, 149, 0.15)); border:1px solid rgba(20, 241, 149, 0.35); border-radius:14px; padding:12px 16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:18px;">📱</span>
-                <span style="font-size:14px; font-weight:800; color:#14F195;">${isSeeker ? 'Solana Seeker 专属认证' : 'Solana Mobile Stack'}</span>
+                <span style="font-size:18px;">🟣</span>
+                <span style="font-size:14px; font-weight:800; color:#14F195;">${isSeeker ? 'Solana Seeker 认证设备' : 'Solana Web3 生态'}</span>
               </div>
-              ${statusBadge}
+              <div style="display:flex; align-items:center; gap:6px;">
+                <select id="wallet-network-select" style="background:rgba(0,0,0,0.5); color:#14F195; border:1px solid rgba(20,241,149,0.4); border-radius:8px; padding:2px 6px; font-size:11px; outline:none; cursor:pointer;">
+                  <option value="devnet" ${currentNet === 'devnet' ? 'selected' : ''}>Devnet (开发网)</option>
+                  <option value="testnet" ${currentNet === 'testnet' ? 'selected' : ''}>Testnet (测试网)</option>
+                </select>
+                ${statusBadge}
+              </div>
             </div>
+
             <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; flex-direction:column; gap:4px;">
-              <div>网络环境：<strong style="color:#ffffff;">Solana Devnet (开发网)</strong></div>
               <div>连接通道：<strong style="color:#14F195;">${typeLabel}</strong></div>
-              <div>钱包地址：<code style="background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px; color:#ffeaa7; word-break:break-all;">${addr}</code></div>
-              ${isConn && !isGuest ? `<div>Devnet 余额：<strong style="color:#fffa65; font-size:14px;">${balance} SOL</strong></div>` : ''}
+              ${isConn ? `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                  <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    钱包地址：<code style="background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px; color:#ffeaa7; word-break:break-all;">${addr}</code>
+                  </div>
+                  <button id="btn-copy-address" style="flex-shrink:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer;">复制</button>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+                  <div>当前余额：<strong style="color:#fffa65; font-size:14px;">${balance} SOL</strong></div>
+                  <button id="btn-refresh-balance" style="background:none; border:none; color:#14F195; font-size:12px; cursor:pointer; padding:0 4px;">🔄 刷新</button>
+                </div>
+              ` : `
+                <div style="color:rgba(255,255,255,0.5); font-size:11px; margin-top:2px;">选择下方任意方式连接钱包，开启链上求生打卡与特权兑换</div>
+              `}
             </div>
           </div>
 
-          <!-- 核心操作按键 -->
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            ${!isConn ? `
-              <button id="btn-mwa-connect" style="background:linear-gradient(135deg, #9945FF, #7d2ae8); color:#fff; border:none; border-radius:12px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(153,69,255,0.4);">
-                📱 唤起 Seed Vault / 移动钱包 (MWA)
-              </button>
-              <button id="btn-guest-connect" style="background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:12px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;">
-                👤 免钱包一键试玩 (游客模式)
-              </button>
-            ` : `
+          <!-- 未连接时：多钱包选择通道 -->
+          ${!isConn ? `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="font-size:12px; font-weight:700; color:rgba(255,255,255,0.85); margin-left:2px;">选择连接方式：</div>
+              ${walletItemsHtml}
+            </div>
+          ` : `
+            <!-- 已连接时：控制中心操作栏 -->
+            <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                 <button id="btn-seeker-checkin" style="background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(20,241,149,0.35);">
                   📝 链上生存打卡 (+100🐚)
                 </button>
-                <button id="btn-devnet-airdrop" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(153,69,255,0.35);">
-                  🪂 申请 1 SOL 测试币
-                </button>
+                ${!isGuest ? `
+                  <button id="btn-devnet-airdrop" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(153,69,255,0.35);">
+                    🪂 申请 1 SOL 测试币
+                  </button>
+                ` : `
+                  <button id="btn-switch-real-wallet" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
+                    🔗 切换至正式钱包
+                  </button>
+                `}
               </div>
               <button id="btn-disconnect-wallet" style="background:rgba(235, 77, 75, 0.15); border:1px solid rgba(235, 77, 75, 0.4); color:#ff7675; border-radius:10px; padding:7px 10px; font-size:12px; cursor:pointer; margin-top:2px;">
                 断开当前钱包连接
               </button>
-            `}
-          </div>
+            </div>
+          `}
 
           <!-- 链上生存签到存证记录 -->
           <div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 14px;">
             <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.85); display:flex; justify-content:space-between;">
-              <span>📜 Seeker 链上签到与存证</span>
-              <span style="font-size:11px; color:#14F195;">Seed Vault 保护</span>
+              <span>📜 链上签到与存证凭据</span>
+              <span style="font-size:11px; color:#14F195;">${isSeeker ? 'Seed Vault 硬件级保护' : 'ED25519 签名存证'}</span>
             </div>
             ${checkinListHtml}
           </div>
         </div>
       `;
 
-      // 绑定弹窗内按钮事件
-      const btnMwa = document.getElementById('btn-mwa-connect');
-      if (btnMwa) {
-        btnMwa.onclick = async () => {
-          btnMwa.disabled = true;
-          btnMwa.innerText = '📱 正在唤起手机钱包授权...';
-          const res = await solanaBridge.connectWallet('mwa');
-          btnMwa.disabled = false;
-          if (res.success) {
-            this.showToast(`🎉 钱包已通过 ${res.type} 成功接入！`, 'medium');
-            this.updateSolanaBtn();
-            renderModal();
-          } else {
-            this.showToast(`提示: ${res.message}`, 'medium');
-            renderModal();
-          }
-        };
-      }
-
-      const btnGuest = document.getElementById('btn-guest-connect');
-      if (btnGuest) {
-        btnGuest.onclick = async () => {
-          const res = await solanaBridge.connectWallet('guest');
-          this.showToast('👤 已切换至游客试玩模式', 'medium');
+      // 绑定网络切换
+      const netSelect = document.getElementById('wallet-network-select');
+      if (netSelect) {
+        netSelect.onchange = (e) => {
+          solanaBridge.setNetwork(e.target.value);
+          this.showToast(`🌐 网络已切换为: ${e.target.value}`, 'small');
           this.updateSolanaBtn();
           renderModal();
         };
       }
 
+      // 绑定复制地址
+      const btnCopy = document.getElementById('btn-copy-address');
+      if (btnCopy) {
+        btnCopy.onclick = async () => {
+          const res = await solanaBridge.copyWalletAddress();
+          this.showToast(res.message, 'small');
+        };
+      }
+
+      // 绑定刷新余额
+      const btnRefresh = document.getElementById('btn-refresh-balance');
+      if (btnRefresh) {
+        btnRefresh.onclick = async () => {
+          btnRefresh.disabled = true;
+          await solanaBridge.fetchBalance();
+          this.showToast('✅ 余额已刷新', 'small');
+          this.updateSolanaBtn();
+          renderModal();
+        };
+      }
+
+      // 绑定多钱包选择项点击
+      const optionItems = document.querySelectorAll('.wallet-option-item');
+      optionItems.forEach(item => {
+        item.onclick = async () => {
+          const walletType = item.getAttribute('data-wallet');
+          this.showToast(`正在唤起 ${walletType} 钱包连接...`, 'small');
+          const res = await solanaBridge.connectWallet(walletType);
+          if (res.success) {
+            soundEngine.playPlaceFurniture();
+            this.showToast(`🎉 已成功接入: ${res.type}！`, 'medium');
+            this.updateSolanaBtn();
+            renderModal();
+          } else {
+            this.showToast(`连接未完成: ${res.message || '未授权'}`, 'medium');
+            renderModal();
+          }
+        };
+      });
+
+      // 切换至正式钱包按钮
+      const btnSwitchReal = document.getElementById('btn-switch-real-wallet');
+      if (btnSwitchReal) {
+        btnSwitchReal.onclick = async () => {
+          await solanaBridge.disconnect();
+          renderModal();
+        };
+      }
+
+      // 签到存证按钮
       const btnCheckin = document.getElementById('btn-seeker-checkin');
       if (btnCheckin) {
         btnCheckin.onclick = async () => {
@@ -2379,8 +3177,11 @@ export class UIManager {
           btnCheckin.disabled = false;
           if (res.success) {
             soundEngine.playPlaceFurniture();
-            this.addInventory('sea_shell', 100);
-            this.showToast(res.hardwareSigned ? '🌟 恭喜！已使用 Seeker 硬件私钥完成第 ' + this.survival.day + ' 天链上打卡！(+100 贝壳)' : '✅ 完成今日打卡存证！(+100 贝壳)', 'medium');
+            this.addInventory('sol_token', 5);
+            const tipText = res.hardwareSigned
+              ? `🌟 恭喜！已使用 Seeker 硬件私钥完成第 ${this.survival.day} 天链上打卡！(+5 算力代币)`
+              : `✅ 完成今日打卡存证！(+5 算力代币)`;
+            this.showToast(tipText, 'medium');
             renderModal();
           } else {
             this.showToast(`打卡未完成: ${res.message || '用户取消'}`, 'medium');
@@ -2389,6 +3190,7 @@ export class UIManager {
         };
       }
 
+      // 申请空投测试币
       const btnAirdrop = document.getElementById('btn-devnet-airdrop');
       if (btnAirdrop) {
         btnAirdrop.onclick = async () => {
@@ -2398,7 +3200,7 @@ export class UIManager {
           btnAirdrop.disabled = false;
           if (res.success) {
             soundEngine.playPlaceFurniture();
-            this.showToast(`🎉 成功领取 1.0 SOL Devnet 测试币！余额: ${res.balance.toFixed(3)} SOL`, 'important');
+            this.showToast(`🎉 成功领取 1.0 SOL 测试币！余额: ${res.balance.toFixed(3)} SOL`, 'important');
             this.updateSolanaBtn();
             renderModal();
           } else {
@@ -2407,6 +3209,7 @@ export class UIManager {
         };
       }
 
+      // 断开连接
       const btnDisconnect = document.getElementById('btn-disconnect-wallet');
       if (btnDisconnect) {
         btnDisconnect.onclick = async () => {
@@ -2666,7 +3469,10 @@ export class UIManager {
       this.inventory.smoked_fish -= 1;
       this.survival.consume({ hunger: 80, life: 35, fatigue: -25 });
       soundEngine.playCooking();
-      this.showToast('🍱✨ 享用了极品熏鱼干！远洋特权军粮，饥饿+80，生命+35，疲劳大减-25！', 'small');
+      if (window.__game?.miningRig?.applyResonanceBuff) {
+        window.__game.miningRig.applyResonanceBuff('smoked_fish');
+      }
+      this.showToast('🍱✨ 享用了极品熏鱼干！饥饿+80，生命+35，并获得 3 轮共振【稳手】双倍残晶增益！', 'small');
     } else if (id === 'bone_armor') {
       this.inventory.bone_armor -= 1;
       this.hasBoneArmorEquipped = true;
@@ -2685,7 +3491,18 @@ export class UIManager {
       this.inventory.energy_drink -= 1;
       this.survival.consume({ hunger: 30, water: 50, fatigue: -35 });
       soundEngine.playSplash();
-      this.showToast('🧃 痛饮了【清甜鲜萃果浆】！饥饿+30，饮水+50，疲劳大减-35！', 'small');
+      if (window.__game?.miningRig?.applyResonanceBuff) {
+        window.__game.miningRig.applyResonanceBuff('energy_drink');
+      }
+      this.showToast('🧃 痛饮了【清甜鲜萃果浆】！饥饿+30，饮水+50，疲劳大减-35，并获得 2 轮共振【专注】地脉透视增强！', 'small');
+    } else if (id === 'resonance_crab_pot') {
+      this.inventory.resonance_crab_pot -= 1;
+      this.survival.consume({ hunger: 70, water: 30, life: 30, fatigue: -20 });
+      soundEngine.playCooking();
+      if (window.__game?.miningRig?.applyResonanceBuff) {
+        window.__game.miningRig.applyResonanceBuff('resonance_crab_pot');
+      }
+      this.showToast('🍲✨ 享用了【共振浓香椰子蟹煲】！饥饿+70，生命+30，并获得 3 轮共振【晶爆概率 x1.5】灵感增益！', 'small');
     } else if (id === 'bamboo_canteen') {
       this.inventory.bamboo_canteen -= 1;
       this.survival.consume({ water: 45, life: 10 });
@@ -3533,292 +4350,693 @@ export class UIManager {
     soundEngine.playCooking();
   }
 
-  // 2.5 荒岛绿色解密矿机 (DePIN Green Mining Rig) 控制台弹窗
+  // --- R8: 矿机共振勘探四个功能页签辅助渲染 ---
+  _renderOddsTabHtml() {
+    return `
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:11.5px; color:rgba(255,255,255,0.85); line-height:1.6;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px;">
+          <div style="font-size:13px; font-weight:900; color:#14f195; margin-bottom:6px;">⚖️ 数学模型与价值基准 (ODDS_TABLE)</div>
+          <div>• 价值基准 V: <strong style="color:#ffd32a;">${ODDS_TABLE.V}</strong> 算力代币/份额</div>
+          <div>• 资金流向: 主池 <strong>${(ODDS_TABLE.ALPHA * 100).toFixed(0)}%</strong> · 母晶池 <strong>${(ODDS_TABLE.MOTHERLODE_SHARE * 100).toFixed(0)}%</strong> · 残晶 <strong>${(ODDS_TABLE.SHARD_RETURN_RATE * 100).toFixed(0)}%</strong> · 销毁 <strong>${(ODDS_TABLE.BURN_SHARE * 100).toFixed(0)}%</strong></div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="font-weight:900; color:#fff; margin-bottom:6px;">💎 晶爆暴击率公示 (E[m] = 1.168x)</div>
+          <div>• 基础无暴击 (x1): <strong>${(ODDS_TABLE.CRIT_TABLE.default[0].prob * 100).toFixed(1)}%</strong></div>
+          <div>• 小晶爆 (x2): <strong>${(ODDS_TABLE.CRIT_TABLE.default[1].prob * 100).toFixed(1)}%</strong></div>
+          <div>• 大晶爆 (x3): <strong>${(ODDS_TABLE.CRIT_TABLE.default[2].prob * 100).toFixed(1)}%</strong></div>
+          <div>• 超新星 (x8): <strong>${(ODDS_TABLE.CRIT_TABLE.default[3].prob * 100).toFixed(1)}%</strong></div>
+          <div style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-top:4px;">* 食用共振蟹煲可获得 3 轮晶爆概率 x1.5 倍提升</div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="font-weight:900; color:#fff; margin-bottom:6px;">🗺️ 5x5 地脉获胜分布 (总权重 26.2)</div>
+          <div>• 主矿脉 (1格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.main}</strong> (理论胜率 <strong>6.11%</strong>)</div>
+          <div>• 副矿脉 (2格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.sub}</strong> (理论胜率 <strong>4.96%</strong>)</div>
+          <div>• 贫矿冷格 (22格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.cold}</strong> (理论胜率 <strong>3.82%</strong>)</div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="font-weight:900; color:#fff; margin-bottom:6px;">🧭 保底校准值机制</div>
+          <div>每轮投入 $\\ge$ 2 份额未中主池则校准值 +1。第 10 轮起触发保底，第 15 轮 100% 触发 2 原石补偿与满级热力透视。最大未命中连串 $\\le$ 15！</div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderMotherlodeTabHtml(miningRig, tokenCount) {
+    const ml = miningRig.motherlode || { pool: 0, hallOfFame: [] };
+    const deployShares = miningRig.resonance?.deploy ? miningRig.resonance.deploy.reduce((a, b) => a + b, 0) : 0;
+    const estProb = Math.min(40, (Math.min(30, (deployShares / 20) * 30))).toFixed(1);
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:radial-gradient(circle at center, rgba(153,69,255,0.25) 0%, rgba(10,16,26,0.6) 100%); border:1.5px solid #9945ff; border-radius:14px; padding:16px; text-align:center;">
+          <div style="font-size:13px; color:#e056fd; font-weight:800;">🌋 远古深渊全岛母晶池 (Motherlode)</div>
+          <div style="font-size:32px; font-weight:900; color:#ffd32a; font-family:monospace; margin:8px 0; text-shadow:0 0 20px rgba(255,211,42,0.6);">
+            <span id="ml-pool-amount">${ml.pool || 0}</span> 🪙
+          </div>
+          <div style="font-size:11.5px; color:rgba(255,255,255,0.7);">
+            当前部署唤醒概率预估: <strong style="color:#14f195;">${estProb}%</strong> · 爆池唤醒者独得 <strong>70%</strong>！
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px; font-size:11.5px; line-height:1.6; color:rgba(255,255,255,0.8);">
+          <div style="font-weight:900; color:#fff; margin-bottom:4px;">💎 母池生态循环账本：</div>
+          <div>• 玩家共振投入：<span style="color:#14f195;">40% (0.54 代币/份额)</span> 自动注入母池</div>
+          <div>• 岛上建设消费：<span style="color:#14f195;">15%</span> (商城、船只升级、扫描仪改装) 注入</div>
+          <div>• 单轮超额溢出：超出单轮硬顶派彩全额注入母池</div>
+          <div>• 模拟矿工分走部分作为系统 SINK 彻底销毁，绝不伪造虚假中奖播报</div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="font-size:12.5px; font-weight:900; color:#fff; margin-bottom:8px;">🏆 远古母脉名人堂 (最近爆池存证)</div>
+          ${ml.hallOfFame && ml.hallOfFame.length > 0 ? ml.hallOfFame.map(r => `
+            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <span>轮次 #${r.roundId}</span>
+              <span style="color:#ffd32a; font-weight:800;">+${r.playerTake} 🪙 (池总: ${r.poolSize})</span>
+            </div>
+          `).join('') : '<div style="font-size:11px; color:rgba(255,255,255,0.4); text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
+        </div>
+      </div>
+    `;
+  }
+
+  _renderResonanceTabHtml(miningRig, inv, crystalCount, tokenCount) {
+    miningRig.ensureResonanceRound();
+    const res = miningRig.resonance;
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[miningRig.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    const k = levelInfo.k;
+    const C = levelInfo.C;
+    const u = levelInfo.u;
+    const progress = Math.min(100, Math.round(res.progress));
+    const selectedSq = this._selectedSquare !== undefined ? this._selectedSquare : 12;
+
+    const visibleBoard = res.board ? npcArrival(res.board, res.progress) : new Array(25).fill(0);
+    const hints = scannerHints(res.cluster, miningRig.scannerLevel, res.seedCommit);
+
+    const phaseLabels = {
+      OPEN: '📡 正在部署 (可调整)',
+      LOCK: '🔒 测算锁定中 (停止部署)',
+      REVEAL: '🌀 地脉揭晓中...',
+      SETTLE: '✅ 结算完成'
+    };
+    const phaseColors = {
+      OPEN: '#14f195',
+      LOCK: '#fed330',
+      REVEAL: '#9945ff',
+      SETTLE: '#00cec9'
+    };
+
+    const isReveal = res.phase === 'REVEAL';
+    const winningSq = res.lastResult ? res.lastResult.winningSquare : -1;
+
+    let gridHtml = '';
+    for (let i = 0; i < 25; i++) {
+      const isSelected = (i === selectedSq);
+      const myShares = res.deploy[i] || 0;
+      const npcShares = Math.round(visibleBoard[i] || 0);
+      const ev = estimateSquareEV(visibleBoard, i, myShares > 0 ? myShares : 1, u);
+
+      let isHeat = false;
+      let isMainHint = false;
+      if (hints) {
+        if (hints.level === 1 && hints.squares && hints.squares.includes(i)) isHeat = true;
+        if (hints.level === 2 && hints.candidates && hints.candidates.includes(i)) isHeat = true;
+        if (hints.level === 3 && hints.heatSquares && hints.heatSquares.includes(i)) {
+          isHeat = true;
+          if (hints.estimatedMainSquare === i) isMainHint = true;
+        }
+      }
+
+      const isWinner = (isReveal || res.phase === 'SETTLE') && (i === winningSq);
+
+      gridHtml += `
+        <div class="res-grid-cell" data-idx="${i}" style="
+          background:${isWinner ? 'radial-gradient(circle, rgba(255,211,42,0.45) 0%, rgba(20,241,149,0.3) 100%)' : (isSelected ? 'rgba(20,241,149,0.22)' : (isHeat ? 'rgba(153,69,255,0.18)' : 'rgba(255,255,255,0.05)'))};
+          border:1.5px solid ${isWinner ? '#ffd32a' : (isSelected ? '#14f195' : (isHeat ? '#a29bfe' : 'rgba(255,255,255,0.1)'))};
+          box-shadow:${isWinner ? '0 0 16px rgba(255,211,42,0.8)' : (isHeat ? '0 0 10px rgba(153,69,255,0.4)' : 'none')};
+          border-radius:8px; padding:6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+          height:56px; cursor:pointer; user-select:none; transition:all 0.15s; position:relative;
+        ">
+          <div style="display:flex; justify-content:space-between; width:100%; font-size:9.5px; color:rgba(255,255,255,0.5);">
+            <span>#${i + 1}</span>
+            <span>${isMainHint ? '⭐' : (isHeat ? '🔥' : '')}</span>
+          </div>
+          <div style="font-size:11px; font-weight:900; color:${myShares > 0 ? '#14f195' : '#dfe6e9'};">
+            ${myShares > 0 ? `💎 ${myShares}` : `${npcShares}`}
+          </div>
+          <div style="font-size:8.5px; color:rgba(255,255,255,0.45);">
+            ${isWinner ? '👑获胜' : `EV:${ev}`}
+          </div>
+        </div>
+      `;
+    }
+
+    const totalDeployed = res.deploy.reduce((a, b) => a + b, 0);
+    const nextScannerLv = miningRig.scannerLevel + 1;
+    const hasNextScanner = (inv[`geo_scanner_mk${nextScannerLv}`] || 0) > 0;
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:900; color:#fff; font-size:13px;">轮次 #${res.roundId}</span>
+              <span style="font-size:11px; font-weight:800; color:${phaseColors[res.phase] || '#fff'}; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">
+                ${phaseLabels[res.phase] || res.phase}
+              </span>
+            </div>
+            <div style="font-size:11px; color:#ffeaa7;">
+              免费份额: <strong>${res.freeShares}</strong> · 料仓: <strong>${miningRig.loadedCrystals}</strong>
+            </div>
+          </div>
+
+          <div style="width:100%; height:8px; background:rgba(0,0,0,0.4); border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); margin-bottom:6px;">
+            <div id="mr-res-progress-bar" style="width:${progress}%; height:100%; background:linear-gradient(90deg, #9945ff, #14f195); border-radius:4px; transition:width 0.2s linear;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; font-size:10.5px; color:rgba(255,255,255,0.6);">
+            <span>进度: <strong id="mr-res-progress-text" style="color:#14f195;">${progress}%</strong> (80% 锁定测算，100% 揭晓)</span>
+            ${isReveal ? `<button id="btn-skip-reveal" style="background:#9945ff; color:#fff; border:none; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer;" ${res.revealTimer <= 5.5 ? '' : 'disabled'}>⏩ 跳过揭晓动画</button>` : ''}
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
+          ${gridHtml}
+        </div>
+
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:12px; font-weight:800; color:#fff;">
+              已选格: <span style="color:#14f195;">[${selectedSq + 1}]</span> · 当前投入: <strong style="color:#ffd32a;">${res.deploy[selectedSq] || 0}</strong> 份
+            </div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.5);">
+              格数上限: ${k} · 总额上限: ${C} 份
+            </div>
+          </div>
+
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button id="btn-res-sub" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
+            <button id="btn-res-add" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
+            <button id="btn-res-split" style="flex:1; background:rgba(0,206,201,0.15); color:#00cec9; border:1px solid rgba(0,206,201,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
+            <button id="btn-res-allin" style="flex:1; background:rgba(255,211,42,0.15); color:#ffd32a; border:1px solid rgba(255,211,42,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
+            <button id="btn-res-commit" style="flex:1.4; background:linear-gradient(135deg, #14f195, #00cec9); color:#0b101b; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed === 0 ? 'disabled' : ''}>
+              ${res.committed ? '✅ 已锁定' : `确认部署 (${totalDeployed}份)`}
+            </button>
+          </div>
+
+          ${hasNextScanner ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(153,69,255,0.15); border:1px solid rgba(153,69,255,0.3); border-radius:8px; padding:6px 10px; margin-top:2px;">
+              <span style="font-size:11px; color:#e056fd;">背包拥有【地质扫描仪 Mk${nextScannerLv}】</span>
+              <button id="btn-install-scanner" style="background:linear-gradient(135deg, #9945ff, #14f195); border:none; border-radius:6px; padding:3px 10px; color:#0b101b; font-weight:900; font-size:11px; cursor:pointer;">
+                🛠️ 装载 Mk${nextScannerLv}
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  _bindResonanceTabEvents(body, miningRig, inv, render) {
+    body.querySelectorAll('.res-grid-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.getAttribute('data-idx'), 10);
+        this._selectedSquare = idx;
+        render();
+      });
+    });
+
+    const subBtn = body.querySelector('#btn-res-sub');
+    if (subBtn) {
+      subBtn.addEventListener('click', () => {
+        miningRig.placeShares(this._selectedSquare, -1);
+        render();
+      });
+    }
+
+    const addBtn = body.querySelector('#btn-res-add');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        const res = miningRig.placeShares(this._selectedSquare, 1);
+        if (!res.ok) {
+          this.showToast(res.msg, 'medium');
+        }
+        render();
+      });
+    }
+
+    const splitBtn = body.querySelector('#btn-res-split');
+    if (splitBtn) {
+      splitBtn.addEventListener('click', () => {
+        const res = miningRig.autoSplitEven();
+        if (!res.ok) this.showToast(res.msg, 'medium');
+        render();
+      });
+    }
+
+    const allInBtn = body.querySelector('#btn-res-allin');
+    if (allInBtn) {
+      allInBtn.addEventListener('click', () => {
+        const res = miningRig.allIn(this._selectedSquare);
+        if (!res.ok) this.showToast(res.msg, 'medium');
+        render();
+      });
+    }
+
+    const commitBtn = body.querySelector('#btn-res-commit');
+    if (commitBtn) {
+      commitBtn.addEventListener('click', () => {
+        const res = miningRig.commitDeployment();
+        if (res.ok) {
+          this.showToast(`✅ 成功锁定本轮 ${res.totalShares} 份共振部署！`, 'medium');
+        } else {
+          this.showToast(res.msg, 'medium');
+        }
+        render();
+      });
+    }
+
+    const skipBtn = body.querySelector('#btn-skip-reveal');
+    if (skipBtn) {
+      skipBtn.addEventListener('click', () => {
+        if (miningRig.resonance.revealTimer <= 5.5) {
+          miningRig.settleResonanceRound();
+          render();
+        }
+      });
+    }
+
+    const installBtn = body.querySelector('#btn-install-scanner');
+    if (installBtn) {
+      installBtn.addEventListener('click', () => {
+        const nextLv = miningRig.scannerLevel + 1;
+        const res = miningRig.installScanner(nextLv);
+        if (res.ok) render();
+        else this.showToast(res.msg, 'medium');
+      });
+    }
+  }
+
+  // --- 基础解密页签渲染与事件绑定 ---
+  _renderDecryptTabHtml(miningRig, inv, crystalCount, tokenCount) {
+    const isDay = miningRig.isDaytime();
+    const progress = Math.min(100, Math.round(miningRig.hashProgress));
+    const battery = Math.round(miningRig.batteryPower);
+    const isTurbo = miningRig.turboTimer > 0;
+    const combo = miningRig.manualTapCombo || 0;
+    const turboBonus = isTurbo ? (2.2 + Math.min(combo * 0.08, 1.2)) : 1.0;
+    const currentHashrate = (miningRig.hashrate * (isDay ? 1.5 : (battery > 0 ? 1.0 : 0.3)) * turboBonus).toFixed(1);
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <!-- 1. 核心算力与出块大看板 -->
+        <div style="
+          background:${isTurbo ? 'linear-gradient(135deg, rgba(255,211,42,0.28), rgba(255,118,117,0.2))' : 'linear-gradient(135deg, rgba(153,69,255,0.22), rgba(20,241,149,0.18))'};
+          border:1.5px solid ${isTurbo ? '#ffd32a' : '#14f195'};
+          border-radius:14px; padding:14px;
+          box-shadow:0 8px 24px ${isTurbo ? 'rgba(255,211,42,0.28)' : 'rgba(20,241,149,0.15)'};
+          transition: all 0.25s ease;
+        ">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:22px;">${isTurbo ? '🔥' : '⚡'}</span>
+                <div style="font-size:16px; font-weight:900; color:#fff;">
+                  ${isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)')}
+                </div>
+              </div>
+              <div style="font-size:11.5px; color:${isTurbo ? '#fed330' : '#14f195'}; margin-top:2px; font-weight:700;">
+                运算算力：<span id="mr-hashrate" style="font-size:14px; font-weight:900;">${currentHashrate} MH/s</span> · ${isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电')}
+              </div>
+            </div>
+
+            ${miningRig.unclaimedSol > 0 ? `
+              <button id="btn-claim-sol" style="
+                background:linear-gradient(135deg, #ffd32a, #ff9f1a); border:none; border-radius:10px;
+                padding:8px 14px; color:#1e272e; font-weight:900; font-size:12.5px; cursor:pointer;
+                box-shadow:0 4px 18px rgba(255,211,42,0.6); animation:pulse 1.2s infinite;
+              ">
+                🪙 收获 ${miningRig.unclaimedSol} 枚算力代币！
+              </button>
+            ` : `
+              <div style="font-size:11px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); padding:4px 8px; border-radius:6px;">
+                待出块产出
+              </div>
+            `}
+          </div>
+
+          <!-- 当前区块解密进度条 -->
+          <div style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#fff; margin-bottom:4px; font-weight:700;">
+              <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#14f195;">${progress}%</strong></span>
+              <span>已验证区块: #${miningRig.totalBlocksMined} (累计挖出 ${miningRig.totalSolMined} 算力代币)</span>
+            </div>
+            <div style="width:100%; height:12px; background:rgba(0,0,0,0.45); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
+              <div id="mr-progress-bar" style="
+                width:${progress}%; height:100%;
+                background:${isTurbo ? 'linear-gradient(90deg, #ff7675, #ffd32a)' : 'linear-gradient(90deg, #9945ff, #14f195)'};
+                border-radius:6px; transition:width 0.15s linear;
+              "></div>
+            </div>
+          </div>
+
+          <!-- 矿机硬件核心指标 -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">晶石装载量</div>
+              <div style="font-size:13px; font-weight:900; color:#14f195;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">蓄电池储能</div>
+              <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#00cec9' : '#ff7675'};">${battery}%</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">背包算力储备</div>
+              <div style="font-size:13px; font-weight:900; color:#fed330;">${tokenCount} 🪙</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 手动狂暴增压点按核心区 -->
+        <div style="
+          background:rgba(255,255,255,0.06); border:1.5px dashed ${isTurbo ? '#ffd32a' : 'rgba(255,255,255,0.22)'};
+          border-radius:14px; padding:12px; text-align:center; position:relative; overflow:hidden;
+        ">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12.5px; font-weight:900; color:#fff;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
+            <div id="mr-combo-badge" style="
+              font-size:11px; font-weight:900;
+              background:${combo > 5 ? 'linear-gradient(135deg, #ff7675, #d63031)' : 'rgba(255,255,255,0.12)'};
+              color:#fff; padding:2px 8px; border-radius:10px;
+            ">
+              ${combo > 0 ? `COMBO x${combo}` : '待增压'}
+            </div>
+          </div>
+
+          <button id="btn-manual-boost" style="
+            width:100%; height:48px;
+            background:${isTurbo ? 'linear-gradient(135deg, #ff9f1a, #ff3838)' : 'linear-gradient(135deg, #9945ff, #14f195)'};
+            border:none; border-radius:12px;
+            color:#fff; font-size:15px; font-weight:900; letter-spacing:0.5px;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+            box-shadow:0 6px 20px ${isTurbo ? 'rgba(255,56,56,0.45)' : 'rgba(20,241,149,0.35)'};
+            user-select:none; -webkit-user-select:none;
+            transition:transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          ">
+            <span style="font-size:20px;">⚡</span>
+            <span>${isTurbo ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！'}</span>
+          </button>
+          <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:6px;">
+            连续点按注入机械动能：算力爆发飞涨 + 立即推进解密进度 + 45%概率出块暴击！
+          </div>
+        </div>
+
+        <!-- 3. 硅晶原石装填区 -->
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12.5px; font-weight:900; color:#fff;">💎 装填硅晶原石 (提供运算原料)</div>
+            <span style="font-size:11.5px; color:#14f195; font-weight:800;">
+              背包持有：${crystalCount} 块
+            </span>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button id="btn-load-1-crystal" style="
+              flex:1; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:8px;
+              padding:8px 12px; color:#fff; font-size:12px; font-weight:700; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
+            " ${crystalCount > 0 ? '' : 'disabled'}>
+              ➕ 装填 1 块原石
+            </button>
+            <button id="btn-load-all-crystals" style="
+              flex:1; background:linear-gradient(135deg, rgba(20,241,149,0.3), rgba(153,69,255,0.3)); border:1px solid #14f195;
+              border-radius:8px; padding:8px 12px; color:#fff; font-size:12px; font-weight:800; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
+            " ${crystalCount > 0 ? '' : 'disabled'}>
+              ⚡ 一键填满矿仓
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. 生物质与电池储能维护区 -->
+        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12.5px; font-weight:900; color:#fff;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
+            <span style="font-size:11px; color:#00cec9;">太阳能板白天免费供电</span>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${(inv['battery'] || 0) > 0 ? `
+              <button class="btn-feed-power" data-id="battery" style="
+                background:rgba(0,206,201,0.18); border:1px solid #00cec9; border-radius:8px;
+                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+              ">
+                🔋 充入备用电池 (+50%电量)
+              </button>
+            ` : ''}
+            ${(inv['tree_sap'] || 0) > 0 ? `
+              <button class="btn-feed-power" data-id="tree_sap" style="
+                background:rgba(255,170,0,0.15); border:1px solid #ffa801; border-radius:8px;
+                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+              ">
+                💧 投入树脂生物质 (+25%电量)
+              </button>
+            ` : ''}
+            ${(inv['tree_branch'] || 0) > 0 ? `
+              <button class="btn-feed-power" data-id="tree_branch" style="
+                background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+              ">
+                🥢 投入干燥木柴 (+12%电量)
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- 5. Solana 链上算力存证 -->
+        <div style="background:linear-gradient(135deg, rgba(153,69,255,0.18), rgba(20,241,149,0.14)); border:1.5px solid #9945ff; border-radius:12px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12.5px; font-weight:900; color:#fff; display:flex; align-items:center; gap:6px;">
+              <span>🔗</span>
+              <span>Solana 链上算力存证</span>
+            </div>
+            <span style="font-size:11px; color:#14f195; font-weight:800; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">
+              ${solanaBridge.isConnected ? (solanaBridge.isGuestMode ? "免钱包沙盒" : "Seed Vault/钱包已连接") : "未连接钱包"}
+            </span>
+          </div>
+          <div style="font-size:11px; color:#dfe6e9; margin-bottom:8px; line-height:1.4;">
+            一键使用 Solana 手机硬件私钥对矿机出块与算力代币产出凭证进行签名，记录至链上成就！
+          </div>
+          <button id="btn-submit-chain-proof" style="
+            width:100%; background:linear-gradient(135deg, #9945ff, #14f195); border:none; border-radius:8px;
+            padding:8px 12px; color:#fff; font-size:12px; font-weight:800; cursor:pointer;
+            box-shadow:0 4px 12px rgba(153,69,255,0.3);
+          ">
+            📝 签署算力工作证明上链存证 (区块 #${miningRig.totalBlocksMined})
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  _bindDecryptTabEvents(body, miningRig, inv, render) {
+    const boostBtn = body.querySelector('#btn-manual-boost');
+    if (boostBtn) {
+      boostBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        boostBtn.style.transform = 'scale(0.94)';
+        miningRig.triggerManualBoost();
+        render();
+      });
+      boostBtn.addEventListener('pointerup', () => { boostBtn.style.transform = 'scale(1.0)'; });
+      boostBtn.addEventListener('pointerleave', () => { boostBtn.style.transform = 'scale(1.0)'; });
+    }
+
+    const claimBtn = body.querySelector('#btn-claim-sol');
+    if (claimBtn) {
+      claimBtn.addEventListener('click', () => {
+        miningRig.claimSolTokens();
+        render();
+      });
+    }
+
+    const load1Btn = body.querySelector('#btn-load-1-crystal');
+    if (load1Btn) {
+      load1Btn.addEventListener('click', () => {
+        miningRig.loadCrystal(1);
+        render();
+      });
+    }
+
+    const loadAllBtn = body.querySelector('#btn-load-all-crystals');
+    if (loadAllBtn) {
+      loadAllBtn.addEventListener('click', () => {
+        const avail = Math.min(inv['sol_crystal'] || 0, miningRig.maxCrystalCapacity - miningRig.loadedCrystals);
+        if (avail > 0) {
+          miningRig.loadCrystal(avail);
+          render();
+        }
+      });
+    }
+
+    const proofBtn = body.querySelector('#btn-submit-chain-proof');
+    if (proofBtn) {
+      proofBtn.addEventListener('click', async () => {
+        proofBtn.disabled = true;
+        proofBtn.textContent = '⏳ 正在签署算力凭证...';
+        try {
+          const proof = solanaBridge.submitMiningProof(miningRig.totalBlocksMined, miningRig.totalSolMined);
+          if (solanaBridge.isConnected && !solanaBridge.isGuestMode && solanaBridge.signSurvivalCheckin) {
+            await solanaBridge.signSurvivalCheckin(miningRig.totalBlocksMined);
+          }
+          this.showToast(`✅ 算力出块证明已成功签名并存证！已验证区块: #${proof.blocks}，累计: ${proof.totalSol} 算力代币`, 'important');
+        } catch (err) {
+          this.showToast(`⚠️ 存证提示: ${err.message || err}`, 'medium');
+        } finally {
+          proofBtn.disabled = false;
+          render();
+        }
+      });
+    }
+
+    body.querySelectorAll('.btn-feed-power').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        miningRig.rechargeBattery(id);
+        render();
+      });
+    });
+  }
+
+  // 2.5 荒岛绿色矿机 (DePIN Green Mining Rig) 控制台弹窗（R8: 四页签支持）
   openMiningRigModal(miningRig) {
     if (this.player && this.player.resetInput) this.player.resetInput();
-    document.getElementById('modal-title').innerHTML = '⛏️ 荒岛绿色解密矿机 (Solana DePIN Rig)';
+    document.getElementById('modal-title').innerHTML = '⛏️ 荒岛绿色矿机 · 算力与共振中枢';
     const body = document.getElementById('modal-body');
 
-    // 弹窗实时动态刷新定时器
     if (this._miningRigTimer) {
       clearInterval(this._miningRigTimer);
       this._miningRigTimer = null;
     }
 
+    this._rigModalTab = this._rigModalTab || 'decrypt';
+    this._selectedSquare = this._selectedSquare !== undefined ? this._selectedSquare : 12;
+
     const render = () => {
       const inv = this.inventory;
       const crystalCount = inv['sol_crystal'] || 0;
       const tokenCount = inv['sol_token'] || 0;
-      const isDay = miningRig.isDaytime();
-      const progress = Math.min(100, Math.round(miningRig.hashProgress));
-      const battery = Math.round(miningRig.batteryPower);
-      const isTurbo = miningRig.turboTimer > 0;
-      const combo = miningRig.manualTapCombo || 0;
-      const turboBonus = isTurbo ? (2.2 + Math.min(combo * 0.08, 1.2)) : 1.0;
-      const currentHashrate = (miningRig.hashrate * (isDay ? 1.5 : (battery > 0 ? 1.0 : 0.3)) * turboBonus).toFixed(1);
+      const currentTab = this._rigModalTab;
+
+      // 顶部四个功能页签（固定顶栏，绝不被 flex 挤压，绝不被内容滚走）
+      const tabNavHtml = `
+        <div class="rig-tabs-nav" style="display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:10px; padding-bottom:8px; overflow-x:auto; flex-shrink:0 !important; min-height:42px !important;">
+          <button class="rig-tab-btn ${currentTab === 'decrypt' ? 'active' : ''}" data-tab="decrypt" type="button" style="
+            background:${currentTab === 'decrypt' ? '#14f195' : 'rgba(255,255,255,0.08)'};
+            color:${currentTab === 'decrypt' ? '#0b101b' : '#fff'};
+            border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
+            white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
+            box-shadow:${currentTab === 'decrypt' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+          ">⚡ 基础解密</button>
+          <button class="rig-tab-btn ${currentTab === 'resonance' ? 'active' : ''}" data-tab="resonance" type="button" style="
+            background:${currentTab === 'resonance' ? '#14f195' : 'rgba(255,255,255,0.08)'};
+            color:${currentTab === 'resonance' ? '#0b101b' : '#fff'};
+            border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
+            white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
+            box-shadow:${currentTab === 'resonance' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+          ">📡 矿脉共振</button>
+          <button class="rig-tab-btn ${currentTab === 'motherlode' ? 'active' : ''}" data-tab="motherlode" type="button" style="
+            background:${currentTab === 'motherlode' ? '#14f195' : 'rgba(255,255,255,0.08)'};
+            color:${currentTab === 'motherlode' ? '#0b101b' : '#fff'};
+            border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
+            white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
+            box-shadow:${currentTab === 'motherlode' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+          ">🌋 母晶池</button>
+          <button class="rig-tab-btn ${currentTab === 'odds' ? 'active' : ''}" data-tab="odds" type="button" style="
+            background:${currentTab === 'odds' ? '#14f195' : 'rgba(255,255,255,0.08)'};
+            color:${currentTab === 'odds' ? '#0b101b' : '#fff'};
+            border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
+            white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
+            box-shadow:${currentTab === 'odds' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+          ">📜 概率公示</button>
+        </div>
+      `;
+
+      let contentHtml = '';
+      if (currentTab === 'decrypt') {
+        contentHtml = this._renderDecryptTabHtml(miningRig, inv, crystalCount, tokenCount);
+      } else if (currentTab === 'resonance') {
+        contentHtml = this._renderResonanceTabHtml(miningRig, inv, crystalCount, tokenCount);
+      } else if (currentTab === 'motherlode') {
+        contentHtml = this._renderMotherlodeTabHtml(miningRig, tokenCount);
+      } else if (currentTab === 'odds') {
+        contentHtml = this._renderOddsTabHtml();
+      }
 
       body.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; max-height:68vh; overflow-y:auto; padding:4px;">
-          <!-- 1. 核心算力与出块大看板 -->
-          <div style="
-            background:${isTurbo ? 'linear-gradient(135deg, rgba(255,211,42,0.28), rgba(255,118,117,0.2))' : 'linear-gradient(135deg, rgba(153,69,255,0.22), rgba(20,241,149,0.18))'};
-            border:1.5px solid ${isTurbo ? '#ffd32a' : '#14f195'};
-            border-radius:14px; padding:14px;
-            box-shadow:0 8px 24px ${isTurbo ? 'rgba(255,211,42,0.28)' : 'rgba(20,241,149,0.15)'};
-            transition: all 0.25s ease;
-          ">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-              <div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="font-size:22px;">${isTurbo ? '🔥' : '⚡'}</span>
-                  <div style="font-size:16px; font-weight:900; color:#fff;">
-                    ${isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)')}
-                  </div>
-                </div>
-                <div style="font-size:11.5px; color:${isTurbo ? '#fed330' : '#14f195'}; margin-top:2px; font-weight:700;">
-                  运算算力：<span id="mr-hashrate" style="font-size:14px; font-weight:900;">${currentHashrate} MH/s</span> · ${isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电')}
-                </div>
-              </div>
-
-              ${miningRig.unclaimedSol > 0 ? `
-                <button id="btn-claim-sol" style="
-                  background:linear-gradient(135deg, #ffd32a, #ff9f1a); border:none; border-radius:10px;
-                  padding:8px 14px; color:#1e272e; font-weight:900; font-size:12.5px; cursor:pointer;
-                  box-shadow:0 4px 18px rgba(255,211,42,0.6); animation:pulse 1.2s infinite;
-                ">
-                  🪙 收获 ${miningRig.unclaimedSol} 枚 $SOL！
-                </button>
-              ` : `
-                <div style="font-size:11px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); padding:4px 8px; border-radius:6px;">
-                  待出块产出
-                </div>
-              `}
-            </div>
-
-            <!-- 当前区块解密进度条 -->
-            <div style="margin-bottom:12px;">
-              <div style="display:flex; justify-content:space-between; font-size:11px; color:#fff; margin-bottom:4px; font-weight:700;">
-                <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#14f195;">${progress}%</strong></span>
-                <span>已验证区块: #${miningRig.totalBlocksMined} (累计挖出 ${miningRig.totalSolMined} $SOL)</span>
-              </div>
-              <div style="width:100%; height:12px; background:rgba(0,0,0,0.45); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
-                <div id="mr-progress-bar" style="
-                  width:${progress}%; height:100%;
-                  background:${isTurbo ? 'linear-gradient(90deg, #ff7675, #ffd32a)' : 'linear-gradient(90deg, #9945ff, #14f195)'};
-                  border-radius:6px; transition:width 0.15s linear;
-                "></div>
-              </div>
-            </div>
-
-            <!-- 矿机硬件核心指标 -->
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-                <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">晶石装载量</div>
-                <div style="font-size:13px; font-weight:900; color:#14f195;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
-              </div>
-              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-                <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">蓄电池储能</div>
-                <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#00cec9' : '#ff7675'};">${battery}%</div>
-              </div>
-              <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-                <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">背包 $SOL 储备</div>
-                <div style="font-size:13px; font-weight:900; color:#fed330;">${tokenCount} 🪙</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. 手动狂暴增压点按核心区 (Tap-to-Boost / Manual Turbo) -->
-          <div style="
-            background:rgba(255,255,255,0.06); border:1.5px dashed ${isTurbo ? '#ffd32a' : 'rgba(255,255,255,0.22)'};
-            border-radius:14px; padding:12px; text-align:center; position:relative; overflow:hidden;
-          ">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div style="font-size:12.5px; font-weight:900; color:#fff;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
-              <div id="mr-combo-badge" style="
-                font-size:11px; font-weight:900;
-                background:${combo > 5 ? 'linear-gradient(135deg, #ff7675, #d63031)' : 'rgba(255,255,255,0.12)'};
-                color:#fff; padding:2px 8px; border-radius:10px;
-              ">
-                ${combo > 0 ? `COMBO x${combo}` : '待增压'}
-              </div>
-            </div>
-
-            <button id="btn-manual-boost" style="
-              width:100%; height:48px;
-              background:${isTurbo ? 'linear-gradient(135deg, #ff9f1a, #ff3838)' : 'linear-gradient(135deg, #9945ff, #14f195)'};
-              border:none; border-radius:12px;
-              color:#fff; font-size:15px; font-weight:900; letter-spacing:0.5px;
-              cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-              box-shadow:0 6px 20px ${isTurbo ? 'rgba(255,56,56,0.45)' : 'rgba(20,241,149,0.35)'};
-              user-select:none; -webkit-user-select:none;
-              transition:transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            ">
-              <span style="font-size:20px;">⚡</span>
-              <span>${isTurbo ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！'}</span>
-            </button>
-            <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:6px;">
-              连续点按注入机械动能：算力爆发飞涨 + 立即推进解密进度 + 45%概率出块暴击！
-            </div>
-          </div>
-
-          <!-- 3. 硅晶原石装填区 -->
-          <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div style="font-size:12.5px; font-weight:900; color:#fff;">💎 装填硅晶原石 (提供运算原料)</div>
-              <span style="font-size:11.5px; color:#14f195; font-weight:800;">
-                背包持有：${crystalCount} 块
-              </span>
-            </div>
-
-            <div style="display:flex; gap:8px;">
-              <button id="btn-load-1-crystal" style="
-                flex:1; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:8px;
-                padding:8px 12px; color:#fff; font-size:12px; font-weight:700; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
-              " ${crystalCount > 0 ? '' : 'disabled'}>
-                ➕ 装填 1 块原石
-              </button>
-              <button id="btn-load-all-crystals" style="
-                flex:1; background:linear-gradient(135deg, rgba(20,241,149,0.3), rgba(153,69,255,0.3)); border:1px solid #14f195;
-                border-radius:8px; padding:8px 12px; color:#fff; font-size:12px; font-weight:800; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
-              " ${crystalCount > 0 ? '' : 'disabled'}>
-                ⚡ 一键填满矿仓
-              </button>
-            </div>
-            ${crystalCount === 0 ? '<div style="font-size:11px; color:#fab1a0; margin-top:6px;">后山高台分布有发光【高能硅晶矿脉】，手持石镐或石锤可敲凿采集！</div>' : ''}
-          </div>
-
-          <!-- 4. 生物质与电池储能维护区 -->
-          <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div style="font-size:12.5px; font-weight:900; color:#fff;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
-              <span style="font-size:11px; color:#00cec9;">太阳能板白天免费供电</span>
-            </div>
-
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-              ${(inv['battery'] || 0) > 0 ? `
-                <button class="btn-feed-power" data-id="battery" style="
-                  background:rgba(0,206,201,0.18); border:1px solid #00cec9; border-radius:8px;
-                  padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
-                ">
-                  🔋 充入备用电池 (+50%电量)
-                </button>
-              ` : ''}
-              ${(inv['tree_sap'] || 0) > 0 ? `
-                <button class="btn-feed-power" data-id="tree_sap" style="
-                  background:rgba(255,170,0,0.15); border:1px solid #ffa801; border-radius:8px;
-                  padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
-                ">
-                  💧 投入树脂生物质 (+25%电量)
-                </button>
-              ` : ''}
-              ${(inv['tree_branch'] || 0) > 0 ? `
-                <button class="btn-feed-power" data-id="tree_branch" style="
-                  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:8px;
-                  padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
-                ">
-                  🥢 投入干燥木柴 (+12%电量)
-                </button>
-              ` : ''}
-              ${!inv['battery'] && !inv['tree_sap'] && !inv['tree_branch'] ? `
-                <div style="font-size:11px; color:rgba(255,255,255,0.45);">背包暂无可注入能源，白天仍可正常利用太阳能免费运转！</div>
-              ` : ''}
-            </div>
+        <div style="display:flex; flex-direction:column; height:100%; max-height:calc(100vh - 80px); overflow:hidden; padding:2px;">
+          ${tabNavHtml}
+          <div style="flex:1; overflow-y:auto; min-height:0; padding-right:2px;">
+            ${contentHtml}
           </div>
         </div>
       `;
 
-      // 绑定手动增压 Tap-to-Boost (优先使用 pointerdown 以消除延迟)
-      const boostBtn = body.querySelector('#btn-manual-boost');
-      if (boostBtn) {
-        boostBtn.addEventListener('pointerdown', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          boostBtn.style.transform = 'scale(0.94)';
-          const res = miningRig.triggerManualBoost();
-          if (res) {
-            // 即时反馈动效
-            setTimeout(() => { boostBtn.style.transform = 'scale(1.02)'; }, 80);
-            setTimeout(() => { boostBtn.style.transform = 'scale(1.0)'; }, 160);
-          }
-          // 局部轻量更新文本
-          const p = Math.min(100, Math.round(miningRig.hashProgress));
-          const pBar = body.querySelector('#mr-progress-bar');
-          const pTxt = body.querySelector('#mr-progress-text');
-          if (pBar) pBar.style.width = `${p}%`;
-          if (pTxt) pTxt.textContent = `${p}%`;
-        });
-      }
-
-      // 绑定领取 $SOL
-      const claimBtn = body.querySelector('#btn-claim-sol');
-      if (claimBtn) {
-        claimBtn.addEventListener('click', () => {
-          const claimedAmt = miningRig.unclaimedSol;
-          miningRig.claimSolTokens();
-          soundEngine.playItemDrop();
-          haptics.heavy();
-          this.showToast(`🎉 成功收获 ${claimedAmt} 枚 $SOL 算力收益！`, 'important');
-          render();
-        });
-      }
-
-      // 绑定装填 1 块
-      const load1Btn = body.querySelector('#btn-load-1-crystal');
-      if (load1Btn) {
-        load1Btn.addEventListener('click', () => {
-          miningRig.loadCrystal(1);
-          render();
-        });
-      }
-
-      // 绑定填满
-      const loadAllBtn = body.querySelector('#btn-load-all-crystals');
-      if (loadAllBtn) {
-        loadAllBtn.addEventListener('click', () => {
-          const avail = Math.min(inv['sol_crystal'] || 0, miningRig.maxCrystalCapacity - miningRig.loadedCrystals);
-          if (avail > 0) {
-            miningRig.loadCrystal(avail);
-            render();
-          }
-        });
-      }
-
-      // 绑定注入能源
-      body.querySelectorAll('.btn-feed-power').forEach(btn => {
+      // 绑定页签切换
+      body.querySelectorAll('.rig-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-id');
-          miningRig.rechargeBattery(id);
+          this._rigModalTab = btn.getAttribute('data-tab');
+          if (this._rigModalTab === 'resonance') {
+            miningRig.setMode('resonance');
+          } else if (this._rigModalTab === 'decrypt') {
+            miningRig.setMode('decrypt');
+          }
           render();
         });
       });
+
+      // 绑定具体页签事件
+      if (currentTab === 'decrypt') {
+        this._bindDecryptTabEvents(body, miningRig, inv, render);
+      } else if (currentTab === 'resonance') {
+        this._bindResonanceTabEvents(body, miningRig, inv, render);
+      }
     };
 
     render();
 
-    // 开启高频轻量实时同步 (每 200ms 同步进度条与倒计时)
+    // 开启高频轻量实时同步 (每 200ms 同步进度条与状态)
     this._miningRigTimer = setInterval(() => {
       if (!this.modalBackdrop || this.modalBackdrop.style.display === 'none') {
         clearInterval(this._miningRigTimer);
         this._miningRigTimer = null;
         return;
       }
-      const p = Math.min(100, Math.round(miningRig.hashProgress));
-      const pBar = body.querySelector('#mr-progress-bar');
-      const pTxt = body.querySelector('#mr-progress-text');
-      const boostBtn = body.querySelector('#btn-manual-boost');
-      const comboBadge = body.querySelector('#mr-combo-badge');
-      if (pBar) pBar.style.width = `${p}%`;
-      if (pTxt) pTxt.textContent = `${p}%`;
-      if (boostBtn) {
-        const isT = miningRig.turboTimer > 0;
-        const btnSpan = boostBtn.querySelector('span:last-child');
-        if (btnSpan) {
-          btnSpan.textContent = isT ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！';
+      if (this._rigModalTab === 'decrypt') {
+        const p = Math.min(100, Math.round(miningRig.hashProgress));
+        const pBar = body.querySelector('#mr-progress-bar');
+        const pTxt = body.querySelector('#mr-progress-text');
+        if (pBar) pBar.style.width = `${p}%`;
+        if (pTxt) pTxt.textContent = `${p}%`;
+      } else if (this._rigModalTab === 'resonance') {
+        const p = Math.min(100, Math.round(miningRig.resonance.progress));
+        const rBar = body.querySelector('#mr-res-progress-bar');
+        const rTxt = body.querySelector('#mr-res-progress-text');
+        if (rBar) rBar.style.width = `${p}%`;
+        if (rTxt) rTxt.textContent = `${p}%`;
+
+        // REVEAL 阶段更新跳过按钮状态 (2.0s 后方可跳过)
+        if (miningRig.resonance.phase === 'REVEAL') {
+          const skipBtn = body.querySelector('#btn-skip-reveal');
+          if (skipBtn) {
+            const canSkip = miningRig.resonance.revealTimer <= 5.5; // 7.5 - 2.0 = 5.5
+            skipBtn.disabled = !canSkip;
+            skipBtn.textContent = canSkip ? '⏩ 跳过揭晓动画' : `⏳ 正在测算揭晓 (${miningRig.resonance.revealTimer.toFixed(1)}s)`;
+          }
         }
-      }
-      if (comboBadge) {
-        const c = miningRig.manualTapCombo || 0;
-        comboBadge.textContent = c > 0 ? `COMBO x${c}` : '待增压';
+      } else if (this._rigModalTab === 'motherlode') {
+        const poolEl = body.querySelector('#ml-pool-amount');
+        if (poolEl) poolEl.textContent = `${miningRig.motherlode.pool}`;
       }
     }, 200);
 
@@ -4359,7 +5577,7 @@ export class UIManager {
                   }).join('')}
                 </div>
 
-                <!-- 升级按钮组（双轨：常规资材组装 / $SOL 黑市蓝图快造） -->
+                <!-- 升级按钮组（双轨：常规资材组装 / 算力代币黑市蓝图快造） -->
                 <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
                   <div style="display:flex; gap:10px;">
                     <button id="btn-perform-upgrade" style="
@@ -4376,7 +5594,7 @@ export class UIManager {
                         background:linear-gradient(135deg, #9945ff, #14f195); color:#0b101b; font-weight:900; font-size:12.5px;
                         box-shadow:0 4px 14px rgba(20,241,149,0.35);
                       ">
-                        🪙 ${nextTier.solCost} $SOL 黑市蓝图一键快造
+                        🪙 ${nextTier.solCost} 算力代币黑市蓝图一键快造
                       </button>
                     ` : ''}
                   </div>
@@ -4734,8 +5952,12 @@ export class UIManager {
       sea_crab: '退潮潮汐捕蟹笼中起获的生猛海螯蟹，生食或挂上营地熏架烤熟风味绝佳。',
       sardine: '随海潮游入潮汐笼的银鳞小沙丁鱼，鲜活肥嫩，可作为生食、鱼饵或熏制军粮。',
       smoked_fish: '经营地烟熏架慢火风干的极品熏鱼干！远洋特权军粮，永久防腐不烂，出海 1 份抵 2 份！',
-      sol_crystal: '后山高能矿脉开采的高频硅晶原石！蕴藏大量链上哈希数据，投入营地矿机可解密出 $SOL 算力代币！',
-      sol_token: '矿机成功计算哈希区块产出的 Solana 算力代币！可在黑市兑换特权蓝图，并实时计入赛季全服算力榜！'
+      sol_crystal: '后山高能矿脉开采的高频硅晶原石！蕴藏大量链上哈希数据，投入营地矿机可解密出荒岛算力代币！',
+      sol_token: '矿机成功计算哈希区块产出的荒岛算力代币（游戏内货币）。可在黑市兑换特权蓝图，与真实 SOL 严格分离。',
+      geo_scanner_mk1: '初阶地脉行波探测仪。在矿机控制台安装后，每轮可勘探出 1 条包含主矿脉的行或列！',
+      geo_scanner_mk2: '高精度地质扫描仪。在矿机控制台安装后，每轮锁定 4 个高能候选格，大幅提升勘探中签率！',
+      geo_scanner_mk3: '终极量子地质扫描仪。在矿机控制台安装后，精确透视 3 个热脉格，主脉预测准确率达 80%！',
+      resonance_crab_pot: '海岛珍馐美食。食用后获得「晶爆」灵感：接下来 3 轮共振勘探晶爆触发概率提升 1.5 倍！'
     };
     return descs[id] || '荒岛上搜集到的珍贵物资。';
   }
@@ -4762,7 +5984,11 @@ export class UIManager {
       sea_crab: '生猛青花海蟹 🦀', sardine: '银鳞小沙丁鱼 🐟',
       smoked_fish: '极品熏鱼干 🍱✨',
       sol_crystal: '未解密硅晶原石 💎',
-      sol_token: '$SOL 算力代币 🪙'
+      sol_token: '荒岛算力代币 🪙',
+      geo_scanner_mk1: '地质共振扫描仪 Mk1 📡',
+      geo_scanner_mk2: '精密共振扫描仪 Mk2 🛰️',
+      geo_scanner_mk3: '全域量子扫描仪 Mk3 🌌',
+      resonance_crab_pot: '共振浓香椰子蟹煲 🍲✨'
     };
     return names[id] || id;
   }
@@ -4790,4 +6016,182 @@ export class UIManager {
       }, 350);
     }
   }
+
+  // 电影级全屏黑幕入眠与黎明破晓唤醒动效 (Sleep Fade Cutscene)
+  triggerSleepFade(icon = "⛺", title = "夜色渐深 · 进入梦乡……", onWakeCallback) {
+    if (!this.fadeOverlay) {
+      if (onWakeCallback) onWakeCallback();
+      return;
+    }
+
+    this.fadeOverlay.innerHTML = `
+      <div style="font-size: 52px; margin-bottom: 16px; animation: floatAnim 2s ease-in-out infinite;">${icon}</div>
+      <div style="font-size: 20px; font-weight: 900; color: #f1c40f; letter-spacing: 2px; margin-bottom: 8px;">${title}</div>
+      <div style="font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 500;">伴着静谧海浪与晚风安然入眠……</div>
+    `;
+
+    this.fadeOverlay.style.pointerEvents = "all";
+    this.fadeOverlay.style.opacity = "1";
+
+    setTimeout(() => {
+      this.fadeOverlay.innerHTML = `
+        <div style="font-size: 52px; margin-bottom: 16px; animation: floatAnim 2s ease-in-out infinite;">🌅</div>
+        <div style="font-size: 20px; font-weight: 900; color: #00cec9; letter-spacing: 2px; margin-bottom: 8px;">朝阳破晓 · 晨曦微露</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 500;">新的一天开始了，四维代谢全满复苏！</div>
+      `;
+
+      if (onWakeCallback) onWakeCallback();
+
+      setTimeout(() => {
+        this.fadeOverlay.style.opacity = "0";
+        this.fadeOverlay.style.pointerEvents = "none";
+        setTimeout(() => {
+          this.fadeOverlay.innerHTML = `
+            <div style="font-size: 42px; margin-bottom: 12px; animation: floatAnim 1.5s ease-in-out infinite;">⛵</div>
+            <div style="font-size: 16px; font-weight: 800; color: #00cec9; letter-spacing: 1px;">乘风破浪航行中……</div>
+          `;
+        }, 400);
+      }, 700);
+    }, 900);
+  }
+
+  // 3.8 近海打捞滑轮浮标网与集捞工坊控制台
+  openAutoSalvageModal(flotsamSalvage) {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    document.getElementById("modal-title").innerHTML = "⚓ 近海打捞滑轮浮标网与集捞工坊";
+    const body = document.getElementById("modal-body");
+
+    const render = () => {
+      const isDeployed = flotsamSalvage && flotsamSalvage.hasAutoSalvageBuoy;
+      const tier = flotsamSalvage ? (flotsamSalvage.tier || 1) : 1;
+      const stats = flotsamSalvage ? flotsamSalvage.getStats() : { totalSalvaged: 0, interval: 30 };
+      const storageInv = (this.game && this.game.storageSystem) ? this.game.storageSystem.storageInventory : {};
+
+      const tierNames = {
+        1: { name: "T1 简易海面浮标网", interval: 30, desc: "基础洋流捕捞，每 30 秒自动截获近海漂流物并归入大木箱。" },
+        2: { name: "T2 动力滑轮双索道网", interval: 18, desc: "强化滑轮与缆绳动力，捕捞周期大幅缩短至 18 秒，附带额外建材！" },
+        3: { name: "T3 深海磁吸集捞仓", interval: 10, desc: "工业级高能磁吸，每 10 秒截获一件远洋高阶物资并自动清点入仓！" }
+      };
+      const curTierInfo = tierNames[tier] || tierNames[1];
+
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; max-height:68vh; overflow-y:auto; padding:4px;">
+          <div style="
+            background: linear-gradient(135deg, rgba(0,206,201,0.22), rgba(9,132,227,0.18));
+            border: 1.5px solid #00cec9; border-radius: 14px; padding: 14px;
+            box-shadow: 0 8px 24px rgba(0,206,201,0.15);
+          ">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-size:16px; font-weight:900; color:#fff; display:flex; align-items:center; gap:8px;">
+                <span>⚓</span>
+                <span>${curTierInfo.name}</span>
+              </div>
+              <div style="font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:20px; background:${isDeployed ? "rgba(46,204,113,0.2)" : "rgba(231,76,60,0.2)"}; color:${isDeployed ? "#2ecc71" : "#e74c3c"}; border:1px solid ${isDeployed ? "#2ecc71" : "#e74c3c"};">
+                ${isDeployed ? "● 运转中 (AUTO-ON)" : "○ 待部署 (OFFLINE)"}
+              </div>
+            </div>
+            <div style="font-size:12px; color:#dff9fb; line-height:1.5;">${curTierInfo.desc}</div>
+            <div style="display:flex; gap:16px; margin-top:10px; font-size:12px; color:#fff;">
+              <div>⚡ 捕捞周期：<strong style="color:#f1c40f;">${stats.interval} 秒/件</strong></div>
+              <div>📦 累计捕捞：<strong style="color:#00cec9;">${stats.totalSalvaged} 件</strong></div>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:13px; font-weight:800; color:#fff; margin-bottom:8px;">📦 营地大木箱中的打捞建材储备</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap:8px;">
+              <div style="background:rgba(255,255,255,0.06); padding:6px; border-radius:8px; text-align:center;">
+                <div style="font-size:18px;">🪵</div>
+                <div style="font-size:11px; color:#dfe6e9;">木板捆</div>
+                <div style="font-size:13px; font-weight:900; color:#f1c40f;">${storageInv["wood_plank"] || 0}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.06); padding:6px; border-radius:8px; text-align:center;">
+                <div style="font-size:18px;">🔩</div>
+                <div style="font-size:11px; color:#dfe6e9;">坚固铁钉</div>
+                <div style="font-size:13px; font-weight:900; color:#f1c40f;">${storageInv["nail"] || 0}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.06); padding:6px; border-radius:8px; text-align:center;">
+                <div style="font-size:18px;">🔋</div>
+                <div style="font-size:11px; color:#dfe6e9;">备用电池</div>
+                <div style="font-size:13px; font-weight:900; color:#f1c40f;">${storageInv["battery"] || 0}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.06); padding:6px; border-radius:8px; text-align:center;">
+                <div style="font-size:18px;">💎</div>
+                <div style="font-size:11px; color:#dfe6e9;">硅晶原石</div>
+                <div style="font-size:13px; font-weight:900; color:#f1c40f;">${storageInv["sol_crystal"] || 0}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+            ${!isDeployed ? `
+              <button id="btn-deploy-buoy" style="
+                background: linear-gradient(135deg, #0984e3, #00cec9); border:none; border-radius:10px;
+                padding:12px; color:#fff; font-weight:900; font-size:14px; cursor:pointer;
+                box-shadow: 0 4px 14px rgba(0,206,201,0.4);
+              ">
+                🚀 部署【近海自动打捞浮标网】(可在商城特权或营地制作)
+              </button>
+            ` : (tier < 3 ? `
+              <button id="btn-upgrade-buoy" style="
+                background: linear-gradient(135deg, #6c5ce7, #a29bfe); border:none; border-radius:10px;
+                padding:12px; color:#fff; font-weight:900; font-size:14px; cursor:pointer;
+                box-shadow: 0 4px 14px rgba(108,92,231,0.4);
+              ">
+                ⚡ 升级为【${tierNames[tier+1].name}】(打捞周期缩短至 ${tierNames[tier+1].interval} 秒)
+              </button>
+            ` : `
+              <div style="background:rgba(241,196,15,0.15); border:1px solid #f1c40f; border-radius:10px; padding:10px; text-align:center; color:#f1c40f; font-size:13px; font-weight:800;">
+                👑 浮标网已达到最高【T3 深海磁吸集捞仓】工业级极速打捞！
+              </div>
+            `)}
+            <button id="btn-open-storage-from-buoy" style="
+              background: rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);
+              border-radius:10px; padding:10px; color:#fff; font-weight:700; font-size:13px; cursor:pointer;
+            ">
+              📦 打开营地储物箱查验全量建材
+            </button>
+          </div>
+        </div>
+      `;
+
+      const deployBtn = document.getElementById("btn-deploy-buoy");
+      if (deployBtn) {
+        deployBtn.onclick = () => {
+          if (flotsamSalvage.unlockAutoSalvageBuoy) {
+            flotsamSalvage.unlockAutoSalvageBuoy();
+            render();
+          }
+        };
+      }
+
+      const upgradeBtn = document.getElementById("btn-upgrade-buoy");
+      if (upgradeBtn) {
+        upgradeBtn.onclick = () => {
+          if (flotsamSalvage.upgradeTier) {
+            const upRes = flotsamSalvage.upgradeTier();
+            if (upRes.success) {
+              this.showToast(`⚓ 浮标网成功升级至【T${upRes.tier}】！打捞效率大幅飙升！`, "important");
+              render();
+            } else {
+              this.showToast(`⚠️ ${upRes.msg}`, "medium");
+            }
+          }
+        };
+      }
+
+      const storageBtn = document.getElementById("btn-open-storage-from-buoy");
+      if (storageBtn) {
+        storageBtn.onclick = () => {
+          if (this.game && this.game.storageSystem) {
+            this.game.storageSystem.openStorage("camp_default_chest");
+          }
+        };
+      }
+    };
+
+    render();
+    this.openModal();
+  }
+
 }
