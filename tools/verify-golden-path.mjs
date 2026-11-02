@@ -80,6 +80,7 @@ try {
     step = `chapter ${chapter} save roundtrip`;
     const saved = await evaluate('window.__game.saveSystem.exportSave()');
     await writeFile(join(out, `chapter-${chapter}.json`), saved);
+    await evaluate('delete window.__game');
     await send('Page.reload');
     await ready();
     assert.equal(await evaluate(`window.__game.saveSystem.importSave(${JSON.stringify(saved)}).success`), true);

@@ -10,7 +10,7 @@ import { iconHTML } from '../ui/IconRegistry.js'; // 黏土图标集成（2026-1
 const CONTEXT_EMOJI_ICON = {
   '🎣': 'tools/fishing_rod', '🍎': 'items/apple', '🥥': 'items/coconut', '🪵': 'items/log', '🪓': 'tools/stone_axe',
   '⛏': 'tools/stone_pickaxe', '🐚': 'items/clam', '💬': 'hud/prompt_generic', '🔥': 'hud/prompt_fire', '⛵': 'items/raft',
-  '🚰': 'items/water_bamboo', '💧': 'items/water_bamboo', '💎': 'hud/prompt_crystal', '📻': 'items/working_radio',
+  '🚰': 'items/water_bamboo', '💧': 'items/water_bamboo', '💎': 'hud/prompt_crystal', '🗼': 'hud/prompt_crystal', '🌟': 'hud/prompt_crystal', '📻': 'items/working_radio',
   '🏕': 'menu/camp', '⛺': 'menu/camp',
   '🐒': 'hud/prompt_monkey', '🌸': 'hud/prompt_heart', '💖': 'hud/prompt_heart', '❤️': 'hud/prompt_heart',
   '🦀': 'hud/prompt_crab', '🐾': 'hud/prompt_tracks', '👑': 'hud/prompt_boss'
@@ -42,6 +42,7 @@ function formatActionText(raw) {
   if (/存取|储物|木箱/.test(str)) return '储物';
   if (/排班|告示|经营/.test(str)) return '经营';
   if (/空投|特权|补给/.test(str)) return '补给';
+  if (/灯塔|修缮|充能/.test(str)) return '灯塔';
   if (/解密|参悟|调查/.test(str)) return '调查';
   if (/开启|神藏/.test(str)) return '开启';
   if (/攻击|突击|迎战/.test(str)) return '攻击';
@@ -402,6 +403,19 @@ export class InteractionFeedbackSystem {
         pos: this.staticPos.tent,
         scale: 1.6,
         color: 0x20bf6b
+      };
+    }
+
+    // 5.7 北崖古灯塔一期工程
+    if (game.lighthouse && playerPos.distanceTo(game.lighthouse.anchor) < 4.5) {
+      return {
+        id: 'lighthouse',
+        name: '北崖古灯塔',
+        icon: game.lighthouse.isLit ? '🌟' : '🗼',
+        text: game.lighthouse.isLit ? '检视北崖灯塔' : '修缮点亮灯塔',
+        pos: game.lighthouse.anchor,
+        scale: 2.2,
+        color: 0xffd32a
       };
     }
 

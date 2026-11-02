@@ -22,7 +22,6 @@ export class IslandTerrain {
     this.stoneTex = this.loadTex('/textures/stone.png');
     this.sandTex = this.loadTex('/textures/sand.png');
     this.planksTex = this.loadTex('/textures/planks.png');
-    this.waterTex = this.loadTex('/textures/water_foam.png');
 
     this.createSkyDome();
     this.createOcean();
@@ -330,7 +329,7 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
 
     // 动态波光浮层：移动端直接剔除 420m 巨大半透明双层 Overdraw，水面更纯净透亮且大幅降低显存带宽
     if (!this.quality || this.quality.pixelRatioCap > 1.25) {
-      const foamTex = this.waterTex.clone();
+      const foamTex = this.loadTex('/textures/water_foam.png');
       foamTex.repeat.set(20, 20);
       const foamMat = new THREE.MeshBasicMaterial({
         map: foamTex,

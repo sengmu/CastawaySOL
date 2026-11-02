@@ -93,12 +93,12 @@ export class TreeInteraction {
       // 位于高台(Y=1.8)，阶梯式高低排布(1.15x ~ 1.45x)，气势庄严挺拔，与瀑布同框
       // -----------------------------------------------------------------------
       { id: 'cedar_tree', pos: new THREE.Vector3(14.0, 1.8, -25.5), scale: 1.45 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(18.0, 1.8, -27.0), scale: 1.25 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(22.5, 1.8, -24.0), scale: 1.38 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(27.0, 1.8, -26.5), scale: 1.42 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(31.5, 1.8, -22.5), scale: 1.28 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(16.5, 1.8, -28.0), scale: 1.25 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(15.5, 1.8, -20.5), scale: 1.38 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(32.0, 1.8, -28.0), scale: 1.42 },
+      { id: 'cedar_tree', pos: new THREE.Vector3(33.0, 1.8, -23.5), scale: 1.28 },
       { id: 'cedar_tree', pos: new THREE.Vector3(35.5, 1.8, -25.0), scale: 1.35 },
-      { id: 'cedar_tree', pos: new THREE.Vector3(25.0, 1.8, -17.5), scale: 1.18 }
+      { id: 'cedar_tree', pos: new THREE.Vector3(32.0, 1.8, -16.5), scale: 1.18 }
     ];
 
     this.initTrees();

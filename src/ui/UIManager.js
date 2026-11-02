@@ -644,6 +644,40 @@ export class UIManager {
       .blueprint-list {
         display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 200px; padding-right: 4px;
       }
+      @media (orientation: portrait) {
+        .inv-grid { max-height: 36vh; }
+        .inv-right-pane { min-height: 240px; }
+        .material-cards-grid { max-height: 36vh; }
+        .blueprint-list { max-height: 38vh !important; }
+      }
+      #btn-rig-upgrade {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        border: 1px solid #00cec9;
+        background: linear-gradient(135deg, #00b894 0%, #0984e3 100%);
+        color: #ffffff;
+        font-size: 12.5px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 206, 201, 0.3);
+        transition: transform 0.1s, opacity 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      #btn-rig-upgrade:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      #btn-rig-upgrade:disabled {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.42);
+        box-shadow: none;
+        cursor: not-allowed;
+      }
       .blueprint-list::-webkit-scrollbar { width: 4px; }
       .blueprint-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
       .blueprint-item {
@@ -773,17 +807,20 @@ export class UIManager {
         background: linear-gradient(160deg, rgba(38,61,53,.98), rgba(18,35,32,.98));
         border: 0; border-left: 1px solid rgba(229,211,163,.28); border-radius: 18px 0 0 18px;
         box-shadow: -12px 0 32px rgba(0,0,0,.35);
-        overflow-y: auto; z-index: 560;
+        overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(217,192,138,.55) rgba(0,0,0,.18); z-index: 560;
         transform: translateX(105%); visibility: hidden; transition: transform .2s ease-out, visibility 0s .2s;
       }
+      .hud-nav-secondary.hud-drawer::-webkit-scrollbar { width: 5px; }
+      .hud-nav-secondary.hud-drawer::-webkit-scrollbar-track { background: rgba(0,0,0,.15); border-radius: 4px; }
+      .hud-nav-secondary.hud-drawer::-webkit-scrollbar-thumb { background: rgba(217,192,138,.55); border-radius: 4px; }
       .hud-nav-secondary.hud-drawer.open { transform: none; visibility: visible; transition: transform .2s ease-out; }
       .hud-drawer-title { font-size: 13px; font-weight: 800; color: #efdfb7; padding: 2px 4px; letter-spacing: 1px; flex-shrink: 0; }
       .hud-drawer .hud-nav-btn { width: 100%; min-height: 44px; padding: 0 14px; justify-content: flex-start; border-radius: 12px; font-size: 13px; flex-shrink: 0; }
       .hud-drawer .hud-nav-desktop-label { display: inline; }
       .hud-drawer-quality { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
       .hud-drawer-qlabel { font-size: 12px; font-weight: 700; color: #f3e9cc; min-width: 30px; }
-      .quality-opt { flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid rgba(229,211,163,.24); background: rgba(246,237,210,.08); color: #f7efd9; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-      .quality-opt[aria-pressed="true"] { background: #d9c08a; color: #1e272e; border-color: #d9c08a; }
+      .quality-opt, .notice-opt { flex: 1; min-height: 40px; border-radius: 12px; border: 1px solid rgba(229,211,163,.24); background: rgba(246,237,210,.08); color: #f7efd9; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; padding: 0 6px; white-space: nowrap; }
+      .quality-opt[aria-pressed="true"], .notice-opt[aria-pressed="true"] { background: #d9c08a; color: #1e272e; border-color: #d9c08a; }
       body.hud-drawer-open .top-dashboard, body.hud-drawer-open .top-right-group, body.hud-drawer-open .mobile-action-zone,
       body.hud-drawer-open .bottom-quick-bar, body.hud-drawer-open #joystick-zone, body.hud-drawer-open .toast-stack { opacity: .3; transition: opacity .18s; }
       .toast-stack {
@@ -916,11 +953,45 @@ export class UIManager {
       .toast-item.toast-quest { -webkit-line-clamp: 4; }
       .hud-dialog-scrim { position: fixed; inset: 0; z-index: 545; background: rgba(6,14,12,.32); display: none; }
       body.hud-dialog-open .hud-dialog-scrim { display: block; }
-      body.hud-dialog-open #joystick-zone, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .mobile-action-zone,
-      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-right-group, body.hud-modal-open #joystick-zone, body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .mobile-action-zone { opacity: .25 !important; transition: opacity .18s; }
-      body.hud-dialog-open #joystick-zone, body.hud-dialog-open #joystick-zone *, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .bottom-quick-bar *, body.hud-dialog-open .mobile-action-zone, body.hud-dialog-open .mobile-action-zone *,
-      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-dashboard *, body.hud-modal-open .top-right-group, body.hud-modal-open .top-right-group *, body.hud-modal-open #joystick-zone, body.hud-modal-open #joystick-zone *,
+      body.hud-dialog-open #joystick-zone, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .mobile-action-zone, body.hud-dialog-open #onboarding-card,
+      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-right-group, body.hud-modal-open .quest-card-container, body.hud-modal-open #onboarding-card, body.hud-modal-open #joystick-zone, body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .mobile-action-zone { opacity: .25 !important; transition: opacity .18s; }
+      body.hud-dialog-open #joystick-zone, body.hud-dialog-open #joystick-zone *, body.hud-dialog-open .bottom-quick-bar, body.hud-dialog-open .bottom-quick-bar *, body.hud-dialog-open .mobile-action-zone, body.hud-dialog-open .mobile-action-zone *, body.hud-dialog-open #onboarding-card, body.hud-dialog-open #onboarding-card *,
+      body.hud-modal-open .top-dashboard, body.hud-modal-open .top-dashboard *, body.hud-modal-open .top-right-group, body.hud-modal-open .top-right-group *, body.hud-modal-open .quest-card-container, body.hud-modal-open .quest-card-container *, body.hud-modal-open #onboarding-card, body.hud-modal-open #onboarding-card *, body.hud-modal-open #joystick-zone, body.hud-modal-open #joystick-zone *,
       body.hud-modal-open .bottom-quick-bar, body.hud-modal-open .bottom-quick-bar *, body.hud-modal-open .mobile-action-zone, body.hud-modal-open .mobile-action-zone * { pointer-events: none !important; }
+      body.hud-drawer-open #onboarding-card { opacity: 0 !important; pointer-events: none !important; transition: opacity .15s; }
+      .craft-cat-bar { scrollbar-width: none; -ms-overflow-style: none; }
+      .craft-cat-bar::-webkit-scrollbar { display: none; }
+      #onboarding-card {
+        position: fixed;
+        z-index: 112;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(max(30px, var(--sab, 0px)) + clamp(66px, 7vw + 10px, 98px));
+        top: auto;
+        width: min(360px, calc(100vw - 28px));
+        box-sizing: border-box;
+        padding: 11px 14px;
+        border: 0;
+        border-radius: 18px;
+        background: rgba(255, 246, 227, .97);
+        color: #6B4A32;
+        box-shadow: 0 10px 24px rgba(142, 122, 160, .30);
+        pointer-events: auto;
+      }
+      @media (orientation: landscape) and (max-height: 500px) {
+        #onboarding-card {
+          bottom: calc(max(24px, var(--sab, 0px)) + 74px);
+          width: min(320px, 40vw);
+          padding: 8px 12px;
+        }
+      }
+      @media (orientation: portrait) {
+        #onboarding-card {
+          top: calc(var(--sat, 0px) + 140px);
+          bottom: auto;
+          width: min(380px, calc(100vw - 20px - var(--sal, 0px) - var(--sar, 0px)));
+        }
+      }
       /* 新浮动摇杆（#virtual-joystick-touch-zone 感应层 z95 / #joystick-base）同样淡出、不可点；快捷栏抬到感应层之上，避免被左半屏感应层盖住点不到 */
       body.hud-dialog-open #joystick-base, body.hud-modal-open #joystick-base, body.hud-drawer-open #joystick-base { opacity: .25 !important; }
       body.hud-dialog-open #virtual-joystick-touch-zone, body.hud-modal-open #virtual-joystick-touch-zone { pointer-events: none !important; }
@@ -954,6 +1025,22 @@ export class UIManager {
         .mobile-action-zone .main-action-capsule { width: 136px; max-width: 136px; box-sizing: border-box; transform-origin: right center; } /* 靠近目标时 scale(1.05) 向左放大，不越过右侧 24px */
         /* 抽屉从顶栏下方开始，不盖住「☰ 菜单」键 */
         .hud-nav-secondary.hud-drawer, .hud-nav-secondary.hud-drawer.open { top: calc(var(--hud-nav-b) + 8px); padding-top: 8px; border-radius: 18px 0 0 18px; }
+      }
+      @media (orientation: landscape) and (max-height: 500px) {
+        .hud-nav-secondary.hud-drawer,
+        .hud-nav-secondary.hud-drawer.open {
+          width: min(344px, 52vw);
+          padding: 8px 12px calc(8px + var(--sab, 0px)) 10px;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-content: start;
+          gap: 5px 6px;
+        }
+        .hud-nav-secondary.hud-drawer .hud-drawer-title,
+        .hud-nav-secondary.hud-drawer .hud-drawer-quality { grid-column: 1 / -1; }
+        .hud-nav-secondary.hud-drawer .hud-nav-btn { min-height: 32px; padding: 0 8px; font-size: 12px; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hud-nav-secondary.hud-drawer .quality-opt,
+        .hud-nav-secondary.hud-drawer .notice-opt { min-height: 28px; font-size: 12px; border-radius: 10px; }
       }
     `;
     // 黏土图标集成（2026-10-31）：图片图标通用样式（尺寸由 iconHTML 内联指定，点击区仍由按钮本身保证 ≥44px）
@@ -1293,19 +1380,24 @@ export class UIManager {
         .quick-slot span:first-child { font-size: 16px !important; }
         .quick-slot span:last-child { display: none !important; }
 
-        /* --- 6. 右下组 grid 两列 48px、gap 8px，主按钮跨两列 104x56 且与上排边缘对齐 --- */
+        /* --- 6. 右下组自适应网格，有攻击键时三列并排不叠压，无攻击键时两列紧凑对齐 --- */
         .mobile-action-zone {
           position: fixed !important;
           right: calc(max(12px, var(--sar, 0px))) !important;
           bottom: calc(max(12px, var(--sab, 0px))) !important;
-          width: 104px !important;
+          width: auto !important;
           z-index: 98 !important;
           display: grid !important;
-          grid-template-columns: 48px 48px !important;
+          grid-template-columns: repeat(2, 48px) !important;
           grid-gap: 8px !important;
           align-items: center !important;
+          justify-items: end !important;
           justify-content: end !important;
           box-sizing: border-box !important;
+        }
+        .mobile-action-zone:has(#btn-quick-attack:not(.ctx-hidden)) {
+          grid-template-columns: repeat(3, 46px) !important;
+          grid-gap: 6px !important;
         }
         .aux-action-row {
           display: contents !important;
@@ -1319,6 +1411,10 @@ export class UIManager {
           align-items: center !important;
           justify-content: center !important;
           box-sizing: border-box !important;
+        }
+        .mobile-action-zone:has(#btn-quick-attack:not(.ctx-hidden)) .aux-btn {
+          width: 46px !important;
+          height: 46px !important;
         }
         #btn-quick-run {
           grid-column: 1 !important;
@@ -1336,6 +1432,10 @@ export class UIManager {
           grid-column: 2 !important;
           grid-row: 1 !important;
         }
+        #btn-quick-attack:not(.ctx-hidden) ~ #btn-quick-jump {
+          grid-column: 3 !important;
+          grid-row: 1 !important;
+        }
         .aux-btn .aux-btn-label {
           display: none !important; /* 小标签放不下只留图标 */
         }
@@ -1343,7 +1443,8 @@ export class UIManager {
           display: none !important;
         }
         .main-action-capsule {
-          grid-column: span 2 !important;
+          grid-column: 1 / -1 !important;
+          justify-self: end !important;
           width: 104px !important;
           height: 56px !important;
           min-height: 56px !important;
@@ -1491,8 +1592,8 @@ export class UIManager {
     const tutorialCard = document.createElement('section');
     tutorialCard.id = 'onboarding-card';
     tutorialCard.setAttribute('aria-live', 'polite');
-    tutorialCard.style.cssText = 'display:none;position:fixed;z-index:120;top:calc(env(safe-area-inset-top, 0px) + 20%);left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 28px));box-sizing:border-box;padding:13px 15px;border:0;border-radius:18px;background:rgba(255,246,227,.97);color:#6B4A32;box-shadow:0 10px 24px rgba(142,122,160,.30);pointer-events:auto;';
-    tutorialCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><strong id="onboarding-title" style="font-size:15px;flex:1"></strong><span id="onboarding-count" style="font-size:11px;opacity:.78"></span><button id="onboarding-skip" type="button" style="border:1px solid transparent;border-radius:12px;padding:5px 8px;background:#FBEBC8;color:#6B4A32;font:inherit;font-size:11px">跳过</button></div><div id="onboarding-text" style="font-size:13px;line-height:1.5"></div>';
+    tutorialCard.style.display = 'none';
+    tutorialCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><strong id="onboarding-title" style="font-size:14px;flex:1"></strong><span id="onboarding-count" style="font-size:11px;opacity:.78"></span><button id="onboarding-skip" type="button" style="border:1px solid transparent;border-radius:12px;padding:4px 8px;background:#FBEBC8;color:#6B4A32;font:inherit;font-size:11px;cursor:pointer">跳过</button></div><div id="onboarding-text" style="font-size:12.5px;line-height:1.45"></div>';
     document.body.appendChild(tutorialCard);
     tutorialCard.querySelector('#onboarding-skip').addEventListener('click', () => window.__game?.story?.dismissOnboarding?.());
 
@@ -1639,15 +1740,17 @@ export class UIManager {
     new MutationObserver(strip).observe(atk, { childList: true, subtree: true, characterData: true });
   }
 
-  // UI 第二步优化：攻击键按情境出现——野兽 8 米内、远程模式、正在攻击或刚攻击/切换过时显示（只在状态变化时写 DOM）
+  // 攻击键按情境出现——持有猎弓/战矛、野兽 8 米内、远程模式、正在攻击或刚攻击/切换过时显示（只在状态变化时写 DOM）
   updateAttackVisibility() {
     const atk = this._attackBtn && this._attackBtn.isConnected ? this._attackBtn : (this._attackBtn = document.getElementById('btn-quick-attack'));
     if (!atk) return;
     const g = window.__game;
     const wc = g && g.wildlifeCombat;
+    const inv = this.inventory || {};
+    const hasCombatWeapon = (inv['wooden_bow'] || 0) > 0 || (inv['spear'] || 0) > 0;
     let show = !wc; // 没有战斗系统时保持常显，兼容旧逻辑
     if (wc) {
-      if (wc.combatMode === 'ranged' || wc.isAttacking || (this._attackShownUntil || 0) > performance.now()) {
+      if (hasCombatWeapon || wc.combatMode === 'ranged' || wc.isAttacking || (this._attackShownUntil || 0) > performance.now()) {
         show = true;
       } else if (g.player && g.player.position && Array.isArray(wc.wildlifeList)) {
         const p = g.player.position;
@@ -1891,14 +1994,29 @@ export class UIManager {
       this.modalBackdrop.style.display = 'none';
     });
 
-    // 关闭对话框
-    this.dialogBox.addEventListener('click', () => {
+    // 关闭对话框（兼容真机触摸 pointerdown / touchstart / click，防止遮罩锁死摇杆）
+    const dismissDialog = (event) => {
+      if (event) event.stopPropagation();
+      if (this.dialogBox.style.display === 'none') return;
+      if (this._dialogTypingTimer) {
+        clearInterval(this._dialogTypingTimer);
+        this._dialogTypingTimer = null;
+      }
       haptics.light();
       this.dialogBox.style.display = 'none';
+      if (this.dialogScrim) this.dialogScrim.style.display = 'none';
+      document.body.classList.remove('hud-dialog-open');
+      if (this.joystick && typeof this.joystick.reset === 'function') this.joystick.reset();
       soundEngine.playAnimalVoice();
-    });
+    };
+    this.closeDialog = dismissDialog;
+    this.dialogBox.addEventListener('click', dismissDialog);
+    this.dialogBox.addEventListener('pointerdown', dismissDialog);
     // UI 重叠优化：点遮罩（任意处）同样关闭对话框；点任务条用提示显示完整任务
-    if (this.dialogScrim) this.dialogScrim.addEventListener('click', (event) => { event.stopPropagation(); this.dialogBox.click(); });
+    if (this.dialogScrim) {
+      this.dialogScrim.addEventListener('click', dismissDialog);
+      this.dialogScrim.addEventListener('pointerdown', dismissDialog);
+    }
     const questEl = document.getElementById('quest-banner');
     if (questEl) {
       questEl.addEventListener('click', () => {
@@ -2466,7 +2584,21 @@ export class UIManager {
     sync();
     const watch = (el, cls) => {
       if (!el) return;
-      const upd = () => document.body.classList.toggle(cls, el.style.display !== '' && el.style.display !== 'none');
+      const upd = () => {
+        if (cls === 'hud-modal-open') {
+          const mainModalOpen = el.style.display !== '' && el.style.display !== 'none';
+          if (mainModalOpen) {
+            const g = this.game || window.__game;
+            if (g?.shopManager?.isOpen) g.shopManager.close();
+            if (typeof this.closeDrawer === 'function') this.closeDrawer();
+          }
+          const shopOpen = !!(this.game?.shopManager?.isOpen || window.__game?.shopManager?.isOpen);
+          const ledgerOpen = document.body.classList.contains('hud-ledger-open');
+          document.body.classList.toggle(cls, mainModalOpen || shopOpen || ledgerOpen);
+          return;
+        }
+        document.body.classList.toggle(cls, el.style.display !== '' && el.style.display !== 'none');
+      };
       new MutationObserver(upd).observe(el, { attributes: true, attributeFilter: ['style'] });
       upd();
     };
@@ -2507,20 +2639,28 @@ export class UIManager {
   }
 
   showDialog(speaker, text) {
+    text = formatKeyHints(text);
     if (this.player && this.player.resetInput) this.player.resetInput();
+    if (this.joystick && typeof this.joystick.reset === 'function') this.joystick.reset();
+    if (this._dialogTypingTimer) {
+      clearInterval(this._dialogTypingTimer);
+      this._dialogTypingTimer = null;
+    }
     document.getElementById('dialog-speaker').textContent = speaker;
     const content = document.getElementById('dialog-text');
     content.textContent = '';
     this.dialogBox.style.display = 'block';
+    if (this.dialogScrim) this.dialogScrim.style.display = '';
 
     let idx = 0;
-    const timer = setInterval(() => {
+    this._dialogTypingTimer = setInterval(() => {
       if (idx < text.length) {
         content.textContent += text[idx];
         if (idx % 2 === 0) soundEngine.playAnimalVoice();
         idx++;
       } else {
-        clearInterval(timer);
+        clearInterval(this._dialogTypingTimer);
+        this._dialogTypingTimer = null;
       }
     }, 22);
   }
@@ -2830,7 +2970,7 @@ export class UIManager {
       rightContentHtml = `
         <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
           ${catChipsHtml}
-          <div class="blueprint-list" style="overflow-y:auto; max-height:190px; padding-right:4px;">${bpRows}</div>
+          <div class="blueprint-list" style="overflow-y:auto; padding-right:4px;">${bpRows}</div>
         </div>
       `;
     }
@@ -3618,7 +3758,22 @@ export class UIManager {
       soundEngine.playSplash();
       this.showToast('🍶 痛饮了便携水壶中的甘泉！饮水+45，生命+10！', 'small');
     } else if (id === 'fire_arrow') {
-      this.showToast('🏹🔥【烈焰爆燃箭】：持有猎弓按 [R] 即可作为特殊贯穿弹药射出！', 'medium');
+      this.showToast('🏹🔥【烈焰爆燃箭】：切换至猎弓射击模式即可作为特殊贯穿弹药射出！', 'medium');
+      return;
+    } else if (id === 'wooden_bow') {
+      if (window.__game && window.__game.wildlifeCombat) {
+        window.__game.wildlifeCombat.toggleCombatMode();
+        this.updateAttackVisibility();
+      }
+      return;
+    } else if (id === 'spear') {
+      const wc = window.__game && window.__game.wildlifeCombat;
+      if (wc && wc.combatMode === 'ranged') {
+        wc.toggleCombatMode();
+      } else {
+        this.showToast('🗡️ 已握持【燧石战矛】！点按右下角攻击按钮即可发动扇形刺击！', 'small');
+      }
+      this.updateAttackVisibility();
       return;
     } else {
       this.showToast(`这是重要材料【${this.getItemName(id)}】，点击右上角【🔨合成台】进行组合融合！`, 'medium');
@@ -4132,7 +4287,7 @@ export class UIManager {
               </div>
               <div style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:4px;">${o.desc}</div>
               <div style="font-size:11px; margin-top:6px;">所需资源：${reqStr}</div>
-              <div style="font-size:11px; color:#ffeaa7; margin-top:4px; font-weight:800;">奖励：+${o.tokenReward} 算力代币 (SOL)</div>
+              <div style="font-size:11px; color:#ffeaa7; margin-top:4px; font-weight:800;">奖励：+${o.tokenReward} 算力代币</div>
             </div>
             <div>
               ${o.completed ? `
@@ -4577,8 +4732,8 @@ export class UIManager {
       <div style="display:flex; flex-direction:column; gap:12px;">
         <div style="background:radial-gradient(circle at center, rgba(153,69,255,0.25) 0%, rgba(10,16,26,0.6) 100%); border:1.5px solid #9945ff; border-radius:14px; padding:16px; text-align:center;">
           <div style="font-size:13px; color:#e056fd; font-weight:800; display:inline-flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
-          <div style="font-size:32px; font-weight:900; color:#ffd32a; font-family:monospace; margin:8px 0; text-shadow:0 0 20px rgba(255,211,42,0.6);">
-            <span id="ml-pool-amount">${ml.pool || 0}</span> 🪙
+          <div style="font-size:32px; font-weight:900; color:#ffd32a; font-family:monospace; margin:8px 0; text-shadow:0 0 20px rgba(255,211,42,0.6); display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+            <span id="ml-pool-amount">${ml.pool || 0}</span> ${iconHTML('items/sol_token', 28, { eager: true })}
           </div>
           <div style="font-size:11.5px; color:rgba(255,255,255,0.7);">
             当前部署每轮唤醒概率预估（含中签）: <strong style="color:#14f195;">${estProb}%</strong> · 爆池唤醒者独得 <strong>${ODDS_TABLE.MOTHERLODE.awakenerShare * 100}%</strong>！
@@ -4598,7 +4753,7 @@ export class UIManager {
           ${ml.hallOfFame && ml.hallOfFame.length > 0 ? ml.hallOfFame.map(r => `
             <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
               <span>轮次 #${r.roundId}</span>
-              <span style="color:#ffd32a; font-weight:800;">+${r.playerTake} 🪙 (池总: ${r.poolSize})</span>
+              <span style="color:#ffd32a; font-weight:800; display:inline-flex; align-items:center; gap:4px;">+${r.playerTake} ${iconHTML('items/sol_token', 13, { eager: true })} (池总: ${r.poolSize})</span>
             </div>
           `).join('') : '<div style="font-size:11px; color:rgba(255,255,255,0.4); text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
         </div>
@@ -4867,8 +5022,9 @@ export class UIManager {
                 background:linear-gradient(135deg, #ffd32a, #ff9f1a); border:none; border-radius:10px;
                 padding:8px 14px; color:#1e272e; font-weight:900; font-size:12.5px; cursor:pointer;
                 box-shadow:0 4px 18px rgba(255,211,42,0.6); animation:pulse 1.2s infinite;
+                display:inline-flex; align-items:center; gap:5px;
               ">
-                🪙 收获 ${miningRig.unclaimedSol} 枚算力代币！
+                ${iconHTML('items/sol_token', 16, { eager: true })} 收获 ${miningRig.unclaimedSol} 枚算力代币！
               </button>
             ` : `
               <div style="font-size:11px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); padding:4px 8px; border-radius:6px;">
@@ -4904,7 +5060,7 @@ export class UIManager {
             </div>
             <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
               <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">背包算力储备</div>
-              <div style="font-size:13px; font-weight:900; color:#fed330;">${tokenCount} 🪙</div>
+              <div style="font-size:13px; font-weight:900; color:#fed330; display:inline-flex; align-items:center; justify-content:center; gap:4px;">${tokenCount} ${iconHTML('items/sol_token', 14, { eager: true })}</div>
             </div>
           </div>
         </div>
@@ -5168,8 +5324,8 @@ export class UIManager {
         <div style="display:flex; flex-direction:column; height:100%; max-height:calc(100vh - 80px); overflow:hidden; padding:2px;">
           ${tabNavHtml}
           <div style="flex:1; overflow-y:auto; min-height:0; padding-right:2px;">
-            <div style="font-size:11px;padding:4px;">其他矿工均为模拟矿工（非真人）</div>
-            ${['decrypt', 'resonance'].includes(currentTab) ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `升级矿机 L${miningRig.rigLevel + 1} · ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '矿机已满级'}</button>` : ''}
+            ${['resonance', 'motherlode'].includes(currentTab) ? `<div style="font-size:11px; padding:5px 10px; margin-bottom:8px; border-radius:8px; background:rgba(153,69,255,0.14); border:1px solid rgba(153,69,255,0.28); color:rgba(255,255,255,0.75); text-align:center;">ℹ️ 地脉共振盘面中的其他矿工均为本地模拟矿工（非真人联机）</div>` : ''}
+            ${['decrypt', 'resonance'].includes(currentTab) ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `⬆️ 升级矿机 L${miningRig.rigLevel + 1} · 消耗 ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '✅ 矿机已达最高等级'}</button>` : ''}
             ${contentHtml}
           </div>
         </div>
@@ -5272,7 +5428,7 @@ export class UIManager {
           <!-- 顶部状态指示栏 -->
           <div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:20px;">🪙</span>
+              ${iconHTML('items/ancient_coin', 20, { eager: true })}
               <span style="font-size:12.5px; color:rgba(255,255,255,0.85); font-weight:700;">
                 古代海盗金币：<strong style="color:#ffd32a; font-size:14px;">${coinCount}</strong> 枚
               </span>
@@ -5339,8 +5495,9 @@ export class UIManager {
                             background:${coinCount >= pet.priceCoins ? 'linear-gradient(135deg, #f39c12, #e67e22)' : 'rgba(255,255,255,0.08)'};
                             border:none; border-radius:7px; color:${coinCount >= pet.priceCoins ? '#000' : 'rgba(255,255,255,0.4)'};
                             font-weight:900; font-size:11px; padding:5px 10px; cursor:${coinCount >= pet.priceCoins ? 'pointer' : 'not-allowed'};
+                            display:inline-flex; align-items:center; gap:4px;
                           ">
-                            🪙 ${pet.priceCoins} 金币结缘
+                            ${iconHTML('items/ancient_coin', 14, { eager: true })} ${pet.priceCoins} 金币结缘
                           </button>
                           <button class="btn-unlock-sol" data-id="${pet.id}" style="
                             background:linear-gradient(135deg, #9945FF, #14F195); border:none; border-radius:7px;
@@ -5650,9 +5807,9 @@ export class UIManager {
     } else if (id === 'large_backpack') {
       return '<span class="stat-pill" style="background:rgba(253,203,110,0.25); color:#ffeaa7;">🎒 行囊容量永久 +4 格</span>';
     } else if (id === 'workradio') {
-      return '<span class="stat-pill" style="background:rgba(108,92,231,0.3); color:#a29bfe;">📡 达成飞机逃脱结局</span>';
+      return '<span class="stat-pill" style="background:rgba(108,92,231,0.3); color:#a29bfe;">📡 S.O.S 远距通讯终端</span>';
     } else if (id === 'escape_raft') {
-      return '<span class="stat-pill" style="background:rgba(9,132,227,0.3); color:#74b9ff;">⛵ 达成扬帆逃脱结局</span>';
+      return '<span class="stat-pill" style="background:rgba(9,132,227,0.3); color:#74b9ff;">⛵ 邻岛航行船坞组件</span>';
     } else {
       return '<span class="stat-pill" style="background:rgba(255,255,255,0.1); color:#dfe6e9;">🛠️ 基础合成原料</span>';
     }
@@ -5757,7 +5914,7 @@ export class UIManager {
 
                 <!-- 材料扣减进度清单 -->
                 <div style="display:flex; flex-direction:column; gap:6px; margin:10px 0;">
-                  ${check.costDetails.map(item => {
+                  ${(check.costDetails || []).map(item => {
                     const itemName = this.getItemName(item.matKey);
                     const percent = Math.min(100, Math.round((item.totalAvailable / item.needCount) * 100));
                     return `
@@ -5788,15 +5945,15 @@ export class UIManager {
                       color:${check.ok ? '#fff' : 'rgba(255,255,255,0.4)'};
                       font-weight:900; font-size:12.5px; box-shadow:${check.ok ? '0 4px 14px rgba(0,206,201,0.4)' : 'none'};
                     ">
-                      ${check.ok ? `🔨 资材组装升级【${nextTier.title}】` : '❌ 资材不足，无法组装'}
+                      ${check.ok ? `🔨 资材组装升级【${nextTier.title}】` : (check.reason ? `🔒 ${check.reason}` : '❌ 资材不足，无法组装')}
                     </button>
                     ${nextTier.solCost ? `
                       <button id="btn-sol-upgrade" style="
                         flex:1; padding:10px; border-radius:10px; border:1px solid #14f195; cursor:pointer;
                         background:linear-gradient(135deg, #9945ff, #14f195); color:#0b101b; font-weight:900; font-size:12.5px;
-                        box-shadow:0 4px 14px rgba(20,241,149,0.35);
+                        box-shadow:0 4px 14px rgba(20,241,149,0.35); display:inline-flex; align-items:center; justify-content:center; gap:5px;
                       ">
-                        🪙 ${nextTier.solCost} 算力代币黑市蓝图一键快造
+                        ${iconHTML('items/sol_token', 15, { eager: true })} ${nextTier.solCost} 算力代币黑市蓝图一键快造
                       </button>
                     ` : ''}
                   </div>
@@ -6132,8 +6289,8 @@ export class UIManager {
       battery: '完好未拆封的工业高能电池，可让坏收音机重新接收无线电。',
       workradio: '重新通电的求生收音机，能接收海上紧急频段并发送求救 SOS！',
       escape_raft: '使用4根木材与钉子扎制的大型求生木筏，具备横渡大洋的能力！',
-      spear: '用坚韧木棍绑缚锋利燧石制成的燧石战矛！按 [F] 或右下角攻击键可发动远距离扇形强力刺击！',
-      wooden_bow: '用兽皮韧弦与弹性硬木制成的简易猎弓！按 [R] 键切换远程射击模式，射出物理抛物线羽箭！',
+      spear: '用坚韧木棍绑缚锋利燧石制成的燧石战矛！点按右下角攻击按钮可发动远距离扇形强力刺击！',
+      wooden_bow: '用兽皮韧弦与弹性硬木制成的简易猎弓！在快捷栏点选即可切换远程射击模式，射出物理抛物线羽箭！',
       flint_arrow: '精巧绑缚轻盈树皮羽毛的燧石羽箭，猎弓远程弹药，击中地面有 50% 概率完好回收！',
       beast_trap: '铁钉与坚石打造的机械夹，点击使用放置在地表，踩中的野兽陷入 4 秒禁锢与致命破绽！',
       wooden_spikes: '削尖硬木加固构成的防兽拒马，放置在营地四周可反弹野兽冲撞并造成 50 点震伤！',
@@ -6181,12 +6338,12 @@ export class UIManager {
       beast_hide: '加厚兽皮 🧶', crab_shell: '坚硬蟹壳 🛡️',
       large_backpack: '拓荒者大皮包 🎒',
       golden_coconut: '黄金海岛椰 🥥✨', bird_egg: '高枝海鸟蛋 🥚',
-      ancient_coin: '古代海盗金币 🪙', treasure_map_piece: '藏宝图残页 🗺️',
+      ancient_coin: '古代海盗金币', treasure_map_piece: '藏宝图残页 🗺️',
       pearl: '深海纯白珍珠 🦪', tough_bark: '高枝坚韧树皮 🍂',
       sea_crab: '生猛青花海蟹 🦀', sardine: '银鳞小沙丁鱼 🐟',
       smoked_fish: '极品熏鱼干 🍱✨',
       sol_crystal: '未解密硅晶原石 💎',
-      sol_token: '荒岛算力代币 🪙',
+      sol_token: '荒岛算力代币',
       geo_scanner_mk1: '地质共振扫描仪 Mk1 📡',
       geo_scanner_mk2: '精密共振扫描仪 Mk2 🛰️',
       geo_scanner_mk3: '全域量子扫描仪 Mk3 🌌',
@@ -6417,7 +6574,7 @@ export class UIManager {
     drawer.innerHTML = `
       <div class="ledger-drawer-header">
         <div class="ledger-drawer-title">
-          ${iconHTML('items/sol_token', 20) || '🪙'} <span>算力总账</span>
+          ${iconHTML('items/sol_token', 20) || '💠'} <span>算力总账</span>
         </div>
         <button type="button" class="ledger-drawer-close" id="btn-ledger-close" aria-label="关闭">✕</button>
       </div>
@@ -6636,7 +6793,7 @@ export class UIManager {
         <div class="ledger-drawer-card" id="ledger-card-sol-token">
           <div class="ledger-drawer-card-header">
             <div class="ledger-drawer-card-title">
-              ${iconHTML('items/sol_token', 18) || '🪙'} <span>算力代币</span>
+              ${iconHTML('items/sol_token', 18) || '💠'} <span>算力代币</span>
             </div>
             <div class="ledger-drawer-card-summary">
               <span class="ledger-drawer-inflow" id="ledger-token-inflow" data-val="${today.token.inflow}">+${today.token.inflow}</span>

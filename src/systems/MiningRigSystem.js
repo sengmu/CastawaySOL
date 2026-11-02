@@ -28,7 +28,7 @@ export class MiningRigSystem {
     this.anchor = new THREE.Vector3(-10.5, 0.05, 20.0);
 
     // 矿机运行数据
-    this.isActive = false;               // 是否正在通电哈希计算中
+    this.isActive = true;                // 初始预装硅晶原石后默认通电运行
     this.hashrate = 85.5;               // 基础算力 (MH/s)
     this.totalBlocksMined = 0;           // 历史已验证区块总数
     this.totalSolMined = 0;             // 历史挖出算力代币总数
@@ -990,7 +990,7 @@ export class MiningRigSystem {
     soundEngine.playItemDrop();
 
     this.game.ui.showDialog(
-      '🪙 荒岛算力代币收取成功！',
+      '💎 荒岛算力代币收取成功！',
       `成功从营地绿色矿机中收取 ${count} 枚【荒岛算力代币 (sol_token)】！\n\n• 当前背包持有: ${inv['sol_token']} 枚\n• 累计验证区块: ${this.totalBlocksMined} 个\n• 残晶储备: ${this.shardCount} 枚 (每满 4 枚自动凝聚为硅晶原石)\n\n【提示：前往【海岛补给与算力黑市】可兑换稀有出海造船图纸与自动化特权，成绩已同步至 Solana 赛季榜！】`
     );
 

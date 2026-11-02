@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-02T11:37:58.618Z",
+  "started": "2026-11-02T15:19:37.785Z",
   "steps": [
     {
       "chapter": 0,
@@ -61,7 +61,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "kindling": 1
       },
@@ -81,7 +81,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1
@@ -102,7 +102,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
@@ -124,7 +124,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
@@ -144,7 +144,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "baked_apple": 1,
         "stone_axe": 1
@@ -163,7 +163,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "baked_apple": 1,
         "stone_axe": 1,
@@ -184,7 +184,7 @@
         "battery": 1,
         "nail": 3,
         "tree_sap": 1,
-        "coconut": 2,
+        "coconut": 3,
         "tree_bark": 0,
         "baked_apple": 1,
         "stone_axe": 1,
@@ -204,7 +204,7 @@
         "broken_radio": 0,
         "battery": 1,
         "nail": 1,
-        "coconut": 9,
+        "coconut": 8,
         "baked_apple": 1,
         "stone_axe": 1,
         "sol_crystal_pure": 0,
@@ -223,7 +223,7 @@
         "broken_radio": 0,
         "battery": 1,
         "nail": 1,
-        "coconut": 9,
+        "coconut": 8,
         "baked_apple": 1,
         "stone_axe": 1,
         "sol_crystal_pure": 0,
@@ -242,7 +242,7 @@
         "broken_radio": 0,
         "battery": 1,
         "nail": 1,
-        "coconut": 9,
+        "coconut": 8,
         "baked_apple": 0,
         "stone_axe": 1,
         "sol_crystal_pure": 0,
@@ -261,7 +261,7 @@
         "broken_radio": 0,
         "battery": 1,
         "nail": 1,
-        "coconut": 9,
+        "coconut": 8,
         "baked_apple": 0,
         "stone_axe": 1,
         "sol_crystal_pure": 0,
@@ -282,7 +282,7 @@
   ],
   "errors": [],
   "interventions": {
-    "count": 61,
+    "count": 57,
     "texts": [
       "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216."
     ]
@@ -290,7 +290,7 @@
   "assetReadiness": [
     {
       "purpose": "raft resource collection",
-      "waitMs": 1,
+      "waitMs": 23,
       "loaded": 39,
       "expected": 39
     }

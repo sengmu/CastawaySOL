@@ -4,6 +4,7 @@ import { economyLedger } from '../systems/EconomyLedger.js';
 // 深度集成 Solana 钱包与模拟微支付通道，实现无需强制真金白银即可顺畅体验的良性商业化闭环
 import { soundEngine } from '../core/AudioSystem.js';
 import { solanaBridge } from '../core/SolanaBridge.js';
+import { iconHTML } from './IconRegistry.js';
 
 export class ShopManager {
   constructor(game, { headless = false } = {}) {
@@ -279,6 +280,55 @@ export class ShopManager {
 
   // 初始化商城弹窗容器
   initModal() {
+    if (!document.getElementById('shop-responsive-style')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'shop-responsive-style';
+      styleEl.textContent = `
+        .shop-item-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+        .shop-item-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+        .shop-item-btn-row {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
+        @media (max-width: 560px) {
+          .shop-item-card {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .shop-item-actions {
+            width: 100%;
+            align-items: stretch;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+          }
+          .shop-item-price-row {
+            justify-content: space-between;
+          }
+          .shop-item-btn-row {
+            width: 100%;
+          }
+          .shop-item-btn-row button {
+            flex: 1;
+            justify-content: center;
+          }
+        }
+      `;
+      (document.head || document.body)?.appendChild(styleEl);
+    }
+
     this.shopBackdrop = document.createElement('div');
     this.shopBackdrop.id = 'shop-modal-backdrop';
     this.shopBackdrop.style.cssText = `
@@ -326,9 +376,15 @@ export class ShopManager {
     if (this.game && this.game.player && this.game.player.resetInput) {
       this.game.player.resetInput();
     }
+    if (this.game && this.game.ui) {
+      if (typeof this.game.ui.closeModal === 'function') this.game.ui.closeModal();
+      if (typeof this.game.ui.closeDrawer === 'function') this.game.ui.closeDrawer();
+      if (typeof this.game.ui.closeLedgerDrawer === 'function') this.game.ui.closeLedgerDrawer();
+    }
     this.isOpen = true;
     this.render();
     this.shopBackdrop.style.display = 'flex';
+    document.body.classList.add('hud-modal-open');
     soundEngine.playPlaceFurniture();
   }
 
@@ -336,6 +392,11 @@ export class ShopManager {
   close() {
     this.isOpen = false;
     this.shopBackdrop.style.display = 'none';
+    const otherModalOpen = !!(this.game?.ui?.modalBackdrop && this.game.ui.modalBackdrop.style.display !== '' && this.game.ui.modalBackdrop.style.display !== 'none');
+    const ledgerOpen = document.body.classList.contains('hud-ledger-open');
+    if (!otherModalOpen && !ledgerOpen) {
+      document.body.classList.remove('hud-modal-open');
+    }
   }
 
   // 渲染商城主内容
@@ -379,7 +440,7 @@ export class ShopManager {
             </span>
           </div>
           <div style="background: rgba(20, 241, 149, 0.15); border: 1px solid rgba(20, 241, 149, 0.3); border-radius: 6px; padding: 2px 8px; color: #14f195; font-weight: 800; font-family: monospace; display: flex; align-items: center; gap: 4px;">
-            <span>🪙 算力代币:</span>
+            <span style="display:inline-flex; align-items:center; gap:4px;">${iconHTML('items/sol_token', 14, { eager: true })} 算力代币:</span>
             <span style="font-size: 13px; color: #fff;">${playerTokens}</span>
             <span>枚</span>
             <span style="color: rgba(255,255,255,0.4); margin: 0 2px;">|</span>
@@ -392,23 +453,19 @@ export class ShopManager {
       </div>
 
       <!-- 商品展示瀑布流列表 -->
-      <div style="padding: 16px 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; max-height: calc(85vh - 160px);">
+      <div style="padding: 14px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; max-height: calc(85vh - 150px);">
         ${this.products.map(p => {
           const owned = p.isOwned();
           const canAffordTokens = playerTokens >= (p.priceToken || 999);
           return `
-            <div style="
+            <div class="shop-item-card" style="
               background: ${owned ? 'rgba(0, 184, 148, 0.08)' : 'rgba(255,255,255,0.05)'};
               border: 1px solid ${owned ? 'rgba(0, 184, 148, 0.3)' : 'rgba(255,255,255,0.1)'};
               border-radius: 14px;
               padding: 14px 16px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 16px;
               transition: transform 0.15s, background 0.15s;
             ">
-              <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1;">
+              <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0;">
                 <div style="
                   background: rgba(255,255,255,0.08);
                   border-radius: 12px;
@@ -422,8 +479,8 @@ export class ShopManager {
                 ">
                   ${p.icon}
                 </div>
-                <div style="flex: 1;">
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <span style="font-size: 15px; font-weight: 900; color: #fff;">${p.title}</span>
                     <span style="font-size: 10px; background: rgba(255,255,255,0.12); color: #dfe6e9; padding: 1px 6px; border-radius: 4px; font-weight: 700;">
                       ${p.badge}
@@ -436,15 +493,15 @@ export class ShopManager {
               </div>
 
               <!-- 右侧购买与状态按钮 (双轨支付通道) -->
-              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
-                <div style="display: flex; align-items: center; gap: 6px;">
+              <div class="shop-item-actions">
+                <div class="shop-item-price-row" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   <span style="font-size: 13px; font-weight: 900; color: #14F195; font-family: monospace;">
                     ${p.priceSOL} SOL
                   </span>
                   ${p.priceToken ? `
                     <span style="font-size: 11px; color: rgba(255,255,255,0.4);">或</span>
-                    <span style="font-size: 11px; font-weight: 800; color: #ffeaa7; font-family: monospace; background: rgba(253, 203, 110, 0.12); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(253, 203, 110, 0.25);">
-                      🪙 ${p.priceToken} 算力代币
+                    <span style="font-size: 11px; font-weight: 800; color: #ffeaa7; font-family: monospace; background: rgba(253, 203, 110, 0.12); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(253, 203, 110, 0.25); display: inline-flex; align-items: center; gap: 4px;">
+                      ${iconHTML('items/sol_token', 13, { eager: true })} ${p.priceToken} 算力代币
                     </span>
                   ` : ''}
                 </div>
@@ -462,21 +519,24 @@ export class ShopManager {
                     ✅ 已激活
                   </button>
                 ` : `
-                  <div style="display: flex; gap: 6px; align-items: center;">
+                  <div class="shop-item-btn-row">
                     ${p.priceToken ? `
                       <button class="shop-token-buy-btn" data-id="${p.id}" ${canAffordTokens ? '' : 'disabled'} style="
                         background: ${canAffordTokens ? 'linear-gradient(135deg, #00cec9 0%, #0984e3 100%)' : 'rgba(255,255,255,0.06)'};
                         border: 1px solid ${canAffordTokens ? '#00cec9' : 'rgba(255,255,255,0.1)'};
                         color: ${canAffordTokens ? '#ffffff' : 'rgba(255,255,255,0.3)'};
-                        padding: 6px 10px;
+                        padding: 7px 10px;
                         border-radius: 8px;
                         font-size: 11px;
                         font-weight: 900;
                         cursor: ${canAffordTokens ? 'pointer' : 'not-allowed'};
                         box-shadow: ${canAffordTokens ? '0 4px 10px rgba(0, 206, 201, 0.3)' : 'none'};
                         transition: transform 0.1s;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 4px;
                       " title="${canAffordTokens ? '使用营地矿机出块获得的荒岛算力代币免充值兑换' : `代币不足 (还差 ${(p.priceToken || 0) - playerTokens} 枚)，去营地矿机出块！`}">
-                        🪙 算力代币兑换
+                        ${iconHTML('items/sol_token', 14, { eager: true })} 算力代币兑换
                       </button>
                     ` : ''}
                     <button class="shop-buy-btn" data-id="${p.id}" ${Boolean(solanaBridge.treasuryAddress) ? '' : 'disabled'} style="

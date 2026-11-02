@@ -134,10 +134,10 @@ export class WildlifeCombatSystem {
     this.createCrab('crab_2', '红螯大沙蟹', [-28, -0.15, 28]);
     this.createCrab('crab_3', '潮间带硬壳蟹', [-32, -0.15, 5]);
 
-    // 2. 丛林野猪 (游荡在西部林区与内陆开阔林地，boar_3 部署在东北高台 [24, 1.8, -20])
+    // 2. 丛林野猪 (游荡在西部林区与内陆开阔林地，boar_3 部署在东北高台东侧林缘，避开北崖灯塔交互区)
     this.createBoar('boar_1', '丛林狂暴野猪', [-22, 0.0, -5]);
     this.createBoar('boar_2', '黑鬃尖牙野猪', [-14, 0.0, -16]);
-    this.createBoar('boar_3', '斑纹剑齿小野猪', [24, 1.8, -20]);
+    this.createBoar('boar_3', '斑纹剑齿小野猪', [34, 1.8, -16]);
   }
 
   // 构建低多边形沙滩巨蟹 3D 模型
@@ -536,11 +536,11 @@ export class WildlifeCombatSystem {
       const atkBtn = document.getElementById('btn-quick-attack');
       if (atkBtn) {
         if (this.combatMode === 'ranged') {
-          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${arrowCount})</span>`;
+          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击(${arrowCount})</span>`;
           atkBtn.style.background = 'linear-gradient(135deg, rgba(230, 126, 34, 0.95), rgba(211, 84, 0, 0.95))';
           atkBtn.style.borderColor = 'rgba(243, 156, 18, 0.85)';
         } else {
-          atkBtn.innerHTML = `${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击 [F]</span>`;
+          atkBtn.innerHTML = `${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击</span>`;
           atkBtn.style.background = 'linear-gradient(135deg, rgba(231, 76, 60, 0.92), rgba(214, 48, 49, 0.92))';
           atkBtn.style.borderColor = 'rgba(255, 150, 150, 0.7)';
         }
@@ -549,9 +549,9 @@ export class WildlifeCombatSystem {
 
     if (game && game.ui) {
       if (this.combatMode === 'ranged') {
-        game.ui.showToast(`🏹 已切换至【远程猎弓模式】！剩余羽箭: ${arrowCount} 支，按 [F] 射击，按 [R] 切回近战！`, 'medium');
+        game.ui.showToast(`🏹 已切换至【远程猎弓模式】！剩余羽箭: ${arrowCount} 支，点按攻击键射击，长按攻击键切回近战！`, 'medium');
       } else {
-        game.ui.showToast('🗡️ 已切换至【近战长矛模式】！按 [F] 扇形挥刺！', 'medium');
+        game.ui.showToast('🗡️ 已切换至【近战长矛模式】！点按攻击键挥刺，长按攻击键切换猎弓！', 'medium');
       }
     }
     return true;
@@ -581,7 +581,7 @@ export class WildlifeCombatSystem {
       if (typeof document !== 'undefined') {
         const atkBtn = document.getElementById('btn-quick-attack');
         if (atkBtn && this.combatMode === 'ranged') {
-          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击 [F](${inv['flint_arrow']})</span>`;
+          atkBtn.innerHTML = `${iconHTML('tools/hunting_bow', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">射击(${inv['flint_arrow']})</span>`;
         }
       }
     }
