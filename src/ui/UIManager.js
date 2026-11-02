@@ -1389,7 +1389,7 @@ export class UIManager {
         <div class="portrait-survival-strip" id="portrait-survival-strip">
           <!-- 第一行：生命数值在左，天数天气弱文本并入右侧 -->
           <div class="strip-row strip-row-top" id="strip-row-top">
-            <img class="portrait-cat-avatar" src="/ui/cozy/cat-avatar.webp" alt="" aria-hidden="true">
+            <img class="portrait-protagonist-avatar" src="/ui/cozy/protagonist-avatar.webp" alt="" aria-hidden="true">
             <div class="strip-item strip-stat strip-life" title="生命值" aria-label="生命 100">
               <span class="life-hearts" aria-hidden="true"><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i></span>
               <b id="strip-val-life">100</b>
