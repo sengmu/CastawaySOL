@@ -235,18 +235,18 @@ export class UIManager {
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
-      .aux-btn:active { transform: scale(0.90); border-color: #00cec9; }
-      .aux-btn-label { font-size: 9.5px; color: rgba(255, 255, 255, 0.8); margin-top: 1px; pointer-events: none; }
+      .aux-btn:active { transform: scale(0.90); border-color: #E9B23F; }
+      .aux-btn-label { font-size: 9.5px; color: #7D5E47; margin-top: 1px; pointer-events: none; }
 
       /* 主情境动作大胶囊 */
       .main-action-capsule {
         width: 154px; height: 68px;
         border-radius: 36px;
-        background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-        border: 2px solid rgba(255, 255, 255, 0.7);
-        box-shadow: 0 8px 30px rgba(0, 206, 201, 0.5);
+        background: #FFD25A;
+        border: 0;
+        box-shadow: inset 0 -4px 0 #E9B23F, inset 0 2px 0 #FFF1D0, 0 10px 24px rgba(142, 122, 160, 0.30);
         display: flex; align-items: center; justify-content: center; gap: 10px;
-        color: #ffffff; font-size: 20px; font-weight: 900;
+        color: #6B4A32; font-size: 20px; font-weight: 900;
         cursor: pointer; transition: transform 0.08s ease-out, box-shadow 0.2s;
         touch-action: manipulation;
         user-select: none;
@@ -255,8 +255,14 @@ export class UIManager {
       }
       .main-action-capsule:active {
         transform: scale(0.93);
-        box-shadow: 0 4px 15px rgba(0, 206, 201, 0.35);
+        box-shadow: inset 0 -2px 0 #E9B23F, 0 4px 12px rgba(142, 122, 160, 0.25);
       }
+      .main-action-capsule.is-urgent {
+        background: #d65e52;
+        color: #ffffff;
+        box-shadow: inset 0 -4px 0 #b04a41, inset 0 2px 0 rgba(255, 241, 208, 0.6), 0 10px 24px rgba(142, 122, 160, 0.30);
+      }
+      .main-action-capsule.is-urgent #main-action-text { color: #ffffff; }
 
       /* 底部快捷物品栏 (避开中央角色，布局在左侧摇杆旁，防遮挡与静默横滑) */
       .bottom-quick-bar {
@@ -710,16 +716,17 @@ export class UIManager {
     `;
     style.textContent += `
       .hud-icon { width: 21px; height: 21px; flex-shrink: 0; stroke-width: 1.8; vertical-align: middle; }
-      .dashboard-panel, .modal-card { background: linear-gradient(145deg, rgba(38,61,53,.97), rgba(18,35,32,.96)); border-color: rgba(229,211,163,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 12px 32px rgba(8,24,20,.3); }
+      .dashboard-panel { background: #FFF6E3; border-color: transparent; box-shadow: 0 10px 24px rgba(142,122,160,.30); }
+      .modal-card { background: linear-gradient(145deg, rgba(38,61,53,.97), rgba(18,35,32,.96)); border-color: rgba(229,211,163,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 12px 32px rgba(8,24,20,.3); }
       .modal-header { background: rgba(245,234,201,.06); border-bottom-color: rgba(229,211,163,.18); }
       .modal-title, .detail-title { color: #efdfb7; }
-      .hud-nav-btn, .aux-btn { background: linear-gradient(145deg, rgba(47,69,59,.96), rgba(23,42,36,.94)); border-color: rgba(229,211,163,.24); color: #f7efd9; }
+      .hud-nav-btn, .aux-btn { background: #FBEBC8; border-color: transparent; color: #6B4A32; }
       .hud-nav-sol { box-shadow: none; }
       .inv-cell, .material-card { background: rgba(246,237,210,.05); border-color: rgba(246,237,210,.16); }
       .inv-cell.selected { background: rgba(223,199,139,.16); box-shadow: inset 0 0 0 1px #d9c08a; border-color: #d9c08a; }
       .hud-nav-btn:active, .aux-btn:active, .quick-slot:active, .inv-cell:active, .material-card:active { transform: scale(.94); }
       .hud-nav-btn:focus-visible, button:focus-visible { outline: 2px solid #ecd39a; outline-offset: 3px; }
-      .toast-banner { color: #f4e8c8; border-color: rgba(226,202,148,.4); background: rgba(28,49,40,.96); }
+      .toast-banner { color: #FFF6E3; border-color: transparent; background: #6B4A32; }
       @keyframes item-received { 0% { box-shadow: 0 0 0 2px #e8cd89; background: rgba(232,205,137,.35); } 100% { box-shadow: none; } }
       .quick-slot.received { animation: item-received .7s ease-out; }
       .gauge-label-row span:first-child { display: flex; align-items: center; gap: 5px; }
@@ -890,7 +897,56 @@ export class UIManager {
     `;
     // UI 重叠优化（2026-10-31）：顶栏避让、对话中遮罩、提示下移、主按钮安全区、抽屉不盖菜单键、面板打开 HUD 淡出（集中在这一层，便于回滚）
     style.textContent += `
-      :root { --hud-nav-w: 230px; --hud-nav-b: 58px; --hud-top-b: 66px; }
+      :root {
+        /* Cozy Art Spec Design Tokens */
+        --ui-panel-bg: #FFF6E3;
+        --ui-card-bg: #FBEBC8;
+        --ui-highlight-bg: #FFF1D0;
+        --ui-text-main: #6B4A32;
+        --ui-text-sub: #7D5E47;
+        --ui-text-muted: #9E7D65;
+
+        --ui-btn-primary-bg: #FFD25A;
+        --ui-btn-primary-depth: #E9B23F;
+        --ui-btn-primary-text: #6B4A32;
+
+        --ui-btn-secondary-bg: #FBEBC8;
+        --ui-btn-secondary-depth: #E3CFA2;
+        --ui-btn-secondary-text: #6B4A32;
+
+        --ui-tab-active-bg: #BFE6F5;
+        --ui-card-active-bg: #E3F4FB;
+        --ui-link: #237A9E;
+
+        --ui-scrim: rgba(74, 63, 92, 0.50);
+        --ui-shadow-soft: 0 10px 24px rgba(142, 122, 160, 0.30);
+        --ui-shadow-soft-sm: 0 4px 12px rgba(142, 122, 160, 0.20);
+        --ui-shadow-soft-depth: inset 0 -4px 0 var(--ui-btn-secondary-depth), inset 0 2px 0 var(--ui-highlight-bg), 0 10px 24px rgba(142, 122, 160, 0.30);
+
+        --ui-status-health: #F26B5B;
+        --ui-status-food: #FF9F43;
+        --ui-status-water: #6EC1E4;
+        --ui-status-energy: #FFD25A;
+        --ui-status-track: #EADFCB;
+
+        --ui-radius-sm: 12px;
+        --ui-radius-md: 16px;
+        --ui-radius-lg: 20px;
+        --ui-radius-xl: 28px;
+        --ui-radius-full: 9999px;
+
+        /* Legacy compatibility */
+        --cozy-hud-surface: rgb(255, 246, 227);
+        --cozy-hud-button: #FBEBC8;
+        --cozy-hud-slot: #FBEBC8;
+        --cozy-hud-cream: #FFF6E3;
+        --cozy-hud-text: #6B4A32;
+        --cozy-hud-border: transparent;
+
+        --hud-nav-w: 230px;
+        --hud-nav-b: 58px;
+        --hud-top-b: 66px;
+      }
       #btn-quick-mining { position: relative; }
       .hud-sol-gift { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #ff4757; border: 2px solid #fff; box-shadow: 0 0 6px rgba(255,71,87,.8); pointer-events: none; }
       .hud-sol-gift[hidden] { display: none; }
@@ -910,23 +966,23 @@ export class UIManager {
         z-index: 112;
         left: 50%;
         transform: translateX(-50%);
-        bottom: calc(max(24px, var(--sab, 0px)) + 68px);
+        bottom: calc(max(30px, var(--sab, 0px)) + clamp(66px, 7vw + 10px, 98px));
         top: auto;
-        width: min(350px, calc(100vw - 28px));
+        width: min(360px, calc(100vw - 28px));
         box-sizing: border-box;
-        padding: 10px 13px;
-        border: 1.5px solid rgba(244, 231, 187, .86);
-        border-radius: 16px;
-        background: rgba(28, 43, 40, .94);
-        color: #fff4dc;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, .32);
+        padding: 11px 14px;
+        border: 0;
+        border-radius: 18px;
+        background: rgba(255, 246, 227, .97);
+        color: #6B4A32;
+        box-shadow: 0 10px 24px rgba(142, 122, 160, .30);
         pointer-events: auto;
       }
       @media (orientation: landscape) and (max-height: 500px) {
         #onboarding-card {
-          bottom: calc(max(12px, var(--sab, 0px)) + 92px);
+          bottom: calc(max(24px, var(--sab, 0px)) + 74px);
           width: min(320px, 40vw);
-          padding: 7px 12px;
+          padding: 8px 12px;
         }
       }
       @media (orientation: portrait) {
@@ -946,10 +1002,10 @@ export class UIManager {
       body.hud-drawer-open #btn-hud-more { background: rgba(217,192,138,.95); color: #1e272e; }
       @media (orientation: landscape) {
         :root { --hud-ql: calc(max(24px, var(--sal, 0px)) + 212px); --hud-qr: calc(max(24px, var(--sar, 0px)) + var(--hud-nav-w) + 12px); }
-        /* 顶栏：算力代币 只显示数量（🎁 改角标），背包/菜单为 48x48 图标键 */
+        /* 顶栏：算力代币 只显示数量（🎁 改角标），菜单为 48x48 图标键 */
         .top-right-group { gap: 10px; }
         .top-right-group .hud-nav-btn { padding: 0 12px; }
-        .top-right-group #btn-open-inv, .top-right-group #btn-hud-more { width: 48px; min-width: 48px; padding: 0; }
+        #btn-open-inv, .top-right-group #btn-hud-more { width: 48px; min-width: 48px; padding: 0; }
         .top-right-group .hud-nav-desktop-label, .top-right-group .hud-sol-unit { display: none; }
         /* 任务条：居中于状态卡与按钮组之间的空隙；上下透明边把点击区撑到 44px，视觉仍是 32px */
         .quest-banner {
@@ -1537,18 +1593,17 @@ export class UIManager {
     tutorialCard.id = 'onboarding-card';
     tutorialCard.setAttribute('aria-live', 'polite');
     tutorialCard.style.display = 'none';
-    tutorialCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><strong id="onboarding-title" style="font-size:14px;flex:1"></strong><span id="onboarding-count" style="font-size:11px;opacity:.78"></span><button id="onboarding-skip" type="button" style="border:1px solid rgba(244,231,187,.6);border-radius:12px;padding:4px 8px;background:rgba(248,238,209,.12);color:#fff4dc;font:inherit;font-size:11px;cursor:pointer">跳过</button></div><div id="onboarding-text" style="font-size:12.5px;line-height:1.45"></div>';
+    tutorialCard.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><strong id="onboarding-title" style="font-size:14px;flex:1"></strong><span id="onboarding-count" style="font-size:11px;opacity:.78"></span><button id="onboarding-skip" type="button" style="border:1px solid transparent;border-radius:12px;padding:4px 8px;background:#FBEBC8;color:#6B4A32;font:inherit;font-size:11px;cursor:pointer">跳过</button></div><div id="onboarding-text" style="font-size:12.5px;line-height:1.45"></div>';
     document.body.appendChild(tutorialCard);
     tutorialCard.querySelector('#onboarding-skip').addEventListener('click', () => window.__game?.story?.dismissOnboarding?.());
 
-    // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 算力代币 资产）
+    // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 算力代币 资产，背包已移入右下操作簇）
     const topNav = document.createElement('div');
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
-      <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900; border:1px solid rgba(255,255,255,0.7); box-shadow:0 0 16px rgba(20,241,149,0.5);" aria-label="矿机中枢">
-        ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:12px; font-weight:900; color:rgba(11,16,27,0.75); margin-left:2px;">算力</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
+      <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" aria-label="矿机中枢">
+        ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:12px; font-weight:900; margin-left:2px;">算力</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
       </button>
-      <button class="hud-nav-btn" id="btn-open-inv" aria-label="背包">🎒 <span class="hud-nav-desktop-label">背包</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
     `;
     document.body.appendChild(topNav);
@@ -1566,7 +1621,7 @@ export class UIManager {
       <div class="hud-drawer-title">菜单</div>
       <button class="hud-nav-btn" id="btn-open-merge" aria-label="合成台">🔨 <span class="hud-nav-desktop-label">合成台</span></button>
       <button class="hud-nav-btn" id="btn-camp-manage">🏕️ 营地经营中枢</button>
-      <button class="hud-nav-btn" id="btn-open-shop" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900;">🛒 补给与特权</button>
+      <button class="hud-nav-btn" id="btn-open-shop">🛒 补给与特权</button>
       <button class="hud-nav-btn" id="btn-open-help" aria-label="手册">📖 <span class="hud-nav-desktop-label">手册</span></button>
       <button class="hud-nav-btn hud-nav-sol" id="btn-solana">${iconHTML('hud/solana', 18, { eager: true })} SOL 钱包连接</button>
       <button class="hud-nav-btn" id="btn-fullscreen" title="进入全屏沉浸模式" aria-label="全屏">⛶ <span class="hud-nav-desktop-label">全屏</span></button>
@@ -1575,16 +1630,17 @@ export class UIManager {
     `;
     document.body.appendChild(drawer);
 
-    // 3. 右下角大尺寸动作胶囊轮盘
+    // 3. 右下角大尺寸动作胶囊轮盘（背包 #btn-open-inv 坐在右下次按钮位，#main-action-btn 坐在右下角大主钮位）
     const actionZone = document.createElement('div');
     actionZone.className = 'mobile-action-zone';
     actionZone.innerHTML = `
       <div class="aux-action-row">
         <div class="context-tag" id="context-tag" role="status" hidden></div>
-        <div class="aux-btn ctx-hidden" id="btn-quick-attack" style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.92), rgba(214, 48, 49, 0.92)); border: 1.5px solid rgba(255, 150, 150, 0.7); box-shadow: 0 4px 16px rgba(231, 76, 60, 0.5);">${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label" style="color:#ffeaa7; font-weight:800;">攻击</span></div>
+        <div class="aux-btn ctx-hidden" id="btn-quick-attack">${iconHTML('hud/attack', 26, { eager: true })}<span class="aux-btn-label">攻击</span></div>
         <div class="aux-btn" id="btn-quick-run">⚡<span class="aux-btn-label">疾跑</span></div>
         <div class="aux-btn" id="btn-quick-jump">🦘<span class="aux-btn-label">跳跃</span></div>
       </div>
+      <button class="aux-btn" id="btn-open-inv" aria-label="背包">🎒<span class="aux-btn-label">背包</span></button>
       <div class="main-action-capsule" id="main-action-btn">
         <span id="main-action-icon">💬</span>
         <span id="main-action-text">互动</span>
@@ -2207,8 +2263,8 @@ export class UIManager {
       if (capIcon && capText && capBtn) {
         capIcon.textContent = '🍶';
         capText.textContent = '喝水救命';
-        capBtn.style.background = 'linear-gradient(135deg, #d63031, #e17055)';
-        capBtn.style.boxShadow = '0 0 20px rgba(214, 48, 49, 0.8)';
+        capBtn.style.background = '';
+        capBtn.style.boxShadow = '';
       }
     }
     const stripCanteen = this._hudEl('strip-val-canteen');

@@ -681,7 +681,8 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
    - **横屏更多抽屉双列防截断（#12）**：在 `@media (orientation: landscape) and (max-height: 500px)` 下为 `.hud-nav-secondary.hud-drawer.open` 启用双列紧凑网格布局并补齐 `.notice-opt` 样式，确保 890×400 视口一屏完整露出底部画质与提示强度开关。
    - **水体泡沫空纹理警告消除（#13）**：`IslandTerrain.js` 改用独立 `loadTex('/textures/water_foam.png')` 加载浪沫贴图，消除异步图片未就绪时 `.clone()` 触发的 `Texture marked for update but no image data found` 警告。
 
-4. **实际验证与未验证边界**：
-   - **实际验证**：无头 Chrome CDP 在 890×400（横屏）与 400×890（竖屏）下完成全部 13 项修复的 DOM/几何断言与截图目视核验（控制台错误 0 条、空纹理警告 0 条）；`node tools/verify-golden-path.mjs` 序章至第六章黄金路径及每章存档导入导出往返校验通过；`verify-e1-economy-repair`、`verify-g3-economy-gate`、`verify-ship-upgrade-system`、`verify-mobile-adaptability`、`verify-icon-wiring`、`verify-mainline-spine`、`verify-save-schema-v2` 回归通过；`android/app/build.gradle` 升级至 `versionCode 28` / `versionName "1.0.28"`，完成 Capacitor 同步、Debug APK 构建与 `adb install -r` Seeker 真机覆盖安装。
-   - **未验证**：Seeker 真机上的物理手指长时实操手感、刘海/挖孔安全区实机观感、MWA / Seed Vault 真机硬件钱包签名唤起、以及真实链上主网支付（按红线未开启主网支付测试）。
+4. **与远端奶油化 HUD（`58a8567`）合并及实际验证边界**：
+   - **合并说明**：拉取并合并 `origin/main`（`58a8567` UI 施工轮 1 奶油化设计令牌与双向 HUD），保留 `android/app/build.gradle` 的 `versionCode 28` / `versionName "1.0.28"`（兼容本机此前已装 `versionCode 27` 覆盖升级），将 `#onboarding-card` 升级为奶油色板并维持快捷栏上方无遮挡定位，移除 `#btn-quick-attack` 旧内联渐变。
+   - **实际验证**：无头 Chrome CDP 在 890×400（横屏）与 400×890（竖屏）下完成全部 13 项修复的 DOM/几何断言与截图目视核验（控制台错误 0 条、空纹理警告 0 条）；合并后复测 `verify-mainline-spine`、`verify-ship-upgrade-system`、`verify-g3-economy-gate`、`verify-a1-ledger-ui` 及 `tools/verify-golden-path.mjs`（序章至第六章全流程）100% 通过；完成 `npm run build:android` 与 Gradle `assembleDebug`，最新安装包已归档至 `E:\CastawaySOL\apks\CastawaySOL-v1.0.28-debug.apk`。
+   - **未验证**：打包完成时 Seeker 手机 USB 连接断开（`adb devices` 为空），`v1.0.28` APK 尚未写入真机；Seeker 真机物理手指长时实操手感、刘海/挖孔安全区实机观感、MWA / Seed Vault 真机硬件钱包签名唤起及真实链上主网支付均未验证（按红线未开启主网支付测试）。
 
