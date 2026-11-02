@@ -236,7 +236,7 @@ export class UIManager {
         -webkit-tap-highlight-color: transparent;
       }
       .aux-btn:active { transform: scale(0.90); border-color: #E9B23F; }
-      .aux-btn-label { font-size: 9.5px; color: #7D5E47; margin-top: 1px; pointer-events: none; }
+      .aux-btn-label { font-size: 10.5px; color: #7D5E47; margin-top: 1px; pointer-events: none; }
 
       /* 主情境动作大胶囊 */
       .main-action-capsule {

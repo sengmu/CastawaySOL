@@ -17,7 +17,7 @@ const cozyCss = fs.readFileSync(path.join(projectRoot, "src/ui/CozyPortraitHud.c
 const landscapeCss = fs.readFileSync(path.join(projectRoot, "src/ui/CozyLandscapeHud.css"), "utf8");
 
 // 1) 顶部 flex 行容器：状态胶囊与右侧三按钮同行同高 48px、gap 8px、外边距 12px
-assert.ok(cozyCss.includes("height: 87px !important;"), "顶部两张状态卡本体必须收在 87px 内");
+assert.ok(cozyCss.includes("height: 98px !important;"), "顶部两张状态卡本体必须收在 98px 内（体积拉升轮新预算）");
 assert.ok(cozyCss.includes("width: 134px !important;"), "右侧三按钮组必须容纳三个 42px 点击区及间距");
 assert.ok(cozyCss.includes("background: var(--cozy-hud-surface)") && landscapeCss.includes("--cozy-hud-surface:"), "竖屏与横屏必须共用桌面 HUD 的深绿面板色板");
 
@@ -37,8 +37,8 @@ assert.ok(vjCode.includes("centerYFromBottom = isPortrait ? (Math.max(16, sab) +
 assert.ok(cozyCss.includes("bottom: max(16px, var(--sab, 0px)) !important;"), "右下按钮区必须使用同一安全边距");
 
 // 5) 右下组：44px 小按钮在 88px 主按钮左侧，保留 4px 水平间距与情境攻击替换位置。
-assert.ok(cozyCss.includes("width: 136px !important;"), "右下操作区宽度必须固定为 136px");
-assert.ok(cozyCss.includes("width: 88px !important;"), "互动主按钮宽度必须为 88px");
+assert.ok(cozyCss.includes("width: 148px !important;"), "右下操作区宽度必须固定为 148px（体积拉升轮新预算）");
+assert.ok(cozyCss.includes("width: 96px !important;"), "互动主按钮宽度必须为 96px（体积拉升轮新预算）");
 assert.ok(cozyCss.includes("#btn-quick-attack:not(.ctx-hidden)"), "战斗时必须有情境攻击位置");
 assert.ok(cozyCss.includes("#btn-quick-jump { display: none !important; }"), "战斗时攻击必须替换跳跃，不能增加第四个按钮");
 assert.ok(cozyCss.includes(".aux-btn.ctx-hidden { display: none !important; }"), "隐藏的攻击键不可占用触控区");
@@ -68,7 +68,7 @@ function verifyGridLines(screenWidth, screenHeight, sat, sar, sab, sal, phoneMod
   const marginL = Math.max(12, sal);
 
   // 网格线 2: 顶部同高
-  const topStripHeight = 87;
+  const topStripHeight = 98;
   const topButtonsHeight = 42;
   assert.ok(topStripHeight >= topButtonsHeight, "顶部状态带容纳 42px 按钮组");
 
