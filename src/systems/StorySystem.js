@@ -38,6 +38,12 @@ export class StorySystem {
     this.endedEndingId = null;             // 旧档兼容；结局已下线
     this.isCompleted = false;
 
+    // 挖矿主线里程碑与过章凭据 (Mining Spine Gates)
+    this.pureCrystalDelivered = false;     // 高纯精炼纯晶是否提纯交付
+    this.raymondRescued = false;           // 学者雷蒙德是否救回大本营
+    this.lighthouseLit = false;            // 北崖古灯塔一期大工程是否点亮
+    this.firstResonanceSettled = false;    // 首次地脉共振勘探是否完成结算
+
     // 推进防抖锁 (防止同一帧重复触发)
     this.isAdvancing = false;
 
@@ -278,6 +284,23 @@ export class StorySystem {
         return;
       }
     }
+
+    // 3. 章节门跨章推进检测：若当前章节末步已达成，但此前受阻于挖矿里程碑，一旦达成自动推进
+    if (this.currentStepIndex === this.getCurrentChapter().steps.length - 1) {
+      let stepNarrativeMet = false;
+      const stepId = currentStep.id;
+      if (stepId === 'find_campsite') stepNarrativeMet = this.hasReachedCampsite;
+      else if (stepId === 'craft_axe') stepNarrativeMet = this.hasCraftedAxe;
+      else if (stepId === 'befriend_monkey') stepNarrativeMet = this.monkeyBefriended;
+      else if (stepId === 'radio_contact') stepNarrativeMet = this.radioBroadcasted;
+      else if (stepId === 'rescue_partner') stepNarrativeMet = this.secondKidAwake;
+      else if (stepId === 'collect_gems') stepNarrativeMet = this.gemsCollected.size >= 3;
+
+      if (stepNarrativeMet && this.canPassChapterGate(this.currentChapterId)) {
+        this.#advanceStep();
+        return;
+      }
+    }
   }
 
   // === 真实行为监听器 (Action-based Triggers) ===
@@ -321,6 +344,7 @@ export class StorySystem {
       this.hasCraftedAxe = true;
       this.#advanceStep();
     } else if (curStepId === 'fix_radio' && product === 'workradio') {
+      this.pureCrystalDelivered = true;
       this.#advanceStep();
     }
   }
@@ -348,6 +372,63 @@ export class StorySystem {
     this.secondKidAffection = 80;
   }
 
+  // 矿机主线章节门验证 (Mining Spine Milestone Gates)
+  canPassChapterGate(chapterId) {
+    if (!this.game || !this.game.miningRig) return true;
+    const rig = this.game.miningRig;
+    const inv = this.game.ui?.inventory || {};
+    const ledger = this.game.economyLedger;
+
+    if (chapterId === 0) {
+      const hasCrystal = (inv.sol_crystal || 0) > 0 || (rig.loadedCrystals || 0) > 0 || (rig.totalBlocksMined || 0) > 0;
+      return !!rig && hasCrystal;
+    }
+    if (chapterId === 1) {
+      return (rig.totalBlocksMined || 0) >= 1 && (rig.totalSolMined || 0) >= 6;
+    }
+    if (chapterId === 2) {
+      const hasScanner = (rig.scannerLevel || 0) >= 1 || (inv.geo_scanner_mk1 || 0) > 0;
+      const hasResonance = this.firstResonanceSettled === true ||
+        (rig.resonance?.history?.length || 0) >= 1 ||
+        (rig.shardCount || 0) > 0 ||
+        Boolean(ledger?.days?.some(d => (d.outflow?.sol_crystal?.resonance_commit || 0) > 0 || (d.inflow?.sol_shard?.resonance_shard || 0) > 0));
+      return hasScanner && hasResonance;
+    }
+    if (chapterId === 3) {
+      const pureDelivered = this.pureCrystalDelivered === true ||
+        Boolean(ledger?.days?.some(d => (d.outflow?.sol_crystal?.refinery_consume || 0) > 0)) ||
+        (this.game.campFacilities?.refineryLevel || 0) >= 1;
+      const rigL2 = (rig.rigLevel || 1) >= 2;
+      return pureDelivered && rigL2;
+    }
+    if (chapterId === 4) {
+      const raymond = this.raymondRescued === true ||
+        this.game.timberIsleScene?.survivorRescued === true ||
+        this.game.raymondSettled === true;
+      return this.secondKidAwake === true && raymond;
+    }
+    if (chapterId === 5) {
+      const lit = this.lighthouseLit === true || this.game.lighthouse?.isLit === true;
+      const rigL4 = (rig.rigLevel || 1) >= 4;
+      return lit && rigL4;
+    }
+    return true;
+  }
+
+  notifyChapterGateBlocked(chapterId) {
+    if (!this.game || !this.game.ui) return;
+    const tips = {
+      0: '🏕️ 请先检视营地绿色矿机雏形并装载首块原石！',
+      1: '⛏️ 第一章过章要求：营地矿机完成首次出块，且累计挖矿产出达到 6 枚算力代币！',
+      2: '🛰️ 第二章过章要求：研制地质扫描仪 Mk1 并完成首次地脉共振勘探结算！',
+      3: '🔥 第三章过章要求：建造精炼炉提炼交付高纯度纯晶，并将矿机升级至 L2！',
+      4: '⛵ 第四章过章要求：造船出海前往浮木岛救回学者雷蒙德，解锁 L3 蓝图！',
+      5: '🗼 第五章过章要求：交付多梯晶石点亮北崖灯塔一期大工程，并将矿机升至 L4！'
+    };
+    const tip = tips[chapterId] || '🚧 尚未达成当前章节挖矿里程碑！';
+    this.game.ui.showToast(tip, 'medium');
+  }
+
   // 单步防跃迁推进守卫
   #advanceStep() {
     if (this.isCompleted || this.isAdvancing) return;
@@ -359,6 +440,11 @@ export class StorySystem {
         this.currentStepIndex++;
         this.notifyQuestProgress(true);
       } else {
+        // 章节门验证：只有满足挖矿交付物里程碑方可通过本章
+        if (!this.canPassChapterGate(this.currentChapterId)) {
+          this.notifyChapterGateBlocked(this.currentChapterId);
+          return;
+        }
         // 晋级下一章节
         if (this.currentChapterId < this.chapters.length - 1) {
           this.currentChapterId++;
@@ -441,6 +527,10 @@ export class StorySystem {
       radioBroadcasted: this.radioBroadcasted,
       raftBuilt: this.raftBuilt,
       gemsCollected: Array.from(this.gemsCollected),
+      pureCrystalDelivered: this.pureCrystalDelivered,
+      raymondRescued: this.raymondRescued,
+      lighthouseLit: this.lighthouseLit,
+      firstResonanceSettled: this.firstResonanceSettled,
       endedEndingId: this.endedEndingId,
       onboardingStep: this.onboardingStep,
       onboardingDismissed: this.onboardingDismissed
@@ -464,6 +554,10 @@ export class StorySystem {
     if (typeof data.sosBuilt === 'boolean') this.sosBuilt = data.sosBuilt;
     if (typeof data.radioBroadcasted === 'boolean') this.radioBroadcasted = data.radioBroadcasted;
     if (typeof data.raftBuilt === 'boolean') this.raftBuilt = data.raftBuilt;
+    if (typeof data.pureCrystalDelivered === 'boolean') this.pureCrystalDelivered = data.pureCrystalDelivered;
+    if (typeof data.raymondRescued === 'boolean') this.raymondRescued = data.raymondRescued;
+    if (typeof data.lighthouseLit === 'boolean') this.lighthouseLit = data.lighthouseLit;
+    if (typeof data.firstResonanceSettled === 'boolean') this.firstResonanceSettled = data.firstResonanceSettled;
     if (Array.isArray(data.gemsCollected)) this.gemsCollected = new Set(data.gemsCollected);
     this.endedEndingId = null;
     // 第六章即成长主线已完成；兼容没有 isCompleted 的旧档。

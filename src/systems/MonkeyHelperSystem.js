@@ -184,6 +184,10 @@ export class MonkeyHelperSystem {
 
   // 执行岩缝钻穴寻宝技能 (Explore Crevice)
   commandExploreCrevice(creviceObj) {
+    if (this.game?.story?.canPassChapterGate && this.game.story.currentChapterId < 3) {
+      if (this.game.ui) this.game.ui.showToast('🐒 小猴 Bub 对幽暗石缝感到畏惧，需等待地脉勘探与工具精通（需进入第三章）！', 'medium');
+      return false;
+    }
     if (!this.isAvailable()) {
       this.game.ui.showToast('🐒 小猴 Bub 正忙或尚未入队！', 'medium');
       return false;

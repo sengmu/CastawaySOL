@@ -377,6 +377,11 @@ export class CampFacilitiesSystem {
 
   // 建造与升级古法纯晶精炼炉 (L1: 3批/日, L2: 6批/日)
   buildRefinery() {
+    if (this.game?.story && this.game.story.currentChapterId < 3) {
+      const msg = '纯晶精炼技术尚未解锁（需进入第三章）！';
+      if (this.game?.ui) this.game.ui.showToast(msg, 'medium');
+      return { ok: false, msg };
+    }
     const nextLevel = this.refineryLevel + 1;
     if (nextLevel > 2) {
       if (this.game?.ui) this.game.ui.showToast('精炼炉已达到最高等级！', 'medium');

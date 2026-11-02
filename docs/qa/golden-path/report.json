@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-02T10:08:17.101Z",
+  "started": "2026-11-02T11:37:58.618Z",
   "steps": [
     {
       "chapter": 0,
@@ -60,8 +60,8 @@
         "broken_radio": 1,
         "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
         "kindling": 1
       },
@@ -74,14 +74,14 @@
       "isCompleted": false,
       "banner": "🚩 [第一章：钻木取火与工匠雏形] 在合成台研制【锋利石斧 (Stone Axe)】（木棍 + 坚硬石块）！",
       "inventory": {
-        "apple": 0,
+        "apple": 1,
         "tree_branch": 8,
         "stone_chunk": 4,
         "broken_radio": 1,
         "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1
@@ -95,14 +95,14 @@
       "isCompleted": false,
       "banner": "🚩 [第二章：丛林猴影 (Bub)] 林中突然窜出一只淘气小猴！追循叫声前往东侧密林探查！",
       "inventory": {
-        "apple": 0,
+        "apple": 1,
         "tree_branch": 7,
         "stone_chunk": 3,
         "broken_radio": 1,
         "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
@@ -117,14 +117,14 @@
       "isCompleted": false,
       "banner": "🚩 [第二章：丛林猴影 (Bub)] 小猴子馋得直流口水！在背包中选中【苹果】或【烤鱼】点按互动按钮投喂它！",
       "inventory": {
-        "apple": 0,
+        "apple": 1,
         "tree_branch": 7,
         "stone_chunk": 3,
         "broken_radio": 1,
         "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
@@ -140,16 +140,13 @@
       "banner": "🚩 [第三章：无线通讯与邻岛求救] 打捞搁浅物资箱中的零件，在合成台修复为【工作收音机】！",
       "inventory": {
         "apple": 0,
-        "tree_branch": 7,
-        "stone_chunk": 3,
         "broken_radio": 1,
         "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
-        "kindling": 1,
-        "baked_apple": 0,
+        "baked_apple": 1,
         "stone_axe": 1
       },
       "action": "merged recovered radio parts",
@@ -162,17 +159,15 @@
       "banner": "🚩 [第三章：无线通讯与邻岛求救] 手持收音机前往南岸 S.O.S 地标点按互动按钮架设天线，接收邻岛求救信号！",
       "inventory": {
         "apple": 0,
-        "tree_branch": 7,
-        "stone_chunk": 3,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
-        "kindling": 1,
-        "baked_apple": 0,
+        "baked_apple": 1,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "built SOS and contacted radio",
@@ -185,17 +180,15 @@
       "banner": "🚩 [第四章：筹备远航与出海营救] 在西南浅滩造好【求生大木筏】，准备扬帆出海展开营救！",
       "inventory": {
         "apple": 0,
-        "tree_branch": 7,
-        "stone_chunk": 1,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 3,
-        "coconut": 3,
         "tree_sap": 1,
+        "coconut": 2,
         "tree_bark": 0,
-        "kindling": 1,
-        "baked_apple": 0,
+        "baked_apple": 1,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "gathered raft materials and used shipyard",
@@ -208,13 +201,13 @@
       "banner": "🚩 [第四章：筹备远航与出海营救] 在东北悬崖高台木屋旁巡查，发现昏迷的第二幸存者，点按互动按钮紧急救援！",
       "inventory": {
         "apple": 0,
-        "stone_chunk": 1,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 1,
-        "coconut": 7,
-        "baked_apple": 0,
+        "coconut": 9,
+        "baked_apple": 1,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "fed partner through interaction",
@@ -227,13 +220,13 @@
       "banner": "🚩 [第五章：扩大生产与海岛家园] 给同伴投喂清水与鲜美烤鱼，将彼此的好感度培养至 100 以上！",
       "inventory": {
         "apple": 0,
-        "stone_chunk": 1,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 1,
-        "coconut": 7,
-        "baked_apple": 0,
+        "coconut": 9,
+        "baked_apple": 1,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "fed partner through interaction",
@@ -246,13 +239,13 @@
       "banner": "🚩 [第五章：扩大生产与海岛家园] 探索全岛采集 3 颗神秘古代宝石（星形宝石、菱形宝石、圆月宝石）！",
       "inventory": {
         "apple": 0,
-        "stone_chunk": 1,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 1,
-        "coconut": 6,
+        "coconut": 9,
         "baked_apple": 0,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "visited gem pickup locations",
@@ -265,13 +258,13 @@
       "banner": "🏝️ 主线完成 · 自由经营：继续挖矿、扩建营地与探索群岛！",
       "inventory": {
         "apple": 0,
-        "stone_chunk": 1,
         "broken_radio": 0,
-        "battery": 0,
+        "battery": 1,
         "nail": 1,
-        "coconut": 6,
+        "coconut": 9,
         "baked_apple": 0,
         "stone_axe": 1,
+        "sol_crystal_pure": 0,
         "workradio": 1
       },
       "action": "opened freeplay via internal state guard",
@@ -289,7 +282,7 @@
   ],
   "errors": [],
   "interventions": {
-    "count": 53,
+    "count": 61,
     "texts": [
       "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216."
     ]
@@ -297,7 +290,7 @@
   "assetReadiness": [
     {
       "purpose": "raft resource collection",
-      "waitMs": 2,
+      "waitMs": 1,
       "loaded": 39,
       "expected": 39
     }

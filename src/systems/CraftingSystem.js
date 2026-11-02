@@ -18,6 +18,8 @@ export class CraftingSystem {
       iron_ingot: { name: '精密铁锭', icon: '🧱', category: 'material', desc: '高温熔炉锻打冶炼的高硬度纯铁锭，是工业级高阶工具的核心。' },
       broken_radio: { name: '故障无线电', icon: '📻', category: 'special', desc: '被海水浸湿的便携应急电台，装入干燥电池即可恢复呼救功能。' },
       battery: { name: '高能干电池', icon: '🔋', category: 'special', desc: '完好无损的应急干电池，可为无线电设备供应充足电能。' },
+      sol_crystal_pure: { name: '高纯度精炼硅晶', icon: '💎', category: 'special', desc: '纯晶精炼炉提炼出的高纯度晶石，质地澄澈，是高阶科技与灯塔工程核心。' },
+      sol_crystal_deep: { name: '深层海脉晶核', icon: '🔮', category: 'special', desc: '浮木岛沉船海沟与深海矿脉产出的幽蓝晶核，蕴含充沛地脉能量。' },
 
       // 工具类
       kindling: { name: '引火物', icon: '🔥', category: 'tool', desc: '木棍与干燥树皮研磨出的引火物，靠近营地篝火可烹饪生食。' },
@@ -140,7 +142,14 @@ export class CraftingSystem {
       {
         id: 'workradio',
         name: '工作收音机 (Work Radio)',
-        desc: '故障电台 + 干电池：【ED1 直升机结局】在沙滩广播呼叫搜救！',
+        desc: '故障电台 + 高纯精炼硅晶（或干电池）：【ED1 直升机结局】在沙滩广播呼叫搜救！',
+        req: { broken_radio: 1, sol_crystal_pure: 1 },
+        result: { id: 'workradio', name: '工作收音机', count: 1 }
+      },
+      {
+        id: 'workradio_battery',
+        name: '工作收音机 (电池备选)',
+        desc: '故障电台 + 干电池：在沙滩广播呼叫搜救！',
         req: { broken_radio: 1, battery: 1 },
         result: { id: 'workradio', name: '工作收音机', count: 1 }
       },

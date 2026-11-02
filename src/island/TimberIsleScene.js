@@ -143,7 +143,7 @@ export class TimberIsleScene {
     this.group.add(this.shipwreckGroup);
   }
 
-  // 3. 岛上特产物理资源 (高阶方木料 lumber、坚固木板 wood_plank、散落铁钉 nail)
+  // 3. 岛上特产物理资源 (高阶方木料 lumber、坚固木板 wood_plank、散落铁钉 nail、深层海脉晶核 sol_crystal_deep)
   initResources() {
     const resourceSpawns = [
       { id: 'ti_res_1', type: 'lumber', name: '重型浮木方料', pos: [6, 0.4, -3], icon: '🪵' },
@@ -151,7 +151,9 @@ export class TimberIsleScene {
       { id: 'ti_res_3', type: 'wood_plank', name: '冲岸坚固木板', pos: [-12, 0.2, 4], icon: '🪵' },
       { id: 'ti_res_4', type: 'wood_plank', name: '冲岸坚固木板', pos: [2, 0.3, -9], icon: '🪵' },
       { id: 'ti_res_5', type: 'nail', name: '沉船散落铁钉', pos: [-4, 0.3, 2], icon: '🔩' },
-      { id: 'ti_res_6', type: 'wood_plank', name: '风干破船板', pos: [8, 0.2, 8], icon: '🪵' }
+      { id: 'ti_res_6', type: 'wood_plank', name: '风干破船板', pos: [8, 0.2, 8], icon: '🪵' },
+      { id: 'ti_res_deep_1', type: 'sol_crystal_deep', name: '深层海脉晶核', pos: [-9, 0.3, -5], icon: '🔮' },
+      { id: 'ti_res_deep_2', type: 'sol_crystal_deep', name: '深层海脉晶核', pos: [14, 0.3, -2], icon: '🔮' }
     ];
 
     const lumberGeo = new THREE.BoxGeometry(0.55, 0.35, 1.9);
@@ -163,6 +165,9 @@ export class TimberIsleScene {
     const nailGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.45, 6);
     const nailMat = new THREE.MeshStandardMaterial({ color: 0x718093, metalness: 0.7, roughness: 0.3 });
 
+    const deepGeo = new THREE.OctahedronGeometry(0.35, 0);
+    const deepMat = new THREE.MeshStandardMaterial({ color: 0x0984e3, emissive: 0x0652dd, roughness: 0.2 });
+
     resourceSpawns.forEach(item => {
       const rGroup = new THREE.Group();
       rGroup.position.fromArray(item.pos);
@@ -173,6 +178,9 @@ export class TimberIsleScene {
         mesh.rotation.y = Math.random() * Math.PI;
       } else if (item.type === 'wood_plank') {
         mesh = new THREE.Mesh(plankGeo, plankMat);
+        mesh.rotation.y = Math.random() * Math.PI;
+      } else if (item.type === 'sol_crystal_deep') {
+        mesh = new THREE.Mesh(deepGeo, deepMat);
         mesh.rotation.y = Math.random() * Math.PI;
       } else {
         mesh = new THREE.Mesh(nailGeo, nailMat);
@@ -330,6 +338,9 @@ export class TimberIsleScene {
       }
 
       this.survivorRescued = true;
+      if (this.game?.story) {
+        this.game.story.raymondRescued = true;
+      }
       if (this.alertMesh) this.alertMesh.visible = false;
       soundEngine.playPlaceFurniture();
 

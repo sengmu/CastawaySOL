@@ -38,6 +38,8 @@ import { TREASURY_ADDRESS } from './config/payment.js';
 import { MonkeyHelperSystem } from './systems/MonkeyHelperSystem.js';
 import { TidalTrapSystem } from './systems/TidalTrapSystem.js';
 import { MiningRigSystem } from './systems/MiningRigSystem.js';
+import { LighthouseEntity } from './entities/LighthouseEntity.js';
+import { OrderBoardSystem } from './systems/OrderBoardSystem.js';
 import { PetCompanionSystem } from './systems/PetCompanionSystem.js';
 import { WeatherSurvivalSystem } from './systems/WeatherSurvivalSystem.js';
 import { AncientTempleEntity } from './entities/AncientTempleEntity.js';
@@ -183,6 +185,8 @@ class Game {
     this.monkeyHelper = new MonkeyHelperSystem(this);
     this.tidalTrap = new TidalTrapSystem(this);
     this.miningRig = new MiningRigSystem(this);
+    this.lighthouse = new LighthouseEntity(this.scene, this);
+    this.orderBoard = new OrderBoardSystem(this);
     this.petCompanion = new PetCompanionSystem(this);
     this.weatherSystem = new WeatherSurvivalSystem(this);
     this.ancientTemple = new AncientTempleEntity(this.scene);
@@ -619,6 +623,10 @@ class Game {
           this.campFacilities.onDayPassed();
         }
 
+        if (this.orderBoard && this.orderBoard.onDayPassed) {
+          this.orderBoard.onDayPassed();
+        }
+
         if (this.miningRig && this.miningRig.onNewDay) {
           this.miningRig.onNewDay(this.survival.day);
         }
@@ -644,6 +652,7 @@ class Game {
       this.ui.updateSurvivalHUD();
       soundEngine.playPlaceFurniture();
       if (this.campFacilities) this.campFacilities.onDayPassed();
+      if (this.orderBoard && this.orderBoard.onDayPassed) this.orderBoard.onDayPassed();
       if (this.saveSystem) this.saveSystem.saveGame("sleep_overnight");
       this.ui.showToast(`⛺ 熟睡了一夜，迎来第 ${this.survival.day} 天！`, "important");
       this._isSleeping = false;
@@ -846,6 +855,12 @@ class Game {
         return;
       }
 
+      // 4.4.1.5 营地日常交付订单板 (-12.0, 0.05, 20.2)
+      if (anchors.orderBoard && playerPos.distanceTo(anchors.orderBoard) < 2.5) {
+        if (this.ui) this.ui.openOrderBoardModal();
+        return;
+      }
+
       // 4.4.2 救援空投与商业化特权无线电站 (-10.2, 0.05, 22.2)
       if (playerPos.distanceTo(anchors.radioTerminal) < 2.5) {
         if (this.shopManager) this.shopManager.open();
@@ -906,6 +921,34 @@ class Game {
         this.monkeyHelper.commandExploreCrevice(creviceAction.target);
         return;
       }
+    }
+
+    // 4.4.8 北崖灯塔一期大工程 (24, 1.8, -26)
+    if (this.lighthouse && playerPos.distanceTo(new THREE.Vector3(24, 1.8, -26)) < 4.5) {
+      if (this.lighthouse.isLit) {
+        if (this.ui) this.ui.showDialog('🌟 北崖古灯塔（一期已点亮）', '金色探照光柱破浪指航，北崖矿脉共振轰鸣运转！\n\n• 全岛矿机算力达到极致，L4 终极算力许可已解锁！\n• 茫茫海雾已被驱散，远洋自由航行已开启！');
+      } else {
+        const canDeliver = this.lighthouse.checkCanDeliver();
+        const inv = this.ui ? this.ui.inventory : {};
+        const raw = inv.sol_crystal || 0;
+        const pure = inv.sol_crystal_pure || 0;
+        const deep = inv.sol_crystal_deep || 0;
+        if (canDeliver.ok) {
+          this.lighthouse.deliverPhase1();
+        } else {
+          if (this.ui) {
+            this.ui.showDialog(
+              '🗼 北崖古灯塔一期 · 修缮与能量充能',
+              `在北崖俯瞰大洋的古老灯塔遗迹，石基与透镜枢纽尚属完整，但核心共振晶座能量枯竭！\n\n【一期点亮工程交付清单】：\n` +
+              `• 硅晶原石 (sol_crystal): ${raw} / 10\n` +
+              `• 高纯度精炼纯晶 (sol_crystal_pure): ${pure} / 3\n` +
+              `• 深层海脉晶核 (sol_crystal_deep): ${deep} / 2\n\n` +
+              `💡 备齐上述三梯晶石后，靠近按 [E] 即可注入能量，全域点亮灯塔并完成第五章主线！`
+            );
+          }
+        }
+      }
+      return;
     }
 
     // 4.5 检查是否在摆放的营地功能设施旁 (储物木箱、净水滴滤台、营地单人床)
@@ -1402,6 +1445,9 @@ class Game {
     if (this.miningRig) {
       this.miningRig.update(delta);
     }
+    if (this.lighthouse) {
+      this.lighthouse.update(delta);
+    }
     if (this.petCompanion) {
       this.petCompanion.update(delta);
     }
@@ -1522,6 +1568,8 @@ class Game {
     const isCampfire = distanceXZ(playerPos, ISLAND_LAYOUT.campfire) < 3.2;
     const isCampChest = Math.hypot(playerPos.x - (-14.5), playerPos.z - 23.5) < 2.5;
     const isNoticeboard = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.noticeboard) < 2.5 : false;
+    const isOrderBoard = this.campEntities?.anchors?.orderBoard ? playerPos.distanceTo(this.campEntities.anchors.orderBoard) < 2.5 : false;
+    const isLighthouse = this.lighthouse && playerPos.distanceTo(new THREE.Vector3(24, 1.8, -26)) < 4.5;
     const isRadioTerminal = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.radioTerminal) < 2.5 : false;
     const isNativePurifier = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.waterPurifier) < 2.5 : false;
     const isBuoyWinch = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.buoyWinch) < 2.8 : false;
@@ -1611,6 +1659,12 @@ class Game {
       this.ui.setContextAction('camp_manage');
       const curJob = this.campFacilities ? this.campFacilities.getResidentJob('second_kid') : null;
       this.ui.showInteraction(`按 [E] 查阅【营地经营告示板】· 幸存者排班 (当前: ${curJob ? curJob.name : '在岗'})`);
+    } else if (isOrderBoard) {
+      this.ui.setContextAction('order_board');
+      this.ui.showInteraction('按 [E] 查看【营地日常交付订单板】(每日刷新3项契约)');
+    } else if (isLighthouse) {
+      this.ui.setContextAction('lighthouse');
+      this.ui.showInteraction(this.lighthouse.isLit ? '🌟 北崖古灯塔（一期已点亮）' : '按 [E] 检视/交付【北崖灯塔一期大工程】');
     } else if (isRadioTerminal) {
       this.ui.setContextAction('shop');
       this.ui.showInteraction('按 [E] 接入【救援无线电站】· 呼叫空投与特权');

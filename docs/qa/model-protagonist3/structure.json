@@ -1,0 +1,524 @@
+{
+  "glb": "public/models/protagonist.glb",
+  "bones": {
+    "count": 45,
+    "names_and_parents_identical_to_pilot": true,
+    "mapped_13": {
+      "Leg_1_L": true,
+      "Leg_1_R": true,
+      "Leg_2_L": true,
+      "Leg_2_R": true,
+      "Arm_1_L": true,
+      "Arm_1_R": true,
+      "Head": true,
+      "S_Tail_1": true,
+      "S_Tail_2": true,
+      "S_Tail_3": true,
+      "Spine_1": true,
+      "Arm_2_L": true,
+      "Arm_2_R": true
+    },
+    "mapped_13_all_present": true,
+    "hierarchy": [
+      [
+        "Root",
+        null
+      ],
+      [
+        "Trans_Root",
+        "Root"
+      ],
+      [
+        "Skl_Root",
+        "Trans_Root"
+      ],
+      [
+        "Spine_1",
+        "Skl_Root"
+      ],
+      [
+        "Spine_2",
+        "Spine_1"
+      ],
+      [
+        "Spine_3",
+        "Spine_2"
+      ],
+      [
+        "Clavicle_L",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_L",
+        "Clavicle_L"
+      ],
+      [
+        "Arm_1_L_Sub",
+        "Arm_1_L"
+      ],
+      [
+        "Arm_2_L",
+        "Arm_1_L_Sub"
+      ],
+      [
+        "Wrist_L",
+        "Arm_2_L"
+      ],
+      [
+        "Hand_L",
+        "Wrist_L"
+      ],
+      [
+        "Wrist_L_Sub",
+        "Arm_2_L"
+      ],
+      [
+        "Clavicle_R",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_R",
+        "Clavicle_R"
+      ],
+      [
+        "Arm_1_R_Sub",
+        "Arm_1_R"
+      ],
+      [
+        "Arm_2_R",
+        "Arm_1_R_Sub"
+      ],
+      [
+        "Wrist_R",
+        "Arm_2_R"
+      ],
+      [
+        "Hand_R",
+        "Wrist_R"
+      ],
+      [
+        "Wrist_R_Sub",
+        "Arm_2_R"
+      ],
+      [
+        "Neck",
+        "Spine_3"
+      ],
+      [
+        "Head",
+        "Neck"
+      ],
+      [
+        "Ear_1_L",
+        "Head"
+      ],
+      [
+        "Z_Ear_L",
+        "Ear_1_L"
+      ],
+      [
+        "Ear_1_R",
+        "Head"
+      ],
+      [
+        "Z_Ear_R",
+        "Ear_1_R"
+      ],
+      [
+        "Feel",
+        "Head"
+      ],
+      [
+        "Waist",
+        "Skl_Root"
+      ],
+      [
+        "Leg_1_L",
+        "Waist"
+      ],
+      [
+        "Leg_1_L_Sub",
+        "Leg_1_L"
+      ],
+      [
+        "Leg_2_L",
+        "Leg_1_L_Sub"
+      ],
+      [
+        "Leg_2_L_Sub",
+        "Leg_2_L"
+      ],
+      [
+        "Ankle_L",
+        "Leg_2_L_Sub"
+      ],
+      [
+        "Toe_L",
+        "Ankle_L"
+      ],
+      [
+        "Leg_1_R",
+        "Waist"
+      ],
+      [
+        "Leg_1_R_Sub",
+        "Leg_1_R"
+      ],
+      [
+        "Leg_2_R",
+        "Leg_1_R_Sub"
+      ],
+      [
+        "Leg_2_R_Sub",
+        "Leg_2_R"
+      ],
+      [
+        "Ankle_R",
+        "Leg_2_R_Sub"
+      ],
+      [
+        "Toe_R",
+        "Ankle_R"
+      ],
+      [
+        "TailRoot",
+        "Waist"
+      ],
+      [
+        "S_Tail_1",
+        "TailRoot"
+      ],
+      [
+        "S_Tail_2",
+        "S_Tail_1"
+      ],
+      [
+        "S_Tail_3",
+        "S_Tail_2"
+      ],
+      [
+        "Z_S_Tail",
+        "S_Tail_3"
+      ]
+    ]
+  },
+  "bone_diff_vs_round1": {
+    "only_in_previous": [],
+    "only_in_round3": [],
+    "order_identical": true
+  },
+  "bone_diff_vs_round2": {
+    "only_in_previous": [],
+    "only_in_round3": [],
+    "order_identical": true
+  },
+  "bone_diff_count": 0,
+  "triangles_total": 7182,
+  "triangle_budget": 8000,
+  "within_budget": true,
+  "meshes": {
+    "ProtagonistMesh": {
+      "triangles": 7182,
+      "vertices": 4799,
+      "materials": [
+        "Mat_Protagonist",
+        "Mat_Protagonist_Face"
+      ],
+      "rigid_single_bone_weights": true
+    }
+  },
+  "weighted_bones": [
+    "Arm_1_L",
+    "Arm_1_R",
+    "Arm_2_L",
+    "Arm_2_R",
+    "Head",
+    "Leg_1_L",
+    "Leg_1_R",
+    "Leg_2_L",
+    "Leg_2_R",
+    "Spine_1"
+  ],
+  "bbox": {
+    "min": [
+      -0.3590826392173767,
+      -0.201316237449646,
+      -4.132894027009115e-09
+    ],
+    "max": [
+      0.3590826392173767,
+      0.2094065248966217,
+      1.4908000230789185
+    ],
+    "size_xyz_m": [
+      0.7181652784347534,
+      0.4107227623462677,
+      1.4908000272118125
+    ]
+  },
+  "pilot_bbox_size_xyz_m": [
+    0.6398976445198059,
+    0.44423700869083405,
+    1.490828783231958
+  ],
+  "height_m": 1.4908000272118125,
+  "height_vs_pilot_pct": -0.002,
+  "height_within_1pct": true,
+  "origin_ground_center": {
+    "min_z": -4.132894027009115e-09,
+    "center_x": 0.0,
+    "center_y": 0.004045143723487854
+  },
+  "proportions_measured_from_glb": {
+    "method": "Head = bbox of vertices weighted to the Head bone (chin -> top tuft); torso = chin -> lowest Spine_1 vertex with |x| < 3 cm (trouser crotch); legs = ground -> crotch",
+    "chin_z_m": 1.058467984199524,
+    "crotch_z_m": 0.5515960454940796,
+    "head_height_m": 0.43233203887939453,
+    "head_pct": 29.0,
+    "torso_pct": 34.0,
+    "legs_pct": 37.0,
+    "heads_tall": 3.448,
+    "head_width_incl_hair_ears_m": 0.47352032363414764,
+    "head_width_pct": 31.76,
+    "spec_targets_pct": {
+      "head": 29,
+      "torso": 34,
+      "legs": 37,
+      "head_width": 31
+    }
+  },
+  "textures": {
+    "protagonist_body": [
+      512,
+      512
+    ],
+    "protagonist_face": [
+      1024,
+      1024
+    ]
+  },
+  "materials": [
+    "Mat_Protagonist",
+    "Mat_Protagonist_Face"
+  ],
+  "glb_bytes": 334032,
+  "triangles_by_part": {
+    "parts": {
+      "skull": 896,
+      "ears": 200,
+      "nose": 54,
+      "hair_cap": 440,
+      "hair_tuft_top": 224,
+      "hair_tuft_side": 224,
+      "hair_tuft_back": 224,
+      "leaf": 144,
+      "shirt": 1088,
+      "neck": 40,
+      "patch": 140,
+      "pants_seat": 96,
+      "rope_belt": 288,
+      "rope_knot": 144,
+      "rope_tail": 32,
+      "rope_tail_end": 100,
+      "arm_upper": 192,
+      "arm_fore": 192,
+      "sleeve": 672,
+      "hand": 288,
+      "sleeve_R_upper": 80,
+      "pants_L_thigh": 80,
+      "pants": 672,
+      "thigh": 192,
+      "shin": 192,
+      "foot": 288
+    },
+    "groups": {
+      "face/head": 1150,
+      "hair": 1256,
+      "clothes": 3392,
+      "body": 1384
+    },
+    "total": 7182
+  },
+  "build_parameters_not_measurements": {
+    "head_w_unit_m": 0.47407439999999995,
+    "tufts": {
+      "top": {
+        "centre": [
+          -0.05,
+          -0.006,
+          1.4102
+        ],
+        "diameter_m": 0.1612,
+        "diameter_pct_head_w": 34.0
+      },
+      "side": {
+        "centre": [
+          -0.1678,
+          -0.014,
+          1.3473
+        ],
+        "diameter_m": 0.1564,
+        "diameter_pct_head_w": 33.0
+      },
+      "back": {
+        "centre": [
+          0.0611,
+          0.0523,
+          1.3685
+        ],
+        "diameter_m": 0.1564,
+        "diameter_pct_head_w": 33.0
+      }
+    },
+    "tuft_overlap": {
+      "top-side": 0.16,
+      "top-back": 0.17,
+      "side-back": -0.529
+    },
+    "leaf": {
+      "len_m": 0.14222231999999999,
+      "width_m": 0.085333392,
+      "thick_m": 0.0313068
+    },
+    "hems": {
+      "shirt_hem": {
+        "circumference_m": 1.0939,
+        "ring_segments": 64,
+        "vertex_spacing_m": 0.0171,
+        "notches": [
+          {
+            "width_m": 0.18,
+            "depth_m": 0.045,
+            "min_corner_radius_m": 0.0365,
+            "vertices_across": 10
+          },
+          {
+            "width_m": 0.17,
+            "depth_m": 0.042,
+            "min_corner_radius_m": 0.0349,
+            "vertices_across": 9
+          },
+          {
+            "width_m": 0.18,
+            "depth_m": 0.042,
+            "min_corner_radius_m": 0.0391,
+            "vertices_across": 10
+          }
+        ]
+      },
+      "sleeve_L": {
+        "circumference_m": 0.5223,
+        "ring_segments": 32,
+        "vertex_spacing_m": 0.0163,
+        "notches": [
+          {
+            "width_m": 0.17,
+            "depth_m": 0.042,
+            "min_corner_radius_m": 0.0349,
+            "vertices_across": 10
+          },
+          {
+            "width_m": 0.16,
+            "depth_m": 0.038,
+            "min_corner_radius_m": 0.0341,
+            "vertices_across": 9
+          }
+        ]
+      },
+      "sleeve_R": {
+        "circumference_m": 0.4846,
+        "ring_segments": 32,
+        "vertex_spacing_m": 0.0151,
+        "notches": [
+          {
+            "width_m": 0.17,
+            "depth_m": 0.042,
+            "min_corner_radius_m": 0.0349,
+            "vertices_across": 11
+          },
+          {
+            "width_m": 0.16,
+            "depth_m": 0.038,
+            "min_corner_radius_m": 0.0341,
+            "vertices_across": 10
+          }
+        ]
+      },
+      "pants_L": {
+        "circumference_m": 0.5639,
+        "ring_segments": 32,
+        "vertex_spacing_m": 0.0176,
+        "notches": [
+          {
+            "width_m": 0.175,
+            "depth_m": 0.044,
+            "min_corner_radius_m": 0.0353,
+            "vertices_across": 9
+          },
+          {
+            "width_m": 0.165,
+            "depth_m": 0.04,
+            "min_corner_radius_m": 0.0345,
+            "vertices_across": 9
+          }
+        ]
+      },
+      "pants_R": {
+        "circumference_m": 0.6286,
+        "ring_segments": 32,
+        "vertex_spacing_m": 0.0196,
+        "notches": [
+          {
+            "width_m": 0.175,
+            "depth_m": 0.044,
+            "min_corner_radius_m": 0.0353,
+            "vertices_across": 8
+          },
+          {
+            "width_m": 0.165,
+            "depth_m": 0.04,
+            "min_corner_radius_m": 0.0345,
+            "vertices_across": 8
+          },
+          {
+            "width_m": 0.16,
+            "depth_m": 0.038,
+            "min_corner_radius_m": 0.0341,
+            "vertices_across": 8
+          }
+        ]
+      }
+    },
+    "face": {
+      "eye_w": 0.042666696,
+      "eye_h": 0.050346701279999996,
+      "eye_spacing": 0.170666784,
+      "eye_zc": 1.2530173999999998,
+      "blush_d": 0.05688892799999999,
+      "mouth_w": 0.10429636799999999,
+      "mouth_thick": 0.018962976,
+      "nose_w": 0.037925952
+    },
+    "rope": {
+      "tube_d": 0.053668799999999996,
+      "knot_d": 0.08944799999999999,
+      "tail_len": 0.17889599999999997,
+      "tail_d": 0.053668799999999996,
+      "tail_end_d": 0.06559519999999999
+    },
+    "limbs": {
+      "arm_d_up_elb_wrist": [
+        0.123264,
+        0.119264,
+        0.111264
+      ],
+      "leg_d_thigh_knee_ankle": [
+        0.16108,
+        0.14708,
+        0.13707999999999998
+      ],
+      "hand_d": 0.13417199999999999,
+      "foot_len": 0.208712
+    }
+  }
+}

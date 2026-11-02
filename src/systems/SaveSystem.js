@@ -138,6 +138,8 @@ export class SaveSystem {
       miningRig: this.game.miningRig && this.game.miningRig.serialize ? this.game.miningRig.serialize() : null,
       quarryIsle: this.game.quarryIsleScene && this.game.quarryIsleScene.serialize ? this.game.quarryIsleScene.serialize() : null,
       flotsamSalvage: flotsam && flotsam.serialize ? flotsam.serialize() : null,
+      lighthouse: this.game.lighthouse && this.game.lighthouse.serialize ? this.game.lighthouse.serialize() : null,
+      orderBoard: this.game.orderBoard && this.game.orderBoard.serialize ? this.game.orderBoard.serialize() : null,
       world: {
         collectedBeachResources: beach && beach.serialize ? beach.serialize().collectedIds : [],
         collectedFlotsam: flotsam && flotsam.serialize ? flotsam.serialize().collectedIds : [],
@@ -609,6 +611,16 @@ export class SaveSystem {
     // 5.6 恢复 DePIN 绿色解密矿机状态
     if (data.miningRig && this.game.miningRig) {
       this.game.miningRig.deserialize(data.miningRig);
+    }
+
+    // 5.7 恢复北崖灯塔一期实体状态
+    if (data.lighthouse && this.game.lighthouse && typeof this.game.lighthouse.deserialize === 'function') {
+      this.game.lighthouse.deserialize(data.lighthouse);
+    }
+
+    // 5.8 恢复营地日常交付订单板状态
+    if (data.orderBoard && this.game.orderBoard && typeof this.game.orderBoard.deserialize === 'function') {
+      this.game.orderBoard.deserialize(data.orderBoard);
     }
 
     // 6. 恢复宝石拾取状态

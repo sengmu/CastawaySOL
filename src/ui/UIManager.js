@@ -2922,6 +2922,14 @@ export class UIManager {
     }
 
     if (product) {
+      if (product === 'geo_scanner_mk1' && window.__game?.story && window.__game.story.currentChapterId < 2) {
+        soundEngine.playMonsterGrowl();
+        this.showToast('🛰️ 地质扫描仪 Mk1 研制技术尚未解锁（需进入第二章）！', 'medium');
+        this.mergeSlots = [null, null];
+        this.openMergeModal();
+        return;
+      }
+
       this.inventory[a] = Math.max(0, (this.inventory[a] || 1) - 1);
       this.inventory[b] = Math.max(0, (this.inventory[b] || 1) - 1);
       this.inventory[product] = (this.inventory[product] || 0) + prodCount;
@@ -4032,6 +4040,83 @@ export class UIManager {
           }
         });
       }
+    };
+
+    render();
+    this.modalBackdrop.style.display = 'flex';
+    soundEngine.playPlaceFurniture();
+  }
+
+  // 0.5 营地日常交付订单板模态弹窗
+  openOrderBoardModal() {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    const game = window.__game;
+    if (!game || !game.orderBoard) return;
+
+    document.getElementById('modal-title').innerHTML = '📜 营地日常交付订单板 · 商业契约';
+    const body = document.getElementById('modal-body');
+
+    const render = () => {
+      const orders = game.orderBoard.getOrdersWithStatus();
+      const currentDay = game.orderBoard.currentDay;
+      const completedCount = game.orderBoard.completedCount;
+
+      let listHtml = '';
+      orders.forEach(o => {
+        const reqStr = o.reqStatus.map(r => `<span style="color:${r.cur >= r.need ? '#55efc4' : '#ff7675'}; font-weight:700;">${this.getItemName(r.key)}: ${r.cur}/${r.need}</span>`).join('，');
+        const canFulfill = o.canFulfill && !o.completed;
+
+        listHtml += `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid ${o.completed ? 'rgba(85,239,196,0.3)' : 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">${o.icon || '📜'}</span>
+                <span style="font-weight:900; color:#fff; font-size:14px;">${o.name}</span>
+                <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.08); color:#00cec9;">${o.category === 'minerals' ? '矿脉深研' : o.category === 'crafted' ? '营地构件' : '天然采集'}</span>
+              </div>
+              <div style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:4px;">${o.desc}</div>
+              <div style="font-size:11px; margin-top:6px;">所需资源：${reqStr}</div>
+              <div style="font-size:11px; color:#ffeaa7; margin-top:4px; font-weight:800;">奖励：+${o.tokenReward} 算力代币 (SOL)</div>
+            </div>
+            <div>
+              ${o.completed ? `
+                <span style="background:rgba(85,239,196,0.2); color:#55efc4; padding:6px 14px; border-radius:8px; font-weight:900; font-size:12px;">✅ 已完成</span>
+              ` : `
+                <button class="order-deliver-btn" data-order-id="${o.uniqueId}" ${canFulfill ? '' : 'disabled'} style="
+                  background:${canFulfill ? 'linear-gradient(135deg, #00cec9, #0984e3)' : 'rgba(255,255,255,0.1)'};
+                  color:${canFulfill ? '#fff' : 'rgba(255,255,255,0.4)'};
+                  border:none; border-radius:8px; padding:8px 16px; font-weight:800; font-size:12px;
+                  cursor:${canFulfill ? 'pointer' : 'not-allowed'};
+                ">
+                  交付履约
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      });
+
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-height:65vh; overflow-y:auto; padding:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:10px;">
+            <span style="font-size:12px; color:rgba(255,255,255,0.8);">📅 第 ${currentDay} 天日常订单（每日清晨重置刷新 3 项契约）</span>
+            <span style="font-size:12px; color:#00cec9; font-weight:800;">已累计履约: ${completedCount} 单</span>
+          </div>
+          ${listHtml}
+        </div>
+      `;
+
+      body.querySelectorAll('.order-deliver-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-order-id');
+          const res = game.orderBoard.deliverOrder(id);
+          if (res.ok) {
+            render();
+          } else {
+            this.showToast(res.msg, 'medium');
+          }
+        });
+      });
     };
 
     render();
@@ -6583,6 +6668,7 @@ export const LEDGER_LABELS = Object.freeze({
   resonance_main: '共振主池',
   resonance_ml: '母晶池',
   checkin: '每日签到',
+  order_deliver: '订单交付',
   rig_upgrade: '矿机升级',
   scanner: '扫描仪',
   shop: '营地商城',
@@ -6600,6 +6686,7 @@ export const LEDGER_LABELS = Object.freeze({
   decrypt_consume: '矿机解密',
   resonance_commit: '共振投入',
   refinery_consume: '精炼消耗',
+  lighthouse: '灯塔工程',
   resonance_shard: '共振残晶'
 });
 

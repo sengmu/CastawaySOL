@@ -190,6 +190,10 @@ export class ShipUpgradeSystem {
 
   // 使用算力代币黑市蓝图一键快造升级
   performSolUpgrade() {
+    if (this.game?.story && this.game.story.currentChapterId < 4) {
+      if (this.game && this.game.ui) this.game.ui.showToast('高阶适航改装蓝图尚未解锁（需进入第四章）！', 'medium');
+      return false;
+    }
     const nextTier = this.getNextTier();
     if (!nextTier || !nextTier.solCost) {
       if (this.game && this.game.ui) this.game.ui.showToast('已达到最高探索舰等级！', 'medium');
@@ -233,6 +237,9 @@ export class ShipUpgradeSystem {
 
   // 检查是否满足升级至下一级船只的材料要求 (聚合背包与营地储物箱)
   checkCanUpgrade() {
+    if (this.game?.story && this.game.story.currentChapterId < 4) {
+      return { ok: false, reason: '高阶适航改装蓝图尚未解锁（需进入第四章）！' };
+    }
     const nextTier = this.getNextTier();
     if (!nextTier || !nextTier.cost) return { ok: false, reason: '已达到最高旗舰等级！' };
 

@@ -584,6 +584,9 @@ export class MiningRigSystem {
 
   // 安装地质扫描仪
   installScanner(level) {
+    if (level === 1 && this.game?.story && this.game.story.currentChapterId < 2) {
+      return { ok: false, msg: '地质共振扫描仪 Mk1 研制技术尚未解锁（需进入第二章）' };
+    }
     const itemKey = `geo_scanner_mk${level}`;
     const inv = this.game?.ui?.inventory;
     if (!inv || (inv[itemKey] || 0) <= 0) {
@@ -935,8 +938,22 @@ export class MiningRigSystem {
   upgradeRig() {
     const next = this.rigLevel + 1;
     const fee = ODDS_TABLE.UPGRADE_COSTS[next];
-    const inv = this.game?.ui?.inventory;
     if (!fee) return { ok: false, msg: '矿机已达满级' };
+
+    if (this.game?.story) {
+      const ch = this.game.story.currentChapterId;
+      if (next === 2 && ch < 3) {
+        return { ok: false, msg: '矿机 L2 升级许可尚未解锁（需进入第三章）' };
+      }
+      if (next === 3 && (ch < 4 || (!this.game.story.raymondRescued && !this.game.timberIsleScene?.survivorRescued))) {
+        return { ok: false, msg: '矿机 L3 图纸尚未解锁（需在第四章远航浮木岛营救学者雷蒙德）' };
+      }
+      if (next === 4 && (ch < 5 || (!this.game.story.lighthouseLit && !this.game.lighthouse?.isLit))) {
+        return { ok: false, msg: '矿机 L4 终极算力图纸尚未解锁（需在第五章点亮北崖灯塔一期）' };
+      }
+    }
+
+    const inv = this.game?.ui?.inventory;
     if (!inv || (inv.sol_token || 0) < fee) return { ok: false, msg: `算力代币不足，需要 ${fee} 枚` };
     const before = structuredClone(this.serialize());
     const ledgerBefore = economyLedger(this.game).serialize();

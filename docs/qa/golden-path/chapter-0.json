@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "6d830b5d0add1639faed12ca384f23c4",
+  "saveSeed": "0f797dc724e3dc8dc491e74121ee0229",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -17,7 +17,7 @@
       }
     ]
   },
-  "timestamp": 1793614110893,
+  "timestamp": 1793619494070,
   "player": {
     "position": [
       -17,
@@ -217,6 +217,10 @@
     "radioBroadcasted": false,
     "raftBuilt": false,
     "gemsCollected": [],
+    "pureCrystalDelivered": false,
+    "raymondRescued": false,
+    "lighthouseLit": false,
+    "firstResonanceSettled": false,
     "endedEndingId": null,
     "onboardingStep": 4,
     "onboardingDismissed": false
@@ -313,7 +317,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793614099213,
+      "freeGrantTs": 1793619481352,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,
@@ -347,6 +351,55 @@
     "hasAutoSalvageBuoy": false,
     "tier": 1,
     "totalSalvaged": 0
+  },
+  "lighthouse": {
+    "isLit": false,
+    "phase1Complete": false
+  },
+  "orderBoard": {
+    "currentDay": 1,
+    "dailyOrders": [
+      {
+        "id": "order_apple",
+        "name": "果林甜品供给",
+        "req": {
+          "apple": 3
+        },
+        "tokenReward": 2,
+        "desc": "营地工匠急需鲜美红苹果补充维生素",
+        "uniqueId": "day_1_A",
+        "category": "primary",
+        "completed": false
+      },
+      {
+        "id": "order_plank",
+        "name": "船坞方木构件",
+        "req": {
+          "wood_plank": 2
+        },
+        "tokenReward": 3,
+        "extraReward": {
+          "ancient_coin": 1
+        },
+        "desc": "船坞扩建防浪板所需的规整木板",
+        "uniqueId": "day_1_B",
+        "category": "crafting",
+        "completed": false
+      },
+      {
+        "id": "order_crystal",
+        "name": "原石能量配额",
+        "req": {
+          "sol_crystal": 2
+        },
+        "tokenReward": 4,
+        "desc": "紧急支援矿机解密与电网稳压的未解密原石",
+        "uniqueId": "day_1_C",
+        "category": "mineral",
+        "completed": false
+      }
+    ],
+    "completedCount": 0
   },
   "world": {
     "collectedBeachResources": [

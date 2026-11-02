@@ -1,0 +1,335 @@
+{
+  "glb": "public/models/protagonist.glb",
+  "bones": {
+    "count": 45,
+    "names_and_parents_identical_to_pilot": true,
+    "mapped_13": {
+      "Leg_1_L": true,
+      "Leg_1_R": true,
+      "Leg_2_L": true,
+      "Leg_2_R": true,
+      "Arm_1_L": true,
+      "Arm_1_R": true,
+      "Head": true,
+      "S_Tail_1": true,
+      "S_Tail_2": true,
+      "S_Tail_3": true,
+      "Spine_1": true,
+      "Arm_2_L": true,
+      "Arm_2_R": true
+    },
+    "mapped_13_all_present": true,
+    "hierarchy": [
+      [
+        "Root",
+        null
+      ],
+      [
+        "Trans_Root",
+        "Root"
+      ],
+      [
+        "Skl_Root",
+        "Trans_Root"
+      ],
+      [
+        "Spine_1",
+        "Skl_Root"
+      ],
+      [
+        "Spine_2",
+        "Spine_1"
+      ],
+      [
+        "Spine_3",
+        "Spine_2"
+      ],
+      [
+        "Clavicle_L",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_L",
+        "Clavicle_L"
+      ],
+      [
+        "Arm_1_L_Sub",
+        "Arm_1_L"
+      ],
+      [
+        "Arm_2_L",
+        "Arm_1_L_Sub"
+      ],
+      [
+        "Wrist_L",
+        "Arm_2_L"
+      ],
+      [
+        "Hand_L",
+        "Wrist_L"
+      ],
+      [
+        "Wrist_L_Sub",
+        "Arm_2_L"
+      ],
+      [
+        "Clavicle_R",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_R",
+        "Clavicle_R"
+      ],
+      [
+        "Arm_1_R_Sub",
+        "Arm_1_R"
+      ],
+      [
+        "Arm_2_R",
+        "Arm_1_R_Sub"
+      ],
+      [
+        "Wrist_R",
+        "Arm_2_R"
+      ],
+      [
+        "Hand_R",
+        "Wrist_R"
+      ],
+      [
+        "Wrist_R_Sub",
+        "Arm_2_R"
+      ],
+      [
+        "Neck",
+        "Spine_3"
+      ],
+      [
+        "Head",
+        "Neck"
+      ],
+      [
+        "Ear_1_L",
+        "Head"
+      ],
+      [
+        "Z_Ear_L",
+        "Ear_1_L"
+      ],
+      [
+        "Ear_1_R",
+        "Head"
+      ],
+      [
+        "Z_Ear_R",
+        "Ear_1_R"
+      ],
+      [
+        "Feel",
+        "Head"
+      ],
+      [
+        "Waist",
+        "Skl_Root"
+      ],
+      [
+        "Leg_1_L",
+        "Waist"
+      ],
+      [
+        "Leg_1_L_Sub",
+        "Leg_1_L"
+      ],
+      [
+        "Leg_2_L",
+        "Leg_1_L_Sub"
+      ],
+      [
+        "Leg_2_L_Sub",
+        "Leg_2_L"
+      ],
+      [
+        "Ankle_L",
+        "Leg_2_L_Sub"
+      ],
+      [
+        "Toe_L",
+        "Ankle_L"
+      ],
+      [
+        "Leg_1_R",
+        "Waist"
+      ],
+      [
+        "Leg_1_R_Sub",
+        "Leg_1_R"
+      ],
+      [
+        "Leg_2_R",
+        "Leg_1_R_Sub"
+      ],
+      [
+        "Leg_2_R_Sub",
+        "Leg_2_R"
+      ],
+      [
+        "Ankle_R",
+        "Leg_2_R_Sub"
+      ],
+      [
+        "Toe_R",
+        "Ankle_R"
+      ],
+      [
+        "TailRoot",
+        "Waist"
+      ],
+      [
+        "S_Tail_1",
+        "TailRoot"
+      ],
+      [
+        "S_Tail_2",
+        "S_Tail_1"
+      ],
+      [
+        "S_Tail_3",
+        "S_Tail_2"
+      ],
+      [
+        "Z_S_Tail",
+        "S_Tail_3"
+      ]
+    ]
+  },
+  "triangles_total": 7174,
+  "triangle_budget": 8000,
+  "within_budget": true,
+  "meshes": {
+    "ProtagonistMesh": {
+      "triangles": 7174,
+      "vertices": 5132,
+      "materials": [
+        "Mat_Protagonist",
+        "Mat_Protagonist_Face"
+      ],
+      "rigid_single_bone_weights": true
+    }
+  },
+  "weighted_bones": [
+    "Arm_1_L",
+    "Arm_1_R",
+    "Arm_2_L",
+    "Arm_2_R",
+    "Head",
+    "Leg_1_L",
+    "Leg_1_R",
+    "Leg_2_L",
+    "Leg_2_R",
+    "Spine_1"
+  ],
+  "bbox": {
+    "min": [
+      -0.37785616517066956,
+      -0.2558375597000122,
+      -4.132894027009115e-09
+    ],
+    "max": [
+      0.3662109076976776,
+      0.314170777797699,
+      1.490800142288208
+    ],
+    "size_xyz_m": [
+      0.7440670728683472,
+      0.5700083374977112,
+      1.490800146421102
+    ]
+  },
+  "pilot_bbox_size_xyz_m": [
+    0.6398976445198059,
+    0.44423700869083405,
+    1.490828783231958
+  ],
+  "height_vs_pilot_pct": -0.002,
+  "height_within_1pct": true,
+  "origin_ground_center": {
+    "min_z": -4.132894027009115e-09,
+    "center_x": -0.005822628736495972
+  },
+  "proportions": {
+    "head_height_chin_to_hair_top_m": 0.535800039768219,
+    "head_ratio_pct": 35.94,
+    "heads_tall": 2.782,
+    "head_width_incl_hair_m": 0.7440670728683472,
+    "head_width_ratio_pct": 49.91,
+    "torso_crotch_to_chin_pct": 27.06,
+    "legs_ground_to_crotch_pct": 37.0,
+    "spec_targets_pct": {
+      "head": 29,
+      "head_width": 31,
+      "torso": 34,
+      "legs": 37
+    }
+  },
+  "bone_diff_vs_round1": {
+    "only_in_round1": [],
+    "only_in_round2": [],
+    "order_identical": true
+  },
+  "bone_diff_count": 0,
+  "textures": {
+    "protagonist_body": [
+      1024,
+      1024
+    ],
+    "protagonist_face": [
+      1024,
+      1024
+    ]
+  },
+  "materials": [
+    "Mat_Protagonist",
+    "Mat_Protagonist_Face"
+  ],
+  "glb_bytes": 1784852,
+  "triangles_by_part": {
+    "parts": {
+      "skull": 896,
+      "ears": 200,
+      "nose": 54,
+      "hair_cap": 252,
+      "hair_crown": 672,
+      "hair_mid": 576,
+      "hair_side": 792,
+      "hair_nape": 360,
+      "hair_fringe": 576,
+      "tuft": 96,
+      "leaf": 96,
+      "shirt": 300,
+      "neck": 32,
+      "patch": 140,
+      "pants_seat": 84,
+      "rope_belt": 256,
+      "rope_knot": 100,
+      "rope_tail": 32,
+      "rope_tail_end": 64,
+      "arm_upper": 160,
+      "sleeve": 220,
+      "arm_fore": 160,
+      "hand": 200,
+      "pants_L_thigh": 60,
+      "pants_L_shin": 120,
+      "thigh": 144,
+      "shin": 160,
+      "foot": 240,
+      "pants_R_thigh": 132
+    },
+    "groups": {
+      "face/head": 1150,
+      "hair": 3420,
+      "clothes": 1508,
+      "body": 1096
+    },
+    "total": 7174
+  }
+}

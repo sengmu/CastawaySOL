@@ -1,0 +1,187 @@
+{
+ "texture_values_in_glb": {
+  "ear": {
+   "unique_values": [
+    "#E8B88C"
+   ],
+   "pixels": 1980
+  },
+  "nose": {
+   "unique_values": [
+    "#DB9A78"
+   ],
+   "pixels": 230
+  },
+  "hair_cap": {
+   "unique_values": [
+    "#B08158"
+   ],
+   "pixels": 2448
+  },
+  "hair": {
+   "unique_values": [
+    "#B08158"
+   ],
+   "pixels": 3338
+  },
+  "leaf": {
+   "unique_values": [
+    "#8CCB5E"
+   ],
+   "pixels": 1102
+  },
+  "shirt": {
+   "unique_values": [
+    "#8DC4DA"
+   ],
+   "pixels": 27170
+  },
+  "neck": {
+   "unique_values": [
+    "#E8B88C"
+   ],
+   "pixels": 286
+  },
+  "patch": {
+   "unique_values": [
+    "#E8C072"
+   ],
+   "pixels": 1849
+  },
+  "pants_seat": {
+   "unique_values": [
+    "#C9A57A"
+   ],
+   "pixels": 5332
+  },
+  "rope": {
+   "unique_values": [
+    "#B08158"
+   ],
+   "pixels": 11140
+  },
+  "skin": {
+   "unique_values": [
+    "#E8B88C"
+   ],
+   "pixels": 55840
+  },
+  "sleeve": {
+   "unique_values": [
+    "#8DC4DA"
+   ],
+   "pixels": 14761
+  },
+  "pants": {
+   "unique_values": [
+    "#C9A57A"
+   ],
+   "pixels": 24984
+  },
+  "foot": {
+   "unique_values": [
+    "#E8B88C"
+   ],
+   "pixels": 3960
+  }
+ },
+ "face_texture_top_values": [
+  {
+   "value": "#E8B88C",
+   "share_pct": 95.42
+  },
+  {
+   "value": "#F7B6C8",
+   "share_pct": 1.96
+  },
+  {
+   "value": "#6B4A32",
+   "share_pct": 1.82
+  },
+  {
+   "value": "#E8B88D",
+   "share_pct": 0.01
+  }
+ ],
+ "render_front_png": {
+  "hair_top_tuft": {
+   "value": "#A67A57",
+   "S": 0.476,
+   "V": 0.651
+  },
+  "shirt_chest_right": {
+   "value": "#8FBECE",
+   "S": 0.306,
+   "V": 0.808
+  },
+  "patch_centre": {
+   "value": "#E0B66E",
+   "S": 0.509,
+   "V": 0.878
+  },
+  "skin_forehead": {
+   "value": "#EEBA8D",
+   "S": 0.408,
+   "V": 0.933
+  },
+  "skin_left_upper_arm": {
+   "value": "#D7A87F",
+   "S": 0.409,
+   "V": 0.843
+  },
+  "trousers_left_shin": {
+   "value": "#C59F76",
+   "S": 0.401,
+   "V": 0.773
+  },
+  "leaf_median_of_green_pixels": {
+   "value": "#8FC660",
+   "S": 0.515,
+   "V": 0.776
+  }
+ },
+ "face_metrics_from_render": {
+  "head_width_used_m": 0.47352032363414764,
+  "eyes": [
+   {
+    "w_m": 0.04177734375,
+    "h_m": 0.04904296875,
+    "cx_m": -0.08531602585266423,
+    "cz_m": 1.253254151175643,
+    "n": 4354
+   },
+   {
+    "w_m": 0.04177734375,
+    "h_m": 0.04904296875,
+    "cx_m": 0.08481558482142858,
+    "cz_m": 1.2532022723214287,
+    "n": 4375
+   }
+  ],
+  "blush": [
+   {
+    "w_m": 0.05509765625,
+    "h_m": 0.055703125,
+    "cx_m": -0.10715781452488947,
+    "cz_m": 1.1886190938738757,
+    "n": 6559
+   },
+   {
+    "w_m": 0.05509765625,
+    "h_m": 0.055703125,
+    "cx_m": 0.10647835602881987,
+    "cz_m": 1.1885939368877203,
+    "n": 6584
+   }
+  ],
+  "eye_diameter_pct_head_w": 8.82,
+  "eye_height_pct_head_w": 10.36,
+  "eye_spacing_pct_head_w": 35.93,
+  "eye_centre_pct_down_from_top": 54.95,
+  "blush_diameter_pct_head_w": 11.64
+ },
+ "glb_embedded_png_md5": {
+  "protagonist_body": "91f8696850dd50ccfabd009c6cff279d",
+  "protagonist_face": "8b243cc9d23343670c9b097c3f8873b8"
+ }
+}

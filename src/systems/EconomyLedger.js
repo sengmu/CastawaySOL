@@ -1,12 +1,12 @@
 // Pure account logic. Production credits and internal transfers have separate totals.
 export const LEDGER_SOURCES = Object.freeze({
-  sol_token: ['decrypt', 'resonance_main', 'resonance_ml', 'checkin'],
+  sol_token: ['decrypt', 'resonance_main', 'resonance_ml', 'checkin', 'order_deliver'],
   sol_crystal: ['vein_mine', 'tidal_spawn', 'flotsam_manual', 'camp_miner', 'monkey_crevice', 'initial_silo', 'shard_condense', 'resonance_calib', 'resonance_free'],
   sol_shard: ['resonance_shard']
 });
 export const LEDGER_SINKS = Object.freeze({
   sol_token: ['rig_upgrade', 'scanner', 'shop', 'ship', 'refinery'],
-  sol_crystal: ['decrypt_consume', 'resonance_commit', 'refinery_consume'],
+  sol_crystal: ['decrypt_consume', 'resonance_commit', 'refinery_consume', 'lighthouse'],
   sol_shard: ['shard_condense']
 });
 export const isEconomyResource = resource => Object.hasOwn(LEDGER_SOURCES, resource);

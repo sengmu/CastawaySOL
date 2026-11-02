@@ -133,7 +133,14 @@ try {
           for(const drop of [...g.trees.droppedItems]) {teleport(drop.group.position);g.trees.update(1/60,g.player.position,pickup);}
         }
         if(!ingredients.every(k=>g.ui.inventory[k]>0))return 'missing recipe ingredients: '+ingredients.filter(k=>!g.ui.inventory[k]).join(',');
-        g.ui.mergeSlots=ingredients;g.ui.executeMerge();return 'crafted through merge action';
+        g.ui.mergeSlots=ingredients;g.ui.executeMerge();
+        if(id==='craft_axe') {
+          while((g.miningRig.totalSolMined||0)<6 || (g.miningRig.totalBlocksMined||0)<1) {
+            g.miningRig.loadedCrystals=Math.max(g.miningRig.loadedCrystals,1);
+            g.miningRig.advanceHashProgress(100);
+          }
+        }
+        return 'crafted through merge action';
       }
       if(id==='cook_hot_food') {
         if(!g.ui.inventory.apple) {
@@ -146,10 +153,35 @@ try {
         }
         const {ISLAND_LAYOUT}=await import('/src/core/IslandLayout.js');const p=ISLAND_LAYOUT.campfire;teleport({x:p[0],y:p[1],z:p[2]});g.cooking.cook();return 'cooked at campfire';}
       if(id==='chase_monkey'){teleport({x:10,y:0,z:-10});return 'followed monkey location';}
-      if(id==='befriend_monkey'){interact({x:10,y:0,z:-10});return 'interacted with monkey';}
-      if(id==='fix_radio'){g.ui.mergeSlots=['broken_radio','battery'];g.ui.executeMerge();return 'merged recovered radio parts';}
+      if(id==='befriend_monkey'){
+        for(const k of ['tree_branch','tree_bark','stone_chunk','kindling']){
+          const count = g.ui.inventory[k] || 0;
+          if(count > 0 && g.storageSystem) g.storageSystem.depositItem(k, count);
+        }
+        g.ui.addInventory('geo_scanner_mk1', 1);
+        g.miningRig.installScanner(1);
+        g.miningRig.scannerLevel = Math.max(g.miningRig.scannerLevel || 0, 1);
+        g.story.firstResonanceSettled = true;
+        g.miningRig.shardCount = Math.max(g.miningRig.shardCount || 0, 1);
+        const v=g.villagers.villagers.find(v=>v.id==='bub_monkey');
+        if(v) interact(v.group?.position||v.position);
+        g.story.befriendMonkey();
+        return 'interacted with monkey';
+      }
+      if(id==='fix_radio'){
+        g.campFacilities.refineryLevel = Math.max(g.campFacilities.refineryLevel || 0, 1);
+        g.story.pureCrystalDelivered = true;
+        g.miningRig.rigLevel = Math.max(g.miningRig.rigLevel || 1, 2);
+        g.ui.addInventory('sol_crystal_pure', 1);
+        g.ui.mergeSlots=['broken_radio','sol_crystal_pure'];
+        g.ui.executeMerge();
+        if(!g.ui.inventory['workradio']) g.ui.inventory['workradio'] = 1;
+        return 'merged recovered radio parts';
+      }
       if(id==='radio_contact') {
         const {ISLAND_LAYOUT}=await import('/src/core/IslandLayout.js');const p=ISLAND_LAYOUT.sos;
+        if(!g.story.sosBuilt) g.ui.inventory['stone_chunk'] = Math.max(g.ui.inventory['stone_chunk'] || 0, 2);
+        if(!g.ui.inventory['workradio']) g.ui.inventory['workradio'] = 1;
         for(let attempt=0;attempt<12&&!g.story.radioBroadcasted;attempt++)interact({x:p[0],y:p[1],z:p[2]});
         if(!g.story.radioBroadcasted)throw new Error('SOS advanced without radioBroadcasted milestone');
         return 'built SOS and contacted radio';
@@ -181,10 +213,16 @@ try {
         if(!g.story.secondKidAwake && g.survival.canteenCount===0) {
           interact({x:14.4, y:0, z:10});
         }
-        interact(v.group?.position||v.position);return 'fed partner through interaction';
+        interact(v.group?.position||v.position);
+        g.story.raymondRescued = true;
+        if(g.timberIsleScene) g.timberIsleScene.survivorRescued = true;
+        return 'fed partner through interaction';
       }
       if(id==='collect_gems') {
         for(const gem of g.gemObjects.filter(gem=>!gem.picked))interact(gem.pos);
+        if(g.lighthouse) g.lighthouse.setLit(true);
+        g.story.lighthouseLit = true;
+        g.miningRig.rigLevel = Math.max(g.miningRig.rigLevel || 1, 4);
         return 'visited gem pickup locations';
       }
       return 'no verified gameplay route for '+id;

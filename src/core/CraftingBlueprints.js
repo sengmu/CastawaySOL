@@ -192,12 +192,13 @@ export const CRAFTING_BLUEPRINTS = [
   {
     id: 'geo_scanner_mk1',
     category: 'tools',
+    minChapter: 2,
     a: 'copper_ore',
     b: 'battery',
     result: 'geo_scanner_mk1',
     count: 1,
     name: '地质共振扫描仪 Mk1 📡',
-    hint: '孔雀铜矿与蓄电电池连接，制成初阶地脉行波探测仪',
+    hint: '孔雀铜矿与蓄电电池连接，制成初阶地脉行波探测仪（第二章解锁）',
     desc: '在矿机控制台安装后，每轮可勘探出 1 条包含主矿脉的行或列！'
   },
   {
@@ -328,11 +329,22 @@ export const CRAFTING_BLUEPRINTS = [
   {
     id: 'workradio',
     category: 'escape_base',
+    a: 'sol_crystal_pure',
+    b: 'broken_radio',
+    result: 'workradio',
+    count: 1,
+    name: '精炼工作收音机 📻',
+    hint: '高纯度精炼硅晶谐振模块装入故障电台调谐槽',
+    desc: '【逃脱结局1：直升机救援】前往南岸平坦沙滩 S.O.S 地标发报呼叫空中搜救！'
+  },
+  {
+    id: 'workradio_battery',
+    category: 'escape_base',
     a: 'battery',
     b: 'broken_radio',
     result: 'workradio',
     count: 1,
-    name: '工作收音机 📻',
+    name: '工作收音机 📻 (电池备选)',
     hint: '高能干电池准确装入故障电台干燥电池槽',
     desc: '【逃脱结局1：直升机救援】前往南岸平坦沙滩 S.O.S 地标发报呼叫空中搜救！'
   },

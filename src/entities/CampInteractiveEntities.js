@@ -21,6 +21,8 @@ export class CampInteractiveEntities {
       radioTerminal: new THREE.Vector3(-10.2, 0.05, 22.2),
       // 营地原生多孔火山石净水滴滤台 (位于营火南侧溪流旁)
       waterPurifier: new THREE.Vector3(-11.0, 0.05, 25.8),
+      // 营地日常交付订单板 (位于告示牌右侧)
+      orderBoard: new THREE.Vector3(-12.0, 0.05, 20.2),
       // 南岸沙滩自动打捞浮标岸边滑轮锚桩 (南岸与出航湾交汇处)
       buoyWinch: new THREE.Vector3(-20.2, 0.02, 33.2)
     };
@@ -30,6 +32,7 @@ export class CampInteractiveEntities {
 
   initEntities() {
     this.createNoticeboard();
+    this.createOrderBoard();
     this.createRadioTerminal();
     this.createWaterPurifier();
     this.createBuoyWinch();
@@ -111,6 +114,64 @@ export class CampInteractiveEntities {
     boardGroup.add(this.boardBadge);
 
     this.group.add(boardGroup);
+  }
+
+  // 1.5 营地日常交付订单板 (Order Board)
+  createOrderBoard() {
+    const orderGroup = new THREE.Group();
+    orderGroup.position.copy(this.anchors.orderBoard);
+    orderGroup.rotation.y = -0.15;
+
+    const woodMat = new THREE.MeshStandardMaterial({
+      color: 0x543d2b,
+      roughness: 0.88
+    });
+
+    // 粗原木单立桩与斜撑
+    const poleGeo = new THREE.CylinderGeometry(0.08, 0.09, 1.5, 8);
+    const pole = new THREE.Mesh(poleGeo, woodMat);
+    pole.position.set(0, 0.75, 0);
+    pole.castShadow = true;
+    orderGroup.add(pole);
+
+    // 宽幅交付订单告示木板
+    const boardGeo = new THREE.BoxGeometry(1.2, 0.8, 0.07);
+    const board = new THREE.Mesh(boardGeo, woodMat);
+    board.position.set(0, 1.1, 0.05);
+    board.castShadow = true;
+    orderGroup.add(board);
+
+    // 羊皮纸订单条 (3 份并排羊皮纸)
+    const paperMat = new THREE.MeshStandardMaterial({
+      color: 0xfbf1c7,
+      roughness: 0.92
+    });
+    for (let i = 0; i < 3; i++) {
+      const pGeo = new THREE.PlaneGeometry(0.32, 0.6);
+      const p = new THREE.Mesh(pGeo, paperMat);
+      p.position.set(-0.36 + i * 0.36, 1.1, 0.09);
+      orderGroup.add(p);
+    }
+
+    // 顶部小顶棚
+    const roofGeo = new THREE.BoxGeometry(1.35, 0.06, 0.25);
+    const roof = new THREE.Mesh(roofGeo, woodMat);
+    roof.position.set(0, 1.54, 0.08);
+    orderGroup.add(roof);
+
+    // 金色卷轴悬浮标识
+    const badgeGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.28, 8);
+    const badgeMat = new THREE.MeshStandardMaterial({
+      color: 0xf1c40f,
+      emissive: 0xd35400,
+      emissiveIntensity: 0.75
+    });
+    this.orderBadge = new THREE.Mesh(badgeGeo, badgeMat);
+    this.orderBadge.rotation.z = Math.PI / 2;
+    this.orderBadge.position.set(0, 1.78, 0.08);
+    orderGroup.add(this.orderBadge);
+
+    this.group.add(orderGroup);
   }
 
   // 2. 救援空投与商业化特权无线电站 (Radio Terminal)
@@ -316,6 +377,12 @@ export class CampInteractiveEntities {
       this.boardBadge.rotation.y += delta * 1.5;
       this.boardBadge.rotation.x += delta * 0.8;
       this.boardBadge.position.y = 1.62 + Math.sin(this.animTime * 2.8) * 0.06;
+    }
+
+    // 1.5 订单板卷轴标识自转与浮沉
+    if (this.orderBadge) {
+      this.orderBadge.rotation.y += delta * 2.0;
+      this.orderBadge.position.y = 1.78 + Math.sin(this.animTime * 3.5) * 0.05;
     }
 
     // 2. 无线电站天线信标呼吸、特权紫晶悬浮与全息光圈旋转

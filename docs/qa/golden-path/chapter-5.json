@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "6d830b5d0add1639faed12ca384f23c4",
+  "saveSeed": "0f797dc724e3dc8dc491e74121ee0229",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -10,14 +10,21 @@
           "sol_crystal": {
             "initial_silo": 1,
             "resonance_free": 3
+          },
+          "sol_token": {
+            "decrypt": 6
           }
         },
-        "outflow": {},
+        "outflow": {
+          "sol_crystal": {
+            "decrypt_consume": 3
+          }
+        },
         "transfers": {}
       }
     ]
   },
-  "timestamp": 1793614172005,
+  "timestamp": 1793619568998,
   "player": {
     "position": [
       -20,
@@ -38,22 +45,23 @@
   },
   "inventory": {
     "apple": 0,
-    "stone_chunk": 1,
     "broken_radio": 0,
-    "battery": 0,
+    "battery": 1,
     "nail": 1,
-    "coconut": 6,
+    "coconut": 9,
     "baked_apple": 0,
     "stone_axe": 1,
+    "sol_crystal_pure": 0,
     "workradio": 1
   },
   "bonusInventorySlots": 0,
   "storage": {
     "storageInventory": {
-      "wood_plank": 1,
-      "tree_branch": 11,
-      "tree_sap": 2,
+      "wood_plank": 2,
+      "tree_branch": 9,
+      "stone_chunk": 3,
       "kindling": 1,
+      "tree_sap": 3,
       "tree_bark": 5
     },
     "bonusCapacity": 0
@@ -65,7 +73,7 @@
     "residentJobs": {
       "second_kid": "salvager"
     },
-    "refineryLevel": 0,
+    "refineryLevel": 1,
     "refineryQueue": 0
   },
   "nauticalChart": {
@@ -203,7 +211,7 @@
     "vaultClaimed": false
   },
   "timberIsle": {
-    "survivorRescued": false,
+    "survivorRescued": true,
     "outpostClaimed": false,
     "collectedResourceIds": []
   },
@@ -231,25 +239,29 @@
       "diamond_gem",
       "moon_gem"
     ],
+    "pureCrystalDelivered": true,
+    "raymondRescued": true,
+    "lighthouseLit": true,
+    "firstResonanceSettled": true,
     "endedEndingId": null,
     "onboardingStep": 4,
     "onboardingDismissed": false
   },
   "miningRig": {
-    "loadedCrystals": 1,
-    "unclaimedSol": 0,
-    "totalBlocksMined": 0,
-    "totalSolMined": 0,
+    "loadedCrystals": 0,
+    "unclaimedSol": 6,
+    "totalBlocksMined": 3,
+    "totalSolMined": 6,
     "batteryPower": 75,
     "hashProgress": 0,
     "isOverclocked": false,
     "hasLithiumPack": false,
     "rigMode": "decrypt",
-    "rigLevel": 1,
+    "rigLevel": 4,
     "loadedPureCrystals": 0,
-    "shardCount": 0,
+    "shardCount": 1,
     "solDust": 0,
-    "scannerLevel": 0,
+    "scannerLevel": 1,
     "resonance": {
       "roundId": 1,
       "phase": "OPEN",
@@ -327,7 +339,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793614099213,
+      "freeGrantTs": 1793619481352,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,
@@ -361,6 +373,55 @@
     "hasAutoSalvageBuoy": false,
     "tier": 1,
     "totalSalvaged": 0
+  },
+  "lighthouse": {
+    "isLit": true,
+    "phase1Complete": true
+  },
+  "orderBoard": {
+    "currentDay": 1,
+    "dailyOrders": [
+      {
+        "id": "order_apple",
+        "name": "果林甜品供给",
+        "req": {
+          "apple": 3
+        },
+        "tokenReward": 2,
+        "desc": "营地工匠急需鲜美红苹果补充维生素",
+        "uniqueId": "day_1_A",
+        "category": "primary",
+        "completed": false
+      },
+      {
+        "id": "order_plank",
+        "name": "船坞方木构件",
+        "req": {
+          "wood_plank": 2
+        },
+        "tokenReward": 3,
+        "extraReward": {
+          "ancient_coin": 1
+        },
+        "desc": "船坞扩建防浪板所需的规整木板",
+        "uniqueId": "day_1_B",
+        "category": "crafting",
+        "completed": false
+      },
+      {
+        "id": "order_crystal",
+        "name": "原石能量配额",
+        "req": {
+          "sol_crystal": 2
+        },
+        "tokenReward": 4,
+        "desc": "紧急支援矿机解密与电网稳压的未解密原石",
+        "uniqueId": "day_1_C",
+        "category": "mineral",
+        "completed": false
+      }
+    ],
+    "completedCount": 0
   },
   "world": {
     "collectedBeachResources": [
