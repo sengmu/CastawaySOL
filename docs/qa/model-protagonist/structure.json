@@ -1,0 +1,273 @@
+{
+  "glb": "public/models/protagonist.glb",
+  "bones": {
+    "count": 45,
+    "names_and_parents_identical_to_pilot": true,
+    "mapped_13": {
+      "Leg_1_L": true,
+      "Leg_1_R": true,
+      "Leg_2_L": true,
+      "Leg_2_R": true,
+      "Arm_1_L": true,
+      "Arm_1_R": true,
+      "Head": true,
+      "S_Tail_1": true,
+      "S_Tail_2": true,
+      "S_Tail_3": true,
+      "Spine_1": true,
+      "Arm_2_L": true,
+      "Arm_2_R": true
+    },
+    "mapped_13_all_present": true,
+    "hierarchy": [
+      [
+        "Root",
+        null
+      ],
+      [
+        "Trans_Root",
+        "Root"
+      ],
+      [
+        "Skl_Root",
+        "Trans_Root"
+      ],
+      [
+        "Spine_1",
+        "Skl_Root"
+      ],
+      [
+        "Spine_2",
+        "Spine_1"
+      ],
+      [
+        "Spine_3",
+        "Spine_2"
+      ],
+      [
+        "Clavicle_L",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_L",
+        "Clavicle_L"
+      ],
+      [
+        "Arm_1_L_Sub",
+        "Arm_1_L"
+      ],
+      [
+        "Arm_2_L",
+        "Arm_1_L_Sub"
+      ],
+      [
+        "Wrist_L",
+        "Arm_2_L"
+      ],
+      [
+        "Hand_L",
+        "Wrist_L"
+      ],
+      [
+        "Wrist_L_Sub",
+        "Arm_2_L"
+      ],
+      [
+        "Clavicle_R",
+        "Spine_3"
+      ],
+      [
+        "Arm_1_R",
+        "Clavicle_R"
+      ],
+      [
+        "Arm_1_R_Sub",
+        "Arm_1_R"
+      ],
+      [
+        "Arm_2_R",
+        "Arm_1_R_Sub"
+      ],
+      [
+        "Wrist_R",
+        "Arm_2_R"
+      ],
+      [
+        "Hand_R",
+        "Wrist_R"
+      ],
+      [
+        "Wrist_R_Sub",
+        "Arm_2_R"
+      ],
+      [
+        "Neck",
+        "Spine_3"
+      ],
+      [
+        "Head",
+        "Neck"
+      ],
+      [
+        "Ear_1_L",
+        "Head"
+      ],
+      [
+        "Z_Ear_L",
+        "Ear_1_L"
+      ],
+      [
+        "Ear_1_R",
+        "Head"
+      ],
+      [
+        "Z_Ear_R",
+        "Ear_1_R"
+      ],
+      [
+        "Feel",
+        "Head"
+      ],
+      [
+        "Waist",
+        "Skl_Root"
+      ],
+      [
+        "Leg_1_L",
+        "Waist"
+      ],
+      [
+        "Leg_1_L_Sub",
+        "Leg_1_L"
+      ],
+      [
+        "Leg_2_L",
+        "Leg_1_L_Sub"
+      ],
+      [
+        "Leg_2_L_Sub",
+        "Leg_2_L"
+      ],
+      [
+        "Ankle_L",
+        "Leg_2_L_Sub"
+      ],
+      [
+        "Toe_L",
+        "Ankle_L"
+      ],
+      [
+        "Leg_1_R",
+        "Waist"
+      ],
+      [
+        "Leg_1_R_Sub",
+        "Leg_1_R"
+      ],
+      [
+        "Leg_2_R",
+        "Leg_1_R_Sub"
+      ],
+      [
+        "Leg_2_R_Sub",
+        "Leg_2_R"
+      ],
+      [
+        "Ankle_R",
+        "Leg_2_R_Sub"
+      ],
+      [
+        "Toe_R",
+        "Ankle_R"
+      ],
+      [
+        "TailRoot",
+        "Waist"
+      ],
+      [
+        "S_Tail_1",
+        "TailRoot"
+      ],
+      [
+        "S_Tail_2",
+        "S_Tail_1"
+      ],
+      [
+        "S_Tail_3",
+        "S_Tail_2"
+      ],
+      [
+        "Z_S_Tail",
+        "S_Tail_3"
+      ]
+    ]
+  },
+  "triangles_total": 2980,
+  "triangle_budget": 3000,
+  "within_budget": true,
+  "meshes": {
+    "ProtagonistMesh": {
+      "triangles": 2980,
+      "vertices": 1645,
+      "materials": [
+        "Mat_Protagonist"
+      ],
+      "rigid_single_bone_weights": true
+    }
+  },
+  "weighted_bones": [
+    "Arm_1_L",
+    "Arm_1_R",
+    "Arm_2_L",
+    "Arm_2_R",
+    "Head",
+    "Leg_1_L",
+    "Leg_1_R",
+    "Leg_2_L",
+    "Leg_2_R",
+    "Spine_1"
+  ],
+  "bbox": {
+    "min": [
+      -0.36264657974243164,
+      -0.21594640612602234,
+      -4.132894027009115e-09
+    ],
+    "max": [
+      0.36264657974243164,
+      0.24896559119224548,
+      1.4908000230789185
+    ],
+    "size_xyz_m": [
+      0.7252931594848633,
+      0.4649119973182678,
+      1.4908000272118125
+    ]
+  },
+  "pilot_bbox_size_xyz_m": [
+    0.6398976445198059,
+    0.44423700869083405,
+    1.490828783231958
+  ],
+  "height_vs_pilot_pct": -0.002,
+  "height_within_5pct": true,
+  "origin_ground_center": {
+    "min_z": -4.132894027009115e-09,
+    "center_x": 0.0
+  },
+  "proportions": {
+    "head_height_chin_to_hair_top_m": 0.432331919670105,
+    "head_ratio_pct": 29.0,
+    "heads_tall": 3.448,
+    "head_width_incl_hair_m": 0.47408829629421234,
+    "head_width_ratio_pct": 31.8,
+    "torso_crotch_to_chin_pct": 34.0,
+    "legs_ground_to_crotch_pct": 37.0,
+    "spec_targets_pct": {
+      "head": 29,
+      "head_width": 31,
+      "torso": 34,
+      "legs": 37
+    }
+  }
+}

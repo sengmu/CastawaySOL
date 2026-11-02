@@ -1,7 +1,9 @@
+import { economyLedger } from './EconomyLedger.js';
 // CastawaySOL - 版本化安全存档系统 (Save & Schema Migration System)
 // 统一管理玩家状态、生存指标、行囊物品、主线剧情、地图资源与建筑家具
 // 支持版本迁移 (Schema Migration)、备份恢复与写保护 (失败不覆盖旧数据)
 
+export const CHECKIN_REWARD = 5;
 export const CURRENT_SCHEMA_VERSION = 2;
 export const SAVE_KEY_PRIMARY = 'castaway_sol_savegame';
 export const SAVE_KEY_BACKUP = 'castaway_sol_savegame_backup';
@@ -25,7 +27,13 @@ export class SaveSystem {
 
   generateSaveSeed() {
     const words = new Uint32Array(4);
-    globalThis.crypto.getRandomValues(words);
+    if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+      globalThis.crypto.getRandomValues(words);
+    } else {
+      for (let i = 0; i < 4; i++) {
+        words[i] = (Math.random() * 0x100000000) >>> 0;
+      }
+    }
     return Array.from(words, n => n.toString(16).padStart(8, '0')).join('');
   }
 
@@ -35,10 +43,11 @@ export class SaveSystem {
     if (this.hasClaimedCheckin(day)) return false;
     const inv = this.game.ui.inventory;
     const previous = inv.sol_token || 0;
+    const ledgerBefore = economyLedger(this.game).serialize();
     this.checkinClaimDays.push(day);
-    inv.sol_token = previous + 5;
+    economyLedger(this.game).credit('sol_token', CHECKIN_REWARD, 'checkin');
     const saved = this.saveGame('daily_checkin');
-    if (!saved?.success) { this.checkinClaimDays.pop(); inv.sol_token = previous; return false; }
+    if (!saved?.success) { this.checkinClaimDays.pop(); inv.sol_token = previous; economyLedger(this.game).deserialize(ledgerBefore); return false; }
     this.game.ui.renderInventory?.();
     return true;
   }
@@ -94,6 +103,7 @@ export class SaveSystem {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       saveSeed: this.saveSeed,
       checkinClaimDays: [...this.checkinClaimDays],
+      economyLedger: economyLedger(this.game).serialize(),
       timestamp: Date.now(),
       player: player ? {
         position: [player.position.x, player.position.y, player.position.z],
@@ -227,6 +237,7 @@ export class SaveSystem {
 
     data.schemaVersion = CURRENT_SCHEMA_VERSION;
     data.saveSeed ||= this.generateSaveSeed();
+    data.economyLedger ??= { days: [] };
     data.checkinClaimDays = Array.isArray(data.checkinClaimDays) ? [...data.checkinClaimDays] : [];
     data.miningRig = this.mergeRigState(data);
     for (const key of this.rigStateKeys()) delete data[key];
@@ -432,6 +443,7 @@ export class SaveSystem {
     if (!this.game || !data) return;
     this.saveSeed = data.saveSeed || this.generateSaveSeed();
     this.checkinClaimDays = [...(data.checkinClaimDays || [])];
+    economyLedger(this.game).deserialize(data.economyLedger);
 
     // 1. 恢复玩家坐标与朝向
     if (data.player && this.game.player && this.game.player.position) {

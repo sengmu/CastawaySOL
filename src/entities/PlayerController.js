@@ -2,6 +2,7 @@ import { ISLAND_LAYOUT, distanceXZ } from '../core/IslandLayout.js';
 import * as THREE from 'three';
 import { modelLoader } from '../core/ModelLoader.js';
 import { soundEngine } from '../core/AudioSystem.js';
+import { GAME_ASSETS } from '../core/AssetRegistry.js';
 
 export class PlayerController {
   constructor(scene, camera, domElement) {
@@ -308,13 +309,17 @@ export class PlayerController {
   }
 
   async loadCharacter() {
-    // 采用现有的核心主角模型（小猫咪，身高与比例已严格校准）
-    const catModel = await modelLoader.loadModel('/models/npcs/Model/NpcNmlCat23.Nin_NX_NVN/NpcNmlCat23.dae', {
-      scale: 1.0,
+    // 采用核心主角模型（3D-PILOT: 自建 3D 荒岛款人类模型，走 GLTFLoader）
+    // 若需回退至经典小猫模型，可配置 GAME_ASSETS.player.path 为旧 DAE 路径
+    const playerAsset = GAME_ASSETS?.player;
+    const playerPath = playerAsset?.path || '/models/protagonist.glb';
+    const playerScale = playerAsset?.scale ?? 1.0;
+    const playerModel = await modelLoader.loadModel(playerPath, {
+      scale: playerScale,
       castShadow: true,
       receiveShadow: true
     });
-    this.model = catModel;
+    this.model = playerModel;
     this.group.add(this.model);
 
     // 检索并绑定骨骼关节与 SkinnedMesh 蒙皮骨架

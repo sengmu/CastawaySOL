@@ -1,5 +1,12 @@
 {
   "errors": [],
-  "status": "blocked",
-  "reason": "[15:15:1102/095016.925809:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)\n"
+  "runtime": {
+    "frame": 13,
+    "completed": true,
+    "banner": "🏝️ 主线完成 · 自由经营：继续挖矿、扩建营地与探索群岛！",
+    "visible": true,
+    "camp": true,
+    "mining": true
+  },
+  "status": "passed"
 }

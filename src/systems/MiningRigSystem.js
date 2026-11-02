@@ -1,3 +1,4 @@
+import { economyLedger } from './EconomyLedger.js';
 // CastawaySOL - 荒岛绿色解密矿机与 DePIN 算力系统 (Green Mining Rig & DePIN System)
 // 结合荒岛废土朋克与 Solana 绿色公链生态：
 // 1. 实体建筑：利用漂流木架、沉船太阳能硅晶板、收音机芯片与铜线组装的手搓解密矿机；
@@ -8,6 +9,16 @@ import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
 import { ODDS_TABLE, cyrb53, genRoundSeed, genCluster, genNpcBoard, settle } from './resonance/ResonanceEngine.js';
+
+export const DECRYPT_REWARD = Object.freeze({ base: 2, bonusChance: 0.35, turboChance: 0.45 });
+export const SCANNER_COSTS = Object.freeze({1: 0, 2: 45, 3: 165});
+export const FREE_SHARES = Object.freeze({ daily: 3, cap: 6, minMs: 15 * 60 * 1000, minSteps: 200 });
+
+export function resonanceRoundRS(res, deploy, board) {
+  const shares = res.winningSquare >= 0 ? (deploy[res.winningSquare] || 0) : 0;
+  const total = shares + (board ? (board[res.winningSquare] || 0) : 0);
+  return res.hit ? 10 + Math.round(20 * shares / Math.max(1, total)) : (deploy.some(v => v > 0) ? 2 : 0);
+}
 
 export class MiningRigSystem {
   constructor(game) {
@@ -23,7 +34,8 @@ export class MiningRigSystem {
     this.totalSolMined = 0;             // 历史挖出算力代币总数
 
     // 矿仓与燃料
-    this.loadedCrystals = 1;            // 初始已预装 1 块硅晶原石体验
+    this.loadedCrystals = 0;
+    economyLedger(game).credit('sol_crystal', 1, 'initial_silo', this, 'loadedCrystals');            // 初始已预装 1 块硅晶原石体验
     this.maxCrystalCapacity = 10;       // 最大矿石装载上限
     this.batteryPower = 75;             // 备用蓄电池电量 (0 ~ 100%)
     this.maxBattery = 100;              // 蓄电池最大上限
@@ -72,13 +84,15 @@ export class MiningRigSystem {
       lastResult: null,
       history: [],
       calib: 0,
-      freeShares: 3,
+      freeShares: 0,
       freeGrantDay: 1,
       freeGrantTs: Date.now(),
       freeGrantSteps: 0,
       buff: { id: null, roundsLeft: 0 },
       autoRepeat: { pattern: null, roundsLeft: 0 }
     };
+
+    economyLedger(game).credit('sol_crystal', FREE_SHARES.daily, 'resonance_free', this.resonance, 'freeShares');
 
     this.motherlode = {
       pool: 0,
@@ -358,10 +372,8 @@ export class MiningRigSystem {
       return false;
     }
 
-    inv['sol_crystal'] -= count;
+    economyLedger(this.game).transfer('sol_crystal', count, 'rig_load', inv, 'sol_crystal', this, 'loadedCrystals');
     if (inv['sol_crystal'] <= 0) delete inv['sol_crystal'];
-
-    this.loadedCrystals += count;
     this.isActive = true;
 
     this.game.ui.renderInventory();
@@ -530,11 +542,11 @@ export class MiningRigSystem {
     }
     if (this.resonance.freeShares > 0) {
       const takeFree = Math.min(this.resonance.freeShares, remainToDeduct);
-      this.resonance.freeShares -= takeFree;
+      economyLedger(this.game).debit('sol_crystal', takeFree, 'resonance_commit', this.resonance, 'freeShares');
       remainToDeduct -= takeFree;
     }
     if (remainToDeduct > 0) {
-      this.loadedCrystals = Math.max(0, this.loadedCrystals - remainToDeduct);
+      economyLedger(this.game).debit('sol_crystal', remainToDeduct, 'resonance_commit', this, 'loadedCrystals');
     }
 
     this.resonance.committed = true;
@@ -577,7 +589,7 @@ export class MiningRigSystem {
     if (!inv || (inv[itemKey] || 0) <= 0) {
       return { ok: false, msg: `背包中缺少【${itemKey}】！需在合成台研制` };
     }
-    const fee = level === 1 ? 0 : (level === 2 ? 25 : 70);
+    const fee = SCANNER_COSTS[level];
     if (fee > 0 && (inv['sol_token'] || 0) < fee) {
       return { ok: false, msg: `装机算力代币不足 (需要 ${fee} 算力代币)！` };
     }
@@ -585,7 +597,7 @@ export class MiningRigSystem {
     inv[itemKey]--;
     if (inv[itemKey] <= 0) delete inv[itemKey];
     if (fee > 0) {
-      inv['sol_token'] -= fee;
+      economyLedger(this.game).debit('sol_token', fee, 'scanner');
       if (inv['sol_token'] <= 0) delete inv['sol_token'];
       this.onSinkSpent(fee, 'scanner');
     }
@@ -630,15 +642,15 @@ export class MiningRigSystem {
     if (currentDay !== (r.buffDay ?? this.game?.survival?.day)) r.buff = { id: null, roundsLeft: 0 };
     r.buffDay = currentDay;
     const isNewDay = currentDay > (r.freeGrantDay || 0);
-    const hasEnoughTime = (now - (r.freeGrantTs || 0)) >= 15 * 60 * 1000;
+    const hasEnoughTime = (now - (r.freeGrantTs || 0)) >= FREE_SHARES.minMs;
     const currentSteps = this.game?.survival?.steps || 0;
-    const hasEnoughSteps = (currentSteps - (r.freeGrantSteps || 0)) >= 200;
+    const hasEnoughSteps = (currentSteps - (r.freeGrantSteps || 0)) >= FREE_SHARES.minSteps;
 
     if (isNewDay && hasEnoughTime && hasEnoughSteps) {
       r.freeGrantDay = currentDay;
       r.freeGrantTs = now;
       r.freeGrantSteps = currentSteps;
-      r.freeShares = Math.min(6, (r.freeShares || 0) + 3);
+      economyLedger(this.game).credit('sol_crystal', Math.min(FREE_SHARES.daily, FREE_SHARES.cap - (r.freeShares || 0)), 'resonance_free', r, 'freeShares');
       if (this.game?.ui) {
         this.game.ui.showToast('🌅 新的一天！地脉感应发放 3 份免费共振勘探份额！', 'medium');
       }
@@ -703,6 +715,7 @@ export class MiningRigSystem {
     const res = this.resonance.lastResult;
     if (!res || this.resonance.phase !== 'REVEAL') return { ok: false, msg: '当前没有待结算的共振结果' };
     const before = structuredClone(this.serialize());
+    const ledgerBefore = economyLedger(this.game).serialize();
     if (res) {
       // Re-evaluate the locked draw against the live pool; seed/board/deployment remain fixed.
       if (this.resonance.roundSeed && this.resonance.board) {
@@ -712,14 +725,14 @@ export class MiningRigSystem {
         });
         res.motherlode = live.motherlode;
       }
-      this.creditPayout(res.payout);
-      this.shardCount += res.shards;
+      this.creditPayout(res.payout, 'resonance_main');
+      economyLedger(this.game).credit('sol_shard', res.shards, 'resonance_shard', this, 'shardCount');
       this.resonance.calib = res.calib;
 
       // 4 残晶折算 1 晶石
       while (this.shardCount >= 4 && this.loadedCrystals < this.maxCrystalCapacity) {
-        this.shardCount -= 4;
-        this.loadedCrystals++;
+        economyLedger(this.game).debit('sol_shard', 4, 'shard_condense', this, 'shardCount');
+        economyLedger(this.game).credit('sol_crystal', 1, 'shard_condense', this, 'loadedCrystals');
       }
 
       if (this.resonance.roundSeed && this.resonance.board) this.motherlode.pool = res.motherlode.nextPool;
@@ -729,11 +742,11 @@ export class MiningRigSystem {
         if (this.resonance.buff.roundsLeft > 0 && --this.resonance.buff.roundsLeft === 0) this.resonance.buff = { id: null, roundsLeft: 0 };
       }
       if (res.calibReward) {
-        this.loadedCrystals += res.calibReward.crystals;
+        economyLedger(this.game).credit('sol_crystal', res.calibReward.crystals, 'resonance_calib', this, 'loadedCrystals');
         this.resonance.fullHeat = Boolean(res.calibReward.fullHeat);
       }
       if (res.motherlode.won) {
-        this.creditPayout(res.motherlode.playerTake);
+        this.creditPayout(res.motherlode.playerTake, 'resonance_ml');
         this.motherlode.paid += res.motherlode.playerTake;
         this.motherlode.burned += res.motherlode.npcBurned;
         this.motherlode.hallOfFame.unshift({
@@ -757,9 +770,7 @@ export class MiningRigSystem {
       if (this.resonance.history.length > 50) this.resonance.history.pop();
 
       // 记录共振勘探赛季积分 (RS)
-      const s_W = (res.winningSquare >= 0) ? (this.resonance.deploy[res.winningSquare] || 0) : 0;
-      const totalInSquare = s_W + (this.resonance.board ? (this.resonance.board[res.winningSquare] || 0) : 0);
-      const roundRS = res.hit ? (10 + Math.round(20 * (s_W / Math.max(1, totalInSquare)))) : (this.resonance.deploy.some(v => v > 0) ? 2 : 0);
+      const roundRS = resonanceRoundRS(res, this.resonance.deploy, this.resonance.board);
       this.season.rs = (this.season.rs || 0) + roundRS;
       if (this.game?.solanaBridge?.submitResonanceProof) {
         this.game.solanaBridge.submitResonanceProof(this.season.rs, this.resonance.roundId);
@@ -785,6 +796,7 @@ export class MiningRigSystem {
     const saved = this.game?.saveSystem?.saveGame?.('resonance_settle');
     if (saved && saved.success === false) {
       this.deserialize(before);
+      economyLedger(this.game).deserialize(ledgerBefore);
       return { ok: false, msg: saved.msg || '结算存档失败，请稍后重试' };
     }
     if (this.game?.solanaBridge) {
@@ -863,14 +875,14 @@ export class MiningRigSystem {
       this.totalBlocksMined++;
 
       // 消耗 1 块硅晶原石
-      this.loadedCrystals--;
+      economyLedger(this.game).debit('sol_crystal', 1, 'decrypt_consume', this, 'loadedCrystals');
 
       // 产出 1~2 枚算力代币 (超频状态下有 45% 几率狂暴暴击 +1)
-      const isCrit = (this.turboTimer > 0) && (Math.random() < 0.45);
-      const baseReward = 1 + (Math.random() < 0.35 ? 1 : 0);
+      const isCrit = (this.turboTimer > 0) && (Math.random() < DECRYPT_REWARD.turboChance);
+      const baseReward = DECRYPT_REWARD.base + (Math.random() < DECRYPT_REWARD.bonusChance ? 1 : 0);
       const reward = baseReward + (isCrit ? 1 : 0);
 
-      this.unclaimedSol += reward;
+      economyLedger(this.game).credit('sol_token', reward, 'decrypt', this, 'unclaimedSol');
       this.totalSolMined += reward;
 
       // 触发 3D 物理爆金币与冲击波全屏视效
@@ -909,8 +921,11 @@ export class MiningRigSystem {
     return this.resonance.fullHeat ? 3 : Math.min(3, this.scannerLevel + (this.resonance.buff.id === 'energy_drink' && this.resonance.buff.roundsLeft > 0 ? 1 : 0));
   }
 
-  creditPayout(amount) {
-    const combined = Math.round((this.solDust + amount) * 1e8) / 1e8;
+  creditPayout(amount, source = 'resonance_main') {
+    // Record fractional production once; dust-to-whole conversion is internal.
+    const pending = { value: this.solDust };
+    economyLedger(this.game).credit('sol_token', amount, source, pending, 'value');
+    const combined = Math.round(pending.value * 1e8) / 1e8;
     const whole = Math.floor(combined);
     this.solDust = Math.round((combined - whole) * 1e8) / 1e8;
     this.unclaimedSol += whole;
@@ -924,12 +939,14 @@ export class MiningRigSystem {
     if (!fee) return { ok: false, msg: '矿机已达满级' };
     if (!inv || (inv.sol_token || 0) < fee) return { ok: false, msg: `算力代币不足，需要 ${fee} 枚` };
     const before = structuredClone(this.serialize());
-    inv.sol_token -= fee;
+    const ledgerBefore = economyLedger(this.game).serialize();
+    const walletBefore = inv.sol_token;
+    economyLedger(this.game).debit('sol_token', fee, 'rig_upgrade');
     this.onSinkSpent(fee, 'rig_upgrade');
     this.rigLevel = next;
     this.maxCrystalCapacity = ODDS_TABLE.RIG_LEVELS[next].capacity;
     const saved = this.game?.saveSystem?.saveGame?.('rig_upgrade');
-    if (saved?.success === false) { inv.sol_token += fee; this.deserialize(before); return { ok: false, msg: '升级存档失败' }; }
+    if (saved?.success === false) { inv.sol_token = walletBefore; economyLedger(this.game).deserialize(ledgerBefore); this.deserialize(before); return { ok: false, msg: '升级存档失败' }; }
     this.game?.ui?.renderInventory?.();
     return { ok: true };
   }
@@ -938,8 +955,8 @@ export class MiningRigSystem {
   claimSolTokens() {
     // 4 残晶自动折算为 1 晶石入料仓
     while (this.shardCount >= 4 && this.loadedCrystals < this.maxCrystalCapacity) {
-      this.shardCount -= 4;
-      this.loadedCrystals++;
+      economyLedger(this.game).debit('sol_shard', 4, 'shard_condense', this, 'shardCount');
+      economyLedger(this.game).credit('sol_crystal', 1, 'shard_condense', this, 'loadedCrystals');
     }
 
     if (this.unclaimedSol <= 0) {
@@ -949,8 +966,7 @@ export class MiningRigSystem {
 
     const count = this.unclaimedSol;
     const inv = this.game.ui.inventory;
-    inv['sol_token'] = (inv['sol_token'] || 0) + count;
-    this.unclaimedSol = 0;
+    economyLedger(this.game).transfer('sol_token', count, 'claim_payout', this, 'unclaimedSol', inv, 'sol_token');
 
     this.game.ui.renderInventory();
     haptics.success();

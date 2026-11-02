@@ -1,3 +1,4 @@
+import { economyLedger, isEconomyResource } from './EconomyLedger.js';
 // CastawaySOL - 出海船升级与随船货仓系统 (Ship Upgrade & Cargo Hold System)
 // 统一管理：船体多阶段进阶 (T1木筏 -> T2龙骨风帆艇 -> T3铁甲探索舰)、随船货运仓、远航补给减免与深海航行能力
 import { soundEngine } from '../core/AudioSystem.js';
@@ -58,8 +59,8 @@ export const VESSEL_TIERS = {
       nail: 6,        // 铁钉 x6
       stone_chunk: 4  // 玄武原石压舱物 x4
     },
-    solCost: 18, // 或消耗 18 枚算力代币黑市蓝图一键快造
-    upgradeBonusDesc: '航程上限跃升至 18.0 海里、随船货仓扩至 8 格、远航干粮淡水完全免消耗、解锁返航自动渔网！支持 18 算力代币黑市图纸一键快造！'
+    solCost: 58, // 或消耗 58 枚算力代币黑市蓝图一键快造
+    upgradeBonusDesc: '航程上限跃升至 18.0 海里、随船货仓扩至 8 格、远航干粮淡水完全免消耗、解锁返航自动渔网！支持 58 算力代币黑市图纸一键快造！'
   }
 };
 
@@ -118,13 +119,17 @@ export class ShipUpgradeSystem {
       return false;
     }
 
-    // 扣背包，加货舱
-    inv[itemKey] -= count;
+    if (this.game.economyLedger && isEconomyResource(itemKey)) {
+      this.game.economyLedger.transfer(itemKey, count, 'storage_deposit', inv, itemKey, this.cargoInventory, itemKey);
+    } else {
+      const bag = inv;
+      bag[itemKey] -= count;
+      this.cargoInventory[itemKey] = (this.cargoInventory[itemKey] || 0) + count;
+    }
     if (inv[itemKey] <= 0) delete inv[itemKey];
 
-    this.cargoInventory[itemKey] = (this.cargoInventory[itemKey] || 0) + count;
     soundEngine.playPlaceFurniture();
-    this.game.ui.renderInventory();
+    if (this.game.ui && this.game.ui.renderInventory) this.game.ui.renderInventory();
     return true;
   }
 
@@ -136,14 +141,21 @@ export class ShipUpgradeSystem {
 
     // 检查背包容量
     if (this.game.ui.isInventoryFull && this.game.ui.isInventoryFull(itemKey)) {
-      this.game.ui.showToast('❌ 随身行囊已满，无法容纳更多物品！', 'medium');
+      if (this.game.ui.showToast) this.game.ui.showToast('❌ 随身行囊已满，无法容纳更多物品！', 'medium');
       return false;
     }
 
-    this.cargoInventory[itemKey] -= count;
+    const inv = this.game.ui.inventory;
+    if (this.game.economyLedger && isEconomyResource(itemKey)) {
+      this.game.economyLedger.transfer(itemKey, count, 'storage_withdraw', this.cargoInventory, itemKey, inv, itemKey);
+    } else {
+      this.cargoInventory[itemKey] -= count;
+      const bag = inv;
+      bag[itemKey] = (bag[itemKey] || 0) + count;
+      if (this.game.ui.renderInventory) this.game.ui.renderInventory();
+    }
     if (this.cargoInventory[itemKey] <= 0) delete this.cargoInventory[itemKey];
 
-    this.game.ui.addInventory(itemKey, count);
     soundEngine.playPlaceFurniture();
     return true;
   }
@@ -193,7 +205,7 @@ export class ShipUpgradeSystem {
       return false;
     }
 
-    inv['sol_token'] -= nextTier.solCost;
+    economyLedger(this.game).debit('sol_token', nextTier.solCost, 'ship');
     if (inv['sol_token'] <= 0) delete inv['sol_token'];
 
     // 消费 15% 注入母晶池

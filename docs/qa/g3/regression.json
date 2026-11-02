@@ -1,0 +1,86 @@
+[
+  {
+    "test": "tests/verify-ancient-temple-system.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-e1-economy-repair.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-g3-economy-gate.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-m1-story-skeleton.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-m2-story-events.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-m3-freeplay.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-mobile-adaptability.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-monkey-and-tidal-trap.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-p1-features.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-p2-quarry-features.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-pet-companion-system.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-portrait-bounding-boxes.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-portrait-experience.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-r10-e2-repairs.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-r10b-rulings.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-r8-resonance-ui.mjs",
+    "exit": 1
+  },
+  {
+    "test": "tests/verify-r9-event-balance.mjs",
+    "exit": 1
+  },
+  {
+    "test": "tests/verify-save-schema-v2.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-ship-upgrade-system.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-sleep-and-salvage-systems.mjs",
+    "exit": 0
+  },
+  {
+    "test": "tests/verify-wallet-features.mjs",
+    "exit": 0
+  }
+]

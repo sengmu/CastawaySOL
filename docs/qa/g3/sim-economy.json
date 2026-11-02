@@ -1,0 +1,2786 @@
+{
+  "scenario": {
+    "steps": 1500,
+    "minutes": 18,
+    "earlySupply": 15,
+    "lateSupply": 22,
+    "resonanceRatio": 0.75,
+    "earlyRounds": 2,
+    "lateRounds": 3,
+    "seed": "g3-neutral-v1"
+  },
+  "snapshots": [
+    {
+      "day": 1,
+      "balance": 11,
+      "dust": 0,
+      "pool": 6.48,
+      "burned": 4.86,
+      "rs": 4,
+      "totalSupply": 15,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 3,
+            "vein_mine": 12
+          },
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      }
+    },
+    {
+      "day": 2,
+      "balance": 21,
+      "dust": 0,
+      "pool": 12.96,
+      "burned": 9.72,
+      "rs": 8,
+      "totalSupply": 30,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 6,
+            "vein_mine": 24,
+            "shard_condense": 1
+          },
+          "sol_token": {
+            "checkin": 10,
+            "decrypt": 11
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 24,
+            "decrypt_consume": 8
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 11
+          }
+        }
+      }
+    },
+    {
+      "day": 3,
+      "balance": 22,
+      "dust": 0,
+      "pool": 20.440000000000005,
+      "burned": 14.58,
+      "rs": 12,
+      "totalSupply": 45,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 9,
+            "vein_mine": 35,
+            "shard_condense": 1,
+            "flotsam_manual": 1
+          },
+          "sol_token": {
+            "checkin": 15,
+            "decrypt": 15
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 36,
+            "decrypt_consume": 11
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          },
+          "sol_token": {
+            "ship": 8
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 15
+          }
+        }
+      }
+    },
+    {
+      "day": 4,
+      "balance": 3,
+      "dust": 0,
+      "pool": 31.92000000000001,
+      "burned": 19.44,
+      "rs": 16,
+      "totalSupply": 60,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 12,
+            "vein_mine": 44,
+            "shard_condense": 3,
+            "flotsam_manual": 1,
+            "camp_miner": 2,
+            "tidal_spawn": 1
+          },
+          "sol_token": {
+            "checkin": 20,
+            "decrypt": 21
+          },
+          "sol_shard": {
+            "resonance_shard": 12
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 48,
+            "decrypt_consume": 16
+          },
+          "sol_shard": {
+            "shard_condense": 12
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 21
+          }
+        }
+      }
+    },
+    {
+      "day": 5,
+      "balance": 2,
+      "dust": 0,
+      "pool": 40.40000000000001,
+      "burned": 24.3,
+      "rs": 20,
+      "totalSupply": 75,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 15,
+            "vein_mine": 52,
+            "shard_condense": 4,
+            "flotsam_manual": 1,
+            "camp_miner": 4,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2
+          },
+          "sol_token": {
+            "checkin": 25,
+            "decrypt": 27
+          },
+          "sol_shard": {
+            "resonance_shard": 17
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 60,
+            "decrypt_consume": 20
+          },
+          "sol_shard": {
+            "shard_condense": 16
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 27
+          }
+        }
+      }
+    },
+    {
+      "day": 6,
+      "balance": 4,
+      "dust": 0,
+      "pool": 48.88000000000002,
+      "burned": 29.16,
+      "rs": 24,
+      "totalSupply": 90,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 18,
+            "vein_mine": 59,
+            "shard_condense": 7,
+            "flotsam_manual": 2,
+            "camp_miner": 6,
+            "tidal_spawn": 1,
+            "monkey_crevice": 4
+          },
+          "sol_token": {
+            "checkin": 30,
+            "decrypt": 36
+          },
+          "sol_shard": {
+            "resonance_shard": 28
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 72,
+            "decrypt_consume": 26
+          },
+          "sol_shard": {
+            "shard_condense": 28
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 24
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 36
+          }
+        }
+      }
+    },
+    {
+      "day": 7,
+      "balance": 14,
+      "dust": 0,
+      "pool": 55.36000000000002,
+      "burned": 34.02,
+      "rs": 28,
+      "totalSupply": 105,
+      "rounds": 2,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 21,
+            "vein_mine": 67,
+            "shard_condense": 8,
+            "flotsam_manual": 2,
+            "camp_miner": 8,
+            "tidal_spawn": 1,
+            "monkey_crevice": 6
+          },
+          "sol_token": {
+            "checkin": 35,
+            "decrypt": 41
+          },
+          "sol_shard": {
+            "resonance_shard": 33
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 84,
+            "decrypt_consume": 30
+          },
+          "sol_shard": {
+            "shard_condense": 32
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 24
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 41
+          }
+        }
+      }
+    },
+    {
+      "day": 8,
+      "balance": 14,
+      "dust": 0,
+      "pool": 66.54000000000002,
+      "burned": 40.905,
+      "rs": 34,
+      "totalSupply": 127,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 24,
+            "vein_mine": 81,
+            "shard_condense": 8,
+            "flotsam_manual": 2,
+            "camp_miner": 10,
+            "tidal_spawn": 2,
+            "monkey_crevice": 8,
+            "resonance_calib": 2
+          },
+          "sol_token": {
+            "checkin": 40,
+            "decrypt": 51
+          },
+          "sol_shard": {
+            "resonance_shard": 33
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 101,
+            "decrypt_consume": 37
+          },
+          "sol_shard": {
+            "shard_condense": 32
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 39
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 51
+          }
+        }
+      }
+    },
+    {
+      "day": 9,
+      "balance": 26,
+      "dust": 0,
+      "pool": 75.72000000000001,
+      "burned": 47.79,
+      "rs": 40,
+      "totalSupply": 149,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 27,
+            "vein_mine": 95,
+            "shard_condense": 9,
+            "flotsam_manual": 3,
+            "camp_miner": 12,
+            "tidal_spawn": 2,
+            "monkey_crevice": 10,
+            "resonance_calib": 2
+          },
+          "sol_token": {
+            "checkin": 45,
+            "decrypt": 58
+          },
+          "sol_shard": {
+            "resonance_shard": 39
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 118,
+            "decrypt_consume": 43
+          },
+          "sol_shard": {
+            "shard_condense": 36
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 39
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 58
+          }
+        }
+      }
+    },
+    {
+      "day": 10,
+      "balance": 6,
+      "dust": 0,
+      "pool": 90.9,
+      "burned": 54.675,
+      "rs": 46,
+      "totalSupply": 171,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 30,
+            "vein_mine": 110,
+            "shard_condense": 11,
+            "flotsam_manual": 3,
+            "camp_miner": 14,
+            "tidal_spawn": 2,
+            "monkey_crevice": 12,
+            "resonance_calib": 2
+          },
+          "sol_token": {
+            "checkin": 50,
+            "decrypt": 68
+          },
+          "sol_shard": {
+            "resonance_shard": 44
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 135,
+            "decrypt_consume": 50
+          },
+          "sol_shard": {
+            "shard_condense": 44
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 49,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 68
+          }
+        }
+      }
+    },
+    {
+      "day": 11,
+      "balance": 20,
+      "dust": 0,
+      "pool": 100.08,
+      "burned": 61.559999999999995,
+      "rs": 52,
+      "totalSupply": 193,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 33,
+            "vein_mine": 125,
+            "shard_condense": 11,
+            "flotsam_manual": 3,
+            "camp_miner": 16,
+            "tidal_spawn": 2,
+            "monkey_crevice": 14,
+            "resonance_calib": 2
+          },
+          "sol_token": {
+            "checkin": 55,
+            "decrypt": 77
+          },
+          "sol_shard": {
+            "resonance_shard": 45
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 152,
+            "decrypt_consume": 55
+          },
+          "sol_shard": {
+            "shard_condense": 44
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 49,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 77
+          }
+        }
+      }
+    },
+    {
+      "day": 12,
+      "balance": 28,
+      "dust": 0,
+      "pool": 110.25999999999999,
+      "burned": 68.44500000000001,
+      "rs": 58,
+      "totalSupply": 215,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 36,
+            "vein_mine": 138,
+            "shard_condense": 11,
+            "flotsam_manual": 4,
+            "camp_miner": 18,
+            "tidal_spawn": 3,
+            "monkey_crevice": 16,
+            "resonance_calib": 4
+          },
+          "sol_token": {
+            "checkin": 60,
+            "decrypt": 86
+          },
+          "sol_shard": {
+            "resonance_shard": 45
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 169,
+            "decrypt_consume": 62
+          },
+          "sol_shard": {
+            "shard_condense": 44
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 55,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 86
+          }
+        }
+      }
+    },
+    {
+      "day": 13,
+      "balance": 42,
+      "dust": 0,
+      "pool": 119.43999999999998,
+      "burned": 75.33000000000003,
+      "rs": 64,
+      "totalSupply": 237,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 39,
+            "vein_mine": 153,
+            "shard_condense": 14,
+            "flotsam_manual": 4,
+            "camp_miner": 20,
+            "tidal_spawn": 3,
+            "monkey_crevice": 18,
+            "resonance_calib": 4
+          },
+          "sol_token": {
+            "checkin": 65,
+            "decrypt": 95
+          },
+          "sol_shard": {
+            "resonance_shard": 56
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 186,
+            "decrypt_consume": 70
+          },
+          "sol_shard": {
+            "shard_condense": 56
+          },
+          "sol_token": {
+            "ship": 8,
+            "rig_upgrade": 30,
+            "shop": 55,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 95
+          }
+        }
+      }
+    },
+    {
+      "day": 14,
+      "balance": 29,
+      "dust": 0,
+      "pool": 132.61999999999998,
+      "burned": 82.21500000000005,
+      "rs": 70,
+      "totalSupply": 259,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 42,
+            "vein_mine": 168,
+            "shard_condense": 14,
+            "flotsam_manual": 4,
+            "camp_miner": 22,
+            "tidal_spawn": 3,
+            "monkey_crevice": 20,
+            "resonance_calib": 4
+          },
+          "sol_token": {
+            "checkin": 70,
+            "decrypt": 101
+          },
+          "sol_shard": {
+            "resonance_shard": 57
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 203,
+            "decrypt_consume": 75
+          },
+          "sol_shard": {
+            "shard_condense": 56
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 61,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 101
+          }
+        }
+      }
+    },
+    {
+      "day": 15,
+      "balance": 44,
+      "dust": 0,
+      "pool": 141.79999999999998,
+      "burned": 89.10000000000007,
+      "rs": 76,
+      "totalSupply": 281,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 45,
+            "vein_mine": 182,
+            "shard_condense": 15,
+            "flotsam_manual": 5,
+            "camp_miner": 24,
+            "tidal_spawn": 3,
+            "monkey_crevice": 22,
+            "resonance_calib": 4
+          },
+          "sol_token": {
+            "checkin": 75,
+            "decrypt": 111
+          },
+          "sol_shard": {
+            "resonance_shard": 63
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 220,
+            "decrypt_consume": 81
+          },
+          "sol_shard": {
+            "shard_condense": 60
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 61,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 111
+          }
+        }
+      }
+    },
+    {
+      "day": 16,
+      "balance": 29,
+      "dust": 0,
+      "pool": 155.98,
+      "burned": 95.98500000000008,
+      "rs": 82,
+      "totalSupply": 303,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 48,
+            "vein_mine": 196,
+            "shard_condense": 17,
+            "flotsam_manual": 5,
+            "camp_miner": 26,
+            "tidal_spawn": 4,
+            "monkey_crevice": 24,
+            "resonance_calib": 6
+          },
+          "sol_token": {
+            "checkin": 80,
+            "decrypt": 121
+          },
+          "sol_shard": {
+            "resonance_shard": 70
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 237,
+            "decrypt_consume": 90
+          },
+          "sol_shard": {
+            "shard_condense": 68
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 91,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 121
+          }
+        }
+      }
+    },
+    {
+      "day": 17,
+      "balance": 40,
+      "dust": 0,
+      "pool": 165.16,
+      "burned": 102.8700000000001,
+      "rs": 88,
+      "totalSupply": 325,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 51,
+            "vein_mine": 211,
+            "shard_condense": 17,
+            "flotsam_manual": 5,
+            "camp_miner": 28,
+            "tidal_spawn": 4,
+            "monkey_crevice": 26,
+            "resonance_calib": 6
+          },
+          "sol_token": {
+            "checkin": 85,
+            "decrypt": 127
+          },
+          "sol_shard": {
+            "resonance_shard": 71
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 254,
+            "decrypt_consume": 95
+          },
+          "sol_shard": {
+            "shard_condense": 68
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 91,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 127
+          }
+        }
+      }
+    },
+    {
+      "day": 18,
+      "balance": 35,
+      "dust": 0,
+      "pool": 177.34,
+      "burned": 109.75500000000012,
+      "rs": 94,
+      "totalSupply": 347,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 54,
+            "vein_mine": 225,
+            "shard_condense": 20,
+            "flotsam_manual": 6,
+            "camp_miner": 30,
+            "tidal_spawn": 4,
+            "monkey_crevice": 28,
+            "resonance_calib": 6
+          },
+          "sol_token": {
+            "checkin": 90,
+            "decrypt": 135
+          },
+          "sol_shard": {
+            "resonance_shard": 81
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 271,
+            "decrypt_consume": 103
+          },
+          "sol_shard": {
+            "shard_condense": 80
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 109,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 135
+          }
+        }
+      }
+    },
+    {
+      "day": 19,
+      "balance": 47,
+      "dust": 0,
+      "pool": 186.52,
+      "burned": 116.64000000000014,
+      "rs": 100,
+      "totalSupply": 369,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 57,
+            "vein_mine": 240,
+            "shard_condense": 20,
+            "flotsam_manual": 6,
+            "camp_miner": 32,
+            "tidal_spawn": 4,
+            "monkey_crevice": 30,
+            "resonance_calib": 6
+          },
+          "sol_token": {
+            "checkin": 95,
+            "decrypt": 142
+          },
+          "sol_shard": {
+            "resonance_shard": 81
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 288,
+            "decrypt_consume": 108
+          },
+          "sol_shard": {
+            "shard_condense": 80
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 109,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 142
+          }
+        }
+      }
+    },
+    {
+      "day": 20,
+      "balance": 47,
+      "dust": 0,
+      "pool": 197.70000000000002,
+      "burned": 123.52500000000016,
+      "rs": 106,
+      "totalSupply": 391,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 60,
+            "vein_mine": 254,
+            "shard_condense": 21,
+            "flotsam_manual": 6,
+            "camp_miner": 34,
+            "tidal_spawn": 5,
+            "monkey_crevice": 32,
+            "resonance_calib": 6
+          },
+          "sol_token": {
+            "checkin": 100,
+            "decrypt": 149
+          },
+          "sol_shard": {
+            "resonance_shard": 87
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 305,
+            "decrypt_consume": 114
+          },
+          "sol_shard": {
+            "shard_condense": 84
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 121,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 149
+          }
+        }
+      }
+    },
+    {
+      "day": 21,
+      "balance": 66,
+      "dust": 0,
+      "pool": 206.88000000000002,
+      "burned": 130.41000000000017,
+      "rs": 112,
+      "totalSupply": 413,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 63,
+            "vein_mine": 268,
+            "shard_condense": 23,
+            "flotsam_manual": 7,
+            "camp_miner": 36,
+            "tidal_spawn": 5,
+            "monkey_crevice": 34,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 105,
+            "decrypt": 163
+          },
+          "sol_shard": {
+            "resonance_shard": 92
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 322,
+            "decrypt_consume": 123
+          },
+          "sol_shard": {
+            "shard_condense": 92
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 121,
+            "scanner": 25
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 163
+          }
+        }
+      }
+    },
+    {
+      "day": 22,
+      "balance": 9,
+      "dust": 0,
+      "pool": 227.06000000000003,
+      "burned": 137.2950000000002,
+      "rs": 118,
+      "totalSupply": 435,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 66,
+            "vein_mine": 283,
+            "shard_condense": 23,
+            "flotsam_manual": 7,
+            "camp_miner": 38,
+            "tidal_spawn": 5,
+            "monkey_crevice": 36,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 110,
+            "decrypt": 171
+          },
+          "sol_shard": {
+            "resonance_shard": 92
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 339,
+            "decrypt_consume": 128
+          },
+          "sol_shard": {
+            "shard_condense": 92
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 171
+          }
+        }
+      }
+    },
+    {
+      "day": 23,
+      "balance": 19,
+      "dust": 0,
+      "pool": 236.24000000000004,
+      "burned": 144.1800000000002,
+      "rs": 124,
+      "totalSupply": 457,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 0,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 69,
+            "vein_mine": 298,
+            "shard_condense": 23,
+            "flotsam_manual": 7,
+            "camp_miner": 40,
+            "tidal_spawn": 5,
+            "monkey_crevice": 38,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 115,
+            "decrypt": 176
+          },
+          "sol_shard": {
+            "resonance_shard": 92
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 356,
+            "decrypt_consume": 133
+          },
+          "sol_shard": {
+            "shard_condense": 92
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 176
+          }
+        }
+      }
+    },
+    {
+      "day": 24,
+      "balance": 32,
+      "dust": 0,
+      "pool": 245.42000000000004,
+      "burned": 151.06500000000023,
+      "rs": 130,
+      "totalSupply": 479,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 72,
+            "vein_mine": 311,
+            "shard_condense": 24,
+            "flotsam_manual": 8,
+            "camp_miner": 42,
+            "tidal_spawn": 6,
+            "monkey_crevice": 40,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 120,
+            "decrypt": 184
+          },
+          "sol_shard": {
+            "resonance_shard": 97
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 373,
+            "decrypt_consume": 139
+          },
+          "sol_shard": {
+            "shard_condense": 96
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 30,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 184
+          }
+        }
+      }
+    },
+    {
+      "day": 25,
+      "balance": 17,
+      "dust": 0.22,
+      "pool": 266.6,
+      "burned": 157.95000000000024,
+      "rs": 147,
+      "totalSupply": 501,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 75,
+            "vein_mine": 326,
+            "shard_condense": 25,
+            "flotsam_manual": 8,
+            "camp_miner": 44,
+            "tidal_spawn": 6,
+            "monkey_crevice": 42,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 125,
+            "decrypt": 191,
+            "resonance_main": 53.22
+          },
+          "sol_shard": {
+            "resonance_shard": 103
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 390,
+            "decrypt_consume": 145
+          },
+          "sol_shard": {
+            "shard_condense": 100
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 244
+          }
+        }
+      }
+    },
+    {
+      "day": 26,
+      "balance": 32,
+      "dust": 0.22,
+      "pool": 275.78000000000003,
+      "burned": 164.83500000000026,
+      "rs": 153,
+      "totalSupply": 523,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 1,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 78,
+            "vein_mine": 341,
+            "shard_condense": 27,
+            "flotsam_manual": 8,
+            "camp_miner": 46,
+            "tidal_spawn": 6,
+            "monkey_crevice": 44,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 130,
+            "decrypt": 201,
+            "resonance_main": 53.22
+          },
+          "sol_shard": {
+            "resonance_shard": 109
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 407,
+            "decrypt_consume": 152
+          },
+          "sol_shard": {
+            "shard_condense": 108
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 254
+          }
+        }
+      }
+    },
+    {
+      "day": 27,
+      "balance": 45,
+      "dust": 0.22,
+      "pool": 284.96000000000004,
+      "burned": 171.72000000000028,
+      "rs": 159,
+      "totalSupply": 545,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 81,
+            "vein_mine": 355,
+            "shard_condense": 28,
+            "flotsam_manual": 9,
+            "camp_miner": 48,
+            "tidal_spawn": 6,
+            "monkey_crevice": 46,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 135,
+            "decrypt": 209,
+            "resonance_main": 53.22
+          },
+          "sol_shard": {
+            "resonance_shard": 114
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 424,
+            "decrypt_consume": 158
+          },
+          "sol_shard": {
+            "shard_condense": 112
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 262
+          }
+        }
+      }
+    },
+    {
+      "day": 28,
+      "balance": 314,
+      "dust": 0.09,
+      "pool": 8,
+      "burned": 255.74500000000035,
+      "rs": 175,
+      "totalSupply": 567,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 84,
+            "vein_mine": 369,
+            "shard_condense": 28,
+            "flotsam_manual": 9,
+            "camp_miner": 50,
+            "tidal_spawn": 7,
+            "monkey_crevice": 48,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 140,
+            "decrypt": 215,
+            "resonance_main": 94.09,
+            "resonance_ml": 217
+          },
+          "sol_shard": {
+            "resonance_shard": 114
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 441,
+            "decrypt_consume": 163
+          },
+          "sol_shard": {
+            "shard_condense": 112
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 526
+          }
+        }
+      }
+    },
+    {
+      "day": 29,
+      "balance": 331,
+      "dust": 0.09,
+      "pool": 17.18,
+      "burned": 262.63000000000034,
+      "rs": 181,
+      "totalSupply": 589,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 2,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 87,
+            "vein_mine": 384,
+            "shard_condense": 31,
+            "flotsam_manual": 9,
+            "camp_miner": 52,
+            "tidal_spawn": 7,
+            "monkey_crevice": 50,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 145,
+            "decrypt": 227,
+            "resonance_main": 94.09,
+            "resonance_ml": 217
+          },
+          "sol_shard": {
+            "resonance_shard": 126
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 458,
+            "decrypt_consume": 171
+          },
+          "sol_shard": {
+            "shard_condense": 124
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 538
+          }
+        }
+      }
+    },
+    {
+      "day": 30,
+      "balance": 360,
+      "dust": 0.44,
+      "pool": 26.360000000000003,
+      "burned": 269.5150000000003,
+      "rs": 196,
+      "totalSupply": 611,
+      "rounds": 3,
+      "rawRemaining": 0,
+      "shards": 3,
+      "totals": {
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 90,
+            "vein_mine": 398,
+            "shard_condense": 32,
+            "flotsam_manual": 10,
+            "camp_miner": 54,
+            "tidal_spawn": 7,
+            "monkey_crevice": 52,
+            "resonance_calib": 8
+          },
+          "sol_token": {
+            "checkin": 150,
+            "decrypt": 235,
+            "resonance_main": 110.44,
+            "resonance_ml": 217
+          },
+          "sol_shard": {
+            "resonance_shard": 131
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 475,
+            "decrypt_consume": 177
+          },
+          "sol_shard": {
+            "shard_condense": 128
+          },
+          "sol_token": {
+            "ship": 26,
+            "rig_upgrade": 110,
+            "shop": 121,
+            "scanner": 95
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 562
+          }
+        }
+      }
+    }
+  ],
+  "purchases": [
+    {
+      "day": 3,
+      "type": "ship",
+      "cost": 8,
+      "id": "tier_2"
+    },
+    {
+      "day": 4,
+      "type": "rig_upgrade",
+      "cost": 30,
+      "id": "rig_2",
+      "level": 2
+    },
+    {
+      "day": 5,
+      "type": "scanner",
+      "cost": 0,
+      "id": "scanner_1",
+      "scanner": 1
+    },
+    {
+      "day": 4,
+      "type": "shop",
+      "cost": 12,
+      "id": "auto_salvage_buoy"
+    },
+    {
+      "day": 6,
+      "type": "shop",
+      "cost": 12,
+      "id": "auto_production_license"
+    },
+    {
+      "day": 8,
+      "type": "shop",
+      "cost": 15,
+      "id": "overclock_mining_chip"
+    },
+    {
+      "day": 10,
+      "type": "scanner",
+      "cost": 25,
+      "id": "scanner_2",
+      "scanner": 2
+    },
+    {
+      "day": 10,
+      "type": "shop",
+      "cost": 10,
+      "id": "depin_lithium_pack"
+    },
+    {
+      "day": 12,
+      "type": "shop",
+      "cost": 6,
+      "id": "backpack_expansion"
+    },
+    {
+      "day": 14,
+      "type": "ship",
+      "cost": 18,
+      "id": "tier_3"
+    },
+    {
+      "day": 14,
+      "type": "shop",
+      "cost": 6,
+      "id": "storage_expansion"
+    },
+    {
+      "day": 16,
+      "type": "shop",
+      "cost": 30,
+      "id": "pet_bella_dog"
+    },
+    {
+      "day": 18,
+      "type": "shop",
+      "cost": 18,
+      "id": "storm_oilskin_cloak"
+    },
+    {
+      "day": 20,
+      "type": "shop",
+      "cost": 12,
+      "id": "storm_fire_shelter"
+    },
+    {
+      "day": 20,
+      "type": "scanner",
+      "cost": 70,
+      "id": "scanner_3",
+      "scanner": 3
+    },
+    {
+      "day": 8,
+      "type": "rig_upgrade",
+      "cost": 80,
+      "id": "rig_3",
+      "level": 3
+    }
+  ],
+  "rejected": [
+    {
+      "day": 4,
+      "id": "auto_salvage_buoy",
+      "cost": 12
+    },
+    {
+      "day": 8,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 9,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 10,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 11,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 12,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 13,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 14,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 15,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 16,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 17,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 18,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 19,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 20,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 20,
+      "id": "scanner_3",
+      "cost": 70
+    },
+    {
+      "day": 21,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 21,
+      "id": "scanner_3",
+      "cost": 70
+    },
+    {
+      "day": 22,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 23,
+      "id": "rig_3",
+      "cost": 80
+    },
+    {
+      "day": 24,
+      "id": "rig_3",
+      "cost": 80
+    }
+  ],
+  "ledger": {
+    "days": [
+      {
+        "day": 1,
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 3,
+            "vein_mine": 12
+          },
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      },
+      {
+        "day": 2,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 5
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 12,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 4
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 5
+          }
+        }
+      },
+      {
+        "day": 3,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 4
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 11,
+            "flotsam_manual": 1
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 3
+          },
+          "sol_token": {
+            "ship": 8
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 4
+          }
+        }
+      },
+      {
+        "day": 4,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 9,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "shard_condense": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 5
+          },
+          "sol_shard": {
+            "shard_condense": 8
+          },
+          "sol_token": {
+            "rig_upgrade": 30
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      },
+      {
+        "day": 5,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 8,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 4
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          },
+          "sol_token": {
+            "shop": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      },
+      {
+        "day": 6,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 9
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 7,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 3
+          },
+          "sol_shard": {
+            "resonance_shard": 11
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 12
+          },
+          "sol_token": {
+            "shop": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 9
+          }
+        }
+      },
+      {
+        "day": 7,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 5
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 8,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 12,
+            "decrypt_consume": 4
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 5
+          }
+        }
+      },
+      {
+        "day": 8,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 10
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2,
+            "resonance_calib": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 7
+          },
+          "sol_token": {
+            "shop": 15
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 10
+          }
+        }
+      },
+      {
+        "day": 9,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 7
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 7
+          }
+        }
+      },
+      {
+        "day": 10,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 10
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 7
+          },
+          "sol_shard": {
+            "shard_condense": 8
+          },
+          "sol_token": {
+            "scanner": 25,
+            "shop": 10
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 10
+          }
+        }
+      },
+      {
+        "day": 11,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 9
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 1
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 9
+          }
+        }
+      },
+      {
+        "day": 12,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 9
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 13,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "resonance_calib": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 7
+          },
+          "sol_token": {
+            "shop": 6
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 9
+          }
+        }
+      },
+      {
+        "day": 13,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 9
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 3
+          },
+          "sol_shard": {
+            "resonance_shard": 11
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 8
+          },
+          "sol_shard": {
+            "shard_condense": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 9
+          }
+        }
+      },
+      {
+        "day": 14,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 1
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          },
+          "sol_token": {
+            "ship": 18,
+            "shop": 6
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      },
+      {
+        "day": 15,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 10
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 10
+          }
+        }
+      },
+      {
+        "day": 16,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 10
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2,
+            "shard_condense": 2,
+            "resonance_calib": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 7
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 9
+          },
+          "sol_shard": {
+            "shard_condense": 8
+          },
+          "sol_token": {
+            "shop": 30
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 10
+          }
+        }
+      },
+      {
+        "day": 17,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 6
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 1
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 6
+          }
+        }
+      },
+      {
+        "day": 18,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 8
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 3
+          },
+          "sol_shard": {
+            "resonance_shard": 10
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 8
+          },
+          "sol_shard": {
+            "shard_condense": 12
+          },
+          "sol_token": {
+            "shop": 18
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 8
+          }
+        }
+      },
+      {
+        "day": 19,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 7
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 7
+          }
+        }
+      },
+      {
+        "day": 20,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 7
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          },
+          "sol_token": {
+            "shop": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 7
+          }
+        }
+      },
+      {
+        "day": 21,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 14
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "resonance_calib": 2,
+            "shard_condense": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 9
+          },
+          "sol_shard": {
+            "shard_condense": 8
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 14
+          }
+        }
+      },
+      {
+        "day": 22,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 8
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          },
+          "sol_token": {
+            "scanner": 70
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 8
+          }
+        }
+      },
+      {
+        "day": 23,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 5
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 5
+          }
+        }
+      },
+      {
+        "day": 24,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 8
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 13,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 8
+          }
+        }
+      },
+      {
+        "day": 25,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "resonance_main": 53.22,
+            "decrypt": 7
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          },
+          "sol_token": {
+            "rig_upgrade": 80
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 60
+          }
+        }
+      },
+      {
+        "day": 26,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 10
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 2
+          },
+          "sol_shard": {
+            "resonance_shard": 6
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 7
+          },
+          "sol_shard": {
+            "shard_condense": 8
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 10
+          }
+        }
+      },
+      {
+        "day": 27,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 8
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 8
+          }
+        }
+      },
+      {
+        "day": 28,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "resonance_main": 40.87,
+            "resonance_ml": 217,
+            "decrypt": 6
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "tidal_spawn": 1,
+            "monkey_crevice": 2
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 5
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 264
+          }
+        }
+      },
+      {
+        "day": 29,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "decrypt": 12
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 15,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "shard_condense": 3
+          },
+          "sol_shard": {
+            "resonance_shard": 12
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 8
+          },
+          "sol_shard": {
+            "shard_condense": 12
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 12
+          }
+        }
+      },
+      {
+        "day": 30,
+        "inflow": {
+          "sol_token": {
+            "checkin": 5,
+            "resonance_main": 16.35,
+            "decrypt": 8
+          },
+          "sol_crystal": {
+            "resonance_free": 3,
+            "vein_mine": 14,
+            "camp_miner": 2,
+            "monkey_crevice": 2,
+            "flotsam_manual": 1,
+            "shard_condense": 1
+          },
+          "sol_shard": {
+            "resonance_shard": 5
+          }
+        },
+        "outflow": {
+          "sol_crystal": {
+            "resonance_commit": 17,
+            "decrypt_consume": 6
+          },
+          "sol_shard": {
+            "shard_condense": 4
+          }
+        },
+        "transfers": {
+          "sol_token": {
+            "claim_payout": 24
+          }
+        }
+      }
+    ]
+  }
+}

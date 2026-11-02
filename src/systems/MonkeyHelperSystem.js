@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
 
+export const MONKEY_CREVICE = Object.freeze({cooldown:45,crystals:2,chance:0.75});
 export class MonkeyHelperSystem {
   constructor(game) {
     this.game = game;
@@ -333,10 +334,10 @@ export class MonkeyHelperSystem {
       );
     } else if (this.busyAction === 'crevice' && this.busyTarget) {
       // 岩缝寻宝收获结算：概率产出古代金币、珍珠、藏宝图残页与铁矿
-      this.busyTarget.cooldown = 45.0; // 冷却 45 秒
+      this.busyTarget.cooldown = MONKEY_CREVICE.cooldown; // 冷却 45 秒
 
       const lootPool = [
-        { id: 'sol_crystal', count: 2, name: '未解密高能硅晶原石 💎 (DePIN 算力核心)', prob: 0.75 },
+        { id: 'sol_crystal', count: MONKEY_CREVICE.crystals, name: '未解密高能硅晶原石 💎 (DePIN 算力核心)', prob: MONKEY_CREVICE.chance },
         { id: 'battery', count: 1, name: '干燥储能电池 🔋 (矿机备用电源)', prob: 0.5 },
         { id: 'ancient_coin', count: 1, name: '古代文明海盗金币 🪙', prob: 0.45 },
         { id: 'treasure_map_piece', count: 1, name: '羊皮纸藏宝图残页 🗺️', prob: 0.35 },
@@ -347,13 +348,13 @@ export class MonkeyHelperSystem {
       lootPool.forEach((item) => {
         if (Math.random() < item.prob) {
           gotten.push(item);
-          this.game.ui.addInventory(item.id, item.count);
+          this.game.ui.addInventory(item.id, item.count, 'monkey_crevice');
         }
       });
 
       if (gotten.length === 0) {
         gotten.push(lootPool[0]);
-        this.game.ui.addInventory(lootPool[0].id, lootPool[0].count);
+        this.game.ui.addInventory(lootPool[0].id, lootPool[0].count, 'monkey_crevice');
       }
 
       soundEngine.playItemDrop();

@@ -1,8 +1,23 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "d3a3ed8c3c3c478b6eb7b514396ab308",
+  "saveSeed": "6d830b5d0add1639faed12ca384f23c4",
   "checkinClaimDays": [],
-  "timestamp": 1793589552988,
+  "economyLedger": {
+    "days": [
+      {
+        "day": 1,
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 3
+          }
+        },
+        "outflow": {},
+        "transfers": {}
+      }
+    ]
+  },
+  "timestamp": 1793614136207,
   "player": {
     "position": [
       10,
@@ -29,8 +44,8 @@
     "battery": 1,
     "nail": 3,
     "coconut": 3,
-    "tree_sap": 2,
-    "tree_bark": 1,
+    "tree_sap": 1,
+    "tree_bark": 0,
     "kindling": 1,
     "baked_apple": 0,
     "stone_axe": 1
@@ -308,7 +323,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793589495842,
+      "freeGrantTs": 1793614099213,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,

@@ -14,6 +14,13 @@ const AVAILABLE = new Set([
   'tools/stone_axe', 'tools/stone_pickaxe', 'tools/fishing_rod', 'tools/flint_spear', 'tools/hunting_bow', 'tools/stone_hammer',
   'menu/crafting_table', 'menu/camp', 'menu/shop', 'menu/manual',
   'hud/mining_rig', 'hud/backpack', 'hud/menu', 'hud/interact', 'hud/attack', 'hud/sprint', 'hud/jump',
+  // 黏土/动森新图标第三批（2026-11-02）：26 个 HUD 新增图标
+  'hud/health', 'hud/food', 'hud/water', 'hud/energy',
+  'hud/weather_clear', 'hud/weather_cloudy', 'hud/weather_rain', 'hud/weather_typhoon',
+  'hud/motherlode', 'hud/shard', 'hud/score_rs',
+  'hud/prompt_crystal', 'hud/prompt_monkey', 'hud/prompt_heart', 'hud/prompt_crab',
+  'hud/prompt_fire', 'hud/prompt_tracks', 'hud/prompt_boss', 'hud/prompt_generic',
+  'hud/quest', 'hud/quest_flag', 'hud/solana', 'hud/close', 'hud/check', 'hud/warn', 'hud/lock',
   // 黏土图标第二批（2026-10-31）：35 个物品图
   'items/baked_apple', 'items/broken_radio', 'items/battery', 'items/working_radio', 'items/raft', 'items/flint_arrow', 'items/rocket', 'items/bone_armor', 'items/herb_salve', 'items/energy_drink', 'items/iron_ingot', 'items/trap', 'items/thorn', 'items/crab_shield', 'items/crab_meat_raw', 'items/crab_meat_cooked', 'items/hide', 'items/crab_shell', 'items/big_backpack', 'items/golden_coconut', 'items/bird_egg', 'items/ancient_coin', 'items/map_fragment', 'items/pearl', 'items/tough_bark', 'items/crab', 'items/sardine', 'items/smoked_fish', 'items/big_rock', 'items/feather', 'items/copper_ore', 'items/steel_pickaxe', 'items/sos_sign', 'items/clam', 'items/grilled_clam'
 ]);
@@ -58,8 +65,54 @@ const ITEM_EMOJI = {
 // 界面图标路径没有图时的 emoji
 const UI_EMOJI = {
   'hud/mining_rig': '⛏️', 'hud/backpack': '🎒', 'hud/menu': '☰', 'hud/interact': '💬', 'hud/attack': '⚔️', 'hud/sprint': '⚡', 'hud/jump': '🦘',
-  'menu/crafting_table': '🔨', 'menu/camp': '🏕️', 'menu/shop': '🛒', 'menu/manual': '📖'
+  'menu/crafting_table': '🔨', 'menu/camp': '🏕️', 'menu/shop': '🛒', 'menu/manual': '📖',
+  // 黏土/动森新图标第三批（2026-11-02）
+  'hud/health': '❤️', 'hud/food': '🍗', 'hud/water': '💧', 'hud/energy': '⚡',
+  'hud/weather_clear': '☀️', 'hud/weather_cloudy': '⛅', 'hud/weather_rain': '🌧️', 'hud/weather_typhoon': '🌀',
+  'hud/motherlode': '💠', 'hud/shard': '🔷', 'hud/score_rs': '🏅',
+  'hud/prompt_crystal': '💎', 'hud/prompt_monkey': '🐒', 'hud/prompt_heart': '❤️', 'hud/prompt_crab': '🦀',
+  'hud/prompt_fire': '🔥', 'hud/prompt_tracks': '🐾', 'hud/prompt_boss': '👑', 'hud/prompt_generic': '💬',
+  'hud/quest': '📜', 'hud/quest_flag': '🚩', 'hud/solana': '🔗', 'hud/close': '✖️', 'hud/check': '✔️', 'hud/warn': '⚠️', 'hud/lock': '🔒'
 };
+
+// 四维状态图标映射与渲染函数
+export const SURVIVAL_ICON_MAP = {
+  health: 'hud/health',
+  life: 'hud/health',
+  food: 'hud/food',
+  hunger: 'hud/food',
+  water: 'hud/water',
+  energy: 'hud/energy',
+  fatigue: 'hud/energy'
+};
+
+export function getSurvivalIconHtml(stat, size = 16, opts = {}) {
+  const iconId = SURVIVAL_ICON_MAP[stat] || (stat?.startsWith('hud/') ? stat : `hud/${stat}`);
+  return iconHTML(iconId, size, { eager: true, ...opts });
+}
+
+// 天气状态图标映射与渲染函数
+export const WEATHER_ICON_MAP = {
+  clear: 'hud/weather_clear',
+  cloudy: 'hud/weather_cloudy',
+  rain: 'hud/weather_rain',
+  typhoon: 'hud/weather_typhoon'
+};
+
+export const WEATHER_EMOJI_FALLBACK = {
+  clear: '☀️',
+  cloudy: '⛅',
+  rain: '🌧️',
+  typhoon: '⛈️'
+};
+
+export function getWeatherIconHtml(weather, size = 18, opts = {}) {
+  const iconId = WEATHER_ICON_MAP[weather];
+  if (iconId && hasIcon(iconId)) {
+    return iconHTML(iconId, size, { eager: true, ...opts });
+  }
+  return WEATHER_EMOJI_FALLBACK[weather] || '☀️';
+}
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 

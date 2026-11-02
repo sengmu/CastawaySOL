@@ -477,7 +477,7 @@ export class StorySystem {
 }
 
 const ONBOARDING_STEPS = [
-  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动黑猫。' },
+  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动。' },
   { id: 'gather', title: '拾取漂流物', text: '走近发亮的树枝，点按右侧互动按钮拾取。' },
   { id: 'inventory', title: '查看随身行囊', text: '点按右上角行囊，查看刚捡到的材料和随身食物。' },
   { id: 'consume', title: '补充体力', text: '在行囊中选择苹果并点按使用；也可以到溪边互动饮水。' }

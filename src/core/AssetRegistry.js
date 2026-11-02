@@ -101,10 +101,14 @@ export const GAME_ASSETS = {
 
   // 玩家角色外观
   player: {
+    // 3D-PILOT: 启用主角自建 3D 荒岛款模型 (GLTF/GLB)
+    path: '/models/protagonist.glb',
+    scale: 1.0,
+    // [回退注释 / Fallback]: 若需回退至小猫咪模型，解开下行注释并恢复 PlayerController 引用
+    // fallbackCatDae: '/models/npcs/Model/NpcNmlCat23.Nin_NX_NVN/NpcNmlCat23.dae',
     body: '/models/player/Model/PlayerBody.Nin_NX_NVN/PlayerBody.dae',
     hair: '/models/player/Model/PlayerHair00.Nin_NX_NVN/PlayerHair00.dae',
     pants: '/models/player/Model/PlayerBottomsPantsNormal.Nin_NX_NVN/PlayerBottomsPantsNormal.dae',
-    scale: 0.8
   },
 
   // 自然植物生态

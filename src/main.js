@@ -750,7 +750,7 @@ class Game {
         const hasPickaxe = (this.ui.inventory['stone_pickaxe'] || 0) > 0 || (this.ui.inventory['iron_pickaxe'] || 0) > 0;
         if (hasHammer || hasPickaxe) {
           const mineRes = this.beachResources.mineRock(nearMineable, hasHammer, hasPickaxe, (itemType) => {
-            this.ui.addInventory(itemType, 1);
+            this.ui.addInventory(itemType, 1, 'vein_mine');
             if (this.story && this.story.onGatherResource) {
               this.story.onGatherResource(itemType);
             }
@@ -768,7 +768,7 @@ class Game {
       }
 
       const picked = this.beachResources.checkPickup(playerPos, (itemType, resName) => {
-        this.ui.addInventory(itemType, 1);
+        this.ui.addInventory(itemType, 1, 'tidal_spawn');
         this.ui.showToast(`拾取了【${resName}】！`, 'small');
         if (this.story && this.story.onGatherResource) {
           this.story.onGatherResource(itemType);
@@ -780,7 +780,7 @@ class Game {
     // 1.6 检测浅海漂浮的木板捆、金属桶、板条箱等漂流物打捞
     if (this.flotsamSalvage) {
       const salvaged = this.flotsamSalvage.checkSalvage(playerPos, (itemType, flotsamName) => {
-        this.ui.addInventory(itemType, 1);
+        this.ui.addInventory(itemType, 1, 'flotsam_manual');
         this.ui.showToast(`打捞获得了【${flotsamName}】！`, 'small');
         if (this.story && this.story.onGatherResource) {
           this.story.onGatherResource(itemType);

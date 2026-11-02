@@ -1,0 +1,38 @@
+┌─────────┬────────────────────────────────────────┬──────┬───────┬────────┐
+│ (index) │ metric                                 │ Day1 │ Day7  │ Day30  │
+├─────────┼────────────────────────────────────────┼──────┼───────┼────────┤
+│ 0       │ 'sol_crystal inflow/initial_silo'      │ 1    │ 1     │ 1      │
+│ 1       │ 'sol_crystal inflow/resonance_free'    │ 3    │ 21    │ 90     │
+│ 2       │ 'sol_crystal inflow/vein_mine'         │ 12   │ 67    │ 398    │
+│ 3       │ 'sol_crystal inflow/shard_condense'    │ 0    │ 8     │ 32     │
+│ 4       │ 'sol_crystal inflow/flotsam_manual'    │ 0    │ 2     │ 10     │
+│ 5       │ 'sol_crystal inflow/camp_miner'        │ 0    │ 8     │ 54     │
+│ 6       │ 'sol_crystal inflow/tidal_spawn'       │ 0    │ 1     │ 7      │
+│ 7       │ 'sol_crystal inflow/monkey_crevice'    │ 0    │ 6     │ 52     │
+│ 8       │ 'sol_crystal inflow/resonance_calib'   │ 0    │ 0     │ 8      │
+│ 9       │ 'sol_token inflow/checkin'             │ 5    │ 35    │ 150    │
+│ 10      │ 'sol_token inflow/decrypt'             │ 6    │ 41    │ 235    │
+│ 11      │ 'sol_token inflow/resonance_main'      │ 0    │ 0     │ 110.44 │
+│ 12      │ 'sol_token inflow/resonance_ml'        │ 0    │ 0     │ 217    │
+│ 13      │ 'sol_shard inflow/resonance_shard'     │ 0    │ 33    │ 131    │
+│ 14      │ 'sol_crystal outflow/resonance_commit' │ 12   │ 84    │ 475    │
+│ 15      │ 'sol_crystal outflow/decrypt_consume'  │ 4    │ 30    │ 177    │
+│ 16      │ 'sol_token outflow/ship'               │ 0    │ 8     │ 26     │
+│ 17      │ 'sol_token outflow/rig_upgrade'        │ 0    │ 30    │ 110    │
+│ 18      │ 'sol_token outflow/shop'               │ 0    │ 24    │ 121    │
+│ 19      │ 'sol_token outflow/scanner'            │ 0    │ 0     │ 95     │
+│ 20      │ 'sol_shard outflow/shard_condense'     │ 0    │ 32    │ 128    │
+│ 21      │ 'sol_token transfers/claim_payout'     │ 6    │ 41    │ 562    │
+│ 22      │ 'balance'                              │ 11   │ 14    │ 360    │
+│ 23      │ 'dust'                                 │ 0    │ 0     │ 0.44   │
+│ 24      │ 'pool'                                 │ 6.48 │ 55.36 │ 26.36  │
+│ 25      │ 'burned'                               │ 4.86 │ 34.02 │ 269.52 │
+│ 26      │ 'rs'                                   │ 4    │ 28    │ 196    │
+│ 27      │ 'totalSupply'                          │ 15   │ 105   │ 611    │
+└─────────┴────────────────────────────────────────┴──────┴───────┴────────┘
+Scenario: {"steps":1500,"minutes":18,"earlySupply":15,"lateSupply":22,"resonanceRatio":0.75,"earlyRounds":2,"lateRounds":3,"seed":"g3-neutral-v1"}
+Prices from real systems; deferred unaffordable attempts: 20
+Resonance red lines: {"neutral":0.7908561055556176,"dawn":0.7608113672840071,"day":0.778890656172908,"dusk":0.7966785820988298,"night":0.839994974691433,"dayClear":0.7558081129630148,"nightClear":0.8111144141976049,"nightTyphoon":0.9023595969136666,"optimal":0.8687651611111668,"clearTiming":0.07317505632186361,"typhoonTiming":0.136338665396045}
+R3 product differentials: [{"id":"auto_salvage_buoy","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"auto_production_license","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"overclock_mining_chip","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"depin_lithium_pack","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"deepsea_shipbuilding_kit","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"backpack_expansion","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"storage_expansion","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"airdrop_rescue_crate","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"pet_bella_dog","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"pet_raymond_cat","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"pet_dom_sheep","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"storm_oilskin_cloak","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"storm_fire_shelter","crystals":0,"rs":0,"injected":0,"purchaseInjection":0},{"id":"ALL_13","crystals":0,"rs":0,"injected":0,"purchaseInjection":0}]
+GATE FAIL: Day7 balance 14.00 < T2+L2 38
+GATE FAIL: Day30 balance 360.00 outside 284±20% [227.2,340.8]

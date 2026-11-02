@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
 
+export const CRYSTAL_VEIN = Object.freeze({ base: 2, bonusChance: 0.5, regrowthSteps: 600, tidalSteps: 120, tidalChance: 0.10 });
+
 export class BeachResourceSystem {
   constructor(scene) {
     this.scene = scene;
@@ -246,7 +248,7 @@ export class BeachResourceSystem {
     if (res.hp <= 0) {
       // 成功击碎巨石/矿床！
       res.collected = true;
-      res.regrowthSteps = 600; // 600 生存步后地壳岩脉重新隆起 (约 3 分钟)
+      res.regrowthSteps = CRYSTAL_VEIN.regrowthSteps; // 600 生存步后地壳岩脉重新隆起 (约 3 分钟)
       res.group.visible = false;
       soundEngine.playPlaceFurniture();
 
@@ -261,8 +263,8 @@ export class BeachResourceSystem {
         if (Math.random() < 0.5) dropped.push('iron_ore');
       } else if (res.type === 'sol_vein') {
         // 高能硅晶矿脉 (DePIN 矿床)：必爆 2 块未解密硅晶原石 + 1 块海蚀碎石，50% 额外爆出第 3 块硅晶
-        dropped = ['sol_crystal', 'sol_crystal', 'stone_chunk'];
-        if (Math.random() < 0.5) dropped.push('sol_crystal');
+        dropped = [...Array(CRYSTAL_VEIN.base).fill('sol_crystal'), 'stone_chunk'];
+        if (Math.random() < CRYSTAL_VEIN.bonusChance) dropped.push('sol_crystal');
       }
 
       dropped.forEach(itemType => {
@@ -290,9 +292,9 @@ export class BeachResourceSystem {
 
     // 潮汐退潮 10% 几率在浅滩涌现微光晶簇彩蛋 (每 120 步检定)
     this.tideStepTimer = (this.tideStepTimer || 0) + stepCount;
-    if (this.tideStepTimer >= 120) {
+    if (this.tideStepTimer >= CRYSTAL_VEIN.tidalSteps) {
       this.tideStepTimer = 0;
-      if (Math.random() < 0.10) {
+      if (Math.random() < CRYSTAL_VEIN.tidalChance) {
         this.spawnTidalCrystal();
       }
     }

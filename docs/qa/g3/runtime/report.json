@@ -1,0 +1,38 @@
+{
+  "errors": [],
+  "runtime": {
+    "frame": 9,
+    "ledger": {
+      "days": [
+        {
+          "day": 1,
+          "inflow": {
+            "sol_crystal": {
+              "initial_silo": 1,
+              "resonance_free": 3
+            }
+          },
+          "outflow": {},
+          "transfers": {}
+        }
+      ]
+    },
+    "snapshot": {
+      "days": [
+        {
+          "day": 1,
+          "inflow": {
+            "sol_crystal": {
+              "initial_silo": 1,
+              "resonance_free": 3
+            }
+          },
+          "outflow": {},
+          "transfers": {}
+        }
+      ]
+    },
+    "schema": 2
+  },
+  "status": "passed"
+}

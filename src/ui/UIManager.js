@@ -1,3 +1,4 @@
+import { economyLedger, isEconomyResource } from '../systems/EconomyLedger.js';
 import { soundEngine } from '../core/AudioSystem.js';
 import { VirtualJoystick } from './VirtualJoystick.js';
 import { solanaBridge } from '../core/SolanaBridge.js';
@@ -7,7 +8,7 @@ import { ShopManager } from './ShopManager.js';
 import { haptics } from '../core/HapticFeedback.js';
 import { createElement, Backpack, Hammer, BookOpen, Maximize, Minimize, MoreHorizontal, Wallet, Zap, ArrowUp, Droplets, MessageCircle, Gem, Mountain, Sailboat, PawPrint, Heart, Fish, Flame, Bed, Trees, Drumstick, Menu } from 'lucide';
 import { VISUAL_QUALITY_KEY } from '../core/VisualQuality.js';
-import { iconHTML } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
+import { iconHTML, getSurvivalIconHtml, getWeatherIconHtml } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
 import { NoticeCenter, NOTICE_MODES } from './NoticeCenter.js'; // 提示系统优化（2026-10-31）
 import cozyPortraitHudCSS from './CozyPortraitHud.css?inline';
 import cozyLandscapeHudCSS from './CozyLandscapeHud.css?inline';
@@ -1359,25 +1360,25 @@ export class UIManager {
       <!-- 横屏桌面/平板展示面板 -->
       <div class="dashboard-panel">
         <div class="stats-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="landscape-weather-symbol" aria-hidden="true">☀️</span>
+          <span class="landscape-weather-symbol" aria-hidden="true">${getWeatherIconHtml('clear', 22)}</span>
           <div class="landscape-time-copy"><div class="time-tag" id="hud-time">第 1 天 · 0 步</div>
           <div class="time-tag" id="hud-weather" style="background:rgba(0, 206, 201, 0.2); color:#00cec9; font-weight:800;">晴朗 37.0°C</div></div>
         </div>
         <div class="gauges-grid">
           <div class="gauge-item">
-            <div class="gauge-label-row"><span>❤️ 生命</span><span id="txt-life">100</span></div>
+            <div class="gauge-label-row"><span>${getSurvivalIconHtml('health', 24)} 生命</span><span id="txt-life">100</span></div>
             <div class="gauge-track"><div class="gauge-fill gauge-fill-life" id="bar-life" style="width:100%;"></div></div>
           </div>
           <div class="gauge-item">
-            <div class="gauge-label-row"><span>🍗 饥饿</span><span id="txt-hunger">70</span></div>
+            <div class="gauge-label-row"><span>${getSurvivalIconHtml('food', 24)} 饥饿</span><span id="txt-hunger">70</span></div>
             <div class="gauge-track"><div class="gauge-fill gauge-fill-hunger" id="bar-hunger" style="width:70%;"></div></div>
           </div>
           <div class="gauge-item">
-            <div class="gauge-label-row"><span>💧 饮水</span><span id="txt-water">70</span></div>
+            <div class="gauge-label-row"><span>${getSurvivalIconHtml('water', 24)} 饮水</span><span id="txt-water">70</span></div>
             <div class="gauge-track"><div class="gauge-fill gauge-fill-water" id="bar-water" style="width:70%;"></div></div>
           </div>
           <div class="gauge-item">
-            <div class="gauge-label-row"><span>⚡ 疲劳</span><span id="txt-fatigue">30</span></div>
+            <div class="gauge-label-row"><span>${getSurvivalIconHtml('energy', 24)} 疲劳</span><span id="txt-fatigue">30</span></div>
             <div class="gauge-track"><div class="gauge-fill gauge-fill-fatigue" id="bar-fatigue" style="width:30%;"></div></div>
           </div>
         </div>
@@ -1397,13 +1398,13 @@ export class UIManager {
           <!-- 第二行：天候与饱食、水分、疲劳 -->
           <div class="strip-row strip-row-bottom" id="strip-row-bottom">
             <div class="strip-subline" id="strip-subline">
-              <span class="strip-weather-icon" id="strip-weather-icon" aria-hidden="true">☀️</span>
+              <span class="strip-weather-icon" id="strip-weather-icon" aria-hidden="true">${getWeatherIconHtml('clear', 20)}</span>
               <span class="strip-weather-copy"><span class="strip-sub-day" id="strip-time">第1天</span><span class="strip-sub-weather" id="strip-weather">晴朗</span></span>
               <span class="strip-sub-steps" id="strip-steps" style="display:none;">0步</span>
             </div>
-            <div class="strip-item strip-stat strip-hunger" title="饱食度"><span class="strip-meter-icon" aria-hidden="true">🍗</span><b id="strip-val-hunger">70</b></div>
-            <div class="strip-item strip-stat strip-water" title="饮水度"><span class="strip-meter-icon" aria-hidden="true">💧</span><b id="strip-val-water">70</b></div>
-            <div class="strip-item strip-stat strip-fatigue" title="疲劳度"><span class="strip-meter-icon" aria-hidden="true">⚡</span><b id="strip-val-fatigue">30</b></div>
+            <div class="strip-item strip-stat strip-hunger" title="饱食度"><span class="strip-meter-icon" aria-hidden="true">${getSurvivalIconHtml('food', 18)}</span><b id="strip-val-hunger">70</b></div>
+            <div class="strip-item strip-stat strip-water" title="饮水度"><span class="strip-meter-icon" aria-hidden="true">${getSurvivalIconHtml('water', 18)}</span><b id="strip-val-water">70</b></div>
+            <div class="strip-item strip-stat strip-fatigue" title="疲劳度"><span class="strip-meter-icon" aria-hidden="true">${getSurvivalIconHtml('energy', 18)}</span><b id="strip-val-fatigue">30</b></div>
           </div>
         </div>
       </div>
@@ -1424,7 +1425,7 @@ export class UIManager {
     }
     questCard.innerHTML = `
       <div class="quest-banner" id="quest-banner" title="点击展开/折叠任务目标" role="button" aria-expanded="false">
-        <span class="quest-icon">📜</span>
+        <span class="quest-icon">${iconHTML('hud/quest', 18, { eager: true })}</span>
         <span class="quest-text" id="quest-text">${formatKeyHints(this.currentQuest).replace(/^🚩\s*/, '')}</span>
         <span class="quest-toggle-arrow" id="quest-toggle-arrow">▼</span>
       </div>
@@ -1466,7 +1467,7 @@ export class UIManager {
       <button class="hud-nav-btn" id="btn-camp-manage">🏕️ 营地经营中枢</button>
       <button class="hud-nav-btn" id="btn-open-shop" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%); color:#0b101b; font-weight:900;">🛒 补给与特权</button>
       <button class="hud-nav-btn" id="btn-open-help" aria-label="手册">📖 <span class="hud-nav-desktop-label">手册</span></button>
-      <button class="hud-nav-btn hud-nav-sol" id="btn-solana">🟣 SOL 钱包连接</button>
+      <button class="hud-nav-btn hud-nav-sol" id="btn-solana">${iconHTML('hud/solana', 18, { eager: true })} SOL 钱包连接</button>
       <button class="hud-nav-btn" id="btn-fullscreen" title="进入全屏沉浸模式" aria-label="全屏">⛶ <span class="hud-nav-desktop-label">全屏</span></button>
       <div class="hud-drawer-quality" role="group" aria-label="画质设置"><span class="hud-drawer-qlabel">画质</span><button type="button" class="quality-opt" data-quality="low" aria-pressed="false">低</button><button type="button" class="quality-opt" data-quality="medium" aria-pressed="false">中</button><button type="button" class="quality-opt" data-quality="high" aria-pressed="false">高</button></div>
       <div class="hud-drawer-quality hud-drawer-notice" role="group" aria-label="提示强度"><span class="hud-drawer-qlabel">提示</span><button type="button" class="notice-opt" data-notice="full" aria-pressed="false">完整</button><button type="button" class="notice-opt" data-notice="lite" aria-pressed="false">精简</button><button type="button" class="notice-opt" data-notice="important" aria-pressed="false">仅重要</button></div>
@@ -1509,7 +1510,7 @@ export class UIManager {
       <div class="modal-card">
         <div class="modal-header">
           <div class="modal-title" id="modal-title">🎒 探险行囊</div>
-          <button class="modal-close-btn" id="modal-close-btn">✕</button>
+          <button class="modal-close-btn" id="modal-close-btn" aria-label="关闭">${iconHTML('hud/close', 18, { eager: true })}</button>
         </div>
         <div class="modal-body" id="modal-body"></div>
       </div>
@@ -1536,8 +1537,8 @@ export class UIManager {
 
     const navIcons = { 'btn-fullscreen': Maximize, 'btn-open-inv': Backpack, 'btn-open-merge': Hammer, 'btn-open-help': BookOpen, 'btn-hud-more': Menu, 'btn-solana': Wallet, 'btn-quick-run': Zap, 'btn-quick-jump': ArrowUp };
     // 黏土图标集成：顶栏背包/菜单、抽屉合成台/营地/商店/手册、疾跑/跳跃改用黏土图标（其余仍用 lucide）
-    const CLAY_NAV = { 'btn-open-inv': 'hud/backpack', 'btn-hud-more': 'hud/menu', 'btn-open-merge': 'menu/crafting_table', 'btn-camp-manage': 'menu/camp', 'btn-open-shop': 'menu/shop', 'btn-open-help': 'menu/manual', 'btn-quick-run': 'hud/sprint', 'btn-quick-jump': 'hud/jump' };
-    const CLAY_NAV_SIZE = { 'btn-open-inv': 30, 'btn-hud-more': 30, 'btn-quick-run': 26, 'btn-quick-jump': 26 };
+    const CLAY_NAV = { 'btn-open-inv': 'hud/backpack', 'btn-hud-more': 'hud/menu', 'btn-open-merge': 'menu/crafting_table', 'btn-camp-manage': 'menu/camp', 'btn-open-shop': 'menu/shop', 'btn-open-help': 'menu/manual', 'btn-quick-run': 'hud/sprint', 'btn-quick-jump': 'hud/jump', 'btn-solana': 'hud/solana' };
+    const CLAY_NAV_SIZE = { 'btn-open-inv': 30, 'btn-hud-more': 30, 'btn-quick-run': 26, 'btn-quick-jump': 26, 'btn-solana': 24 };
     navIcons['btn-camp-manage'] = null;
     navIcons['btn-open-shop'] = null;
     Object.entries(navIcons).forEach(([id, definition]) => {
@@ -1551,9 +1552,9 @@ export class UIManager {
       }
     });
     document.getElementById('main-action-icon').innerHTML = iconHTML('hud/interact', 30, { eager: true }); // 黏土图标集成
-    const gaugeIcons = [[Heart, '生命'], [Drumstick, '饱食'], [Droplets, '水分'], [Zap, '疲劳']];
+    const gaugeIcons = [['hud/health', '生命'], ['hud/food', '饱食'], ['hud/water', '水分'], ['hud/energy', '疲劳']];
     dashboard.querySelectorAll('.gauge-label-row span:first-child').forEach((label, index) => {
-      label.innerHTML = hudIcon(gaugeIcons[index][0]) + `<span class="gauge-name">${gaugeIcons[index][1]}</span>`;
+      label.innerHTML = iconHTML(gaugeIcons[index][0], 24, { eager: true, className: 'gauge-clay-icon' }) + `<span class="gauge-name">${gaugeIcons[index][1]}</span>`;
     });
     // UI 第二步优化：水壶口数用小圆点显示在水分条旁（横屏紧凑状态卡；竖屏仍用原水壶行）
     const waterItem = document.getElementById('bar-water')?.closest('.gauge-item');
@@ -1735,6 +1736,18 @@ export class UIManager {
       });
     }
 
+    // 算力总账入口：只在算力代币数量显示上挂点击事件
+    const solTokenEl = document.getElementById('txt-hud-sol-token');
+    if (solTokenEl) {
+      solTokenEl.style.cursor = 'pointer';
+      solTokenEl.setAttribute('title', '点击查看算力总账');
+      solTokenEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.openLedgerDrawer();
+      });
+    }
+
     document.getElementById('btn-open-inv').addEventListener('click', () => {
       haptics.light();
       this.openInventoryModal();
@@ -1855,6 +1868,7 @@ export class UIManager {
 
     // 初始化 Solana 钱包按钮状态
     this.updateSolanaBtn();
+    this.initLedgerDrawer();
   }
 
   // 移动端全屏沉浸与横屏锁定切换
@@ -1971,7 +1985,7 @@ export class UIManager {
       const isHypo = ws.bodyTemp < 35.0;
       this._hudWrite('weather-text', `${wNames[ws.currentWeather] || '晴'} ${temp}°C${isHypo ? ' ⚠️失温' : ''}`, (v) => { weatherEl.textContent = v; });
       const weatherSymbol = this._hudEl('landscape-weather-symbol') || weatherEl.closest('.stats-header')?.querySelector('.landscape-weather-symbol');
-      if (weatherSymbol) this._hudWrite('landscape-weather-symbol', wIcons[ws.currentWeather] || '☀️', (v) => { weatherSymbol.textContent = v; });
+      if (weatherSymbol) this._hudWrite('landscape-weather-symbol', getWeatherIconHtml(ws.currentWeather, 22), (v) => { weatherSymbol.innerHTML = v; });
       this._hudWrite('weather-bg', isHypo ? 'rgba(235, 77, 75, 0.3)' : (ws.currentWeather === 'rain' || ws.currentWeather === 'typhoon' ? 'rgba(9, 132, 227, 0.3)' : 'rgba(0, 206, 201, 0.2)'), (v) => { weatherEl.style.background = v; });
       this._hudWrite('weather-color', isHypo ? '#ff7675' : '#00cec9', (v) => { weatherEl.style.color = v; });
     }
@@ -1979,6 +1993,16 @@ export class UIManager {
     // 动态刷新顶部 算力代币 资产与矿机待领取状态
     const solHud = this._hudEl('txt-hud-sol-token');
     if (solHud) {
+      if (!solHud._ledgerBound) {
+        solHud._ledgerBound = true;
+        solHud.style.cursor = 'pointer';
+        solHud.setAttribute('title', '点击查看算力总账');
+        solHud.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          this.openLedgerDrawer();
+        });
+      }
       const solCount = (this.inventory ? this.inventory['sol_token'] : 0) || 0;
       const g = window.__game;
       const unclaimed = (g && g.miningRig) ? g.miningRig.unclaimedSol : 0;
@@ -2025,7 +2049,7 @@ export class UIManager {
         stripWeather.title = `体温 ${Math.round(ws.bodyTemp)}°C`;
       });
       const weatherIcon = this._hudEl('strip-weather-icon');
-      if (weatherIcon) this._hudWrite('strip-weather-icon', wIcons[ws.currentWeather] || '☀️', (v) => { weatherIcon.textContent = v; });
+      if (weatherIcon) this._hudWrite('strip-weather-icon', getWeatherIconHtml(ws.currentWeather, 20), (v) => { weatherIcon.innerHTML = v; });
     }
     const statKeys = ['life', 'hunger', 'water', 'fatigue'];
     let hasZeroDanger = (values.life <= 0 || values.water <= 0);
@@ -2254,8 +2278,23 @@ export class UIManager {
       pet_nest: PawPrint, sheep_pouch: Backpack, mining_rig: Zap,
       temple_enter: Mountain, temple_portal: Sailboat, temple_altar: Gem, temple_vault: Gem
     };
-    // 黏土图标集成：通用互动/村民用黏土「互动」图标，矿机/驮袋用对应黏土图标，其余情境仍用 lucide
-    const clayCtx = { mining_rig: 'hud/mining_rig', sheep_pouch: 'hud/backpack' };
+    // 黏土/动森新图标第三批：世界交互浮标与情境动作图标映射
+    const clayCtx = {
+      mining_rig: 'hud/mining_rig',
+      sheep_pouch: 'hud/backpack',
+      gem: 'hud/prompt_crystal',
+      monkey: 'hud/prompt_monkey',
+      monkey_helper: 'hud/prompt_monkey',
+      monkey_crevice: 'hud/prompt_monkey',
+      partner: 'hud/prompt_heart',
+      crab_trap: 'hud/prompt_crab',
+      cooking: 'hud/prompt_fire',
+      smoker_rack: 'hud/prompt_fire',
+      campfire: 'hud/prompt_fire',
+      pet_nest: 'hud/prompt_tracks',
+      temple_vault: 'hud/prompt_boss',
+      villager: 'hud/prompt_generic'
+    };
     const ctxDef = contextIcons[type];
     icon.innerHTML = clayCtx[type] ? iconHTML(clayCtx[type], 30, { eager: true }) : (ctxDef && ctxDef !== MessageCircle ? hudIcon(ctxDef) : iconHTML('hud/interact', 30, { eager: true }));
   }
@@ -2453,12 +2492,16 @@ export class UIManager {
     return this.maxInventorySlots;
   }
 
-  addInventory(type, count = 1) {
+  addInventory(type, count = 1, source) {
     if (this.isInventoryFull(type)) {
       this.showToast(`❌ 行囊已满 (${this.usedInventorySlots}/${this.maxInventorySlots})！请将物资存入营地木箱或使用【行囊扩容】！`, 'medium');
       return false;
     }
-    this.inventory[type] = (this.inventory[type] || 0) + count;
+    if (isEconomyResource(type)) {
+      if (!source) throw new Error(`Missing economy source for ${type}`);
+      const game = this.buildSystem.game;
+      economyLedger(game).credit(type, count, source, this.inventory);
+    } else this.inventory[type] = (this.inventory[type] || 0) + count;
     this.renderQuickBar();
     this.bottomBar.querySelectorAll('[data-id]').forEach(slot => {
       if (slot.dataset.id === type) slot.classList.add('received');
@@ -2955,12 +2998,12 @@ export class UIManager {
     if (solanaBridge.isConnected && solanaBridge.walletAddress) {
       const addrShort = solanaBridge.walletAddress.slice(0, 4) + '...' + solanaBridge.walletAddress.slice(-4);
       const balStr = solanaBridge.isGuest ? '游客' : `${solanaBridge.balance.toFixed(2)} SOL`;
-      const devTag = solanaBridge.isMWA ? '📱' : '🟣';
+      const devTag = solanaBridge.isMWA ? '📱' : iconHTML('hud/solana', 18, { eager: true });
       btn.innerHTML = `${devTag} ${addrShort} (${balStr})`;
       btn.style.background = 'linear-gradient(135deg, rgba(153, 69, 255, 0.4), rgba(20, 241, 149, 0.4))';
       btn.style.border = '1px solid #14F195';
     } else {
-      btn.innerHTML = '🟣 SOL 钱包连接';
+      btn.innerHTML = `${iconHTML('hud/solana', 18, { eager: true })} SOL 钱包连接`;
       btn.style.background = '';
       btn.style.border = '';
     }
@@ -4373,6 +4416,7 @@ export class UIManager {
       <p>保底：每轮投入 ≥ ${num('pity-min-shares',o.PITY.minShares)} 份且未中主池，校准值 +1。校准奖概率：${pityRounds.map(r => `第 ${r} 轮 ${num(`pity-${r}`,pct(o.PITY_TABLE[r]))}%`).join('，')}。奖励 ${num('pity-crystals',o.PITY.crystals)} 原石及下一轮满级热力；校准奖不等于主池命中。</p>
       <p>母池：投入 ${num('ml-inject',pct(o.MOTHERLODE_SHARE))}%、消费 ${num('ml-sink',pct(m.sinkShare))}%、超硬顶部分注入；池上限 ${num('ml-cap',o.MAX_MOTHERLODE_POOL)}。命中后检定概率 min(${num('ml-max-prob',m.maxProbability)}, min(${num('ml-base-prob',m.baseMaxProbability)}, 获胜格己方份额/${num('ml-divisor',m.sharesDivisor)}) × 天气系数)，台风系数 ${num('ml-typhoon',m.typhoonMultiplier)}。</p>
       <p>唤醒者独得 ${num('ml-awakener',pct(m.awakenerShare))}%；余下 ${num('ml-shared',pct(m.sharedShare))}% 按获胜格份额分配，模拟矿工所得销毁，其中 ${num('ml-seed',pct(m.seedShare))}% 留作下一池种子。</p>
+      <p>母晶池需单轮押注满 5 份方可参与分配。</p>
       <p>本轮种子哈希（cyrb53）：<span data-seed="commit">${miningRig?.resonance.seedCommit || '尚未生成'}</span><br>上一轮种子揭示：<span data-seed="reveal">${miningRig?.resonance.seedReveal || '暂无'}</span></p>
       <p>最近获胜格：${(miningRig?.resonance.history || []).map(r => r.winningSquare + 1).join('、') || '暂无'}</p>
     </div>`;
@@ -4391,7 +4435,7 @@ export class UIManager {
     return `
       <div style="display:flex; flex-direction:column; gap:12px;">
         <div style="background:radial-gradient(circle at center, rgba(153,69,255,0.25) 0%, rgba(10,16,26,0.6) 100%); border:1.5px solid #9945ff; border-radius:14px; padding:16px; text-align:center;">
-          <div style="font-size:13px; color:#e056fd; font-weight:800;">🌋 远古深渊全岛母晶池 (Motherlode)</div>
+          <div style="font-size:13px; color:#e056fd; font-weight:800; display:inline-flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
           <div style="font-size:32px; font-weight:900; color:#ffd32a; font-family:monospace; margin:8px 0; text-shadow:0 0 20px rgba(255,211,42,0.6);">
             <span id="ml-pool-amount">${ml.pool || 0}</span> 🪙
           </div>
@@ -4436,9 +4480,9 @@ export class UIManager {
 
     const phaseLabels = {
       OPEN: '📡 正在部署 (可调整)',
-      LOCK: '🔒 测算锁定中 (停止部署)',
+      LOCK: `${iconHTML('hud/lock', 14, { eager: true })} 测算锁定中 (停止部署)`,
       REVEAL: '🌀 地脉揭晓中...',
-      SETTLE: '✅ 结算完成'
+      SETTLE: `${iconHTML('hud/check', 14, { eager: true })} 结算完成`
     };
     const phaseColors = {
       OPEN: '#14f195',
@@ -4511,6 +4555,12 @@ export class UIManager {
             </div>
           </div>
 
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.06); padding:4px 8px; border-radius:8px;">
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="全岛母晶池">${iconHTML('hud/motherlode', 14, { eager: true })} 母池: <strong id="mr-motherlode-pool" style="color:#ffd32a;">${miningRig.motherlode?.pool || 0}</strong></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="残晶存量">${iconHTML('hud/shard', 14, { eager: true })} 残晶: <strong id="mr-shard-count" style="color:#14f195;">${miningRig.shardCount || 0}</strong></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="赛季算力评分">${iconHTML('hud/score_rs', 14, { eager: true })} 算力评分: <strong id="mr-score-rs" style="color:#00cec9;">${miningRig.season?.rs || 0}</strong></span>
+          </div>
+
           <div style="width:100%; height:8px; background:rgba(0,0,0,0.4); border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); margin-bottom:6px;">
             <div id="mr-res-progress-bar" style="width:${progress}%; height:100%; background:linear-gradient(90deg, #9945ff, #14f195); border-radius:4px; transition:width 0.2s linear;"></div>
           </div>
@@ -4541,7 +4591,7 @@ export class UIManager {
             <button id="btn-res-split" style="flex:1; background:rgba(0,206,201,0.15); color:#00cec9; border:1px solid rgba(0,206,201,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
             <button id="btn-res-allin" style="flex:1; background:rgba(255,211,42,0.15); color:#ffd32a; border:1px solid rgba(255,211,42,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
             <button id="btn-res-commit" style="flex:1.4; background:linear-gradient(135deg, #14f195, #00cec9); color:#0b101b; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
-              ${res.committed ? '✅ 已锁定' : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
+              ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
             </button>
           </div>
 
@@ -4950,7 +5000,7 @@ export class UIManager {
             border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
             white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
             box-shadow:${currentTab === 'motherlode' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
-          ">🌋 母晶池</button>
+          ">${iconHTML('hud/motherlode', 14, { eager: true })} 母晶池</button>
           <button class="rig-tab-btn ${currentTab === 'odds' ? 'active' : ''}" data-tab="odds" type="button" style="
             background:${currentTab === 'odds' ? '#14f195' : 'rgba(255,255,255,0.08)'};
             color:${currentTab === 'odds' ? '#0b101b' : '#fff'};
@@ -5028,6 +5078,13 @@ export class UIManager {
         const rTxt = body.querySelector('#mr-res-progress-text');
         if (rBar) rBar.style.width = `${p}%`;
         if (rTxt) rTxt.textContent = `${p}%`;
+
+        const mrPoolEl = body.querySelector('#mr-motherlode-pool');
+        if (mrPoolEl) mrPoolEl.textContent = `${miningRig.motherlode?.pool || 0}`;
+        const mrShardEl = body.querySelector('#mr-shard-count');
+        if (mrShardEl) mrShardEl.textContent = `${miningRig.shardCount || 0}`;
+        const mrRsEl = body.querySelector('#mr-score-rs');
+        if (mrRsEl) mrRsEl.textContent = `${miningRig.season?.rs || 0}`;
 
         // REVEAL 阶段更新跳过按钮状态 (2.0s 后方可跳过)
         if (miningRig.resonance.phase === 'REVEAL') {
@@ -6198,4 +6255,352 @@ export class UIManager {
     this.openModal();
   }
 
+  // ========================================================
+  // 算力总账 (Compute Ledger Drawer) - A1 轮展示层
+  // ========================================================
+  initLedgerDrawer() {
+    if (document.getElementById('ledger-drawer')) return;
+
+    let scrim = document.getElementById('ledger-drawer-scrim');
+    if (!scrim) {
+      scrim = document.createElement('div');
+      scrim.className = 'ledger-drawer-scrim';
+      scrim.id = 'ledger-drawer-scrim';
+      document.body.appendChild(scrim);
+    }
+
+    const drawer = document.createElement('aside');
+    drawer.className = 'ledger-drawer';
+    drawer.id = 'ledger-drawer';
+    drawer.setAttribute('aria-label', '算力总账');
+    drawer.innerHTML = `
+      <div class="ledger-drawer-header">
+        <div class="ledger-drawer-title">
+          ${iconHTML('items/sol_token', 20) || '🪙'} <span>算力总账</span>
+        </div>
+        <button type="button" class="ledger-drawer-close" id="btn-ledger-close" aria-label="关闭">✕</button>
+      </div>
+      <div class="ledger-drawer-body" id="ledger-drawer-body"></div>
+      <div class="ledger-drawer-disclaimer" id="ledger-drawer-disclaimer">算力代币是游戏内道具，不能兑换 SOL 或 SKR，不承诺任何收益。</div>
+    `;
+    document.body.appendChild(drawer);
+
+    scrim.addEventListener('click', () => {
+      this.closeLedgerDrawer();
+    });
+    const closeBtn = drawer.querySelector('#btn-ledger-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.closeLedgerDrawer();
+      });
+    }
+  }
+
+  getEconomyLedger() {
+    if (this._injectedLedger) return this._injectedLedger;
+    const game = this.game || this.buildSystem?.game || window.__game;
+    if (game?.economyLedger) return game.economyLedger;
+    if (game) return economyLedger(game);
+    return null;
+  }
+
+  openLedgerDrawer() {
+    this.initLedgerDrawer();
+    const drawer = document.getElementById('ledger-drawer');
+    const scrim = document.getElementById('ledger-drawer-scrim');
+    if (!drawer) return;
+
+    this.renderLedgerDrawer();
+
+    drawer.classList.add('open');
+    if (scrim) scrim.classList.add('open');
+    document.body.classList.add('hud-modal-open');
+    document.body.classList.add('hud-ledger-open');
+
+    // 暂停/隐藏会被抽屉压住的独立任务简条
+    const questCard = document.getElementById('quest-card-container');
+    if (questCard) {
+      this._questCardPrevDisplay = questCard.style.display;
+      questCard.style.display = 'none';
+    }
+  }
+
+  closeLedgerDrawer() {
+    const drawer = document.getElementById('ledger-drawer');
+    const scrim = document.getElementById('ledger-drawer-scrim');
+    if (drawer) drawer.classList.remove('open');
+    if (scrim) scrim.classList.remove('open');
+
+    document.body.classList.remove('hud-modal-open');
+    document.body.classList.remove('hud-ledger-open');
+
+    // 恢复任务简条
+    const questCard = document.getElementById('quest-card-container');
+    if (questCard && this._questCardPrevDisplay !== undefined) {
+      questCard.style.display = this._questCardPrevDisplay;
+      this._questCardPrevDisplay = undefined;
+    }
+  }
+
+  getLedgerSummary() {
+    const game = this.game || this.buildSystem?.game || window.__game;
+    const ledger = this.getEconomyLedger();
+    const currentDay = this.survival?.day || game?.survival?.day || 1;
+    const days = ledger?.days || [];
+    const todayRow = days.find(d => d.day === currentDay) || { day: currentDay, inflow: {}, outflow: {}, transfers: {} };
+
+    // 1. 今日算力代币
+    const tokenInflowMap = todayRow.inflow?.sol_token || {};
+    const tokenOutflowMap = todayRow.outflow?.sol_token || {};
+    let tokenInflowTotal = 0;
+    for (const k in tokenInflowMap) tokenInflowTotal += Number(tokenInflowMap[k]) || 0;
+    let tokenOutflowTotal = 0;
+    for (const k in tokenOutflowMap) tokenOutflowTotal += Number(tokenOutflowMap[k]) || 0;
+    tokenInflowTotal = Math.round(tokenInflowTotal * 1e8) / 1e8;
+    tokenOutflowTotal = Math.round(tokenOutflowTotal * 1e8) / 1e8;
+    const tokenNet = Math.round((tokenInflowTotal - tokenOutflowTotal) * 1e8) / 1e8;
+
+    // 2. 今日晶石
+    const crystalInflowMap = todayRow.inflow?.sol_crystal || {};
+    const crystalOutflowMap = todayRow.outflow?.sol_crystal || {};
+    let crystalInflowTotal = 0;
+    for (const k in crystalInflowMap) crystalInflowTotal += Number(crystalInflowMap[k]) || 0;
+    let crystalOutflowTotal = 0;
+    for (const k in crystalOutflowMap) crystalOutflowTotal += Number(crystalOutflowMap[k]) || 0;
+    crystalInflowTotal = Math.round(crystalInflowTotal * 1e8) / 1e8;
+    crystalOutflowTotal = Math.round(crystalOutflowTotal * 1e8) / 1e8;
+    const crystalNet = Math.round((crystalInflowTotal - crystalOutflowTotal) * 1e8) / 1e8;
+
+    // 3. 近 7 日每日净流入
+    const chartDays = [];
+    const startDay = Math.max(1, currentDay - 6);
+    for (let d = startDay; d <= currentDay; d++) {
+      const row = days.find(r => r.day === d);
+      let inflow = 0;
+      let outflow = 0;
+      if (row) {
+        if (row.inflow?.sol_token) {
+          for (const k in row.inflow.sol_token) inflow += Number(row.inflow.sol_token[k]) || 0;
+        }
+        if (row.outflow?.sol_token) {
+          for (const k in row.outflow.sol_token) outflow += Number(row.outflow.sol_token[k]) || 0;
+        }
+      }
+      const net = Math.round((inflow - outflow) * 1e8) / 1e8;
+      chartDays.push({ day: d, net, inflow, outflow });
+    }
+
+    // 4. 会话共振统计
+    let totalCommittedCrystals = 0;
+    let totalRecoveredTokens = 0;
+    let totalResonanceMlTokens = 0;
+
+    for (const d of days) {
+      if (d.outflow?.sol_crystal?.resonance_commit) {
+        totalCommittedCrystals += Number(d.outflow.sol_crystal.resonance_commit) || 0;
+      }
+      if (d.inflow?.sol_token?.resonance_main) {
+        totalRecoveredTokens += Number(d.inflow.sol_token.resonance_main) || 0;
+      }
+      if (d.inflow?.sol_token?.resonance_ml) {
+        totalRecoveredTokens += Number(d.inflow.sol_token.resonance_ml) || 0;
+        totalResonanceMlTokens += Number(d.inflow.sol_token.resonance_ml) || 0;
+      }
+    }
+    totalCommittedCrystals = Math.round(totalCommittedCrystals * 1e8) / 1e8;
+    totalRecoveredTokens = Math.round(totalRecoveredTokens * 1e8) / 1e8;
+
+    const tokenEquivalent = Math.round(totalCommittedCrystals * ODDS_TABLE.V * 100) / 100;
+
+    const ml = game?.miningRig?.motherlode || ledger?.motherlode || {};
+    const mlInjected = Number(ml.injected ?? 0);
+    const mlPaid = Number(ml.paid ?? totalResonanceMlTokens);
+    const mlBurned = Number(ml.burned ?? 0);
+
+    return {
+      currentDay,
+      today: {
+        token: { inflow: tokenInflowTotal, outflow: tokenOutflowTotal, net: tokenNet, map: { inflow: tokenInflowMap, outflow: tokenOutflowMap } },
+        crystal: { inflow: crystalInflowTotal, outflow: crystalOutflowTotal, net: crystalNet, map: { inflow: crystalInflowMap, outflow: crystalOutflowMap } }
+      },
+      chartDays,
+      resonance: {
+        committedCrystals: totalCommittedCrystals,
+        tokenEquivalent,
+        recoveredTokens: totalRecoveredTokens,
+        motherlodeInjected: mlInjected,
+        motherlodePaid: mlPaid,
+        motherlodeBurned: mlBurned
+      }
+    };
+  }
+
+  renderLedgerDrawer() {
+    this.initLedgerDrawer();
+    const body = document.getElementById('ledger-drawer-body');
+    if (!body) return;
+
+    const summary = this.getLedgerSummary();
+    const { currentDay, today, chartDays, resonance } = summary;
+
+    const tokenItems = [];
+    for (const [source, val] of Object.entries(today.token.map.inflow)) {
+      if (val > 0) tokenItems.push({ key: source, label: LEDGER_LABELS[source] || source, val: `+${val}`, numVal: val, type: 'inflow' });
+    }
+    for (const [sink, val] of Object.entries(today.token.map.outflow)) {
+      if (val > 0) tokenItems.push({ key: sink, label: LEDGER_LABELS[sink] || sink, val: `-${val}`, numVal: val, type: 'outflow' });
+    }
+
+    const crystalItems = [];
+    for (const [source, val] of Object.entries(today.crystal.map.inflow)) {
+      if (val > 0) crystalItems.push({ key: source, label: LEDGER_LABELS[source] || source, val: `+${val}`, numVal: val, type: 'inflow' });
+    }
+    for (const [sink, val] of Object.entries(today.crystal.map.outflow)) {
+      if (val > 0) crystalItems.push({ key: sink, label: LEDGER_LABELS[sink] || sink, val: `-${val}`, numVal: val, type: 'outflow' });
+    }
+
+    const renderItemsHtml = (items) => {
+      if (!items.length) {
+        return '<div style="font-size:11px;opacity:0.65;padding:2px 0;">今日暂无明细变动</div>';
+      }
+      return items.map(item => `
+        <span class="ledger-drawer-item" data-key="${item.key}" data-val="${item.numVal}">
+          <span class="ledger-drawer-item-label">${item.label}</span>
+          <span class="ledger-drawer-item-val ${item.type === 'inflow' ? 'ledger-drawer-inflow' : 'ledger-drawer-outflow'}">${item.val}</span>
+        </span>
+      `).join('');
+    };
+
+    const maxAbsNet = Math.max(1, ...chartDays.map(cd => Math.abs(cd.net)));
+    const chartBarsHtml = chartDays.map(cd => {
+      const heightPct = Math.min(100, Math.max(6, Math.round((Math.abs(cd.net) / maxAbsNet) * 100)));
+      return `
+        <div class="ledger-drawer-chart-col" data-day="${cd.day}" data-net="${cd.net}" title="第${cd.day}天 净流入: ${cd.net}">
+          <div class="ledger-drawer-chart-val">${cd.net > 0 ? '+' : ''}${cd.net}</div>
+          <div class="ledger-drawer-chart-bar-wrap">
+            <div class="ledger-drawer-chart-bar" style="height:${heightPct}%;"></div>
+          </div>
+          <div class="ledger-drawer-chart-label">D${cd.day}</div>
+        </div>
+      `;
+    }).join('');
+
+    body.innerHTML = `
+      <!-- 今日收支 -->
+      <section class="ledger-drawer-section" id="ledger-section-today">
+        <div class="ledger-drawer-section-title">
+          <span>今日收支 (第 ${currentDay} 天)</span>
+          <span style="font-size:11px;opacity:0.75;">按账本来源/去向记录</span>
+        </div>
+        <div class="ledger-drawer-card" id="ledger-card-sol-token">
+          <div class="ledger-drawer-card-header">
+            <div class="ledger-drawer-card-title">
+              ${iconHTML('items/sol_token', 18) || '🪙'} <span>算力代币</span>
+            </div>
+            <div class="ledger-drawer-card-summary">
+              <span class="ledger-drawer-inflow" id="ledger-token-inflow" data-val="${today.token.inflow}">+${today.token.inflow}</span>
+              <span class="ledger-drawer-outflow" id="ledger-token-outflow" data-val="${today.token.outflow}">-${today.token.outflow}</span>
+              <span class="ledger-drawer-net" id="ledger-token-net" data-val="${today.token.net}">净 ${today.token.net >= 0 ? '+' : ''}${today.token.net}</span>
+            </div>
+          </div>
+          <div class="ledger-drawer-items-grid" id="ledger-token-items">
+            ${renderItemsHtml(tokenItems)}
+          </div>
+        </div>
+        <div class="ledger-drawer-card" id="ledger-card-sol-crystal">
+          <div class="ledger-drawer-card-header">
+            <div class="ledger-drawer-card-title">
+              ${iconHTML('items/sol_crystal', 18) || '💎'} <span>晶石</span>
+            </div>
+            <div class="ledger-drawer-card-summary">
+              <span class="ledger-drawer-inflow" id="ledger-crystal-inflow" data-val="${today.crystal.inflow}">+${today.crystal.inflow}</span>
+              <span class="ledger-drawer-outflow" id="ledger-crystal-outflow" data-val="${today.crystal.outflow}">-${today.crystal.outflow}</span>
+              <span class="ledger-drawer-net" id="ledger-crystal-net" data-val="${today.crystal.net}">净 ${today.crystal.net >= 0 ? '+' : ''}${today.crystal.net}</span>
+            </div>
+          </div>
+          <div class="ledger-drawer-items-grid" id="ledger-crystal-items">
+            ${renderItemsHtml(crystalItems)}
+          </div>
+        </div>
+      </section>
+
+      <!-- 近 7 日每日净流入 -->
+      <section class="ledger-drawer-section" id="ledger-section-chart">
+        <div class="ledger-drawer-section-title">
+          <span>近 7 日每日净流入</span>
+          <span style="font-size:11px;opacity:0.75;">算力代币 · 单色按日汇总</span>
+        </div>
+        <div class="ledger-drawer-card">
+          <div class="ledger-drawer-chart-container" id="ledger-chart-bars">
+            ${chartBarsHtml}
+          </div>
+        </div>
+      </section>
+
+      <!-- 共振专项 -->
+      <section class="ledger-drawer-section" id="ledger-section-resonance">
+        <div class="ledger-drawer-section-title">
+          <span>共振专项</span>
+          <span style="font-size:11px;opacity:0.75;">基准比价: 1晶石 ≈ ${ODDS_TABLE.V}代币</span>
+        </div>
+        <div class="ledger-drawer-card">
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">本次会话投入晶石数</span>
+            <span class="ledger-drawer-resonance-val" id="ledger-res-committed" data-val="${resonance.committedCrystals}">${resonance.committedCrystals} 晶</span>
+          </div>
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">投入折合代币</span>
+            <span class="ledger-drawer-resonance-val" id="ledger-res-equiv" data-val="${resonance.tokenEquivalent}">≈ ${resonance.tokenEquivalent} 算力</span>
+          </div>
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">共振回收代币</span>
+            <span class="ledger-drawer-resonance-val ledger-drawer-inflow" id="ledger-res-recovered" data-val="${resonance.recoveredTokens}">+${resonance.recoveredTokens} 算力</span>
+          </div>
+          <div style="height:1px;background:var(--cozy-hud-border);margin:4px 0;opacity:0.4;"></div>
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">母晶池注入</span>
+            <span class="ledger-drawer-resonance-val" id="ledger-ml-injected" data-val="${resonance.motherlodeInjected}">${resonance.motherlodeInjected} 算力</span>
+          </div>
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">母晶池派发</span>
+            <span class="ledger-drawer-resonance-val" id="ledger-ml-paid" data-val="${resonance.motherlodePaid}">${resonance.motherlodePaid} 算力</span>
+          </div>
+          <div class="ledger-drawer-resonance-row">
+            <span class="ledger-drawer-resonance-label">
+              <span class="ledger-drawer-tag-sim">模拟</span> 模拟矿工分走（已销毁）
+            </span>
+            <span class="ledger-drawer-resonance-val ledger-drawer-outflow" id="ledger-ml-burned" data-val="${resonance.motherlodeBurned}">${resonance.motherlodeBurned} 算力</span>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
 }
+
+export const LEDGER_LABELS = Object.freeze({
+  decrypt: '矿机解密',
+  resonance_main: '共振主池',
+  resonance_ml: '母晶池',
+  checkin: '每日签到',
+  rig_upgrade: '矿机升级',
+  scanner: '扫描仪',
+  shop: '营地商城',
+  ship: '船只',
+  refinery: '精炼',
+  vein_mine: '矿脉开采',
+  tidal_spawn: '潮汐冲刷',
+  flotsam_manual: '漂流拾取',
+  camp_miner: '营地矿工',
+  monkey_crevice: '猴子裂隙',
+  initial_silo: '初始矿仓',
+  shard_condense: '残晶凝聚',
+  resonance_calib: '共振校准',
+  resonance_free: '共振赠予',
+  decrypt_consume: '矿机解密',
+  resonance_commit: '共振投入',
+  refinery_consume: '精炼消耗',
+  resonance_shard: '共振残晶'
+});
+
+export { getSurvivalIconHtml, getWeatherIconHtml };

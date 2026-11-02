@@ -1,0 +1,29 @@
+G3 ledger enums / validation / retention passed
+G3 transfers / rollback / save defaults / grep / conservation / 13 SOL callbacks passed
+G3 resonance metrics: {"neutral":0.7908561055556176,"dawn":0.7608113672840071,"day":0.778890656172908,"dusk":0.7966785820988298,"night":0.839994974691433,"dayClear":0.7558081129630148,"nightClear":0.8111144141976049,"nightTyphoon":0.9023595969136666,"optimal":0.8687651611111668,"clearTiming":0.07317505632186361,"typhoonTiming":0.136338665396045}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Unrelaxed economy hard gates
++ actual - expected
+
++ [
++   'Day7 balance 14.00 < T2+L2 38',
++   'Day30 balance 360.00 outside 284±20% [227.2,340.8]'
++ ]
+- []
+
+    at file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tests/verify-g3-economy-gate.mjs:93:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    'Day7 balance 14.00 < T2+L2 38',
+    'Day30 balance 360.00 outside 284±20% [227.2,340.8]'
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

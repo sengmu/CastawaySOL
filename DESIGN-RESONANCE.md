@@ -254,6 +254,13 @@ N = 125·u × M_phase × M_weather × M_event × ε
 ### 4.5 名人堂记录字段（存档内保留最近 20 条）
 `id, seasonId, roundId, realTs, gameDay, phase, weather, poolSize, playerTake, npcBurned, seedForNext, winningSquare, playerSharePct, stakeWeighted, rigLevel, scannerLevel, buffId, seedCommit, seedReveal, walletShort, isSeeker`
 
+### 4.6 规则修订注记（2026-11-02 R10d，用户批准）
+为解决全量仿真中极端天气/增益窗口下狙击与最优策略 RTP 越界（红线 ≤1.05）问题，母晶池规则修订如下：1. **领取门槛**：单轮押注总份额（dep 合计）< 5 时，`motherlode.playerTake = 0`（不参与分配），玩家注资与奖池累积/锁定/结转逻辑不变，NPC 侧不变；2. **取消台风母晶加成**：`MOTHERLODE.typhoonMultiplier` 由 1.5 调整为 1.0，各天气下母晶概率上限保持 0.30。
+
+### 4.7 双微调注记（2026-11-02 R10e，用户批准）
+1. `ODDS_TABLE.PHASE_MULTIPLIERS.dawn`（晨曦时段倍率）由 1.20 调整为 **1.21**。
+2. `ODDS_TABLE.MOTHERLODE.awakenerShare`（唤醒者份额）由 0.70 调整为 **0.65**（余下 30% 获胜格共享份额与 10% 种子份额保持不变；未分配之 5% 留于池中在结算时并入模拟矿工份额彻底销毁）。
+
 ---
 
 ## 5. 放大器细则

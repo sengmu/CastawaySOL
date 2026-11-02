@@ -1,8 +1,23 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "d3a3ed8c3c3c478b6eb7b514396ab308",
+  "saveSeed": "6d830b5d0add1639faed12ca384f23c4",
   "checkinClaimDays": [],
-  "timestamp": 1793589624849,
+  "economyLedger": {
+    "days": [
+      {
+        "day": 1,
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 3
+          }
+        },
+        "outflow": {},
+        "transfers": {}
+      }
+    ]
+  },
+  "timestamp": 1793614180056,
   "player": {
     "position": [
       -20,
@@ -27,7 +42,7 @@
     "broken_radio": 0,
     "battery": 0,
     "nail": 1,
-    "coconut": 13,
+    "coconut": 6,
     "baked_apple": 0,
     "stone_axe": 1,
     "workradio": 1
@@ -35,11 +50,11 @@
   "bonusInventorySlots": 0,
   "storage": {
     "storageInventory": {
-      "wood_plank": 3,
-      "tree_branch": 12,
-      "tree_bark": 4,
-      "tree_sap": 6,
-      "kindling": 1
+      "wood_plank": 1,
+      "tree_branch": 11,
+      "tree_sap": 2,
+      "kindling": 1,
+      "tree_bark": 5
     },
     "bonusCapacity": 0
   },
@@ -312,7 +327,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793589495842,
+      "freeGrantTs": 1793614099213,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,

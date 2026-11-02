@@ -1,0 +1,49 @@
+{
+  "started": "2026-11-02T07:46:04.512Z",
+  "errors": [],
+  "modelChecks": {
+    "hasModel": true,
+    "skeletonsCount": 1,
+    "mappedBones": {
+      "legL": "Leg_1_L",
+      "legR": "Leg_1_R",
+      "kneeL": "Leg_2_L",
+      "kneeR": "Leg_2_R",
+      "armL": "Arm_1_L",
+      "armR": "Arm_1_R",
+      "head": "Head",
+      "tail1": "S_Tail_1",
+      "tail2": "S_Tail_2",
+      "tail3": "S_Tail_3",
+      "spine": "Spine_1",
+      "forearmL": "Arm_2_L",
+      "forearmR": "Arm_2_R"
+    },
+    "position": {
+      "x": -10,
+      "y": 0,
+      "z": 39.5
+    },
+    "rotation": 3.141592653589793
+  },
+  "animationChecks": {
+    "phase1": {
+      "walkCycle": 1.5707963267948966,
+      "legL_rotX": 0.48,
+      "legR_rotX": -0.48,
+      "armL_rotX": -0.44999999999990054,
+      "armR_rotX": 0.45000000000027357
+    },
+    "phase2": {
+      "walkCycle": 4.71238898038469,
+      "legL_rotX": -0.48,
+      "legR_rotX": 0.48,
+      "armL_rotX": 0.4500000000000995,
+      "armR_rotX": -0.44999999999972645
+    },
+    "legDelta": 0.96,
+    "armDelta": 0.9,
+    "verified": true
+  },
+  "status": "passed"
+}

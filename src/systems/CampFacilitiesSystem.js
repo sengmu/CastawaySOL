@@ -1,7 +1,10 @@
+import { economyLedger } from './EconomyLedger.js';
 // CastawaySOL - 营地设施与居民生产经营中枢 (Camp Facilities & Resident Production System)
 // 统一管理：净水滴滤台淡水蓄积与快速蒸馏、营地床位绑定、居民幸存者自动采集生产、自动化排班特权与清晨经营简报
 import { soundEngine } from '../core/AudioSystem.js';
 
+export const CAMP_MINER_CRYSTALS = 2;
+export const REFINERY_CRYSTAL_COST = 2;
 export class CampFacilitiesSystem {
   constructor(game) {
     this.game = game;
@@ -283,9 +286,9 @@ export class CampFacilitiesSystem {
           reports.push(`👧 【艾莉·${job.name}】细心维护滴滤台，额外蓄水 +${bonusWater} 份，并装备纯净水 x1 入库`);
         } else if (job.id === 'miner') {
           // F5 补齐实现：硅晶矿脉探采员产出（执照的 x1.5 不作用于晶石）
-          const baseCrystals = 2;
+          const baseCrystals = CAMP_MINER_CRYSTALS;
           const stones = Math.max(1, Math.round(2 * efficiency));
-          storage['sol_crystal'] = (storage['sol_crystal'] || 0) + baseCrystals;
+          economyLedger(this.game).credit('sol_crystal', baseCrystals, 'camp_miner', storage);
           storage['stone_chunk'] = (storage['stone_chunk'] || 0) + stones;
           reports.push(`👧 【艾莉·${job.name}】勘探矿脉，采集入库：硅晶原石 x${baseCrystals}、玄武碎石 x${stones}`);
         }
@@ -326,7 +329,7 @@ export class CampFacilitiesSystem {
       let batchCount = 0;
       while (batchCount < maxBatches) {
         if ((storage['sol_crystal'] || 0) >= 2 && (storage['tree_sap'] || 0) >= 1) {
-          storage['sol_crystal'] -= 2;
+          economyLedger(this.game).debit('sol_crystal', REFINERY_CRYSTAL_COST, 'refinery_consume', storage);
           storage['tree_sap'] -= 1;
           storage['sol_crystal_pure'] = (storage['sol_crystal_pure'] || 0) + 1;
           batchCount++;
@@ -403,7 +406,7 @@ export class CampFacilitiesSystem {
       return { ok: false, msg };
     }
 
-    inv['sol_token'] -= costTokens;
+    economyLedger(this.game).debit('sol_token', costTokens, 'refinery');
     if (inv['sol_token'] <= 0) delete inv['sol_token'];
 
     let remStone = costStone;

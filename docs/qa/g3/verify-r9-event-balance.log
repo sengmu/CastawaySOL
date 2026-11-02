@@ -1,0 +1,44 @@
+⚖️ 开始执行 CastawaySOL R9 事件钩子与经济平衡全链路测试套件...
+
+▶ [断言 3/6] 验证防刷睡门控（连续睡觉 10 次只能获得 1 次免费份额）...
+  ✅ 防刷睡门控生效：连续入睡 10 次严格仅发放 1 次免费份额！
+
+▶ [断言 4/6] 验证保底校准值机制（最长未命中连串 <= 15）...
+  ✅ 20,000 轮测试最大连空连串为 14 <= 15，保底 100% 生效！
+
+▶ [断言 5/6] 验证 SOL 付费道具纯洁性（对晶石产量影响为 0）...
+  ✅ SOL 付费道具对晶石供给影响严格为 0，合规防线牢不可破！
+
+▶ [断言 6/6] 回报率回归检验 (中性 76%–84%、最优 <= 105%)...
+  中性策略回归 RTP: 79.60% (要求 76% - 84%)
+  最优策略回归 RTP: 85.42% (要求 <= 105%)
+  ✅ 回报率回归测试全部通过！
+
+▶ [断言 1&2/6] 30 天典型玩家经济轨迹模拟与母池触发间隔...
+  新口径 30 天余额: 360.00；母池: 26.36
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: G3 真实剧本硬线（保留 284±20%，另收紧 Day7）
++ actual - expected
+
++ [
++   'Day7 balance 14.00 < T2+L2 38',
++   'Day30 balance 360.00 outside 284±20% [227.2,340.8]'
++ ]
+- []
+
+    at file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tests/verify-r9-event-balance.mjs:205:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    'Day7 balance 14.00 < T2+L2 38',
+    'Day30 balance 360.00 outside 284±20% [227.2,340.8]'
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

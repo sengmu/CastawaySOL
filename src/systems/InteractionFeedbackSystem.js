@@ -6,12 +6,14 @@ import * as THREE from 'three';
 import { distanceXZ, ISLAND_LAYOUT } from '../core/IslandLayout.js';
 import { iconHTML } from '../ui/IconRegistry.js'; // 黏土图标集成（2026-10-31）
 
-// 黏土图标第二批（2026-10-31）：主按钮情境 emoji → 黏土图标对照；对不上的保持 emoji
+// 黏土/动森新图标第三批（2026-11-02）：主按钮情境 emoji → 黏土图标对照；对不上的保持 emoji
 const CONTEXT_EMOJI_ICON = {
   '🎣': 'tools/fishing_rod', '🍎': 'items/apple', '🥥': 'items/coconut', '🪵': 'items/log', '🪓': 'tools/stone_axe',
-  '⛏': 'tools/stone_pickaxe', '🐚': 'items/clam', '💬': 'hud/interact', '🔥': 'items/tinder', '⛵': 'items/raft',
-  '🚰': 'items/water_bamboo', '💧': 'items/water_bamboo', '💎': 'items/sol_crystal', '📻': 'items/working_radio',
-  '🏕': 'menu/camp', '⛺': 'menu/camp'
+  '⛏': 'tools/stone_pickaxe', '🐚': 'items/clam', '💬': 'hud/prompt_generic', '🔥': 'hud/prompt_fire', '⛵': 'items/raft',
+  '🚰': 'items/water_bamboo', '💧': 'items/water_bamboo', '💎': 'hud/prompt_crystal', '📻': 'items/working_radio',
+  '🏕': 'menu/camp', '⛺': 'menu/camp',
+  '🐒': 'hud/prompt_monkey', '🌸': 'hud/prompt_heart', '💖': 'hud/prompt_heart', '❤️': 'hud/prompt_heart',
+  '🦀': 'hud/prompt_crab', '🐾': 'hud/prompt_tracks', '👑': 'hud/prompt_boss'
 };
 function contextIconHTML(emoji) {
   const key = String(emoji || '').replace(/\uFE0F/g, '');

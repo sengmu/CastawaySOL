@@ -1,8 +1,23 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "d3a3ed8c3c3c478b6eb7b514396ab308",
+  "saveSeed": "6d830b5d0add1639faed12ca384f23c4",
   "checkinClaimDays": [],
-  "timestamp": 1793589515847,
+  "economyLedger": {
+    "days": [
+      {
+        "day": 1,
+        "inflow": {
+          "sol_crystal": {
+            "initial_silo": 1,
+            "resonance_free": 3
+          }
+        },
+        "outflow": {},
+        "transfers": {}
+      }
+    ]
+  },
+  "timestamp": 1793614110893,
   "player": {
     "position": [
       -17,
@@ -298,7 +313,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793589495842,
+      "freeGrantTs": 1793614099213,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,

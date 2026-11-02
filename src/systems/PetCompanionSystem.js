@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
+import { isEconomyResource } from './EconomyLedger.js';
 
 export const PET_CATALOG = {
   bub_monkey: {
@@ -365,11 +366,16 @@ export class PetCompanionSystem {
       return false;
     }
 
-    inv[itemKey] -= count;
+    if (this.game.economyLedger && isEconomyResource(itemKey)) {
+      this.game.economyLedger.transfer(itemKey, count, 'storage_deposit', inv, itemKey, this.sheepPouchInventory, itemKey);
+    } else {
+      const bag = inv;
+      bag[itemKey] -= count;
+      this.sheepPouchInventory[itemKey] = (this.sheepPouchInventory[itemKey] || 0) + count;
+    }
     if (inv[itemKey] <= 0) delete inv[itemKey];
 
-    this.sheepPouchInventory[itemKey] = (this.sheepPouchInventory[itemKey] || 0) + count;
-    if (this.game.ui) this.game.ui.renderInventory();
+    if (this.game.ui && this.game.ui.renderInventory) this.game.ui.renderInventory();
 
     haptics.medium();
     soundEngine.playItemDrop();
@@ -379,12 +385,17 @@ export class PetCompanionSystem {
   withdrawFromSheepPouch(itemKey, count = 1) {
     if ((this.sheepPouchInventory[itemKey] || 0) < count) return false;
 
-    this.sheepPouchInventory[itemKey] -= count;
+    const inv = this.game.ui.inventory;
+    if (this.game.economyLedger && isEconomyResource(itemKey)) {
+      this.game.economyLedger.transfer(itemKey, count, 'storage_withdraw', this.sheepPouchInventory, itemKey, inv, itemKey);
+    } else {
+      this.sheepPouchInventory[itemKey] -= count;
+      const bag = inv;
+      bag[itemKey] = (bag[itemKey] || 0) + count;
+    }
     if (this.sheepPouchInventory[itemKey] <= 0) delete this.sheepPouchInventory[itemKey];
 
-    const inv = this.game.ui.inventory;
-    inv[itemKey] = (inv[itemKey] || 0) + count;
-    if (this.game.ui) this.game.ui.renderInventory();
+    if (this.game.ui && this.game.ui.renderInventory) this.game.ui.renderInventory();
 
     haptics.medium();
     soundEngine.playItemDrop();

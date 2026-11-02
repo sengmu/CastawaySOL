@@ -1,3 +1,4 @@
+import { economyLedger, isEconomyResource } from './EconomyLedger.js';
 // CastawaySOL - 营地储物箱管理系统 (Camp Storage System)
 // 支持营地储物箱物品存放、取出、一键整理、容量扩容与 Schema v1 存档保护
 import { soundEngine } from '../core/AudioSystem.js';
@@ -58,11 +59,13 @@ export class StorageSystem {
     }
 
     // 扣背包
-    inv[itemKey] -= count;
+    if (isEconomyResource(itemKey)) {
+      economyLedger(this.game).transfer(itemKey, count, 'storage_deposit', inv, itemKey, this.storageInventory, itemKey);
+    } else {
+      inv[itemKey] -= count;
+      this.storageInventory[itemKey] = (this.storageInventory[itemKey] || 0) + count;
+    }
     if (inv[itemKey] <= 0) delete inv[itemKey];
-
-    // 增储物箱
-    this.storageInventory[itemKey] = (this.storageInventory[itemKey] || 0) + count;
 
     soundEngine.playItemDrop();
     this.game.ui.renderInventory();
@@ -115,11 +118,13 @@ export class StorageSystem {
     }
 
     // 扣储物箱
-    this.storageInventory[itemKey] -= count;
+    if (isEconomyResource(itemKey)) {
+      economyLedger(this.game).transfer(itemKey, count, 'storage_withdraw', this.storageInventory, itemKey, this.game.ui.inventory, itemKey);
+    } else {
+      this.storageInventory[itemKey] -= count;
+      this.game.ui.addInventory(itemKey, count);
+    }
     if (this.storageInventory[itemKey] <= 0) delete this.storageInventory[itemKey];
-
-    // 增背包
-    this.game.ui.addInventory(itemKey, count);
 
     soundEngine.playItemDrop();
     this.game.ui.renderInventory();

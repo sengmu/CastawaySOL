@@ -198,95 +198,11 @@ console.log('  ✅ 回报率回归测试全部通过！');
 // ==========================================
 console.log('\n▶ [断言 1&2/6] 30 天典型玩家经济轨迹模拟与母池触发间隔...');
 
-function simulate30DaysPlayer() {
-  let day = 1;
-  let tokens = 0;
-  let motherlodePool = 4; // 初始种子
-  let rigLevel = 1;
-  let scannerLevel = 0;
-  let totalCrystalEarned = 0;
-  let totalTokenSpent = 0;
-  let totalMotherlodeWon = 0;
-  let mlTriggerRounds = [];
-
-  for (day = 1; day <= 30; day++) {
-    // 升级节奏 (§6)
-    if (day === 4) rigLevel = 2;
-    if (day === 5) scannerLevel = 1;
-    if (day === 8) rigLevel = 3;
-    if (day === 10) scannerLevel = 2;
-    if (day === 18) rigLevel = 4;
-    if (day === 20) scannerLevel = 3;
-
-    // 每日支出事件 (§6: 船、升级、矿机、装备等)
-    let dailySpend = 0;
-    if (day === 3) dailySpend += 8;  // T2 船
-    if (day === 4) dailySpend += 30; // L2 矿机
-    if (day === 8) dailySpend += 80; // L3 矿机
-    if (day === 10) dailySpend += 25; // Mk2 扫描仪
-    if (day === 18) dailySpend += 200; // L4 矿机
-    if (day === 20) dailySpend += 70; // Mk3 扫描仪
-    dailySpend += 10; // 日常杂项消耗
-
-    totalTokenSpent += dailySpend;
-    tokens -= dailySpend;
-    // 消费 15% 注入母池
-    motherlodePool = Math.min(1000, motherlodePool + dailySpend * 0.15);
-
-    // 每日晶石收入 (§6)
-    const dailyCrystals = day < 4 ? 9 : (day < 14 ? 14 : 18);
-    const freeShares = 3;
-    totalCrystalEarned += dailyCrystals + freeShares;
-
-    // 共振投入比例 (70% ~ 85%)
-    const resRatio = day < 4 ? 0.6 : (day < 14 ? 0.75 : 0.85);
-    const sharesToBet = Math.round((dailyCrystals + freeShares) * resRatio);
-    // Non-resonance raw crystals are decrypted; free shares cannot be decrypted.
-    const decryptedCrystals = Math.max(0, dailyCrystals - Math.max(0, sharesToBet - freeShares));
-    tokens += decryptedCrystals * ODDS_TABLE.V;
-    const roundsToday = Math.max(1, Math.floor(sharesToBet / (rigLevel >= 3 ? 15 : (rigLevel === 2 ? 10 : 6))));
-
-    for (let r = 0; r < roundsToday; r++) {
-      const u = ODDS_TABLE.RIG_LEVELS[rigLevel].u;
-      const k = ODDS_TABLE.RIG_LEVELS[rigLevel].k;
-      const seed = `day_${day}_round_${r}`;
-      const cl = genCluster(`day_${day}`, r);
-      const bd = genNpcBoard(seed, u, 1.0, 1.0, 1.0, cl);
-
-      const dep = new Array(25).fill(0);
-      const chosen = cl.heatIndices.slice(0, k);
-      chosen.forEach(sq => { dep[sq] = u; });
-
-      const res = settle(bd, dep, motherlodePool, {
-        u,
-        roundSeed: seed,
-        cluster: cl,
-        weather: 'clear'
-      });
-
-      motherlodePool = res.motherlode.nextPool;
-      tokens += res.payout;
-
-      if (res.motherlode.won) {
-        tokens += res.motherlode.playerTake;
-        totalMotherlodeWon += res.motherlode.playerTake;
-        mlTriggerRounds.push(day);
-      }
-    }
-  }
-
-  return {
-    finalTokens: tokens,
-    totalTokenSpent,
-    totalMotherlodeWon,
-    mlTriggerDays: mlTriggerRounds
-  };
-}
-
-const simResult = simulate30DaysPlayer();
-console.log(`  30 天模拟终态余额: ${simResult.finalTokens.toFixed(1)} 算力代币 (期望参考约 284)`);
-console.log(`  30 天母池派奖总额: ${simResult.totalMotherlodeWon} 算力代币`);
-assert.ok(simResult.finalTokens >= 284 * 0.8 && simResult.finalTokens <= 284 * 1.2, `30天余额 ${simResult.finalTokens} 必须在设计 284±20% 范围 [227.2, 340.8]`);
+const { simulateEconomy, assertEconomy } = await import('../tools/sim-economy.mjs');
+const simResult = simulateEconomy();
+const final = simResult.snapshots.at(-1);
+console.log(`  新口径 30 天余额: ${final.balance.toFixed(2)}；母池: ${final.pool.toFixed(2)}`);
+assert.deepEqual(assertEconomy(simResult), [], 'G3 真实剧本硬线（保留 284±20%，另收紧 Day7）');
 console.log('  ✅ 30 天宏观经济模拟平衡验证通过！');
 
 console.log('\n🎉🎉🎉 [ALL R9 TESTS PASSED] R9 事件钩子、母池经济与长线平衡测试 100% 全部通过！');

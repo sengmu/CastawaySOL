@@ -1,0 +1,6 @@
+
+> castaway-sol@1.0.0 verify:golden
+> node tools/verify-golden-path.mjs
+
+[golden] BLOCKED at browser startup: Chromium did not expose DevTools: [27:27:1102/112902.826640:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+

@@ -1,3 +1,4 @@
+import { economyLedger } from '../systems/EconomyLedger.js';
 // CastawaySOL - 商业化特权与 Solana 支付商城系统 (Shop & Monetization System)
 // 借鉴《疯狂水世界》经典变现模型：自动化减负特权、仓储扩容包、幸存者执照与急救空投
 // 深度集成 Solana 钱包与模拟微支付通道，实现无需强制真金白银即可顺畅体验的良性商业化闭环
@@ -5,7 +6,7 @@ import { soundEngine } from '../core/AudioSystem.js';
 import { solanaBridge } from '../core/SolanaBridge.js';
 
 export class ShopManager {
-  constructor(game) {
+  constructor(game, { headless = false } = {}) {
     this.game = game;
     this.isOpen = false;
 
@@ -59,7 +60,7 @@ export class ShopManager {
         badge: '算力狂飙',
         icon: '💎',
         priceSOL: 0.06,
-        priceToken: 15,
+        priceToken: 35,
         desc: '将精密收音机高频晶振芯片改装入营地矿机！使矿机基础哈希算力永久暴增 +100% (翻倍)，步数与时间解密出块速度翻倍！',
         isOwned: () => {
           return this.game.miningRig && this.game.miningRig.isOverclocked;
@@ -79,7 +80,7 @@ export class ShopManager {
         badge: '能源无忧',
         icon: '🔋',
         priceSOL: 0.04,
-        priceToken: 10,
+        priceToken: 25,
         desc: '加装高能量密度固态锂电模组！矿机蓄电上限扩容至 200%，即使无日光夜间也能全速运算，告别电力匮乏！',
         isOwned: () => {
           return this.game.miningRig && this.game.miningRig.hasLithiumPack;
@@ -120,7 +121,7 @@ export class ShopManager {
         badge: '随身便利',
         icon: '🎒',
         priceSOL: 0.02,
-        priceToken: 6,
+        priceToken: 15,
         desc: '缝制加厚多隔层兽皮行囊，使随身携带的物品栏槽位上限永久额外 +10 格，大幅减少往返跑图存箱的麻烦！',
         isOwned: () => false, // 可多次购买
         onPurchase: () => {
@@ -138,7 +139,7 @@ export class ShopManager {
         badge: '仓储无忧',
         icon: '📦',
         priceSOL: 0.02,
-        priceToken: 6,
+        priceToken: 15,
         desc: '为营地木箱打造加固原木货架，使营地储物总容量永久额外增加 +16 格空间，海量海难建材随心储纳！',
         isOwned: () => false, // 可多次购买
         onPurchase: () => {
@@ -179,7 +180,7 @@ export class ShopManager {
         badge: '护卫嗅探',
         icon: '🐕',
         priceSOL: 0.15,
-        priceToken: 30,
+        priceToken: 55,
         desc: '随行灵犬伙伴！地脉嗅探深埋宝藏，野兽狂吠硬直震慑，并提供野兽撕咬伤害永久减免 20% 顶级生存护甲特权！',
         isOwned: () => {
           return this.game.petCompanion && this.game.petCompanion.isUnlocked('bella_dog');
@@ -239,7 +240,7 @@ export class ShopManager {
         badge: '风雨无阻',
         icon: '🧥',
         priceSOL: 0.08,
-        priceToken: 18,
+        priceToken: 35,
         desc: '密织浸油防水风衣！彻底免疫倾盆暴雨与台风中的露天失温冻伤，恶劣气象中行动自如！',
         isOwned: () => {
           return this.game.weatherSystem && this.game.weatherSystem.hasOilskinCloak;
@@ -259,7 +260,7 @@ export class ShopManager {
         badge: '营地温暖',
         icon: '⛺',
         priceSOL: 0.05,
-        priceToken: 12,
+        priceToken: 25,
         desc: '为营地主篝火打造轻合金防风避雷顶棚，狂风暴雨中篝火永不熄灭，并提供双倍回暖加速！',
         isOwned: () => {
           return this.game.weatherSystem && this.game.weatherSystem.hasFireShelter;
@@ -273,7 +274,7 @@ export class ShopManager {
       }
     ];
 
-    this.initModal();
+    if (!headless) this.initModal();
   }
 
   // 初始化商城弹窗容器
@@ -557,7 +558,7 @@ export class ShopManager {
         return;
       }
 
-      inv['sol_token'] -= reqTokens;
+      economyLedger(this.game).debit('sol_token', reqTokens, 'shop');
       if (inv['sol_token'] <= 0) delete inv['sol_token'];
       this.game.ui.renderInventory();
 

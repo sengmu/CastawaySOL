@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-02T03:18:10.569Z",
+  "started": "2026-11-02T10:08:17.101Z",
   "steps": [
     {
       "chapter": 0,
@@ -61,7 +61,7 @@
         "battery": 1,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
+        "tree_sap": 1,
         "tree_bark": 0,
         "kindling": 1
       },
@@ -81,8 +81,8 @@
         "battery": 1,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1
       },
@@ -102,8 +102,8 @@
         "battery": 1,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
         "stone_axe": 1
@@ -124,8 +124,8 @@
         "battery": 1,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 1,
         "stone_axe": 1
@@ -146,8 +146,8 @@
         "battery": 1,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 0,
         "stone_axe": 1
@@ -168,8 +168,8 @@
         "battery": 0,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 0,
         "stone_axe": 1,
@@ -191,8 +191,8 @@
         "battery": 0,
         "nail": 3,
         "coconut": 3,
-        "tree_sap": 2,
-        "tree_bark": 1,
+        "tree_sap": 1,
+        "tree_bark": 0,
         "kindling": 1,
         "baked_apple": 0,
         "stone_axe": 1,
@@ -212,7 +212,7 @@
         "broken_radio": 0,
         "battery": 0,
         "nail": 1,
-        "coconut": 14,
+        "coconut": 7,
         "baked_apple": 0,
         "stone_axe": 1,
         "workradio": 1
@@ -231,7 +231,7 @@
         "broken_radio": 0,
         "battery": 0,
         "nail": 1,
-        "coconut": 14,
+        "coconut": 7,
         "baked_apple": 0,
         "stone_axe": 1,
         "workradio": 1
@@ -250,7 +250,7 @@
         "broken_radio": 0,
         "battery": 0,
         "nail": 1,
-        "coconut": 13,
+        "coconut": 6,
         "baked_apple": 0,
         "stone_axe": 1,
         "workradio": 1
@@ -269,7 +269,7 @@
         "broken_radio": 0,
         "battery": 0,
         "nail": 1,
-        "coconut": 13,
+        "coconut": 6,
         "baked_apple": 0,
         "stone_axe": 1,
         "workradio": 1
@@ -289,7 +289,7 @@
   ],
   "errors": [],
   "interventions": {
-    "count": 73,
+    "count": 53,
     "texts": [
       "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216."
     ]
@@ -297,7 +297,7 @@
   "assetReadiness": [
     {
       "purpose": "raft resource collection",
-      "waitMs": 6,
+      "waitMs": 2,
       "loaded": 39,
       "expected": 39
     }
