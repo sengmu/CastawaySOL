@@ -13,6 +13,7 @@ import {
   settle
 } from '../src/systems/resonance/ResonanceEngine.js';
 import { SurvivalSystem } from '../src/systems/SurvivalSystem.js';
+import { MiningRigSystem } from '../src/systems/MiningRigSystem.js';
 import { SaveSystem } from '../src/systems/SaveSystem.js';
 
 console.log('⚡ 开始执行 CastawaySOL R7 矿脉共振勘探引擎与经济仿真测试套件...\n');
@@ -78,8 +79,8 @@ const v2Migrated = saveSys.migrate(v1Save);
 assert.equal(v2Migrated.schemaVersion, 2, 'v1 迁移后版本必须升为 2');
 assert.ok(v2Migrated.miningRig, '必须补充默认 miningRig 数据');
 assert.equal(v2Migrated.miningRig.loadedCrystals, 1, '默认已装载 1 块晶石');
-assert.equal(v2Migrated.rigMode, 'decrypt', '默认模式为 decrypt');
-assert.equal(v2Migrated.rigLevel, 1, '默认矿机等级为 1');
+assert.equal(v2Migrated.miningRig.rigMode, 'decrypt', '默认模式为 decrypt');
+assert.equal(v2Migrated.miningRig.rigLevel, 1, '默认矿机等级为 1');
 
 // 验证超频芯片在存档中持久恢复
 const v2WithOverclock = {
@@ -209,7 +210,7 @@ console.log('  ✅ 10^6 轮大样本统计分布与公示概率严格吻合！')
 // ==========================================
 console.log('\n▶ [断言 5/6] 验证策略回报率区间 (中性 0.76–0.84，最优 <= 1.05)...');
 
-function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixedPhase = null) {
+function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixedPhase = null, buffId = null) {
   let totalCost = 0;
   let totalReturn = 0;
   let pool = 100;
@@ -226,7 +227,7 @@ function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixe
     const M_phase = ODDS_TABLE.PHASE_MULTIPLIERS[phase] || 1.0;
     const M_weather = ODDS_TABLE.WEATHER_MULTIPLIERS[weather] || 1.0;
 
-    const seed = `sim_rtp_${strategy}_${i}`;
+    const seed = `sim_rtp_${i}`;
     const cl = genCluster('day_1', i);
     const bd = genNpcBoard(seed, u, M_phase, M_weather, 1.0, cl);
 
@@ -242,8 +243,8 @@ function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixe
       dep[cl.subIndices[0]] = 5;
       dep[cl.subIndices[1]] = 5;
     } else if (strategy === 'snipe') {
-      // 最小份额狙击母池：无扫描仪信息，单格只押 1 份碰运气
-      dep[i % 25] = 1;
+      // 最小份额狙击母池：无扫描仪信息，单格押最低合法 2 份碰运气
+      dep[i % 25] = 2;
     }
 
     const shares = dep.reduce((a, b) => a + b, 0);
@@ -253,7 +254,7 @@ function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixe
       u,
       roundSeed: seed,
       cluster: cl,
-      buffId: null,
+      buffId,
       weather,
       currentCalib: calib
     });
@@ -263,7 +264,7 @@ function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixe
 
     // 收益汇总：主池派彩 + 残晶折算 + 母池获利 + 保底原石
     const payout = res.payout;
-    const shardVal = res.shards * 0.25 * ODDS_TABLE.V;
+    const shardVal = res.shards * ODDS_TABLE.SHARD_RETURN_RATE * ODDS_TABLE.V;
     const mlTake = res.motherlode.playerTake;
     const calibVal = res.calibReward ? res.calibReward.crystals * ODDS_TABLE.V : 0;
 
@@ -274,25 +275,44 @@ function testStrategyRTP(rounds, strategy = 'neutral', fixedWeather = null, fixe
   return totalReturn / totalCost;
 }
 
-const neutralRTP = testStrategyRTP(25_000, 'neutral');
-console.log(`  中性策略 (时间均匀加权) 回报率: ${(neutralRTP * 100).toFixed(2)}% (要求 76% - 84%)`);
-assert.ok(neutralRTP >= 0.76 && neutralRTP <= 0.84, `中性策略回报率 ${neutralRTP} 必须在 [0.76, 0.84] 区间内`);
-
-const optimalRTP = testStrategyRTP(25_000, 'optimal');
-console.log(`  最优策略 (熟练掌握扫描仪+主脉) 回报率: ${(optimalRTP * 100).toFixed(2)}% (要求 <= 105%)`);
-assert.ok(optimalRTP <= 1.05, `最优策略回报率必须 <= 1.05 (当前 ${optimalRTP})`);
-
-// 挑时段 (如夜间晴 vs 白天晴) 相对中性的提升 <= +15%
-const dayClearRTP = testStrategyRTP(15_000, 'neutral', 'clear', 'day');
-const nightClearRTP = testStrategyRTP(15_000, 'neutral', 'clear', 'night');
-const timingBoost = (nightClearRTP - dayClearRTP) / dayClearRTP;
-console.log(`  时段择时提升幅度: +${(timingBoost * 100).toFixed(2)}% (要求 <= +15%)`);
-assert.ok(timingBoost <= 0.15, `挑时段相对中性的提升必须 <= 15% (当前 ${(timingBoost * 100).toFixed(2)}%)`);
-
-const snipeRTP = testStrategyRTP(25_000, 'snipe', 'clear', 'day');
-console.log(`  单份狙击母池策略回报率: ${(snipeRTP * 100).toFixed(2)}% (要求中性带内 <= 84%)`);
-assert.ok(snipeRTP <= 0.84, `单份狙击母池单位份额 EV 必须不可套利超越中性带 (当前 ${(snipeRTP * 100).toFixed(2)}%)`);
-console.log('  ✅ 经济学回报率约束全部受控合格！');
+const strategyFailures = [];
+function strategyAssert(condition, message) { if (!condition) strategyFailures.push(message); }
+const STRATEGY_ROUNDS = 200_000;
+const neutralRTP = testStrategyRTP(STRATEGY_ROUNDS, 'neutral');
+// 实机没有自动推进时段；初始 day，睡醒后 sunrise（main.js）。
+const runtimeNeutral = testStrategyRTP(STRATEGY_ROUNDS, 'neutral', null, 'dawn');
+for (const [name, value] of [['混合时段', neutralRTP], ['实机睡醒(sunrise)', runtimeNeutral], ['实机初始(day)', testStrategyRTP(STRATEGY_ROUNDS, 'neutral', null, 'day')]]) {
+  console.log(`${name} 中性 RTP: ${value}`);
+  strategyAssert(value >= .76 && value <= .84, `${name} 中性 ${value} 必须在 [0.76, 0.84]`);
+}
+const uniformNeutral = ['dawn','day','dusk','night'].reduce((sum, phase) => sum + testStrategyRTP(STRATEGY_ROUNDS, 'neutral', null, phase), 0) / 4;
+const nightTyphoon = testStrategyRTP(STRATEGY_ROUNDS, 'neutral', 'typhoon', 'night');
+const dayClear = testStrategyRTP(STRATEGY_ROUNDS, 'neutral', 'clear', 'day');
+const nightClear = testStrategyRTP(STRATEGY_ROUNDS, 'neutral', 'clear', 'night');
+strategyAssert(nightClear / dayClear - 1 <= .15, '晴天夜/昼择时提升必须 <= 15%');
+const timingBoost = nightTyphoon / uniformNeutral - 1;
+console.log(`夜×台风中性: ${nightTyphoon}; 中性均匀: ${uniformNeutral}; 择时提升: ${timingBoost}`);
+strategyAssert(timingBoost <= .15, `夜×台风 / 中性均匀 − 1 = ${timingBoost} 必须 <= .15`);
+// 中性下限失败即已不可验收；避免在已失败的系数上耗费全矩阵仿真。
+assert.deepEqual(strategyFailures, [], 'R10b 中性与择时红线');
+let maxStrategy = {rtp: 0};
+for (const weather of ['clear','cloudy','rain','typhoon']) {
+ for (const phase of ['dawn','day','dusk','night']) {
+  for (const strategy of ['neutral','optimal','snipe']) {
+   // 连续 3 轮蟹煲窗口重复采样：每个被测轮次均带增益，不摊薄增益收益。
+   for (const buff of [null,'resonance_crab_pot','smoked_fish']) {
+    const rtp = testStrategyRTP(STRATEGY_ROUNDS, strategy, weather, phase, buff);
+    if (rtp > maxStrategy.rtp) maxStrategy = {rtp,weather,phase,strategy,buff};
+    strategyAssert(rtp <= 1.05, `${weather}/${phase}/${strategy}/${buff}: ${rtp} 必须 <= 1.05`);
+   }
+  }
+  const snipe = testStrategyRTP(STRATEGY_ROUNDS, 'snipe', weather, phase);
+  const neutral = testStrategyRTP(STRATEGY_ROUNDS, 'neutral', weather, phase);
+  strategyAssert(snipe <= neutral, `同条件 ${weather}/${phase} 狙击 ${snipe} 必须 <= 中性 ${neutral}`);
+ }
+}
+console.log(`全部策略最大值: ${JSON.stringify(maxStrategy)}`);
+console.log('  策略约束已记录，在末尾统一严格断言。');
 
 // ==========================================
 // 断言 6: 单轮硬顶生效，全程无 NaN 或负值
@@ -314,5 +334,20 @@ assert.ok(!Number.isNaN(resCap.payout) && resCap.payout >= 0, '派彩不能为 N
 assert.ok(!Number.isNaN(resCap.excessToMotherlode) && resCap.excessToMotherlode >= 0, '溢出不能为 NaN 或负数');
 assert.ok(!Number.isNaN(resCap.pot) && resCap.pot > 0, '奖池金额必须大于 0 且有效');
 console.log('  ✅ 单轮硬顶保护生效，溢出自动滚入母池！');
+
+
+
+const buffRig = new MiningRigSystem({ ui: { showToast() {} }, survival: {day:1} });
+buffRig.applyResonanceBuff('resonance_crab_pot');
+for (let i=0; i<4; i++) {
+  buffRig.ensureResonanceRound();
+  buffRig.resonance.committedDeploy[0] = i === 0 ? 0 : 2;
+  buffRig.advanceResonanceProgress(80);
+  buffRig.advanceResonanceProgress(20);
+  buffRig.settleResonanceRound();
+  assert.equal(buffRig.resonance.buff.roundsLeft, i === 0 ? 3 : 3-i);
+}
+assert.equal(buffRig.resonance.buff.id,null);
+assert.deepEqual(strategyFailures, [], 'R10b 严格策略红线');
 
 console.log('\n🎉🎉🎉 [ALL R7 ASSERTIONS PASSED] R7 共振勘探结算引擎与经济仿真 100% 验证通过！');

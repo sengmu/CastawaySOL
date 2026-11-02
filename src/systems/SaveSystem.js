@@ -9,6 +9,8 @@ export const SAVE_KEY_BACKUP = 'castaway_sol_savegame_backup';
 export class SaveSystem {
   constructor(game) {
     this.game = game;
+    this.saveSeed = this.generateSaveSeed();
+    this.checkinClaimDays = [];
     this.isSaving = false;
     this.lastSavedTimestamp = null;
     this.autoSaveInterval = null;
@@ -19,6 +21,26 @@ export class SaveSystem {
         this.saveGame('unload');
       });
     }
+  }
+
+  generateSaveSeed() {
+    const words = new Uint32Array(4);
+    globalThis.crypto.getRandomValues(words);
+    return Array.from(words, n => n.toString(16).padStart(8, '0')).join('');
+  }
+
+  hasClaimedCheckin(day) { return this.checkinClaimDays.includes(day); }
+
+  claimDailyCheckin(day) {
+    if (this.hasClaimedCheckin(day)) return false;
+    const inv = this.game.ui.inventory;
+    const previous = inv.sol_token || 0;
+    this.checkinClaimDays.push(day);
+    inv.sol_token = previous + 5;
+    const saved = this.saveGame('daily_checkin');
+    if (!saved?.success) { this.checkinClaimDays.pop(); inv.sol_token = previous; return false; }
+    this.game.ui.renderInventory?.();
+    return true;
   }
 
   // 启动自动保存定时器 (默认每 60 秒)
@@ -70,6 +92,8 @@ export class SaveSystem {
 
     const snapshot = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
+      saveSeed: this.saveSeed,
+      checkinClaimDays: [...this.checkinClaimDays],
       timestamp: Date.now(),
       player: player ? {
         position: [player.position.x, player.position.y, player.position.z],
@@ -104,44 +128,6 @@ export class SaveSystem {
       miningRig: this.game.miningRig && this.game.miningRig.serialize ? this.game.miningRig.serialize() : null,
       quarryIsle: this.game.quarryIsleScene && this.game.quarryIsleScene.serialize ? this.game.quarryIsleScene.serialize() : null,
       flotsamSalvage: flotsam && flotsam.serialize ? flotsam.serialize() : null,
-      rigMode: this.game.rigMode || 'decrypt',
-      rigLevel: this.game.rigLevel || 1,
-      loadedPureCrystals: this.game.loadedPureCrystals || 0,
-      shardCount: this.game.shardCount || 0,
-      solDust: this.game.solDust || 0,
-      scannerLevel: this.game.scannerLevel || 0,
-      resonance: (this.game.resonance = this.game.resonance ? { ...this.game.resonance } : {
-        roundId: 1,
-        phase: 'idle',
-        progress: 0,
-        revealTimer: 0,
-        seedCommit: '',
-        board: [],
-        deploy: new Array(25).fill(0),
-        committed: false,
-        lastResult: null,
-        history: [],
-        calib: 0,
-        freeShares: 3,
-        freeGrantDay: 1,
-        freeGrantTs: Date.now(),
-        freeGrantSteps: 0,
-        buff: { id: null, roundsLeft: 0 },
-        autoRepeat: { pattern: null, roundsLeft: 0 }
-      }),
-      motherlode: this.game.motherlode ? { ...this.game.motherlode } : {
-        pool: 0,
-        injected: 0,
-        paid: 0,
-        burned: 0,
-        hallOfFame: []
-      },
-      season: this.game.season ? { ...this.game.season } : {
-        id: 1,
-        rs: 0,
-        countedToday: 0,
-        utcDay: Math.floor(Date.now() / 86400000)
-      },
       world: {
         collectedBeachResources: beach && beach.serialize ? beach.serialize().collectedIds : [],
         collectedFlotsam: flotsam && flotsam.serialize ? flotsam.serialize().collectedIds : [],
@@ -195,26 +181,28 @@ export class SaveSystem {
       }
     }
 
-    for (const key of ['loadedPureCrystals', 'shardCount', 'solDust', 'scannerLevel', 'rigLevel']) {
-      if (data[key] !== undefined) {
-        if (typeof data[key] !== 'number' || Number.isNaN(data[key]) || data[key] < 0) return false;
+    // Validate both legacy inputs and the authoritative nested state during migration.
+    for (const state of [data, data.miningRig || {}]) {
+      for (const key of ['loadedPureCrystals', 'shardCount', 'solDust', 'scannerLevel', 'rigLevel']) {
+        if (state[key] !== undefined) {
+          if (typeof state[key] !== 'number' || Number.isNaN(state[key]) || state[key] < 0) return false;
+        }
+      }
+
+      if (state.resonance && typeof state.resonance === 'object') {
+        for (const rk of ['roundId', 'progress', 'revealTimer', 'calib', 'freeShares']) {
+          const val = state.resonance[rk];
+          if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
+        }
+      }
+
+      if (state.motherlode && typeof state.motherlode === 'object') {
+        for (const mk of ['pool', 'injected', 'paid', 'burned']) {
+          const val = state.motherlode[mk];
+          if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
+        }
       }
     }
-
-    if (data.resonance && typeof data.resonance === 'object') {
-      for (const rk of ['roundId', 'progress', 'revealTimer', 'calib', 'freeShares']) {
-        const val = data.resonance[rk];
-        if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
-      }
-    }
-
-    if (data.motherlode && typeof data.motherlode === 'object') {
-      for (const mk of ['pool', 'injected', 'paid', 'burned']) {
-        const val = data.motherlode[mk];
-        if (val !== undefined && (typeof val !== 'number' || Number.isNaN(val) || val < 0)) return false;
-      }
-    }
-
     return true;
   }
 
@@ -238,7 +226,25 @@ export class SaveSystem {
     }
 
     data.schemaVersion = CURRENT_SCHEMA_VERSION;
+    data.saveSeed ||= this.generateSaveSeed();
+    data.checkinClaimDays = Array.isArray(data.checkinClaimDays) ? [...data.checkinClaimDays] : [];
+    data.miningRig = this.mergeRigState(data);
+    for (const key of this.rigStateKeys()) delete data[key];
     return data;
+  }
+
+  rigStateKeys() { return ['rigMode', 'rigLevel', 'loadedPureCrystals', 'shardCount', 'solDust', 'scannerLevel', 'resonance', 'motherlode', 'season']; }
+
+  mergeRigState(data) {
+    const rig = { ...(data.miningRig || {}) };
+    const defaults = { rigMode: 'decrypt', rigLevel: 1, loadedPureCrystals: 0, shardCount: 0, solDust: 0, scannerLevel: 0 };
+    for (const key of this.rigStateKeys()) {
+      if (['resonance', 'motherlode', 'season'].includes(key)) {
+        if (data[key] || rig[key]) rig[key] = { ...(data[key] || {}), ...(rig[key] || {}) };
+      } else rig[key] = rig[key] ?? data[key] ?? defaults[key];
+    }
+    if (rig.resonance?.phase === 'idle') rig.resonance.phase = 'OPEN';
+    return rig;
   }
 
   // v1 -> v2 迁移管道：补充 miningRig、quarryIsle、flotsamSalvage 与完整共振协议默认字段 (design §7)
@@ -278,54 +284,7 @@ export class SaveSystem {
       };
     }
 
-    // 4. 共振完整字段 (依据 design-resonance.md §7)
-    if (data.rigMode === undefined) data.rigMode = 'decrypt';
-    if (data.rigLevel === undefined) data.rigLevel = 1;
-    if (data.loadedPureCrystals === undefined) data.loadedPureCrystals = 0;
-    if (data.shardCount === undefined) data.shardCount = 0;
-    if (data.solDust === undefined) data.solDust = 0;
-    if (data.scannerLevel === undefined) data.scannerLevel = 0;
-
-    if (!data.resonance) {
-      data.resonance = {
-        roundId: 1,
-        phase: 'idle',
-        progress: 0,
-        revealTimer: 0,
-        seedCommit: '',
-        board: [],
-        deploy: new Array(25).fill(0),
-        committed: false,
-        lastResult: null,
-        history: [], // limit 50
-        calib: 0,
-        freeShares: 3,
-        freeGrantDay: data.survival?.day || 1,
-        freeGrantTs: Date.now(),
-        freeGrantSteps: 0,
-        buff: { id: null, roundsLeft: 0 },
-        autoRepeat: { pattern: null, roundsLeft: 0 }
-      };
-    }
-
-    if (!data.motherlode) {
-      data.motherlode = {
-        pool: 0,
-        injected: 0,
-        paid: 0,
-        burned: 0,
-        hallOfFame: [] // limit 20
-      };
-    }
-
-    if (!data.season) {
-      data.season = {
-        id: 1,
-        rs: 0,
-        countedToday: 0,
-        utcDay: Math.floor(Date.now() / 86400000)
-      };
-    }
+    data.miningRig = this.mergeRigState(data);
 
     return data;
   }
@@ -471,6 +430,8 @@ export class SaveSystem {
   // 将加载的数据分发应用到场景与游戏子系统
   applyDataToGame(data) {
     if (!this.game || !data) return;
+    this.saveSeed = data.saveSeed || this.generateSaveSeed();
+    this.checkinClaimDays = [...(data.checkinClaimDays || [])];
 
     // 1. 恢复玩家坐标与朝向
     if (data.player && this.game.player && this.game.player.position) {
@@ -637,17 +598,6 @@ export class SaveSystem {
     if (data.miningRig && this.game.miningRig) {
       this.game.miningRig.deserialize(data.miningRig);
     }
-
-    // 5.7 恢复共振字段状态
-    if (data.rigMode !== undefined) this.game.rigMode = data.rigMode;
-    if (data.rigLevel !== undefined) this.game.rigLevel = data.rigLevel;
-    if (data.loadedPureCrystals !== undefined) this.game.loadedPureCrystals = data.loadedPureCrystals;
-    if (data.shardCount !== undefined) this.game.shardCount = data.shardCount;
-    if (data.solDust !== undefined) this.game.solDust = data.solDust;
-    if (data.scannerLevel !== undefined) this.game.scannerLevel = data.scannerLevel;
-    if (data.resonance) this.game.resonance = { ...data.resonance };
-    if (data.motherlode) this.game.motherlode = { ...data.motherlode };
-    if (data.season) this.game.season = { ...data.season };
 
     // 6. 恢复宝石拾取状态
     if (data.world && Array.isArray(data.world.collectedGems) && this.game.gemObjects) {

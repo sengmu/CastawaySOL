@@ -531,7 +531,7 @@ export class ShopManager {
       });
     });
 
-    // 绑定 $SOL 算力代币免充值兑换事件
+    // 绑定 算力代币 算力代币免充值兑换事件
     const tokenBuyBtns = this.shopContainer.querySelectorAll('.shop-token-buy-btn');
     tokenBuyBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -541,14 +541,14 @@ export class ShopManager {
     });
   }
 
-  // 处理购买结账 (支持 SOL 支付 与 $SOL 算力代币双轨结算)
+  // 处理购买结账 (支持 SOL 支付 与 算力代币 算力代币双轨结算)
   async handleCheckout(productId, useToken = false) {
     const product = this.products.find(p => p.id === productId);
     if (!product) return;
 
     const toast = this.game.ui;
 
-    // 1. 若使用 $SOL 算力代币兑换 (Play-to-Unlock 闭环)
+    // 1. 若使用 算力代币 算力代币兑换 (Play-to-Unlock 闭环)
     if (useToken) {
       const inv = this.game.ui.inventory;
       const reqTokens = product.priceToken || 999;

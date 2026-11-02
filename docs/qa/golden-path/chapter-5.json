@@ -1,6 +1,8 @@
 {
   "schemaVersion": 2,
-  "timestamp": 1793552653330,
+  "saveSeed": "d3a3ed8c3c3c478b6eb7b514396ab308",
+  "checkinClaimDays": [],
+  "timestamp": 1793589609469,
   "player": {
     "position": [
       -20,
@@ -25,7 +27,7 @@
     "broken_radio": 0,
     "battery": 0,
     "nail": 1,
-    "coconut": 15,
+    "coconut": 13,
     "baked_apple": 0,
     "stone_axe": 1,
     "workradio": 1
@@ -33,11 +35,11 @@
   "bonusInventorySlots": 0,
   "storage": {
     "storageInventory": {
-      "wood_plank": 2,
-      "tree_branch": 9,
+      "wood_plank": 3,
+      "tree_branch": 12,
+      "tree_bark": 4,
       "tree_sap": 6,
-      "kindling": 1,
-      "tree_bark": 3
+      "kindling": 1
     },
     "bonusCapacity": 0
   },
@@ -193,6 +195,7 @@
   "raymondSettled": false,
   "currentIslandId": "main_island",
   "story": {
+    "isCompleted": true,
     "currentChapterId": 6,
     "currentStepIndex": 0,
     "hasGatheredBranch": true,
@@ -238,6 +241,16 @@
       "progress": 0,
       "revealTimer": 0,
       "seedCommit": "",
+      "roundSeed": "",
+      "seedReveal": "",
+      "board": null,
+      "cluster": null,
+      "lockPool": 0,
+      "lockU": 6,
+      "lockWeather": "clear",
+      "lockBuff": null,
+      "buffDay": 1,
+      "fullHeat": false,
       "deploy": [
         0,
         0,
@@ -299,7 +312,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793552503589,
+      "freeGrantTs": 1793589495842,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,
@@ -333,76 +346,6 @@
     "hasAutoSalvageBuoy": false,
     "tier": 1,
     "totalSalvaged": 0
-  },
-  "rigMode": "decrypt",
-  "rigLevel": 1,
-  "loadedPureCrystals": 0,
-  "shardCount": 0,
-  "solDust": 0,
-  "scannerLevel": 0,
-  "resonance": {
-    "roundId": 1,
-    "phase": "idle",
-    "progress": 0,
-    "revealTimer": 0,
-    "seedCommit": "",
-    "board": [],
-    "deploy": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
-    "committed": false,
-    "lastResult": null,
-    "history": [],
-    "calib": 0,
-    "freeShares": 3,
-    "freeGrantDay": 1,
-    "freeGrantTs": 1793552523377,
-    "freeGrantSteps": 0,
-    "buff": {
-      "id": null,
-      "roundsLeft": 0
-    },
-    "autoRepeat": {
-      "pattern": null,
-      "roundsLeft": 0
-    }
-  },
-  "motherlode": {
-    "pool": 0,
-    "injected": 0,
-    "paid": 0,
-    "burned": 0,
-    "hallOfFame": []
-  },
-  "season": {
-    "id": 1,
-    "rs": 0,
-    "countedToday": 0,
-    "utcDay": 20758
   },
   "world": {
     "collectedBeachResources": [

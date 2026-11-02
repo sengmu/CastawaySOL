@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
-import { ODDS_TABLE, genRoundSeed, genCluster, genNpcBoard, settle } from './resonance/ResonanceEngine.js';
+import { ODDS_TABLE, cyrb53, genRoundSeed, genCluster, genNpcBoard, settle } from './resonance/ResonanceEngine.js';
 
 export class MiningRigSystem {
   constructor(game) {
@@ -56,6 +56,13 @@ export class MiningRigSystem {
       progress: 0,
       revealTimer: 0,
       seedCommit: '',
+      roundSeed: '',
+      seedReveal: '',
+      lockPool: 0,
+      lockWeather: 'clear',
+      lockBuff: null,
+      buffDay: game?.survival?.day || 1,
+      fullHeat: false,
       board: null,
       cluster: null,
       deploy: new Array(25).fill(0),
@@ -407,7 +414,6 @@ export class MiningRigSystem {
   setMode(mode) {
     if (mode !== 'decrypt' && mode !== 'resonance') return;
     this.rigMode = mode;
-    if (this.game) this.game.rigMode = mode;
   }
 
   getCapacityU() {
@@ -419,11 +425,11 @@ export class MiningRigSystem {
     if (!this.resonance.cluster) {
       const saveSeed = this.game?.saveSystem?.saveSeed || 'castaway';
       this.resonance.cluster = genCluster(saveSeed, this.resonance.roundId);
-      this.resonance.seedCommit = genRoundSeed(saveSeed, this.resonance.roundId);
-      const isDay = this.isDaytime();
-      const phaseMult = isDay ? 1.0 : (this.game?.dayNight?.currentMode === 'dawn' ? 1.25 : 0.6);
+      this.resonance.roundSeed ||= genRoundSeed(saveSeed, this.resonance.roundId);
+      this.resonance.seedCommit = cyrb53(this.resonance.roundSeed).toString(16);
+      const phaseMult = ODDS_TABLE.PHASE_MULTIPLIERS[this.getPhaseKey()];
       const weatherMult = ODDS_TABLE.WEATHER_MULTIPLIERS[this.game?.weatherSystem?.currentWeather] || 1.0;
-      this.resonance.board = genNpcBoard(this.resonance.seedCommit, this.getCapacityU(), phaseMult, weatherMult, 1.0, this.resonance.cluster);
+      this.resonance.board = genNpcBoard(this.resonance.roundSeed, this.getCapacityU(), phaseMult, weatherMult, 1.0, this.resonance.cluster);
     }
   }
 
@@ -514,7 +520,7 @@ export class MiningRigSystem {
     if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
     const alreadyCommitted = this.resonance.committedShares || 0;
     const totalShares = this.resonance.deploy.reduce((a, b) => a + b, 0);
-    if (totalShares <= 0) return { ok: false, msg: '请先在矿格中分配晶石份额！' };
+    if (totalShares < 2) return { ok: false, msg: '每轮至少部署 2 份！' };
     if (totalShares <= alreadyCommitted) return { ok: false, msg: '本轮部署已全部提交！' };
 
     // 扣除料仓与免费份额
@@ -597,6 +603,7 @@ export class MiningRigSystem {
 
   // 应用料理增益
   applyResonanceBuff(id) {
+    this.resonance.buffDay = this.game?.survival?.day || 1;
     if (id === 'energy_drink') {
       this.resonance.buff = { id: 'energy_drink', name: '专注', roundsLeft: 2 };
     } else if (id === 'smoked_fish') {
@@ -609,7 +616,7 @@ export class MiningRigSystem {
   // 消费 15% 自动注入母晶池
   onSinkSpent(amount, source = 'general') {
     if (typeof amount !== 'number' || amount <= 0) return;
-    const inject = Math.round(amount * 0.15);
+    const inject = Math.round(amount * ODDS_TABLE.MOTHERLODE.sinkShare);
     if (inject > 0) {
       this.motherlode.injected += inject;
       this.motherlode.pool = Math.min(ODDS_TABLE.MAX_MOTHERLODE_POOL, this.motherlode.pool + inject);
@@ -620,6 +627,8 @@ export class MiningRigSystem {
   onNewDay(currentDay) {
     const now = Date.now();
     const r = this.resonance;
+    if (currentDay !== (r.buffDay ?? this.game?.survival?.day)) r.buff = { id: null, roundsLeft: 0 };
+    r.buffDay = currentDay;
     const isNewDay = currentDay > (r.freeGrantDay || 0);
     const hasEnoughTime = (now - (r.freeGrantTs || 0)) >= 15 * 60 * 1000;
     const currentSteps = this.game?.survival?.steps || 0;
@@ -646,12 +655,16 @@ export class MiningRigSystem {
         // 锁定计算结果并落盘
         const res = settle(this.resonance.board, this.resonance.committedDeploy, this.motherlode.pool, {
           u: this.getCapacityU(),
-          roundSeed: this.resonance.seedCommit,
+          roundSeed: this.resonance.roundSeed,
           cluster: this.resonance.cluster,
           buffId: this.resonance.buff ? this.resonance.buff.id : null,
           weather: this.game?.weatherSystem?.currentWeather || 'clear',
           currentCalib: this.resonance.calib
         });
+        this.resonance.lockU = this.getCapacityU();
+        this.resonance.lockWeather = this.game?.weatherSystem?.currentWeather || 'clear';
+        this.resonance.lockPool = this.motherlode.pool;
+        this.resonance.lockBuff = { ...this.resonance.buff };
         this.resonance.lastResult = res;
         if (this.game?.saveSystem) {
           this.game.saveSystem.saveGame('resonance_lock');
@@ -689,10 +702,17 @@ export class MiningRigSystem {
   settleResonanceRound() {
     const res = this.resonance.lastResult;
     if (!res || this.resonance.phase !== 'REVEAL') return { ok: false, msg: '当前没有待结算的共振结果' };
-    const before = this.serialize();
+    const before = structuredClone(this.serialize());
     if (res) {
-      this.unclaimedSol += res.payout;
-      this.totalSolMined += res.payout;
+      // Re-evaluate the locked draw against the live pool; seed/board/deployment remain fixed.
+      if (this.resonance.roundSeed && this.resonance.board) {
+        const live = settle(this.resonance.board, this.resonance.committedDeploy, this.motherlode.pool, {
+          u: this.resonance.lockU || this.getCapacityU(), roundSeed: this.resonance.roundSeed, cluster: this.resonance.cluster,
+          buffId: this.resonance.lockBuff?.id, weather: this.resonance.lockWeather || this.game?.weatherSystem?.currentWeather || 'clear', currentCalib: this.resonance.calib
+        });
+        res.motherlode = live.motherlode;
+      }
+      this.creditPayout(res.payout);
       this.shardCount += res.shards;
       this.resonance.calib = res.calib;
 
@@ -702,10 +722,18 @@ export class MiningRigSystem {
         this.loadedCrystals++;
       }
 
-      this.motherlode.pool = res.motherlode.nextPool;
+      if (this.resonance.roundSeed && this.resonance.board) this.motherlode.pool = res.motherlode.nextPool;
+      else this.motherlode.pool = Math.max(0, Math.min(ODDS_TABLE.MAX_MOTHERLODE_POOL, this.motherlode.pool + res.motherlode.nextPool - this.resonance.lockPool));
+      this.resonance.fullHeat = false;
+      if (this.resonance.committedDeploy.some(v => v > 0)) {
+        if (this.resonance.buff.roundsLeft > 0 && --this.resonance.buff.roundsLeft === 0) this.resonance.buff = { id: null, roundsLeft: 0 };
+      }
+      if (res.calibReward) {
+        this.loadedCrystals += res.calibReward.crystals;
+        this.resonance.fullHeat = Boolean(res.calibReward.fullHeat);
+      }
       if (res.motherlode.won) {
-        this.unclaimedSol += res.motherlode.playerTake;
-        this.totalSolMined += res.motherlode.playerTake;
+        this.creditPayout(res.motherlode.playerTake);
         this.motherlode.paid += res.motherlode.playerTake;
         this.motherlode.burned += res.motherlode.npcBurned;
         this.motherlode.hallOfFame.unshift({
@@ -740,6 +768,7 @@ export class MiningRigSystem {
     }
 
     // 重置进入下一轮
+    this.resonance.seedReveal = this.resonance.roundSeed;
     this.resonance.roundId++;
     this.resonance.progress = 0;
     this.resonance.phase = 'OPEN';
@@ -749,6 +778,8 @@ export class MiningRigSystem {
     this.resonance.committedDeploy = new Array(25).fill(0);
     this.resonance.cluster = null;
     this.resonance.board = null;
+    this.resonance.roundSeed = '';
+    this.resonance.seedCommit = '';
     this.resonance.lastResult = null;
 
     const saved = this.game?.saveSystem?.saveGame?.('resonance_settle');
@@ -866,11 +897,41 @@ export class MiningRigSystem {
 
   // 判定当前海岛是否为白天 (日出至日落，享有太阳能 100% 绿色增益)
   isDaytime() {
-    if (this.game && this.game.dayNight) {
-      const mode = this.game.dayNight.currentMode;
-      return mode === 'day' || mode === 'dawn';
-    }
-    return true;
+    const key = this.getPhaseKey();
+    return key === ODDS_TABLE.PHASE_KEY_MAP.day || key === ODDS_TABLE.PHASE_KEY_MAP.sunrise;
+  }
+
+  getPhaseKey() {
+    return ODDS_TABLE.PHASE_KEY_MAP[this.game?.dayNight?.currentMode] || ODDS_TABLE.PHASE_KEY_MAP.day;
+  }
+
+  getScannerLevel() {
+    return this.resonance.fullHeat ? 3 : Math.min(3, this.scannerLevel + (this.resonance.buff.id === 'energy_drink' && this.resonance.buff.roundsLeft > 0 ? 1 : 0));
+  }
+
+  creditPayout(amount) {
+    const combined = Math.round((this.solDust + amount) * 1e8) / 1e8;
+    const whole = Math.floor(combined);
+    this.solDust = Math.round((combined - whole) * 1e8) / 1e8;
+    this.unclaimedSol += whole;
+    this.totalSolMined += whole;
+  }
+
+  upgradeRig() {
+    const next = this.rigLevel + 1;
+    const fee = ODDS_TABLE.UPGRADE_COSTS[next];
+    const inv = this.game?.ui?.inventory;
+    if (!fee) return { ok: false, msg: '矿机已达满级' };
+    if (!inv || (inv.sol_token || 0) < fee) return { ok: false, msg: `算力代币不足，需要 ${fee} 枚` };
+    const before = structuredClone(this.serialize());
+    inv.sol_token -= fee;
+    this.onSinkSpent(fee, 'rig_upgrade');
+    this.rigLevel = next;
+    this.maxCrystalCapacity = ODDS_TABLE.RIG_LEVELS[next].capacity;
+    const saved = this.game?.saveSystem?.saveGame?.('rig_upgrade');
+    if (saved?.success === false) { inv.sol_token += fee; this.deserialize(before); return { ok: false, msg: '升级存档失败' }; }
+    this.game?.ui?.renderInventory?.();
+    return { ok: true };
   }
 
   // 一键收取已挖出的算力代币
@@ -1057,6 +1118,16 @@ export class MiningRigSystem {
         progress: this.resonance.progress,
         revealTimer: this.resonance.revealTimer,
         seedCommit: this.resonance.seedCommit,
+        roundSeed: this.resonance.roundSeed,
+        seedReveal: this.resonance.seedReveal,
+        board: this.resonance.board,
+        cluster: this.resonance.cluster,
+        lockPool: this.resonance.lockPool,
+        lockU: this.resonance.lockU || this.getCapacityU(),
+        lockWeather: this.resonance.lockWeather,
+        lockBuff: this.resonance.lockBuff,
+        buffDay: this.resonance.buffDay,
+        fullHeat: this.resonance.fullHeat,
         deploy: [...this.resonance.deploy],
         committed: this.resonance.committed,
         committedShares: this.resonance.committedShares || 0,
@@ -1105,7 +1176,10 @@ export class MiningRigSystem {
     }
     if (typeof data.loadedPureCrystals === 'number') this.loadedPureCrystals = data.loadedPureCrystals;
     if (typeof data.shardCount === 'number') this.shardCount = data.shardCount;
-    if (typeof data.solDust === 'number') this.solDust = data.solDust;
+    this.solDust = typeof data.solDust === 'number' ? data.solDust : 0;
+    const accrued = Math.round((this.unclaimedSol + this.solDust) * 1e8) / 1e8;
+    this.unclaimedSol = Math.floor(accrued);
+    this.solDust = Math.round((accrued - this.unclaimedSol) * 1e8) / 1e8;
     if (typeof data.scannerLevel === 'number') this.scannerLevel = data.scannerLevel;
 
     if (data.resonance && typeof data.resonance === 'object') {
@@ -1114,7 +1188,10 @@ export class MiningRigSystem {
       this.resonance.phase = r.phase || 'OPEN';
       this.resonance.progress = typeof r.progress === 'number' ? r.progress : 0;
       this.resonance.revealTimer = typeof r.revealTimer === 'number' ? r.revealTimer : 0;
-      this.resonance.seedCommit = r.seedCommit || '';
+      for (const key of ['roundSeed', 'seedReveal', 'board', 'cluster', 'lockPool', 'lockU', 'lockWeather', 'lockBuff', 'buffDay', 'fullHeat']) if (r[key] !== undefined) this.resonance[key] = r[key];
+      this.resonance.roundSeed ||= r.seedCommit || '';
+      if (r.lockPool === undefined && r.lastResult) this.resonance.lockPool = data.motherlode?.pool || 0;
+      this.resonance.seedCommit = this.resonance.roundSeed ? cyrb53(this.resonance.roundSeed).toString(16) : '';
       if (Array.isArray(r.deploy) && r.deploy.length === 25) {
         this.resonance.deploy = [...r.deploy];
       }

@@ -3,6 +3,11 @@
 // 纯 JavaScript 模块，无 THREE.js 或 DOM 依赖，供前端系统与模拟套件直接 import
 
 export const ODDS_TABLE = {
+  PHASE_KEY_MAP: { day: 'day', sunrise: 'dawn', sunset: 'dusk', night: 'night' },
+  UPGRADE_COSTS: { 2: 30, 3: 80, 4: 200 },
+  MOTHERLODE: { sinkShare: 0.15, maxProbability: 0.40, baseMaxProbability: 0.30, sharesDivisor: 20, typhoonMultiplier: 1.5, awakenerShare: 0.70, sharedShare: 0.30, seedShare: 0.10 },
+  PITY: { minShares: 2, crystals: 2, fullHeat: true },
+  LONG_TERM_RTP: { min: 0.78, max: 0.82 },
   GRID_SIZE: 25,
   GRID_ROWS: 5,
   GRID_COLS: 5,
@@ -51,7 +56,7 @@ export const ODDS_TABLE = {
   },
 
   PHASE_MULTIPLIERS: {
-    dawn: 1.25,
+    dawn: 1.20,
     day: 1.00,
     dusk: 0.85,
     night: 0.60
@@ -61,7 +66,7 @@ export const ODDS_TABLE = {
     clear: 1.00,
     cloudy: 0.95,
     rain: 0.75,
-    typhoon: 0.35
+    typhoon: 0.55
   }
 };
 
@@ -268,7 +273,7 @@ export function estimateSquareEV(board, squareIdx, playerShares, u, M_phase = 1.
   if (playerShares <= 0) return 0;
   const V = ODDS_TABLE.V;
   const ALPHA = ODDS_TABLE.ALPHA;
-  const R = 23.6 * u;
+  const { R } = rigParameters(u);
   const totalNpc = board.reduce((a, b) => a + b, 0);
   const totalShares = totalNpc + playerShares;
   const pot = ALPHA * V * totalShares + R;
@@ -278,8 +283,8 @@ export function estimateSquareEV(board, squareIdx, playerShares, u, M_phase = 1.
   const shareRatio = playerShares / sqTotal;
 
   // 假设平均中签概率约 1/25 = 0.04，期望晶爆 1.168
-  const baseWinProb = 1.0 / 25.0;
-  const expectedPayout = baseWinProb * (shareRatio * pot * 1.168);
+  const baseWinProb = 1.0 / ODDS_TABLE.GRID_SIZE;
+  const expectedPayout = baseWinProb * (shareRatio * pot * expectedCritMultiplier());
   const cost = playerShares * V;
   return Number((expectedPayout / cost).toFixed(3));
 }
@@ -297,8 +302,7 @@ export function settle(board, deploy, motherlodePool = 0, params = {}) {
 
   const V = ODDS_TABLE.V;
   const ALPHA = ODDS_TABLE.ALPHA;
-  const R = 23.6 * u;
-  const cap = 60 * u;
+  const { R, cap } = rigParameters(u);
 
   // 1. 抽选获胜格
   const winningSquare = drawWinner(roundSeed, cluster);
@@ -345,16 +349,16 @@ export function settle(board, deploy, motherlodePool = 0, params = {}) {
   // 7. 保底 (校准值)
   let nextCalib = currentCalib;
   let calibReward = null;
-  if (playerTotalShares >= 2) {
+  if (playerTotalShares >= ODDS_TABLE.PITY.minShares) {
     if (hit) {
       nextCalib = 0;
     } else {
       nextCalib = currentCalib + 1;
-      if (nextCalib >= 10) {
+      if (nextCalib >= Math.min(...Object.keys(ODDS_TABLE.PITY_TABLE).map(Number))) {
         const pityProb = ODDS_TABLE.PITY_TABLE[nextCalib] || 1.0;
         const rngCalib = mulberry32(cyrb53(`pity_${roundSeed}`));
         if (rngCalib() < pityProb) {
-          calibReward = { crystals: 2, fullHeat: true };
+          calibReward = { crystals: ODDS_TABLE.PITY.crystals, fullHeat: ODDS_TABLE.PITY.fullHeat };
           nextCalib = 0;
         }
       }
@@ -372,16 +376,15 @@ export function settle(board, deploy, motherlodePool = 0, params = {}) {
   let seedForNext = 0;
 
   if (hit) {
-    const weatherCoeff = weather === 'typhoon' ? 1.5 : 1.0;
-    const mlProb = Math.min(0.40, Math.min(0.30, s_W / 20.0) * weatherCoeff);
+    const mlProb = motherlodeProbability(s_W, weather);
     const rngMl = mulberry32(cyrb53(`ml_${roundSeed}`));
     if (rngMl() < mlProb && currentPool > 0) {
       mlWon = true;
       const T_W = (board[winningSquare] || 0) + s_W;
-      playerMlTake = Math.round(currentPool * 0.70 + (currentPool * 0.30) * (s_W / T_W));
+      playerMlTake = Math.round(currentPool * ODDS_TABLE.MOTHERLODE.awakenerShare + (currentPool * ODDS_TABLE.MOTHERLODE.sharedShare) * (s_W / T_W));
       playerMlTake = Math.min(currentPool, playerMlTake);
       npcMlBurned = currentPool - playerMlTake;
-      seedForNext = Math.round(npcMlBurned * 0.10);
+      seedForNext = Math.round(npcMlBurned * ODDS_TABLE.MOTHERLODE.seedShare);
       currentPool = seedForNext;
     }
   }
@@ -403,4 +406,21 @@ export function settle(board, deploy, motherlodePool = 0, params = {}) {
       nextPool: currentPool
     }
   };
+}
+
+export function rigParameters(u) {
+  const info = Object.values(ODDS_TABLE.RIG_LEVELS).find(info => info.u === u);
+  if (!info) throw new RangeError(`Unknown rig capacity ${u}`);
+  return info;
+}
+export function expectedCritMultiplier(buffed = false) {
+  return ODDS_TABLE.CRIT_TABLE[buffed ? 'buffed' : 'default'].reduce((sum, row) => sum + row.prob * row.mult, 0);
+}
+export function motherlodeProbability(shares, weather = 'clear') {
+  const m = ODDS_TABLE.MOTHERLODE;
+  return Math.min(m.maxProbability, Math.min(m.baseMaxProbability, shares / m.sharesDivisor) * (weather === 'typhoon' ? m.typhoonMultiplier : 1));
+}
+export function clusterWeightTotal() {
+  const w = ODDS_TABLE.CLUSTER_WEIGHTS;
+  return w.main + 2 * w.sub + (ODDS_TABLE.GRID_SIZE - 3) * w.cold;
 }

@@ -11,7 +11,7 @@ import { iconHTML } from './IconRegistry.js'; // 黏土图标集成（2026-10-31
 import { NoticeCenter, NOTICE_MODES } from './NoticeCenter.js'; // 提示系统优化（2026-10-31）
 import cozyPortraitHudCSS from './CozyPortraitHud.css?inline';
 import cozyLandscapeHudCSS from './CozyLandscapeHud.css?inline';
-import { ODDS_TABLE, estimateSquareEV, scannerHints, npcArrival } from '../systems/resonance/ResonanceEngine.js';
+import { ODDS_TABLE, expectedCritMultiplier, clusterWeightTotal, motherlodeProbability, estimateSquareEV, scannerHints, npcArrival } from '../systems/resonance/ResonanceEngine.js';
 
 function hudIcon(definition) {
   const svg = createElement(definition);
@@ -874,7 +874,7 @@ export class UIManager {
       body.hud-drawer-open #btn-hud-more { background: rgba(217,192,138,.95); color: #1e272e; }
       @media (orientation: landscape) {
         :root { --hud-ql: calc(max(24px, var(--sal, 0px)) + 212px); --hud-qr: calc(max(24px, var(--sar, 0px)) + var(--hud-nav-w) + 12px); }
-        /* 顶栏：$SOL 只显示数量（🎁 改角标），背包/菜单为 48x48 图标键 */
+        /* 顶栏：算力代币 只显示数量（🎁 改角标），背包/菜单为 48x48 图标键 */
         .top-right-group { gap: 10px; }
         .top-right-group .hud-nav-btn { padding: 0 12px; }
         .top-right-group #btn-open-inv, .top-right-group #btn-hud-more { width: 48px; min-width: 48px; padding: 0; }
@@ -1439,7 +1439,7 @@ export class UIManager {
     document.body.appendChild(tutorialCard);
     tutorialCard.querySelector('#onboarding-skip').addEventListener('click', () => window.__game?.story?.dismissOnboarding?.());
 
-    // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 $SOL 资产）
+    // 2. 右上角功能系统导航组（突出 DePIN 挖矿与 算力代币 资产）
     const topNav = document.createElement('div');
     topNav.className = 'top-right-group';
     topNav.innerHTML = `
@@ -1976,7 +1976,7 @@ export class UIManager {
       this._hudWrite('weather-color', isHypo ? '#ff7675' : '#00cec9', (v) => { weatherEl.style.color = v; });
     }
 
-    // 动态刷新顶部 $SOL 资产与矿机待领取状态
+    // 动态刷新顶部 算力代币 资产与矿机待领取状态
     const solHud = this._hudEl('txt-hud-sol-token');
     if (solHud) {
       const solCount = (this.inventory ? this.inventory['sol_token'] : 0) || 0;
@@ -3077,8 +3077,8 @@ export class UIManager {
             <!-- 已连接时：控制中心操作栏 -->
             <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                <button id="btn-seeker-checkin" style="background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(20,241,149,0.35);">
-                  📝 链上生存打卡 (+100🐚)
+                <button id="btn-seeker-checkin" ${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? 'disabled' : ''} style="opacity:${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? 0.45 : 1};background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(20,241,149,0.35);">
+                  ${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? '今日已领取' : '📝 链上生存打卡 (+5 算力代币)'}
                 </button>
                 ${!isGuest ? `
                   <button id="btn-devnet-airdrop" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(153,69,255,0.35);">
@@ -3171,15 +3171,17 @@ export class UIManager {
       const btnCheckin = document.getElementById('btn-seeker-checkin');
       if (btnCheckin) {
         btnCheckin.onclick = async () => {
+          const claimDay = this.survival.day;
+          if (window.__game.saveSystem.hasClaimedCheckin(claimDay)) return;
           btnCheckin.disabled = true;
           btnCheckin.innerText = '✍️ 签名确认中...';
-          const res = await solanaBridge.signSurvivalCheckin(this.survival.day, this.survival.steps);
+          const res = await solanaBridge.signSurvivalCheckin(claimDay, this.survival.steps);
           btnCheckin.disabled = false;
           if (res.success) {
             soundEngine.playPlaceFurniture();
-            this.addInventory('sol_token', 5);
+            if (!window.__game.saveSystem.claimDailyCheckin(claimDay)) { this.showToast('今日已领取或存档失败', 'medium'); renderModal(); return; }
             const tipText = res.hardwareSigned
-              ? `🌟 恭喜！已使用 Seeker 硬件私钥完成第 ${this.survival.day} 天链上打卡！(+5 算力代币)`
+              ? `🌟 恭喜！已使用 Seeker 硬件私钥完成第 ${claimDay} 天链上打卡！(+5 算力代币)`
               : `✅ 完成今日打卡存证！(+5 算力代币)`;
             this.showToast(tipText, 'medium');
             renderModal();
@@ -4351,43 +4353,40 @@ export class UIManager {
   }
 
   // --- R8: 矿机共振勘探四个功能页签辅助渲染 ---
-  _renderOddsTabHtml() {
-    return `
-      <div style="display:flex; flex-direction:column; gap:12px; font-size:11.5px; color:rgba(255,255,255,0.85); line-height:1.6;">
-        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px;">
-          <div style="font-size:13px; font-weight:900; color:#14f195; margin-bottom:6px;">⚖️ 数学模型与价值基准 (ODDS_TABLE)</div>
-          <div>• 价值基准 V: <strong style="color:#ffd32a;">${ODDS_TABLE.V}</strong> 算力代币/份额</div>
-          <div>• 资金流向: 主池 <strong>${(ODDS_TABLE.ALPHA * 100).toFixed(0)}%</strong> · 母晶池 <strong>${(ODDS_TABLE.MOTHERLODE_SHARE * 100).toFixed(0)}%</strong> · 残晶 <strong>${(ODDS_TABLE.SHARD_RETURN_RATE * 100).toFixed(0)}%</strong> · 销毁 <strong>${(ODDS_TABLE.BURN_SHARE * 100).toFixed(0)}%</strong></div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-          <div style="font-weight:900; color:#fff; margin-bottom:6px;">💎 晶爆暴击率公示 (E[m] = 1.168x)</div>
-          <div>• 基础无暴击 (x1): <strong>${(ODDS_TABLE.CRIT_TABLE.default[0].prob * 100).toFixed(1)}%</strong></div>
-          <div>• 小晶爆 (x2): <strong>${(ODDS_TABLE.CRIT_TABLE.default[1].prob * 100).toFixed(1)}%</strong></div>
-          <div>• 大晶爆 (x3): <strong>${(ODDS_TABLE.CRIT_TABLE.default[2].prob * 100).toFixed(1)}%</strong></div>
-          <div>• 超新星 (x8): <strong>${(ODDS_TABLE.CRIT_TABLE.default[3].prob * 100).toFixed(1)}%</strong></div>
-          <div style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-top:4px;">* 食用共振蟹煲可获得 3 轮晶爆概率 x1.5 倍提升</div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-          <div style="font-weight:900; color:#fff; margin-bottom:6px;">🗺️ 5x5 地脉获胜分布 (总权重 26.2)</div>
-          <div>• 主矿脉 (1格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.main}</strong> (理论胜率 <strong>6.11%</strong>)</div>
-          <div>• 副矿脉 (2格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.sub}</strong> (理论胜率 <strong>4.96%</strong>)</div>
-          <div>• 贫矿冷格 (22格): 权重 <strong>${ODDS_TABLE.CLUSTER_WEIGHTS.cold}</strong> (理论胜率 <strong>3.82%</strong>)</div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-          <div style="font-weight:900; color:#fff; margin-bottom:6px;">🧭 保底校准值机制</div>
-          <div>每轮投入 $\\ge$ 2 份额未中主池则校准值 +1。第 10 轮起触发保底，第 15 轮 100% 触发 2 原石补偿与满级热力透视。最大未命中连串 $\\le$ 15！</div>
-        </div>
-      </div>
-    `;
+  _renderOddsTabHtml(miningRig = window.__game?.miningRig) {
+    const o = ODDS_TABLE;
+    const num = (key, value) => `<strong data-odds="${key}">${value}</strong>`;
+    const pct = n => Number((n * 100).toFixed(6));
+    const flows = { main: o.ALPHA, mother: o.MOTHERLODE_SHARE, shard: 1 - o.ALPHA - o.MOTHERLODE_SHARE - o.BURN_SHARE, burn: o.BURN_SHARE };
+    const pityRounds = Object.keys(o.PITY_TABLE).map(Number);
+    const m = o.MOTHERLODE;
+    return `<div style="font-size:12px;line-height:1.8;padding:12px;">
+      <p>不承诺任何收益。晶石消耗即为成本；荒岛算力代币为游戏内货币。</p>
+      <p>价值基准 V：${num('V', o.V)} 算力代币/份额</p>
+      <p>资金流向：主池 ${num('flow-main', pct(flows.main))}% · 母晶池 ${num('flow-mother', pct(flows.mother))}% · 残晶预算 ${num('flow-shard', pct(flows.shard))}% · 销毁 ${num('flow-burn', pct(flows.burn))}%（合计 100%）。</p>
+      <p>残晶折算率：${num('shard-rate', o.SHARD_RETURN_RATE)}，每 ${1 / o.SHARD_RETURN_RATE} 残晶折 1 原石；获胜格的八邻格按投入份额返还残晶。</p>
+      <p>长期中性回报率参考区间 ${num('rtp-min', pct(o.LONG_TERM_RTP.min))}%–${num('rtp-max', pct(o.LONG_TERM_RTP.max))}%，单轮结果有波动。</p>
+      <p>矿机参数：${Object.entries(o.RIG_LEVELS).map(([lv, r]) => `L${lv}：R=${num(`R-${lv}`, r.R)}，单轮硬顶=${num(`cap-${lv}`, r.cap)}`).join('；')}</p>
+      <p>晶爆表：${['default', 'buffed'].map(kind => `${kind === 'default' ? '基础' : '蟹煲增益'} E[m]=${num(`em-${kind}`, Number(expectedCritMultiplier(kind === 'buffed').toFixed(6)))}；${o.CRIT_TABLE[kind].map((row, i) => `×${num(`crit-${kind}-${i}-mult`, row.mult)}：${num(`crit-${kind}-${i}-prob`, pct(row.prob))}%`).join('，')}`).join('<br>')}</p>
+      <p>矿脉总权重 ${num('weight-total', clusterWeightTotal())}：${Object.entries(o.CLUSTER_WEIGHTS).map(([kind, weight]) => `${{main:'主脉（1 格）',sub:'副脉（2 格）',cold:`冷格（${o.GRID_SIZE - 3} 格）`}[kind]}权重 ${num(`weight-${kind}`, weight)}，理论胜率 ${num(`win-${kind}`, pct(weight / clusterWeightTotal()))}%`).join('；')}</p>
+      <p>模拟矿工负载系数：时段 ${Object.entries(o.PHASE_MULTIPLIERS).map(([k,v]) => `${k}=${num(`phase-${k}`,v)}`).join('，')}；天气 ${Object.entries(o.WEATHER_MULTIPLIERS).map(([k,v]) => `${k}=${num(`weather-${k}`,v)}`).join('，')}。</p>
+      <p>保底：每轮投入 ≥ ${num('pity-min-shares',o.PITY.minShares)} 份且未中主池，校准值 +1。校准奖概率：${pityRounds.map(r => `第 ${r} 轮 ${num(`pity-${r}`,pct(o.PITY_TABLE[r]))}%`).join('，')}。奖励 ${num('pity-crystals',o.PITY.crystals)} 原石及下一轮满级热力；校准奖不等于主池命中。</p>
+      <p>母池：投入 ${num('ml-inject',pct(o.MOTHERLODE_SHARE))}%、消费 ${num('ml-sink',pct(m.sinkShare))}%、超硬顶部分注入；池上限 ${num('ml-cap',o.MAX_MOTHERLODE_POOL)}。命中后检定概率 min(${num('ml-max-prob',m.maxProbability)}, min(${num('ml-base-prob',m.baseMaxProbability)}, 获胜格己方份额/${num('ml-divisor',m.sharesDivisor)}) × 天气系数)，台风系数 ${num('ml-typhoon',m.typhoonMultiplier)}。</p>
+      <p>唤醒者独得 ${num('ml-awakener',pct(m.awakenerShare))}%；余下 ${num('ml-shared',pct(m.sharedShare))}% 按获胜格份额分配，模拟矿工所得销毁，其中 ${num('ml-seed',pct(m.seedShare))}% 留作下一池种子。</p>
+      <p>本轮种子哈希（cyrb53）：<span data-seed="commit">${miningRig?.resonance.seedCommit || '尚未生成'}</span><br>上一轮种子揭示：<span data-seed="reveal">${miningRig?.resonance.seedReveal || '暂无'}</span></p>
+      <p>最近获胜格：${(miningRig?.resonance.history || []).map(r => r.winningSquare + 1).join('、') || '暂无'}</p>
+    </div>`;
   }
 
   _renderMotherlodeTabHtml(miningRig, tokenCount) {
     const ml = miningRig.motherlode || { pool: 0, hallOfFame: [] };
-    const deployShares = miningRig.resonance?.deploy ? miningRig.resonance.deploy.reduce((a, b) => a + b, 0) : 0;
-    const estProb = Math.min(40, (Math.min(30, (deployShares / 20) * 30))).toFixed(1);
+    // Each winning square gets its own conditional awakening check.
+    const w = ODDS_TABLE.CLUSTER_WEIGHTS;
+    const cl = miningRig.resonance.cluster;
+    const estProb = (100 * (miningRig.resonance.deploy || []).reduce((sum, shares, sq) => {
+      const weight = cl?.mainIndex === sq ? w.main : cl?.subIndices.includes(sq) ? w.sub : w.cold;
+      return sum + weight / clusterWeightTotal() * motherlodeProbability(shares, miningRig.game?.weatherSystem?.currentWeather || 'clear');
+    }, 0)).toFixed(2);
 
     return `
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -4397,14 +4396,14 @@ export class UIManager {
             <span id="ml-pool-amount">${ml.pool || 0}</span> 🪙
           </div>
           <div style="font-size:11.5px; color:rgba(255,255,255,0.7);">
-            当前部署唤醒概率预估: <strong style="color:#14f195;">${estProb}%</strong> · 爆池唤醒者独得 <strong>70%</strong>！
+            当前部署每轮唤醒概率预估（含中签）: <strong style="color:#14f195;">${estProb}%</strong> · 爆池唤醒者独得 <strong>${ODDS_TABLE.MOTHERLODE.awakenerShare * 100}%</strong>！
           </div>
         </div>
 
         <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px; font-size:11.5px; line-height:1.6; color:rgba(255,255,255,0.8);">
           <div style="font-weight:900; color:#fff; margin-bottom:4px;">💎 母池生态循环账本：</div>
-          <div>• 玩家共振投入：<span style="color:#14f195;">40% (0.54 代币/份额)</span> 自动注入母池</div>
-          <div>• 岛上建设消费：<span style="color:#14f195;">15%</span> (商城、船只升级、扫描仪改装) 注入</div>
+          <div>• 玩家共振投入：<span style="color:#14f195;">${ODDS_TABLE.MOTHERLODE_SHARE * 100}% (${(ODDS_TABLE.MOTHERLODE_SHARE * ODDS_TABLE.V).toFixed(2)} 代币/份额)</span> 自动注入母池</div>
+          <div>• 岛上建设消费：<span style="color:#14f195;">${ODDS_TABLE.MOTHERLODE.sinkShare * 100}%</span> (商城、船只升级、扫描仪改装) 注入</div>
           <div>• 单轮超额溢出：超出单轮硬顶派彩全额注入母池</div>
           <div>• 模拟矿工分走部分作为系统 SINK 彻底销毁，绝不伪造虚假中奖播报</div>
         </div>
@@ -4433,7 +4432,7 @@ export class UIManager {
     const selectedSq = this._selectedSquare !== undefined ? this._selectedSquare : 12;
 
     const visibleBoard = res.board ? npcArrival(res.board, res.progress) : new Array(25).fill(0);
-    const hints = scannerHints(res.cluster, miningRig.scannerLevel, res.seedCommit);
+    const hints = scannerHints(res.cluster, miningRig.getScannerLevel(), res.roundSeed);
 
     const phaseLabels = {
       OPEN: '📡 正在部署 (可调整)',
@@ -4484,7 +4483,7 @@ export class UIManager {
             <span>${isMainHint ? '⭐' : (isHeat ? '🔥' : '')}</span>
           </div>
           <div style="font-size:11px; font-weight:900; color:${myShares > 0 ? '#14f195' : '#dfe6e9'};">
-            ${myShares > 0 ? `💎 ${myShares}` : `${npcShares}`}
+            ${myShares > 0 ? `💎 ${myShares} · ` : ''}<span class="npc-shares">${npcShares}<sup>模拟</sup></span>
           </div>
           <div style="font-size:8.5px; color:rgba(255,255,255,0.45);">
             ${isWinner ? '👑获胜' : `EV:${ev}`}
@@ -4541,8 +4540,8 @@ export class UIManager {
             <button id="btn-res-add" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
             <button id="btn-res-split" style="flex:1; background:rgba(0,206,201,0.15); color:#00cec9; border:1px solid rgba(0,206,201,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
             <button id="btn-res-allin" style="flex:1; background:rgba(255,211,42,0.15); color:#ffd32a; border:1px solid rgba(255,211,42,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
-            <button id="btn-res-commit" style="flex:1.4; background:linear-gradient(135deg, #14f195, #00cec9); color:#0b101b; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed === 0 ? 'disabled' : ''}>
-              ${res.committed ? '✅ 已锁定' : `确认部署 (${totalDeployed}份)`}
+            <button id="btn-res-commit" style="flex:1.4; background:linear-gradient(135deg, #14f195, #00cec9); color:#0b101b; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
+              ${res.committed ? '✅ 已锁定' : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
             </button>
           </div>
 
@@ -4970,18 +4969,23 @@ export class UIManager {
       } else if (currentTab === 'motherlode') {
         contentHtml = this._renderMotherlodeTabHtml(miningRig, tokenCount);
       } else if (currentTab === 'odds') {
-        contentHtml = this._renderOddsTabHtml();
+        miningRig.ensureResonanceRound();
+        contentHtml = this._renderOddsTabHtml(miningRig);
       }
 
       body.innerHTML = `
         <div style="display:flex; flex-direction:column; height:100%; max-height:calc(100vh - 80px); overflow:hidden; padding:2px;">
           ${tabNavHtml}
           <div style="flex:1; overflow-y:auto; min-height:0; padding-right:2px;">
+            <div style="font-size:11px;padding:4px;">其他矿工均为模拟矿工（非真人）</div>
+            ${['decrypt', 'resonance'].includes(currentTab) ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `升级矿机 L${miningRig.rigLevel + 1} · ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '矿机已满级'}</button>` : ''}
             ${contentHtml}
           </div>
         </div>
       `;
 
+      const upgradeBtn = body.querySelector('#btn-rig-upgrade');
+      if (upgradeBtn) upgradeBtn.onclick = () => { const result = miningRig.upgradeRig(); if (!result.ok) this.showToast(result.msg, 'medium'); render(); };
       // 绑定页签切换
       body.querySelectorAll('.rig-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -5721,7 +5725,7 @@ export class UIManager {
         });
       }
 
-      // 绑定 $SOL 算力代币黑市快造
+      // 绑定 算力代币 算力代币黑市快造
       const solUpBtn = body.querySelector('#btn-sol-upgrade');
       if (solUpBtn) {
         solUpBtn.addEventListener('click', () => {

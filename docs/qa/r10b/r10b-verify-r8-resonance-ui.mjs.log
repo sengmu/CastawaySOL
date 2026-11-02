@@ -1,0 +1,20 @@
+📡 开始执行 CastawaySOL R8 矿机共振面板与揭晓交互专项测试套件...
+
+▶ [1/5] 验证概率公示页与 ODDS_TABLE 引擎常量逐项相等...
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [121:121:1102/083630.351366:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+
+    at browserSession (file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tools/lib/browser-session.mjs:16:12)
+    at async file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tests/verify-r8-resonance-ui.mjs:25:18 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

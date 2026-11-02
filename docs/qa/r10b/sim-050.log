@@ -1,0 +1,55 @@
+⚡ 开始执行 CastawaySOL R7 矿脉共振勘探引擎与经济仿真测试套件...
+
+▶ [断言 1/6] 验证 30fps / 60fps / 120fps 帧率解耦（60 秒生存步误差 <= 2%）...
+  📊 30fps 步数: 191, 60fps 步数: 192, 120fps 步数: 192
+  ✅ 帧率解耦断言 100% 通过（误差 0%）！
+
+▶ [断言 2/6] 验证 v1 存档平滑升级带出默认 miningRig 与超频状态持久化...
+  ✅ v1 升级迁移与超频芯片持久化断言通过！
+
+▶ [断言 3/6] 验证确定性种子结果可复现性与 LOCK 状态快照幂等...
+  ✅ 相同种子 100% 幂等可复现！
+
+▶ [断言 4/6] 快速模拟 1,000,000 轮抽签分布与晶爆概率...
+  主脉格 [12] 经验频率: 6.081% (理论 6.107%)
+  副脉格 [11] 经验频率: 4.958% (理论 4.962%)
+  冷格   [0]  经验频率: 3.839% (理论 3.817%)
+  超新星 x8 频率: 0.403% (理论 0.400%)
+  大晶爆 x3 频率: 2.004% (理论 2.000%)
+  小晶爆 x2 频率: 10.031% (理论 10.000%)
+  ✅ 10^6 轮大样本统计分布与公示概率严格吻合！
+
+▶ [断言 5/6] 验证策略回报率区间 (中性 0.76–0.84，最优 <= 1.05)...
+混合时段 中性 RTP: 0.7928487104938903
+实机睡醒(sunrise) 中性 RTP: 0.7594507648148708
+实机初始(day) 中性 RTP: 0.781577451234636
+夜×台风中性: 0.9172141351852799; 中性均匀: 0.7959337037037704; 择时提升: 0.15237504193772344
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: R10b 中性与择时红线
++ actual - expected
+
++ [
++   '实机睡醒(sunrise) 中性 0.7594507648148708 必须在 [0.76, 0.84]',
++   '夜×台风 / 中性均匀 − 1 = 0.15237504193772344 必须 <= .15'
++ ]
+- []
+
+    at file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tools/sim-resonance.mjs:297:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    '实机睡醒(sunrise) 中性 0.7594507648148708 必须在 [0.76, 0.84]',
+    '夜×台风 / 中性均匀 − 1 = 0.15237504193772344 必须 <= .15'
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

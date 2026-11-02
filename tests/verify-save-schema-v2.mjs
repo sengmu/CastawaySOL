@@ -121,16 +121,7 @@ class MockGame {
     this.quarryIsleScene = new QuarryIsleScene(mockScene, this);
     this.shopManager = new ShopManager(this);
 
-    // 共振字段
-    this.rigMode = 'decrypt';
-    this.rigLevel = 1;
-    this.loadedPureCrystals = 0;
-    this.shardCount = 0;
-    this.solDust = 0;
-    this.scannerLevel = 0;
-    this.resonance = null;
-    this.motherlode = null;
-    this.season = null;
+
   }
 }
 
@@ -148,17 +139,18 @@ assert.strictEqual(snapshot.schemaVersion, 2, '生成的快照必须包含 schem
 assert.ok(snapshot.miningRig, '快照必须包含 miningRig');
 assert.ok(snapshot.flotsamSalvage, '快照必须包含 flotsamSalvage');
 assert.ok(snapshot.quarryIsle, '快照必须包含 quarryIsle');
-assert.strictEqual(snapshot.rigMode, 'decrypt', 'rigMode 默认必须为 decrypt');
-assert.strictEqual(snapshot.rigLevel, 1, 'rigLevel 默认必须为 1');
-assert.strictEqual(snapshot.loadedPureCrystals, 0);
-assert.strictEqual(snapshot.shardCount, 0);
-assert.strictEqual(snapshot.solDust, 0);
-assert.strictEqual(snapshot.scannerLevel, 0);
-assert.ok(snapshot.resonance, '共振对象必须存在');
-assert.strictEqual(snapshot.resonance.deploy.length, 25, '共振 deploy 格子必须为 25');
-assert.strictEqual(snapshot.resonance.freeShares, 3, '免费 share 初始为 3');
-assert.ok(snapshot.motherlode, 'motherlode 对象必须存在');
-assert.ok(snapshot.season, 'season 对象必须存在');
+assert.strictEqual(snapshot.miningRig.rigMode, 'decrypt', 'rigMode 默认必须为 decrypt');
+assert.strictEqual(snapshot.miningRig.rigLevel, 1, 'rigLevel 默认必须为 1');
+assert.strictEqual(snapshot.miningRig.loadedPureCrystals, 0);
+assert.strictEqual(snapshot.miningRig.shardCount, 0);
+assert.strictEqual(snapshot.miningRig.solDust, 0);
+assert.strictEqual(snapshot.miningRig.scannerLevel, 0);
+assert.ok(snapshot.miningRig.resonance, '共振对象必须存在');
+assert.strictEqual(snapshot.miningRig.resonance.deploy.length, 25, '共振 deploy 格子必须为 25');
+assert.strictEqual(snapshot.miningRig.resonance.freeShares, 3, '免费 share 初始为 3');
+assert.ok(snapshot.miningRig.motherlode, 'motherlode 对象必须存在');
+assert.ok(snapshot.miningRig.season, 'season 对象必须存在');
+for (const key of ['rigMode','rigLevel','loadedPureCrystals','shardCount','solDust','scannerLevel','resonance','motherlode','season']) assert.equal(key in snapshot, false, `禁止影子字段 ${key}`);
 console.log('  ✅ Schema v2 顶级快照与共振字段默认值验证通过！');
 
 // ==========================================
@@ -399,3 +391,26 @@ assert.deepStrictEqual(snapA, snapB, '导出再导入后的游戏快照必须与
 console.log('  ✅ 导出与导入快照深度相等验证通过！');
 
 console.log('\n🎉🎉🎉 [ALL S1 SCHEMA V2 TESTS PASSED] 安全网第1轮 S1 存档补全 100% 验证成功！');
+
+// M3: use the real story serializer for completion and legacy chapter-6 migration.
+const { StorySystem } = await import('../src/systems/StorySystem.js');
+const completedGame = new MockGame();
+completedGame.story = new StorySystem(completedGame);
+completedGame.story.currentChapterId = 6;
+completedGame.story.update({x:0,z:0},{},{});
+const completedSave = new SaveSystem(completedGame);
+const completedJson = completedSave.exportSave();
+assert.equal(JSON.parse(completedJson).story.isCompleted, true);
+const freeplayGame = new MockGame();
+freeplayGame.story = new StorySystem(freeplayGame);
+const freeplaySave = new SaveSystem(freeplayGame);
+assert.equal(freeplaySave.importSave(completedJson).success, true);
+assert.equal(freeplayGame.story.isCompleted, true);
+assert.match(freeplayGame.story.getQuestBannerText(), /自由经营/);
+assert.deepStrictEqual({...freeplaySave.createSnapshot(),timestamp:0},{...JSON.parse(completedJson),timestamp:0}, '主线完成后全存档往返深相等');
+const legacyChapter6 = JSON.parse(completedJson);
+delete legacyChapter6.story.isCompleted;
+assert.equal(freeplaySave.importSave(JSON.stringify(legacyChapter6)).success,true);
+assert.equal(freeplayGame.story.isCompleted,true,'旧第六章存档通过 SaveSystem 导入即进入漫游');
+assert.match(freeplayGame.story.getQuestBannerText(), /自由经营/);
+console.log('M3 SAVE PASS: 完成主线全存档往返深相等；旧第六章档导入迁移通过');

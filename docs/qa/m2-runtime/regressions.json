@@ -1,0 +1,76 @@
+{
+  "tests": [
+    {
+      "file": "tests/verify-ancient-temple-system.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-e1-economy-repair.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-m1-story-skeleton.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-m2-story-events.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-mobile-adaptability.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-monkey-and-tidal-trap.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-p1-features.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-p2-quarry-features.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-pet-companion-system.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-portrait-bounding-boxes.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-portrait-experience.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-r8-resonance-ui.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-r9-event-balance.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-save-schema-v2.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-ship-upgrade-system.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-sleep-and-salvage-systems.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "tests/verify-wallet-features.mjs",
+      "exitCode": 0
+    }
+  ],
+  "eventTypes": 20,
+  "shuffleSeeds": 100,
+  "m1Steps": 15,
+  "eventChecks": 30000
+}

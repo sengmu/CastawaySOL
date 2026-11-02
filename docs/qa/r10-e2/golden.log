@@ -1,0 +1,5 @@
+
+> castaway-sol@1.0.0 verify:golden
+> node tools/verify-golden-path.mjs
+
+[golden] BLOCKED at browser startup: Chromium did not expose DevTools

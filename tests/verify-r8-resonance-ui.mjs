@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { browserSession } from '../tools/lib/browser-session.mjs';
 import { ODDS_TABLE } from '../src/systems/resonance/ResonanceEngine.js';
 import { MiningRigSystem } from '../src/systems/MiningRigSystem.js';
 
@@ -20,29 +21,46 @@ assert.ok(uiCode.includes('data-tab="resonance"'), '必须包含矿脉共振页�
 assert.ok(uiCode.includes('data-tab="motherlode"'), '必须包含母晶池页签');
 assert.ok(uiCode.includes('data-tab="odds"'), '必须包含概率公示页签');
 
-// 1.2 基础价值与资金流向比例直接引用 ODDS_TABLE
-assert.ok(uiCode.includes('${ODDS_TABLE.V}'), '公示页必须直接引用 ODDS_TABLE.V 算力基准');
-assert.ok(uiCode.includes('${(ODDS_TABLE.ALPHA * 100).toFixed(0)}%'), '必须引用主池比例 ALPHA (24%)');
-assert.ok(uiCode.includes('${(ODDS_TABLE.MOTHERLODE_SHARE * 100).toFixed(0)}%'), '必须引用母晶池比例 MOTHERLODE_SHARE (40%)');
-assert.ok(uiCode.includes('${(ODDS_TABLE.SHARD_RETURN_RATE * 100).toFixed(0)}%'), '必须引用残晶折算率 (25%)');
-assert.ok(uiCode.includes('${(ODDS_TABLE.BURN_SHARE * 100).toFixed(0)}%'), '必须引用销毁比例 (30%)');
-
-// 1.3 晶爆概率与倍率直接引用 CRIT_TABLE
-assert.ok(uiCode.includes('${(ODDS_TABLE.CRIT_TABLE.default[0].prob * 100).toFixed(1)}%'), '必须引用无暴击概率表达式');
-assert.ok(uiCode.includes('${(ODDS_TABLE.CRIT_TABLE.default[1].prob * 100).toFixed(1)}%'), '必须引用小晶爆概率表达式');
-assert.ok(uiCode.includes('${(ODDS_TABLE.CRIT_TABLE.default[2].prob * 100).toFixed(1)}%'), '必须引用大晶爆概率表达式');
-assert.ok(uiCode.includes('${(ODDS_TABLE.CRIT_TABLE.default[3].prob * 100).toFixed(1)}%'), '必须引用超新星概率表达式');
-
-// 1.4 地质地脉权重与胜率
-assert.ok(uiCode.includes('${ODDS_TABLE.CLUSTER_WEIGHTS.main}'), '必须引用主脉权重 1.6');
-assert.ok(uiCode.includes('6.11%'), '必须包含主脉理论胜率 6.11%');
-assert.ok(uiCode.includes('${ODDS_TABLE.CLUSTER_WEIGHTS.sub}'), '必须引用副脉权重 1.3');
-assert.ok(uiCode.includes('4.96%'), '必须包含副脉理论胜率 4.96%');
-assert.ok(uiCode.includes('${ODDS_TABLE.CLUSTER_WEIGHTS.cold}'), '必须引用冷格权重 1.0');
-assert.ok(uiCode.includes('3.82%'), '必须包含冷格理论胜率 3.82%');
-
-// 1.5 保底校准值
-assert.ok(uiCode.includes('15 轮 100%'), '必须公示最大保底连空 15 轮');
+// Render the actual UI method in Chromium, then read numeric DOM content.
+const rendered = await browserSession(async ({ evaluate, errors }) => {
+  const result = await evaluate(`(async () => {
+    const g = window.__game;
+    const host = document.createElement('div');
+    host.innerHTML = g.ui._renderOddsTabHtml(g.miningRig);
+    document.body.append(host);
+    const values = Object.fromEntries([...host.querySelectorAll('[data-odds]')].map(el => [el.dataset.odds, Number(el.textContent)]));
+    const text = host.textContent; host.remove(); return {values, text};
+  })()`);
+  assert.equal(errors.length, 0, '公示页渲染控制台零错误');
+  return result;
+});
+const values = rendered.values;
+const pct = n => Number((n * 100).toFixed(6));
+assert.equal(values.V, ODDS_TABLE.V);
+for (const [name, value] of Object.entries({main:ODDS_TABLE.ALPHA,mother:ODDS_TABLE.MOTHERLODE_SHARE,shard:1-ODDS_TABLE.ALPHA-ODDS_TABLE.MOTHERLODE_SHARE-ODDS_TABLE.BURN_SHARE,burn:ODDS_TABLE.BURN_SHARE})) assert.equal(values[`flow-${name}`],pct(value));
+assert.equal(['main','mother','shard','burn'].reduce((sum,k)=>sum+values[`flow-${k}`],0),100);
+assert.equal(values['shard-rate'],ODDS_TABLE.SHARD_RETURN_RATE);
+for (const [lv,r] of Object.entries(ODDS_TABLE.RIG_LEVELS)) { assert.equal(values[`R-${lv}`],r.R);assert.equal(values[`cap-${lv}`],r.cap); }
+for (const kind of ['default','buffed']) {
+  const table=ODDS_TABLE.CRIT_TABLE[kind];
+  table.forEach((r,i)=>{assert.equal(values[`crit-${kind}-${i}-mult`],r.mult);assert.equal(values[`crit-${kind}-${i}-prob`],pct(r.prob));});
+  assert.equal(values[`em-${kind}`],Number(table.reduce((sum,r)=>sum+r.mult*r.prob,0).toFixed(6)));
+}
+const weights=ODDS_TABLE.CLUSTER_WEIGHTS;
+const total=weights.main+2*weights.sub+(ODDS_TABLE.GRID_SIZE-3)*weights.cold;
+assert.equal(values['weight-total'],total);
+for (const [k,w] of Object.entries(weights)) { assert.equal(values[`weight-${k}`],w);assert.equal(values[`win-${k}`],pct(w/total)); }
+for (const [r,p] of Object.entries(ODDS_TABLE.PITY_TABLE)) assert.equal(values[`pity-${r}`],pct(p));
+for (const [k,v] of Object.entries(ODDS_TABLE.PHASE_MULTIPLIERS)) assert.equal(values[`phase-${k}`],v);
+for (const [k,v] of Object.entries(ODDS_TABLE.WEATHER_MULTIPLIERS)) assert.equal(values[`weather-${k}`],v);
+assert.equal(values['pity-min-shares'],ODDS_TABLE.PITY.minShares);
+assert.equal(values['pity-crystals'],ODDS_TABLE.PITY.crystals);
+assert.equal(values['ml-cap'],ODDS_TABLE.MAX_MOTHERLODE_POOL);
+for(const [label,key] of Object.entries({'ml-sink':'sinkShare','ml-max-prob':'maxProbability','ml-base-prob':'baseMaxProbability','ml-divisor':'sharesDivisor','ml-typhoon':'typhoonMultiplier','ml-awakener':'awakenerShare','ml-shared':'sharedShare','ml-seed':'seedShare'})) assert.equal(values[label],['ml-sink','ml-awakener','ml-shared','ml-seed'].includes(label)?pct(ODDS_TABLE.MOTHERLODE[key]):ODDS_TABLE.MOTHERLODE[key]);
+assert.equal(values['ml-inject'],pct(ODDS_TABLE.MOTHERLODE_SHARE));
+assert.equal(values['rtp-min'],pct(ODDS_TABLE.LONG_TERM_RTP.min));assert.equal(values['rtp-max'],pct(ODDS_TABLE.LONG_TERM_RTP.max));
+assert.ok(rendered.text.includes('不承诺任何收益'));
+assert.ok(!rendered.text.includes('$') && !rendered.text.includes('\\ge') && !rendered.text.includes('\\le'));
 console.log('  ✅ 公示页数据全部直接读取自 ODDS_TABLE 常量，100% 吻合！');
 
 // ==========================================

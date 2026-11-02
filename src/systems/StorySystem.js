@@ -35,7 +35,8 @@ export class StorySystem {
     this.raftBuilt = false;                // 救生大木筏是否建成
     this.caveExplored = false;             // 山麓洞穴是否探索
     this.gemsCollected = new Set();        // 收集到的遗迹神殿宝石
-    this.endedEndingId = null;             // 已达成的结局代码 (ED1 - ED8)
+    this.endedEndingId = null;             // 旧档兼容；结局已下线
+    this.isCompleted = false;
 
     // 推进防抖锁 (防止同一帧重复触发)
     this.isAdvancing = false;
@@ -50,14 +51,14 @@ export class StorySystem {
           {
             id: 'collect_driftwood',
             type: 'action',
-            desc: '探索南岸沙滩，按【E】走近拾取散落的【漂流木棍】！',
-            hint: '在海滩四周走动，靠近发光的树枝按 E 键拾取'
+            desc: '探索南岸沙滩，走近并点按互动按钮拾取散落的【漂流木棍】！',
+            hint: '在海滩四周走动，靠近发光的树枝点按互动按钮拾取'
           },
           {
             id: 'find_food_water',
             type: 'action',
             desc: '四维代谢正在消耗！在行囊中食用野果，或前往内陆小溪饮水！',
-            hint: '打开行囊点击食用随身野苹果，或前往内陆溪流 (X:13.5) 按 E 痛快畅饮'
+            hint: '打开行囊点按食用随身野苹果，或前往内陆溪流 (X:13.5) 点按互动按钮痛快畅饮'
           },
           {
             id: 'find_campsite',
@@ -82,8 +83,8 @@ export class StorySystem {
           {
             id: 'cook_hot_food',
             type: 'action',
-            desc: '靠近营地篝火按【E】，用引火物烘烤鲜鱼或采集的苹果！',
-            hint: '持食材靠近营地中央篝火 (-12, 0, 24) 按 E 键烹饪热食'
+            desc: '靠近营地篝火点按互动按钮，用引火物烘烤鲜鱼或采集的苹果！',
+            hint: '持食材靠近营地中央篝火 (-12, 0, 24) 点按互动按钮烹饪热食'
           },
           {
             id: 'craft_axe',
@@ -108,9 +109,9 @@ export class StorySystem {
           {
             id: 'befriend_monkey',
             type: 'state',
-            desc: '小猴子馋得直流口水！在背包中选中【苹果】或【烤鱼】按【E】投喂它！',
+            desc: '小猴子馋得直流口水！在背包中选中【苹果】或【烤鱼】点按互动按钮投喂它！',
             checkState: () => this.monkeyBefriended,
-            hint: '靠近小猴子按 E 投喂美味食物，收服猴子伙伴'
+            hint: '靠近小猴子点按互动按钮投喂美味食物，收服猴子伙伴'
           }
         ]
       },
@@ -128,9 +129,9 @@ export class StorySystem {
           {
             id: 'radio_contact',
             type: 'state',
-            desc: '手持收音机前往南岸 S.O.S 地标按【E】架设天线，接收邻岛求救信号！',
+            desc: '手持收音机前往南岸 S.O.S 地标点按互动按钮架设天线，接收邻岛求救信号！',
             checkState: () => this.radioBroadcasted,
-            hint: '在南岸沙滩巨石 S.O.S 处按 E 键调谐收音机频段'
+            hint: '在南岸沙滩巨石 S.O.S 处点按互动按钮调谐收音机频段'
           }
         ]
       },
@@ -149,7 +150,7 @@ export class StorySystem {
           {
             id: 'rescue_partner',
             type: 'state',
-            desc: '在东北悬崖高台木屋旁巡查，发现昏迷的第二幸存者，按【E】紧急救援！',
+            desc: '在东北悬崖高台木屋旁巡查，发现昏迷的第二幸存者，点按互动按钮紧急救援！',
             checkState: () => this.secondKidAwake,
             hint: '前往东北侧山顶别墅高台 (25, 1.8, -19) 救治昏迷同伴'
           }
@@ -178,15 +179,15 @@ export class StorySystem {
       },
       {
         id: 6,
-        title: '第六章：远古遗迹与终极生还',
-        subtitle: '解开神殿谜题，逃出生天',
+        title: '第六章：自由经营',
+        subtitle: '主线完成，建设海岛家园',
         steps: [
           {
-            id: 'final_escape',
+            id: 'mainline_complete',
             type: 'state',
-            desc: '乘上坚固大木筏扬帆远航，逃出孤岛！',
-            checkState: () => this.endedEndingId !== null,
-            hint: '乘木筏或呼叫救援触发终极结算'
+            desc: '开启自由经营，继续挖矿、扩建营地与探索群岛！',
+            checkState: () => this.currentChapterId === 6,
+            hint: '留岛漫游，自由建设与经营'
           }
         ]
       }
@@ -205,6 +206,7 @@ export class StorySystem {
 
   // 获得格式化的当前任务引导文案
   getQuestBannerText() {
+    if (this.isCompleted) return FREEPLAY_BANNER;
     const chapter = this.getCurrentChapter();
     const step = this.getCurrentStep();
     return `🚩 [${chapter.title}] ${step.desc}`;
@@ -253,7 +255,7 @@ export class StorySystem {
       }
       this.lastOnboardingPosition = [playerPos.x, playerPos.z || 0];
     }
-    if (this.endedEndingId || this.isAdvancing) return;
+    if (this.isCompleted || this.isAdvancing) return;
 
     const currentStep = this.getCurrentStep();
     if (!currentStep) return;
@@ -264,7 +266,7 @@ export class StorySystem {
         if (currentStep.id === 'find_campsite') {
           this.hasReachedCampsite = true;
         }
-        this.advanceStep();
+        this.#advanceStep();
         return;
       }
     }
@@ -272,7 +274,7 @@ export class StorySystem {
     // 2. 状态驱动类任务检测 (如好感度达到要求、巨石阵拼装完成)
     if (currentStep.type === 'state' && currentStep.checkState) {
       if (currentStep.checkState()) {
-        this.advanceStep();
+        this.#advanceStep();
         return;
       }
     }
@@ -286,7 +288,7 @@ export class StorySystem {
     if (this.getCurrentStep()?.id === 'collect_driftwood') {
       if (itemType === 'tree_branch' || itemType === 'driftwood') {
         this.hasGatheredBranch = true;
-        this.advanceStep();
+        this.#advanceStep();
       }
     }
   }
@@ -296,7 +298,7 @@ export class StorySystem {
     this._completeOnboardingThrough(3);
     if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
@@ -305,7 +307,7 @@ export class StorySystem {
     this._completeOnboardingThrough(3);
     if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
@@ -314,12 +316,12 @@ export class StorySystem {
     const curStepId = this.getCurrentStep()?.id;
     if (curStepId === 'craft_kindling' && product === 'kindling') {
       this.hasCraftedKindling = true;
-      this.advanceStep();
+      this.#advanceStep();
     } else if (curStepId === 'craft_axe' && product === 'stone_axe') {
       this.hasCraftedAxe = true;
-      this.advanceStep();
+      this.#advanceStep();
     } else if (curStepId === 'fix_radio' && product === 'workradio') {
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
@@ -327,7 +329,7 @@ export class StorySystem {
   onCookFood() {
     if (this.getCurrentStep()?.id === 'cook_hot_food') {
       this.hasCookedFood = true;
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
@@ -335,13 +337,20 @@ export class StorySystem {
   onRadioContact() {
     this.radioBroadcasted = true;
     if (this.getCurrentStep()?.id === 'radio_contact') {
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
+  // 外部救醒交互只记录里程碑；当前步骤的状态判定由任务帧更新负责。
+  onPartnerAwakened() {
+    if (this.secondKidAwake) return;
+    this.secondKidAwake = true;
+    this.secondKidAffection = 80;
+  }
+
   // 单步防跃迁推进守卫
-  advanceStep() {
-    if (this.isAdvancing) return;
+  #advanceStep() {
+    if (this.isCompleted || this.isAdvancing) return;
     this.isAdvancing = true;
 
     try {
@@ -355,6 +364,9 @@ export class StorySystem {
           this.currentChapterId++;
           this.currentStepIndex = 0;
           this.notifyQuestChapterComplete();
+        } else {
+          this.isCompleted = true;
+          this.game?.ui?.updateObjective?.(this.getQuestBannerText());
         }
       }
     } finally {
@@ -386,7 +398,7 @@ export class StorySystem {
       this.game.ui.showDialog('🐒 伙伴加入：小猴子 Bub', '你递给小猴子香甜的果实，它开心地手舞足蹈，翻了个跟头跳上了你的肩膀！\n小猴子正式成为你的荒岛忠实伙伴！它将在探索中为你搜寻稀有道具！');
     }
     if (this.getCurrentStep()?.id === 'befriend_monkey') {
-      this.advanceStep();
+      this.#advanceStep();
     }
   }
 
@@ -405,27 +417,14 @@ export class StorySystem {
       this.game.ui.showDialog('⛵ 求生大木筏建造完成！', '经过精密的木工捆绑与打钉加固，一艘坚不可摧的双桅求生大木筏在南岸西侧码头赫然成型！\n现在具备横渡深海探索邻岛的航海载具！');
     }
     if (this.getCurrentStep()?.id === 'build_raft') {
-      this.advanceStep();
-    }
-  }
-
-  // 触发特定结局 (仅由明确的剧情交互如乘筏远航或无线电呼叫直升机触发)
-  triggerEnding(endingId) {
-    this.endedEndingId = endingId;
-    if (this.game && this.game.ui) {
-      this.game.ui.triggerEndingScreen(endingId, {
-        day: this.game.survival ? this.game.survival.day : 1,
-        steps: this.game.survival ? this.game.survival.steps : 0,
-        monkeyBefriended: this.monkeyBefriended,
-        secondKidAwake: this.secondKidAwake,
-        secondKidAffection: this.secondKidAffection
-      });
+      this.#advanceStep();
     }
   }
 
   // 序列化与反序列化支持 (用于 SaveSystem 安全存档与迁移)
   serialize() {
     return {
+      isCompleted: this.isCompleted,
       currentChapterId: this.currentChapterId,
       currentStepIndex: this.currentStepIndex,
       hasGatheredBranch: this.hasGatheredBranch,
@@ -466,7 +465,9 @@ export class StorySystem {
     if (typeof data.radioBroadcasted === 'boolean') this.radioBroadcasted = data.radioBroadcasted;
     if (typeof data.raftBuilt === 'boolean') this.raftBuilt = data.raftBuilt;
     if (Array.isArray(data.gemsCollected)) this.gemsCollected = new Set(data.gemsCollected);
-    if (data.endedEndingId) this.endedEndingId = data.endedEndingId;
+    this.endedEndingId = null;
+    // 第六章即成长主线已完成；兼容没有 isCompleted 的旧档。
+    this.isCompleted = data.isCompleted === true || this.currentChapterId === 6;
     if (typeof data.onboardingStep === 'number') this.onboardingStep = Math.max(0, Math.min(ONBOARDING_STEPS.length, data.onboardingStep));
     else if ((data.currentChapterId || 0) > 0 || (data.currentStepIndex || 0) > 0 || data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite) this.onboardingStep = ONBOARDING_STEPS.length;
     if (typeof data.onboardingDismissed === 'boolean') this.onboardingDismissed = data.onboardingDismissed;
@@ -476,8 +477,10 @@ export class StorySystem {
 }
 
 const ONBOARDING_STEPS = [
-  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动黑猫；电脑上也可以用 WASD 或方向键。' },
-  { id: 'gather', title: '拾取漂流物', text: '走近发亮的树枝，点击右侧互动按钮；电脑上按 E 拾取。' },
-  { id: 'inventory', title: '查看随身行囊', text: '点击右上角行囊，查看刚捡到的材料和随身食物。' },
-  { id: 'consume', title: '补充体力', text: '在行囊中选择苹果并点击使用；也可以到溪边互动饮水。' }
+  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动黑猫。' },
+  { id: 'gather', title: '拾取漂流物', text: '走近发亮的树枝，点按右侧互动按钮拾取。' },
+  { id: 'inventory', title: '查看随身行囊', text: '点按右上角行囊，查看刚捡到的材料和随身食物。' },
+  { id: 'consume', title: '补充体力', text: '在行囊中选择苹果并点按使用；也可以到溪边互动饮水。' }
 ];
+
+const FREEPLAY_BANNER = '🏝️ 主线完成 · 自由经营：继续挖矿、扩建营地与探索群岛！';

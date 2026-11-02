@@ -15,12 +15,12 @@ const browser = spawn(process.env.CHROME_BIN || 'chromium', ['--headless', '--no
 let stderr = '';
 browser.stderr.on('data', b => { stderr += b; });
 const wait = ms => new Promise(r => setTimeout(r, ms));
-const report = { started: new Date().toISOString(), steps: [], checkpoints: [], errors: [], knownRed: ['final_escape'] };
+const report = { started: new Date().toISOString(), steps: [], checkpoints: [], errors: [], interventions: { count: 0, texts: [] } };
 let ws, send, step = 'browser startup';
 try {
-  for (let n = 0; !stderr.includes('DevTools listening on') && n < 200; n++) await wait(100);
+  for (let n = 0; !stderr.includes('DevTools listening on') && browser.exitCode === null && browser.signalCode === null && n < 200; n++) await wait(100);
   const endpoint = stderr.match(/DevTools listening on (ws:\/\/[^\s]+)/)?.[1];
-  assert.ok(endpoint, 'Chromium did not expose DevTools');
+  assert.ok(endpoint, 'Chromium did not expose DevTools: ' + stderr.slice(-2000));
   const port = new URL(endpoint).port;
   const pages = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
   ws = new WebSocketImpl(pages.find(p => p.type === 'page').webSocketDebuggerUrl);
@@ -31,6 +31,14 @@ try {
     const msg = JSON.parse(event.data);
     if (msg.id) { const p = pending.get(msg.id); if (p) { clearTimeout(p.timer); pending.delete(msg.id); msg.error ? p.reject(new Error(JSON.stringify(msg.error))) : p.resolve(msg.result); } }
     if (msg.method === 'Runtime.exceptionThrown') report.errors.push(msg.params.exceptionDetails);
+    if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') report.errors.push(msg.params);
+    if (msg.method === 'Log.entryAdded') {
+      const entry = msg.params.entry;
+      if (entry.source === 'intervention') {
+        report.interventions.count++;
+        if (!report.interventions.texts.includes(entry.text)) report.interventions.texts.push(entry.text);
+      } else if (entry.level === 'error') report.errors.push(msg.params);
+    }
   };
   send = (method, params = {}) => new Promise((resolve, reject) => {
     const id = ++seq;
@@ -44,20 +52,29 @@ try {
   };
   await send('Runtime.enable');
   await send('Page.enable');
+  await send('Log.enable');
   // Freeze frame scheduling, not gameplay state, to make save comparisons deterministic.
   await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.requestAnimationFrame = () => 0;' });
   const ready = async () => {
+    for (let n = 0; n < 180; n++) { if (await evaluate('!!window.__game?.story && !!window.__game?.saveSystem && !!window.__game?.beachResources && !document.getElementById("loading-screen")')) return; await wait(500); }
+    throw new Error('game initialization timed out');
+  };
+  const waitForTreeAssets = async () => {
+    const startedAt = Date.now();
+    let current = { loaded: 0, expected: 0 };
     for (let n = 0; n < 240; n++) {
-      const loaded = await evaluate('(()=>{const g=window.__game;return !!g?.story && !!g?.saveSystem && !!g?.beachResources && !document.getElementById("loading-screen")})()');
-      const treesReady = loaded && await evaluate('(()=>{const t=window.__game?.trees;return !!t && t.trees.length===t.treePositions.length})()');
-      if (loaded && treesReady) return;
+      current = await evaluate('(()=>{const t=window.__game?.trees;return t?{loaded:t.trees.length,expected:t.treePositions.length}:{loaded:0,expected:0}})()');
+      if (current.expected > 0 && current.loaded === current.expected) {
+        (report.assetReadiness ||= []).push({ purpose: 'raft resource collection', waitMs: Date.now() - startedAt, ...current });
+        return;
+      }
       await wait(500);
     }
-    throw new Error('game initialization or tree assets timed out');
+    throw new Error(`tree assets timed out: ${current.loaded}/${current.expected}`);
   };
   await send('Page.navigate', { url: base });
   await ready();
-  const state = () => evaluate(`(()=>{const g=window.__game;return {chapter:g.story.currentChapterId,step:g.story.getCurrentStep().id,inventory:{...g.ui.inventory}}})()`);
+  const state = () => evaluate(`(()=>{const g=window.__game;return {chapter:g.story.currentChapterId,step:g.story.getCurrentStep().id,isCompleted:g.story.isCompleted,banner:g.story.getQuestBannerText(),inventory:{...g.ui.inventory}}})()`);
   const tick = () => evaluate(`(()=>{const g=window.__game;g.story.update(g.player.position,g.ui.inventory,g.survival);return g.story.getCurrentStep().id})()`);
   const checkpoint = async chapter => {
     step = `chapter ${chapter} save roundtrip`;
@@ -76,7 +93,25 @@ try {
     const before = await state();
     step = `${before.chapter}/${before.step}`;
     console.log(`[golden] ${step}`);
-    if (before.step === 'final_escape') { report.status = 'passed_except_known_red'; break; }
+    if (before.step === 'mainline_complete') {
+      await tick();
+      const completed = await state();
+      assert.equal(completed.chapter, 6);
+      assert.equal(completed.isCompleted, true, 'mainline must complete');
+      assert.match(completed.banner, /主线完成.*自由经营/);
+      assert.equal(await evaluate('document.body.innerText.includes("主线完成 · 自由经营")'), true, 'freeplay objective must appear in DOM');
+      report.steps.push({...before, action:'opened freeplay via internal state guard', next:completed.step, isCompleted:completed.isCompleted});
+      await checkpoint(6);
+      const restored = await state();
+      assert.equal(restored.isCompleted, true);
+      assert.match(restored.banner, /主线完成.*自由经营/);
+      const migration = await evaluate(`(()=>{const g=window.__game;const old=JSON.parse(g.saveSystem.exportSave());delete old.story.isCompleted;old.story.currentChapterId=6;old.story.currentStepIndex=0;const result=g.saveSystem.importSave(JSON.stringify(old));g.story.update(g.player.position,g.ui.inventory,g.survival);return {success:result.success,completed:g.story.isCompleted,banner:g.story.getQuestBannerText()}})()`);
+      assert.equal(migration.success,true);assert.equal(migration.completed,true);assert.match(migration.banner,/自由经营/);
+      report.oldChapter6Migration = migration;
+      report.status = 'passed';
+      break;
+    }
+    if (before.step === 'build_raft') await waitForTreeAssets();
     const action = await evaluate(`(async()=>{
       const g=window.__game, id=g.story.getCurrentStep().id;
       const teleport=p=>{g.player.position.set(p.x,p.y||0,p.z);};
@@ -158,7 +193,10 @@ try {
     await tick();
     const after = await state();
     report.steps.push({ ...before, action, next: after.step });
-    if (after.chapter !== before.chapter) await checkpoint(before.chapter);
+    if (after.chapter !== before.chapter) {
+      if (after.chapter === 6) await tick();
+      await checkpoint(before.chapter);
+    }
     if (after.step === before.step) throw new Error(`No progress: ${action}; inventory=${JSON.stringify(after.inventory)}`);
   }
   if (!report.status) throw new Error('bounded step budget exhausted');

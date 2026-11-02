@@ -1,0 +1,10 @@
+{
+  "started": "2026-11-01T18:25:47.788Z",
+  "steps": [],
+  "checkpoints": [],
+  "errors": [],
+  "kind": "M2 normal animation runtime smoke",
+  "status": "blocked",
+  "blockedAt": "browser startup",
+  "reason": "Chromium did not expose DevTools: [16:16:1102/022547.841483:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)\n"
+}

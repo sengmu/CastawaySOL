@@ -1,0 +1,102 @@
+[
+  {
+    "file": "verify-ancient-temple-system.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-e1-economy-repair.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-m1-story-skeleton.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-m2-story-events.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-m3-freeplay.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-mobile-adaptability.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-monkey-and-tidal-trap.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-p1-features.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-p2-quarry-features.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-pet-companion-system.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-portrait-bounding-boxes.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-portrait-experience.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-r10-e2-repairs.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-r10b-rulings.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-r8-resonance-ui.mjs",
+    "status": 1,
+    "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: [121:121:1102/095025.546170:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)\n\n    at browserSession (file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tools/lib/browser-session.mjs:16:12)\n    at async file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tests/verify-r8-resonance-ui.mjs:25:18 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v22.22.2\n"
+  },
+  {
+    "file": "verify-r9-event-balance.mjs",
+    "status": 1,
+    "output": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: 30天余额 20.830000000000133 必须在设计 284±20% 范围 [227.2, 340.8]\n    at file:///home/lgh/%E6%A1%8C%E9%9D%A2/CastawaySOL_repo/tests/verify-r9-event-balance.mjs:289:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}\n\nNode.js v22.22.2\n"
+  },
+  {
+    "file": "verify-save-schema-v2.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-ship-upgrade-system.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-sleep-and-salvage-systems.mjs",
+    "status": 0,
+    "output": ""
+  },
+  {
+    "file": "verify-wallet-features.mjs",
+    "status": 0,
+    "output": ""
+  }
+]

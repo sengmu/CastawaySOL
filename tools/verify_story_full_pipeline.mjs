@@ -1,6 +1,7 @@
-// CastawaySOL - 五幕主线与全部结局分支端到端仿真测试套件
-// 严格对齐 GBC《Survival Kids (Konami 1999)》五幕叙事与多结局状态机
+// CastawaySOL - 七章主线与全部结局分支端到端仿真测试套件
+// 对齐 M1 七章顺序；通过真实事件驱动，不允许背包状态替代行为
 
+import { ISLAND_LAYOUT } from '../src/core/IslandLayout.js';
 import { StorySystem } from '../src/systems/StorySystem.js';
 import { SurvivalSystem } from '../src/systems/SurvivalSystem.js';
 import { CraftingSystem } from '../src/systems/CraftingSystem.js';
@@ -89,17 +90,17 @@ console.log('--- [Chapter 0: 序章·海难漂流] ---');
   assert(story.currentStepIndex === 0, '初始位于第一步：收集木棍与漂流物');
 
   // 1. 拾取木棍
-  story.update({ x: 0, y: 0, z: 4 }, mockUI.inventory, survival);
+  story.onGatherResource('tree_branch');
   assert(story.currentStepIndex === 1, '第1步达成，自动推进到第2步：进食与饮水');
 
   // 2. 模拟进食与饮水
   survival.hunger = 80;
   survival.water = 75;
-  story.update({ x: 0, y: 0, z: 4 }, mockUI.inventory, survival);
+  story.onDrinkWater();
   assert(story.currentStepIndex === 2, '第2步达成，推进到第3步：寻找帐篷营地');
 
   // 3. 移动至帐篷营地 (-16, 0, -8)
-  story.update({ x: -16.2, y: 0, z: -8.1 }, mockUI.inventory, survival);
+  story.update({ x: ISLAND_LAYOUT.tent[0], y: ISLAND_LAYOUT.tent[1], z: ISLAND_LAYOUT.tent[2] }, mockUI.inventory, survival);
   assert(story.currentChapterId === 1, '序章通关，成功晋升第一章：钻木取火与工匠雏形');
   assert(story.currentStepIndex === 0, '第一章第一步已激活');
 }
@@ -117,11 +118,13 @@ console.log('\n--- [Chapter 1: 第一章·钻木取火与工匠雏形] ---');
   const recipeKindling = crafting.findRecipe('tree_branch', 'tree_bark');
   assert(recipeKindling !== null && recipeKindling.result.id === 'kindling', '工作台查验引火物配方有效');
   mockUI.inventory['kindling'] = 1;
+  story.onCraftItem('kindling');
   story.update({ x: -7, y: 0, z: -4 }, mockUI.inventory, survival);
   assert(story.currentStepIndex === 1, '引火物研制成功，进入第2步：营火烹饪');
 
   // 2. 烹饪熟食 (烤鱼)
   mockUI.inventory['baked_fish'] = 1;
+  story.onCookFood();
   story.update({ x: -7, y: 0, z: -4 }, mockUI.inventory, survival);
   assert(story.currentStepIndex === 2, '烤鱼烹饪完成，进入第3步：研制石斧');
 
@@ -129,6 +132,7 @@ console.log('\n--- [Chapter 1: 第一章·钻木取火与工匠雏形] ---');
   const recipeAxe = crafting.findRecipe('tree_branch', 'stone_chunk');
   assert(recipeAxe !== null && recipeAxe.result.id === 'stone_axe', '工作台查验锋利石斧配方有效');
   mockUI.inventory['stone_axe'] = 1;
+  story.onCraftItem('stone_axe');
   story.update({ x: 0, y: 0, z: 0 }, mockUI.inventory, survival);
   assert(story.currentChapterId === 2, '第一章通关，晋升第二章：丛林猴影 (Bub)');
 }
@@ -165,13 +169,16 @@ console.log('\n--- [Chapter 3: 第三章·求救信号与命运抉择] ---');
   const recipeRadio = crafting.findRecipe('battery', 'broken_radio');
   assert(recipeRadio !== null && recipeRadio.result.id === 'workradio', '工作台查验工作收音机配方有效');
   mockUI.inventory['workradio'] = 1;
+  story.onCraftItem('workradio');
   story.update({ x: 0, y: 0, z: 0 }, mockUI.inventory, survival);
-  assert(story.currentStepIndex === 1, '无线电修复完成，进入第2步：沙滩 SOS 或造筏');
+  assert(story.currentStepIndex === 1, '无线电修复完成，进入第2步：接收邻岛求救信号');
 
   // 2. 建造沙滩 S.O.S 地标
   story.buildSosSign();
   assert(story.sosBuilt === true, '沙滩巨型 S.O.S 地标搭建完毕');
-  assert(story.currentChapterId === 4, '第三章通关，晋升第四章：第二幸存者');
+  assert(story.getCurrentStep().id === 'radio_contact', 'SOS 本身不能代替无线电求救触发');
+  story.onRadioContact();
+  assert(story.currentChapterId === 4, '第三章通关，晋升第四章：筹备远航与出海营救');
 }
 
 // ----------------------------------------------------
@@ -184,25 +191,30 @@ console.log('\n--- [Chapter 4: 第四章·第二幸存者艾莉 (Ellie)] ---');
   story.currentStepIndex = 0;
 
   // 1. 救治同伴
-  story.secondKidAwake = true;
-  story.secondKidAffection = 80;
-  story.advanceStep();
-  assert(story.currentStepIndex === 1, '艾莉苏醒，进入第2步：赠礼与好感培养 (>=100)');
+  story.buildRaft();
+  assert(story.getCurrentStep().id === 'rescue_partner', '造筏后必须先搜救同伴');
+  story.onPartnerAwakened();
+  story.update({x:1000,z:1000}, mockUI.inventory, survival);
+  assert(story.getCurrentStep().id === 'care_partner', '艾莉苏醒，进入第五章同伴照料');
 
   // 2. 赠礼增进好感度至 105
   story.secondKidAffection = 105;
   story.update({ x: 23, y: 1.8, z: -17 }, mockUI.inventory, survival);
-  assert(story.currentChapterId === 5, '第四章通关，羁绊突破，晋升第五章：远古遗迹与终极生还');
+  assert(story.currentChapterId === 5 && story.getCurrentStep().id === 'collect_gems', '好感达标后进入第五章收集宝石');
 }
 
 // ----------------------------------------------------
 // 测试 6：第五章：远古遗迹三宝石与全结局分支
 // ----------------------------------------------------
-console.log('\n--- [Chapter 5: 第五章·远古遗迹与终极生还结局] ---');
+console.log('\n--- [Chapter 5: 第五章·扩大生产与海岛家园] ---');
 {
   const { mockGame, story, survival, mockUI } = createMockGame();
   story.currentChapterId = 5;
   story.currentStepIndex = 0;
+
+  story.secondKidAffection = 105;
+  story.update({x:1000,z:1000}, mockUI.inventory, survival);
+  assert(story.getCurrentStep().id === 'collect_gems', '照料同伴后才能收集宝石');
 
   // 收集三颗神秘远古宝石
   story.gemsCollected.add('star_gem');
@@ -211,46 +223,17 @@ console.log('\n--- [Chapter 5: 第五章·远古遗迹与终极生还结局] ---
   assert(story.gemsCollected.size === 3, '成功集齐三颗远古遗迹宝石');
 
   story.update({ x: 0, y: 0, z: 0 }, mockUI.inventory, survival);
-  assert(story.currentStepIndex === 1, '宝石齐聚，神殿之谜解开，进入最终逃脱步');
+  assert(story.currentChapterId === 6 && story.getCurrentStep().id === 'mainline_complete', '宝石齐聚，进入第六章自由经营开启步');
 
-  // --------------------------------------------------
-  // 结局分支 A：沙滩广播呼叫搜救直升机 (ED1)
-  // --------------------------------------------------
-  story.triggerEnding('ED1');
-  const endA = mockGame.getEnding();
-  assert(endA !== null && endA.endingId === 'ED1', '【结局分支 ED1】成功达成搜救直升机脱险结局');
+  story.update({x:0,z:0}, mockUI.inventory, survival);
+  assert(story.isCompleted === true, '主线完成进入自由经营');
+  assert(story.getQuestBannerText().includes('自由经营'), '任务栏显示自由经营');
+  assert(mockGame.getEnding() === null, '完成主线不触发结局页');
 
-  // --------------------------------------------------
-  // 结局分支 B：抛下未醒同伴独乘简易木筏 (ED2)
-  // --------------------------------------------------
-  story.endedEndingId = null;
-  story.secondKidAwake = false;
-  story.triggerEnding('ED2');
-  const endB = mockGame.getEnding();
-  assert(endB !== null && endB.endingId === 'ED2', '【结局分支 ED2】成功达成孤舟海难悲壮漂流结局');
-
-  // --------------------------------------------------
-  // 结局分支 C：双人携手木筏归航，好感度普通 (ED6)
-  // --------------------------------------------------
-  story.endedEndingId = null;
-  story.secondKidAwake = true;
-  story.secondKidAffection = 80;
-  story.triggerEnding('ED6');
-  const endC = mockGame.getEnding();
-  assert(endC !== null && endC.endingId === 'ED6', '【结局分支 ED6】成功达成平安双人扬帆归航结局');
-
-  // --------------------------------------------------
-  // 结局分支 D：SSS 级传说结局：真爱羁绊永恒誓约 (ED8)
-  // --------------------------------------------------
-  story.endedEndingId = null;
-  story.secondKidAwake = true;
-  story.secondKidAffection = 180;
-  story.monkeyBefriended = true;
-  story.triggerEnding('ED8');
-  const endD = mockGame.getEnding();
-  assert(endD !== null && endD.endingId === 'ED8', '【结局分支 ED8】成功达成 SSS 级真爱同舟永恒相守誓约大结局');
 }
 
 console.log('\n======================================================');
 console.log(`📊 测试汇总：共执行 ${totalTests} 项断言，全部通过 ${passedTests} 项 (通过率: ${Math.round((passedTests / totalTests) * 100)}%)`);
 console.log('======================================================');
+
+if (totalTests !== passedTests) process.exitCode = 1;

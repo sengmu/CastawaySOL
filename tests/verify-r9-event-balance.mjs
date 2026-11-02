@@ -229,7 +229,7 @@ function simulate30DaysPlayer() {
     dailySpend += 10; // 日常杂项消耗
 
     totalTokenSpent += dailySpend;
-    tokens = Math.max(0, tokens - dailySpend);
+    tokens -= dailySpend;
     // 消费 15% 注入母池
     motherlodePool = Math.min(1000, motherlodePool + dailySpend * 0.15);
 
@@ -241,6 +241,9 @@ function simulate30DaysPlayer() {
     // 共振投入比例 (70% ~ 85%)
     const resRatio = day < 4 ? 0.6 : (day < 14 ? 0.75 : 0.85);
     const sharesToBet = Math.round((dailyCrystals + freeShares) * resRatio);
+    // Non-resonance raw crystals are decrypted; free shares cannot be decrypted.
+    const decryptedCrystals = Math.max(0, dailyCrystals - Math.max(0, sharesToBet - freeShares));
+    tokens += decryptedCrystals * ODDS_TABLE.V;
     const roundsToday = Math.max(1, Math.floor(sharesToBet / (rigLevel >= 3 ? 15 : (rigLevel === 2 ? 10 : 6))));
 
     for (let r = 0; r < roundsToday; r++) {
@@ -283,7 +286,7 @@ function simulate30DaysPlayer() {
 const simResult = simulate30DaysPlayer();
 console.log(`  30 天模拟终态余额: ${simResult.finalTokens.toFixed(1)} 算力代币 (期望参考约 284)`);
 console.log(`  30 天母池派奖总额: ${simResult.totalMotherlodeWon} 算力代币`);
-assert.ok(simResult.finalTokens >= 150 && simResult.finalTokens <= 450, `30天余额 ${simResult.finalTokens} 处于健康平衡带 [150, 450] (误差在合理范围)`);
+assert.ok(simResult.finalTokens >= 284 * 0.8 && simResult.finalTokens <= 284 * 1.2, `30天余额 ${simResult.finalTokens} 必须在设计 284±20% 范围 [227.2, 340.8]`);
 console.log('  ✅ 30 天宏观经济模拟平衡验证通过！');
 
 console.log('\n🎉🎉🎉 [ALL R9 TESTS PASSED] R9 事件钩子、母池经济与长线平衡测试 100% 全部通过！');

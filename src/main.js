@@ -1010,7 +1010,7 @@ class Game {
             '🪨 南岸沙滩 S.O.S 呼救地标',
             '在开阔的平坦沙滩上搬运巨石排布【S.O.S】求救符号需要准备：\n\n' +
             '• 【海蚀碎石/燧石 (Stone Chunk)】x2 (当前持有: ' + stoneCount + ')\n\n' +
-            '在海滩礁石带或退潮浅滩拾取碎石后，靠近按【E】即可拼装成型！'
+            '在海滩礁石带或退潮浅滩拾取碎石后，靠近点按互动按钮即可拼装成型！'
           );
           return;
         }
@@ -1175,15 +1175,13 @@ class Game {
             }
             else if (foodKey) inv[foodKey]--;
 
-            this.story.secondKidAwake = true;
-            this.story.secondKidAffection = 80;
+            this.story.onPartnerAwakened();
             this.ui.renderInventory();
             this.ui.updateSurvivalHUD();
             soundEngine.playPlaceFurniture();
             this.ui.showDialog(nearestVillager.name, '✨ 你轻轻将温水与食物喂入少女干裂的唇齿中……\n少女长睫轻颤，缓缓睁开了清澈的双眸：“唔……是你救了我吗？我叫艾莉……谢谢你……在这个孤岛上能遇见你，真的太好了！”\n【💖 好感度提升至 80！】');
-            this.story.advanceStep();
           } else {
-            this.ui.showDialog(nearestVillager.name, '少女面色苍白，处于严重的饥渴与昏迷状态！\n请准备【水壶中的清水】或【烤鱼/烤苹果】靠近按【E】进行紧急喂食唤醒救治！');
+            this.ui.showDialog(nearestVillager.name, '少女面色苍白，处于严重的饥渴与昏迷状态！\n请准备【水壶中的清水】或【烤鱼/烤苹果】靠近点按互动按钮进行紧急喂食唤醒救治！');
           }
           return;
         } else {
@@ -1434,13 +1432,13 @@ class Game {
 
       if (isReturnRaft) {
         this.ui.setContextAction('raft');
-        this.ui.showInteraction('按 [E] 扬帆返航 · 返回主岛大本营');
+        this.ui.showInteraction('点按互动按钮 扬帆返航 · 返回主岛大本营');
       } else if (isSurvivor) {
         this.ui.setContextAction('partner');
-        this.ui.showInteraction(this.timberIsleScene.survivorRescued ? '按 [E] 与探险学者雷蒙德对话' : '按 [E] 喂水/喂食紧急救援受困学者雷蒙德！');
+        this.ui.showInteraction(this.timberIsleScene.survivorRescued ? '点按互动按钮 与探险学者雷蒙德对话' : '点按互动按钮 喂水/喂食紧急救援受困学者雷蒙德！');
       } else if (isOutpost) {
         this.ui.setContextAction('default');
-        this.ui.showInteraction(this.timberIsleScene.outpostClaimed ? '🚩 【浮木前哨站】已建成并每日运送浮木' : '按 [E] 消耗木板x2+铁钉x1 插旗建立海外前哨');
+        this.ui.showInteraction(this.timberIsleScene.outpostClaimed ? '🚩 【浮木前哨站】已建成并每日运送浮木' : '点按互动按钮 消耗木板x2+铁钉x1 插旗建立海外前哨');
       } else if (nearTiRes) {
         this.ui.setContextAction('pickup');
         this.ui.showInteraction(`按 [E] 拾取特产资源：【${nearTiRes.name}】`);
@@ -1469,7 +1467,7 @@ class Game {
 
       if (isReturnRaft) {
         this.ui.setContextAction('raft');
-        this.ui.showInteraction('按 [E] 扬帆返航 · 返回主岛大本营');
+        this.ui.showInteraction('点按互动按钮 扬帆返航 · 返回主岛大本营');
       } else if (isMonolith) {
         this.ui.setContextAction('default');
         this.ui.showInteraction('按 [E] 参悟【古代水手冶炼石碑】· 领悟熔炉知识');
@@ -1584,13 +1582,13 @@ class Game {
       this.ui.showInteraction(`⚔️ 警惕【${nearAggroMob.name}】！按 [F] 或右下角 [⚔️] 发动挥刺突击！`);
     } else if (nearGem) {
       this.ui.setContextAction('gem');
-      this.ui.showInteraction(`按 [E] 拾取神秘秘宝：【${nearGem.info.name}】`);
+      this.ui.showInteraction(`点按互动按钮 拾取神秘秘宝：【${nearGem.info.name}】`);
     } else if (isTempleAltar) {
       this.ui.setContextAction('temple_enter');
-      this.ui.showInteraction('按 [E] 踏入【后山古代神殿】独立地宫密室');
+      this.ui.showInteraction('点按互动按钮 踏入【后山古代神殿】独立地宫密室');
     } else if (monkeyCreviceAction && monkeyCreviceAction.type === 'crevice') {
       this.ui.setContextAction('monkey_crevice');
-      this.ui.showInteraction(`按 [E] 指派小猴钻入【${monkeyCreviceAction.target.name}】探宝 (精力-15)`);
+      this.ui.showInteraction(`点按互动按钮 指派小猴钻入【${monkeyCreviceAction.target.name}】探宝 (精力-15)`);
     } else if (isCrabTrap) {
       this.ui.setContextAction('crab_trap');
       const trapTotal = this.tidalTrap.getTotalCatches();
@@ -1657,14 +1655,14 @@ class Game {
         }
       } else {
         this.ui.setContextAction('pickup');
-        this.ui.showInteraction(`按 [E] 拾取散落物资：【${nearestBeachRes.name}】`);
+        this.ui.showInteraction(`点按互动按钮 拾取散落物资：【${nearestBeachRes.name}】`);
       }
     } else if (nearestFlotsam) {
       this.ui.setContextAction('pickup');
       this.ui.showInteraction(`按 [E] 打捞海面物资：【${nearestFlotsam.spec.name}】`);
     } else if (isFreshwater) {
       this.ui.setContextAction('water');
-      this.ui.showInteraction('按 [E] 饮用甘甜溪水并装满水壶');
+      this.ui.showInteraction('点按互动按钮 饮用甘甜溪水并装满水壶');
     } else if (this.fishing.state === 'bite') {
       this.ui.setContextAction('fishing');
       this.ui.showInteraction('❗ 鱼儿咬钩了！点击 [🎣起竿]！');
@@ -1673,39 +1671,39 @@ class Game {
       this.ui.showInteraction('🎣 浮标静置水中……等待大鱼咬钩');
     } else if (isSos) {
       this.ui.setContextAction('sos');
-      this.ui.showInteraction(this.story.sosBuilt ? '按 [E] 架设收音机天线搜索无线电求救信号' : '按 [E] 搭建南岸沙滩巨型 S.O.S 地标');
+      this.ui.showInteraction(this.story.sosBuilt ? '点按互动按钮 架设收音机天线搜索无线电求救信号' : '点按互动按钮 搭建南岸沙滩巨型 S.O.S 地标');
     } else if (isNearDockSlipway) {
       this.ui.setContextAction('shipyard');
       const curTier = this.shipUpgradeSystem ? this.shipUpgradeSystem.getCurrentTier() : null;
-      this.ui.showInteraction(this.story.raftBuilt ? `按 [E] 打开【西南船坞工程台】· 船体升级与随船货仓 (${curTier ? curTier.title : 'T1'})` : '按 [E] 在船坞滑道拼装【首艘求生大木筏】');
+      this.ui.showInteraction(this.story.raftBuilt ? `点按互动按钮 打开【西南船坞工程台】· 船体升级与随船货仓 (${curTier ? curTier.title : 'T1'})` : '点按互动按钮 在船坞滑道拼装【首艘求生大木筏】');
     } else if (isNearVessel) {
       this.ui.setContextAction('raft');
       const curTier = this.shipUpgradeSystem ? this.shipUpgradeSystem.getCurrentTier() : null;
-      this.ui.showInteraction(this.story.raftBuilt ? `按 [E] 登上【${curTier ? curTier.name : '出海座驾'}】· 展开群岛海图扬帆起航` : '按 [E] 在入海浅滩下水组装【求生大木筏】');
+      this.ui.showInteraction(this.story.raftBuilt ? `点按互动按钮 登上【${curTier ? curTier.name : '出海座驾'}】· 展开群岛海图扬帆起航` : '点按互动按钮 在入海浅滩下水组装【求生大木筏】');
     } else if (nearestVillager) {
       if (nearestVillager.id === 'bub_monkey') {
         if (this.story.monkeyBefriended) {
           this.ui.setContextAction('monkey_helper');
           const energy = this.monkeyHelper ? this.monkeyHelper.energy : 80;
           const aff = this.monkeyHelper ? this.monkeyHelper.affinity : 60;
-          this.ui.showInteraction(`按 [E] 打开【小猴伙伴协同面板】(精力: ${energy}/100 亲密: ${aff})`);
+          this.ui.showInteraction(`点按互动按钮 打开【小猴伙伴协同面板】(精力: ${energy}/100 亲密: ${aff})`);
         } else {
           this.ui.setContextAction('monkey');
-          this.ui.showInteraction('按 [E] 投喂美味果实收服小猴巴布！');
+          this.ui.showInteraction('点按互动按钮 投喂美味果实收服小猴巴布！');
         }
       } else if (nearestVillager.id === 'second_kid') {
         this.ui.setContextAction('partner');
-        this.ui.showInteraction(this.story.secondKidAwake ? `按 [E] 与艾莉交谈/送礼 (好感: ${this.story.secondKidAffection})` : '按 [E] 紧急喂水/喂食唤醒昏迷同伴！');
+        this.ui.showInteraction(this.story.secondKidAwake ? `点按互动按钮 与艾莉交谈/送礼 (好感: ${this.story.secondKidAffection})` : '点按互动按钮 紧急喂水/喂食唤醒昏迷同伴！');
       } else {
         this.ui.setContextAction('villager');
-        this.ui.showInteraction(`按 [E] 或点击 [💬对话] 与 ${nearestVillager.name.split(' ')[0]} 聊天`);
+        this.ui.showInteraction(`点按互动按钮 或点击 [💬对话] 与 ${nearestVillager.name.split(' ')[0]} 聊天`);
       }
     } else if (isWater) {
       this.ui.setContextAction('fishing');
       this.ui.showInteraction('按 [E] 或点击 [🎣钓鱼] 抛竿垂钓');
     } else if (isFire) {
       this.ui.setContextAction('cooking');
-      this.ui.showInteraction('按 [E] 或点击 [🔥烹饪] 烤鱼/烤苹果');
+      this.ui.showInteraction('点按 [🔥烹饪] 烤鱼/烤苹果');
     } else if (isTent) {
       this.ui.setContextAction('sleep');
       this.ui.showInteraction('按 [E] 或点击 [🛏️睡觉] 消除疲劳过夜');
@@ -1713,13 +1711,13 @@ class Game {
       const hasAxe = (this.ui.inventory['stone_axe'] || 0) > 0;
       if (hasAxe) {
         this.ui.setContextAction('tree');
-        this.ui.showInteraction(`按 [E] 挥舞锋利石斧砍伐【${nearestTree.name}】获取重型圆木 (余${nearestTree.chopHp || 3}斧)`);
+        this.ui.showInteraction(`点按互动按钮 挥舞锋利石斧砍伐【${nearestTree.name}】获取重型圆木 (余${nearestTree.chopHp || 3}斧)`);
       } else if (this.monkeyHelper && this.monkeyHelper.isAvailable() && this.monkeyHelper.energy >= 10) {
         this.ui.setContextAction('monkey_helper');
         this.ui.showInteraction(`按 [E] 指挥小猴攀爬【${nearestTree.name}】采摘稀有果实 (精力-10)`);
       } else {
         this.ui.setContextAction('tree');
-        this.ui.showInteraction(`按 [E] 或点击 [🌲摇树] 摇晃 ${nearestTree.name}`);
+        this.ui.showInteraction(`点按 [🌲摇树] 摇晃 ${nearestTree.name}`);
       }
     } else {
       this.ui.setContextAction('default');

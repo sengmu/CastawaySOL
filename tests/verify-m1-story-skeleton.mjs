@@ -28,7 +28,7 @@ const expectedChapters = [
   { id: 3, title: '第三章：无线通讯与邻岛求救', steps: ['fix_radio', 'radio_contact'] },
   { id: 4, title: '第四章：筹备远航与出海营救', steps: ['build_raft', 'rescue_partner'] },
   { id: 5, title: '第五章：扩大生产与海岛家园', steps: ['care_partner', 'collect_gems'] },
-  { id: 6, title: '第六章：远古遗迹与终极生还', steps: ['final_escape'] }
+  { id: 6, title: '第六章：自由经营', steps: ['mainline_complete'] }
 ];
 
 expectedChapters.forEach(exp => {
@@ -63,7 +63,7 @@ assert.equal(ch5.steps[1].id, 'collect_gems', '第五章承接收集全岛远古
 
 // 第六章：神殿终极逃生
 const ch6 = story.chapters[6];
-assert.equal(ch6.steps[0].id, 'final_escape', '第六章作为终极逃脱阶段');
+assert.equal(ch6.steps[0].id, 'mainline_complete', '第六章作为自由经营开启阶段');
 console.log('  ✅ 剧情转折逻辑顺畅，无依赖死锁！');
 
 // ==========================================
