@@ -647,3 +647,15 @@
     flex-shrink: 0 !important;
   }
 }
+
+/* ===== UI 施工轮2：横屏弹窗（居中浮卡）与矿机页签 ===== */
+@media (orientation: landscape) {
+  .modal-card {
+    width: 78% !important;
+    max-width: 780px !important;
+    border-radius: 28px !important;
+  }
+  .rig-tab-btn { border-radius: 16px !important; font-size: 13px !important; }
+  .res-grid-cell { border-radius: 12px !important; }
+  .npc-shares sup { color: #C4443A; font-weight: 900; }
+}

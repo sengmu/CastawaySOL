@@ -417,7 +417,7 @@ export class UIManager {
         .modal-card {
           width: calc(100vw - 16px);
           max-height: calc(100vh - 32px - var(--sat, 0px) - var(--sab, 0px));
-          border-radius: 18px;
+          border-radius: 28px;
         }
         .toast-banner {
           top: 140px;
@@ -464,43 +464,43 @@ export class UIManager {
       /* 模态大弹窗框架 (背包/Merge/帮助) */
       .modal-backdrop {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.72);
+        background: rgba(74, 63, 92, 0.50);
         backdrop-filter: blur(12px);
         display: none; align-items: center; justify-content: center;
         z-index: 600;
       }
       .modal-card {
-        background: rgba(22, 27, 34, 0.96);
+        background: #FFF6E3;
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 221, 89, 0.32);
-        border-radius: 20px;
+        border: 2px solid transparent;
+        border-radius: 28px;
         width: calc(100% - 32px - var(--sal, 0px) - var(--sar, 0px));
         max-width: 780px;
         max-height: calc(100vh - 28px - var(--sat, 0px) - var(--sab, 0px));
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
-        color: #ffffff; display: flex; flex-direction: column;
+        box-shadow: 0 24px 48px rgba(142, 122, 160, 0.35);
+        color: #6B4A32; display: flex; flex-direction: column;
         overflow: hidden;
       }
       .modal-header {
-        background: rgba(0, 0, 0, 0.35);
-        padding: 10px 18px;
+        background: transparent;
+        padding: 12px 18px;
         display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(107, 74, 50, 0.12);
       }
-      .modal-title { font-size: 16px; font-weight: 900; color: #ffdd59; display: flex; align-items: center; gap: 8px; }
+      .modal-title { font-size: 18px; font-weight: 900; color: #6B4A32; display: flex; align-items: center; gap: 8px; }
       .modal-close-btn {
         width: 32px; height: 32px; border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1); border: none;
-        color: #ffffff; font-size: 16px; cursor: pointer;
+        background: #FBEBC8; border: none; box-shadow: inset 0 -3px 0 #E3CFA2;
+        color: #6B4A32; font-size: 16px; cursor: pointer;
         display: flex; align-items: center; justify-content: center; transition: all 0.15s;
       }
-      .modal-close-btn:hover { background: rgba(235, 77, 75, 0.7); }
+      .modal-close-btn:hover { background: #C4443A; color: #FFF6E3; }
       .modal-body {
         padding: 12px 16px; overflow-y: auto; flex: 1; min-height: 0;
       }
       .modal-body::-webkit-scrollbar { width: 5px; }
-      .modal-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+      .modal-body::-webkit-scrollbar-thumb { background: rgba(107, 74, 50, 0.25); border-radius: 3px; }
 
       /* 双栏横屏布局通用容器 */
       .split-modal-layout {
@@ -519,45 +519,47 @@ export class UIManager {
         max-height: 206px; overflow-y: auto; padding-right: 2px;
       }
       .inv-grid::-webkit-scrollbar { width: 4px; }
-      .inv-grid::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
+      .inv-grid::-webkit-scrollbar-thumb { background: rgba(107, 74, 50, 0.25); border-radius: 2px; }
       .inv-cell {
         min-height: 64px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1.5px solid rgba(255, 255, 255, 0.12);
-        border-radius: 10px;
+        background: #FBEBC8;
+        border: 1.5px solid transparent;
+        border-radius: 16px;
+        box-shadow: inset 0 -3px 0 #E3CFA2;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         position: relative; cursor: pointer; transition: all 0.15s;
       }
       .inv-cell.selected {
-        border-color: #ffdd59; background: rgba(255, 221, 89, 0.18);
-        box-shadow: 0 0 14px rgba(255, 221, 89, 0.4); transform: translateY(-1px);
+        border-color: transparent; background: #E3F4FB;
+        box-shadow: inset 0 0 0 2px #5FD4C8; transform: translateY(-1px);
       }
+      .inv-cell.selected::after { content: '✓'; position: absolute; top: -4px; left: -4px; width: 16px; height: 16px; border-radius: 50%; background: #5FD4C8; color: #FFF6E3; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
       .inv-icon { font-size: 20px; line-height: 1; }
-      .inv-name { font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, 0.9); margin-top: 4px; text-align: center; }
+      .inv-name { font-size: 12px; font-weight: 700; color: #6B4A32; margin-top: 4px; text-align: center; }
       .inv-count {
         position: absolute; top: 2px; right: 4px;
-        background: rgba(0, 0, 0, 0.7); padding: 0 4px; border-radius: 4px;
-        font-size: 9px; font-weight: 900; color: #00cec9;
+        background: #6B4A32; padding: 0 4px; border-radius: 4px;
+        font-size: 9px; font-weight: 900; color: #FFF6E3;
       }
 
       /* 探险行囊右栏 详情与操作卡 */
       .inv-right-pane {
         flex: 1; display: flex; flex-direction: column; justify-content: space-between;
-        background: rgba(0, 0, 0, 0.28); border-radius: 14px; padding: 10px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.08); min-height: 206px;
+        background: #FBEBC8; border-radius: 16px; padding: 10px 12px;
+        border: 1px solid transparent; min-height: 206px;
       }
       .item-detail-panel {
         display: flex; flex-direction: column; gap: 6px;
       }
-      .detail-title { font-size: 15px; font-weight: 900; color: #ffdd59; display: flex; align-items: center; gap: 6px; }
-      .detail-desc { font-size: 13px; color: rgba(255, 255, 255, 0.82); line-height: 1.6; }
+      .detail-title { font-size: 15px; font-weight: 900; color: #6B4A32; display: flex; align-items: center; gap: 6px; }
+      .detail-desc { font-size: 13px; color: #7D5E47; line-height: 1.6; }
       .detail-stat-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
       .stat-pill { font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 6px; }
       .detail-action-btn {
-        background: linear-gradient(135deg, #00b894, #00cec9);
-        border: none; border-radius: 12px; padding: 10px 14px;
-        color: #ffffff; font-size: 14px; font-weight: 900;
-        cursor: pointer; box-shadow: 0 4px 15px rgba(0, 206, 201, 0.35);
+        background: #FFD25A;
+        border: none; border-radius: 16px; padding: 10px 14px;
+        color: #6B4A32; font-size: 14px; font-weight: 900;
+        cursor: pointer; box-shadow: inset 0 -4px 0 #E9B23F, 0 8px 18px rgba(142, 122, 160, 0.30);
         transition: transform 0.1s; width: 100%;
       }
       .detail-action-btn:active { transform: scale(0.97); }
@@ -655,13 +657,13 @@ export class UIManager {
         margin-bottom: 10px;
         padding: 9px 14px;
         border-radius: 10px;
-        border: 1px solid #00cec9;
-        background: linear-gradient(135deg, #00b894 0%, #0984e3 100%);
-        color: #ffffff;
+        border: 1px solid transparent;
+        background: #FBEBC8;
+        box-shadow: inset 0 -3px 0 #E3CFA2;
+        color: #6B4A32;
         font-size: 12.5px;
         font-weight: 900;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 206, 201, 0.3);
         transition: transform 0.1s, opacity 0.15s;
         display: flex;
         align-items: center;
@@ -672,9 +674,10 @@ export class UIManager {
         transform: scale(0.98);
       }
       #btn-rig-upgrade:disabled {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        color: rgba(255, 255, 255, 0.42);
+        background: #EADFCB;
+        border: 1px solid transparent;
+        box-shadow: none;
+        color: #7D5E47;
         box-shadow: none;
         cursor: not-allowed;
       }
@@ -717,13 +720,13 @@ export class UIManager {
     style.textContent += `
       .hud-icon { width: 21px; height: 21px; flex-shrink: 0; stroke-width: 1.8; vertical-align: middle; }
       .dashboard-panel { background: #FFF6E3; border-color: transparent; box-shadow: 0 10px 24px rgba(142,122,160,.30); }
-      .modal-card { background: linear-gradient(145deg, rgba(38,61,53,.97), rgba(18,35,32,.96)); border-color: rgba(229,211,163,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 12px 32px rgba(8,24,20,.3); }
-      .modal-header { background: rgba(245,234,201,.06); border-bottom-color: rgba(229,211,163,.18); }
-      .modal-title, .detail-title { color: #efdfb7; }
+      .modal-card { background: #FFF6E3; border-color: transparent; box-shadow: 0 24px 48px rgba(142,122,160,.35); }
+      .modal-header { background: transparent; border-bottom-color: rgba(107,74,50,.12); }
+      .modal-title, .detail-title { color: #6B4A32; }
       .hud-nav-btn, .aux-btn { background: #FBEBC8; border-color: transparent; color: #6B4A32; }
       .hud-nav-sol { box-shadow: none; }
-      .inv-cell, .material-card { background: rgba(246,237,210,.05); border-color: rgba(246,237,210,.16); }
-      .inv-cell.selected { background: rgba(223,199,139,.16); box-shadow: inset 0 0 0 1px #d9c08a; border-color: #d9c08a; }
+      .inv-cell, .material-card { background: #FBEBC8; border-color: transparent; }
+      .inv-cell.selected { background: #E3F4FB; box-shadow: inset 0 0 0 2px #5FD4C8; border-color: transparent; }
       .hud-nav-btn:active, .aux-btn:active, .quick-slot:active, .inv-cell:active, .material-card:active { transform: scale(.94); }
       .hud-nav-btn:focus-visible, button:focus-visible { outline: 2px solid #ecd39a; outline-offset: 3px; }
       .toast-banner { color: #FFF6E3; border-color: transparent; background: #6B4A32; }
@@ -1488,7 +1491,7 @@ export class UIManager {
           width: calc(100vw - 16px - var(--sal, 0px) - var(--sar, 0px)) !important;
           max-width: 480px !important;
           max-height: calc(100vh - 24px - var(--sat, 0px) - var(--sab, 0px)) !important;
-          border-radius: 18px !important;
+          border-radius: 28px !important;
         }
         .split-modal-layout {
           flex-direction: column !important;
@@ -4730,32 +4733,32 @@ export class UIManager {
 
     return `
       <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="background:radial-gradient(circle at center, rgba(153,69,255,0.25) 0%, rgba(10,16,26,0.6) 100%); border:1.5px solid #9945ff; border-radius:14px; padding:16px; text-align:center;">
-          <div style="font-size:13px; color:#e056fd; font-weight:800; display:inline-flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
-          <div style="font-size:32px; font-weight:900; color:#ffd32a; font-family:monospace; margin:8px 0; text-shadow:0 0 20px rgba(255,211,42,0.6); display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+        <div style="background:#FBEBC8; border:1.5px solid transparent; border-radius:14px; padding:16px; text-align:center;">
+          <div style="font-size:13px; color:#9945ff; font-weight:800; display:inline-flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
+          <div style="font-size:32px; font-weight:900; color:#B97E10; font-family:monospace; margin:8px 0; text-shadow:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
             <span id="ml-pool-amount">${ml.pool || 0}</span> ${iconHTML('items/sol_token', 28, { eager: true })}
           </div>
-          <div style="font-size:11.5px; color:rgba(255,255,255,0.7);">
-            当前部署每轮唤醒概率预估（含中签）: <strong style="color:#14f195;">${estProb}%</strong> · 爆池唤醒者独得 <strong>${ODDS_TABLE.MOTHERLODE.awakenerShare * 100}%</strong>！
+          <div style="font-size:11.5px; color:#6B4A32;">
+            当前部署每轮唤醒概率预估（含中签）: <strong style="color:#1E9E8A;">${estProb}%</strong> · 爆池唤醒者独得 <strong>${ODDS_TABLE.MOTHERLODE.awakenerShare * 100}%</strong>！
           </div>
         </div>
 
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px; font-size:11.5px; line-height:1.6; color:rgba(255,255,255,0.8);">
-          <div style="font-weight:900; color:#fff; margin-bottom:4px;">💎 母池生态循环账本：</div>
-          <div>• 玩家共振投入：<span style="color:#14f195;">${ODDS_TABLE.MOTHERLODE_SHARE * 100}% (${(ODDS_TABLE.MOTHERLODE_SHARE * ODDS_TABLE.V).toFixed(2)} 代币/份额)</span> 自动注入母池</div>
-          <div>• 岛上建设消费：<span style="color:#14f195;">${ODDS_TABLE.MOTHERLODE.sinkShare * 100}%</span> (商城、船只升级、扫描仪改装) 注入</div>
+        <div style="background:#FBEBC8; border-radius:12px; padding:12px; font-size:11.5px; line-height:1.6; color:#6B4A32;">
+          <div style="font-weight:900; color:#6B4A32; margin-bottom:4px;">💎 母池生态循环账本：</div>
+          <div>• 玩家共振投入：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE_SHARE * 100}% (${(ODDS_TABLE.MOTHERLODE_SHARE * ODDS_TABLE.V).toFixed(2)} 代币/份额)</span> 自动注入母池</div>
+          <div>• 岛上建设消费：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE.sinkShare * 100}%</span> (商城、船只升级、扫描仪改装) 注入</div>
           <div>• 单轮超额溢出：超出单轮硬顶派彩全额注入母池</div>
           <div>• 模拟矿工分走部分作为系统 SINK 彻底销毁，绝不伪造虚假中奖播报</div>
         </div>
 
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
-          <div style="font-size:12.5px; font-weight:900; color:#fff; margin-bottom:8px;">🏆 远古母脉名人堂 (最近爆池存证)</div>
+        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
+          <div style="font-size:12.5px; font-weight:900; color:#6B4A32; margin-bottom:8px;">🏆 远古母脉名人堂 (最近爆池存证)</div>
           ${ml.hallOfFame && ml.hallOfFame.length > 0 ? ml.hallOfFame.map(r => `
-            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid #FBEBC8;">
               <span>轮次 #${r.roundId}</span>
-              <span style="color:#ffd32a; font-weight:800; display:inline-flex; align-items:center; gap:4px;">+${r.playerTake} ${iconHTML('items/sol_token', 13, { eager: true })} (池总: ${r.poolSize})</span>
+              <span style="color:#B97E10; font-weight:800; display:inline-flex; align-items:center; gap:4px;">+${r.playerTake} ${iconHTML('items/sol_token', 13, { eager: true })} (池总: ${r.poolSize})</span>
             </div>
-          `).join('') : '<div style="font-size:11px; color:rgba(255,255,255,0.4); text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
+          `).join('') : '<div style="font-size:11px; color:#7D5E47; text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
         </div>
       </div>
     `;
@@ -4781,10 +4784,10 @@ export class UIManager {
       SETTLE: `${iconHTML('hud/check', 14, { eager: true })} 结算完成`
     };
     const phaseColors = {
-      OPEN: '#14f195',
-      LOCK: '#fed330',
+      OPEN: '#1E9E8A',
+      LOCK: '#B97E10',
       REVEAL: '#9945ff',
-      SETTLE: '#00cec9'
+      SETTLE: '#237A9E'
     };
 
     const isReveal = res.phase === 'REVEAL';
@@ -4812,20 +4815,20 @@ export class UIManager {
 
       gridHtml += `
         <div class="res-grid-cell" data-idx="${i}" style="
-          background:${isWinner ? 'radial-gradient(circle, rgba(255,211,42,0.45) 0%, rgba(20,241,149,0.3) 100%)' : (isSelected ? 'rgba(20,241,149,0.22)' : (isHeat ? 'rgba(153,69,255,0.18)' : 'rgba(255,255,255,0.05)'))};
-          border:1.5px solid ${isWinner ? '#ffd32a' : (isSelected ? '#14f195' : (isHeat ? '#a29bfe' : 'rgba(255,255,255,0.1)'))};
-          box-shadow:${isWinner ? '0 0 16px rgba(255,211,42,0.8)' : (isHeat ? '0 0 10px rgba(153,69,255,0.4)' : 'none')};
+          background:${isWinner ? '#FFF1D0' : (isSelected ? '#E3F4FB' : (isHeat ? 'rgba(142,122,160,0.20)' : '#FBEBC8'))};
+          border:1.5px solid ${isWinner ? '#E9B23F' : (isSelected ? '#5FD4C8' : (isHeat ? '#8E7AA0' : 'transparent'))};
+          box-shadow:${isWinner ? '0 0 0 2px #E9B23F' : (isHeat ? '0 0 0 1px rgba(142,122,160,0.5)' : 'none')};
           border-radius:8px; padding:6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
           height:56px; cursor:pointer; user-select:none; transition:all 0.15s; position:relative;
         ">
-          <div style="display:flex; justify-content:space-between; width:100%; font-size:9.5px; color:rgba(255,255,255,0.5);">
+          <div style="display:flex; justify-content:space-between; width:100%; font-size:9.5px; color:#7D5E47;">
             <span>#${i + 1}</span>
             <span>${isMainHint ? '⭐' : (isHeat ? '🔥' : '')}</span>
           </div>
-          <div style="font-size:11px; font-weight:900; color:${myShares > 0 ? '#14f195' : '#dfe6e9'};">
+          <div style="font-size:11px; font-weight:900; color:${myShares > 0 ? '#1E9E8A' : '#6B4A32'};">
             ${myShares > 0 ? `💎 ${myShares} · ` : ''}<span class="npc-shares">${npcShares}<sup>模拟</sup></span>
           </div>
-          <div style="font-size:8.5px; color:rgba(255,255,255,0.45);">
+          <div style="font-size:8.5px; color:#7D5E47;">
             ${isWinner ? '👑获胜' : `EV:${ev}`}
           </div>
         </div>
@@ -4838,32 +4841,32 @@ export class UIManager {
 
     return `
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 14px;">
+        <div style="background:#FBEBC8; border:1px solid transparent; border-radius:12px; padding:10px 14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-weight:900; color:#fff; font-size:13px;">轮次 #${res.roundId}</span>
-              <span style="font-size:11px; font-weight:800; color:${phaseColors[res.phase] || '#fff'}; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">
+              <span style="font-weight:900; color:#6B4A32; font-size:13px;">轮次 #${res.roundId}</span>
+              <span style="font-size:11px; font-weight:800; color:${phaseColors[res.phase] || '#6B4A32'}; background:#EADFCB; padding:2px 8px; border-radius:6px;">
                 ${phaseLabels[res.phase] || res.phase}
               </span>
             </div>
-            <div style="font-size:11px; color:#ffeaa7;">
+            <div style="font-size:11px; color:#6B4A32;">
               免费份额: <strong>${res.freeShares}</strong> · 料仓: <strong>${miningRig.loadedCrystals}</strong>
             </div>
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.06); padding:4px 8px; border-radius:8px;">
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="全岛母晶池">${iconHTML('hud/motherlode', 14, { eager: true })} 母池: <strong id="mr-motherlode-pool" style="color:#ffd32a;">${miningRig.motherlode?.pool || 0}</strong></span>
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="残晶存量">${iconHTML('hud/shard', 14, { eager: true })} 残晶: <strong id="mr-shard-count" style="color:#14f195;">${miningRig.shardCount || 0}</strong></span>
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="赛季算力评分">${iconHTML('hud/score_rs', 14, { eager: true })} 算力评分: <strong id="mr-score-rs" style="color:#00cec9;">${miningRig.season?.rs || 0}</strong></span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; color:#6B4A32; background:#FBEBC8; padding:4px 8px; border-radius:8px;">
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="全岛母晶池">${iconHTML('hud/motherlode', 14, { eager: true })} 母池: <strong id="mr-motherlode-pool" style="color:#B97E10;">${miningRig.motherlode?.pool || 0}</strong></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="残晶存量">${iconHTML('hud/shard', 14, { eager: true })} 残晶: <strong id="mr-shard-count" style="color:#1E9E8A;">${miningRig.shardCount || 0}</strong></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;" title="赛季算力评分">${iconHTML('hud/score_rs', 14, { eager: true })} 算力评分: <strong id="mr-score-rs" style="color:#237A9E;">${miningRig.season?.rs || 0}</strong></span>
           </div>
 
-          <div style="width:100%; height:8px; background:rgba(0,0,0,0.4); border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); margin-bottom:6px;">
-            <div id="mr-res-progress-bar" style="width:${progress}%; height:100%; background:linear-gradient(90deg, #9945ff, #14f195); border-radius:4px; transition:width 0.2s linear;"></div>
+          <div style="width:100%; height:8px; background:#EADFCB; border-radius:4px; overflow:hidden; border:1px solid rgba(107,74,50,0.14); margin-bottom:6px;">
+            <div id="mr-res-progress-bar" style="width:${progress}%; height:100%; background:#5FD4C8; border-radius:4px; transition:width 0.2s linear;"></div>
           </div>
 
-          <div style="display:flex; justify-content:space-between; font-size:10.5px; color:rgba(255,255,255,0.6);">
-            <span>进度: <strong id="mr-res-progress-text" style="color:#14f195;">${progress}%</strong> (80% 锁定测算，100% 揭晓)</span>
-            ${isReveal ? `<button id="btn-skip-reveal" style="background:#9945ff; color:#fff; border:none; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer;" ${res.revealTimer <= 5.5 ? '' : 'disabled'}>⏩ 跳过揭晓动画</button>` : ''}
+          <div style="display:flex; justify-content:space-between; font-size:10.5px; color:#7D5E47;">
+            <span>进度: <strong id="mr-res-progress-text" style="color:#1E9E8A;">${progress}%</strong> (80% 锁定测算，100% 揭晓)</span>
+            ${isReveal ? `<button id="btn-skip-reveal" style="background:#FBEBC8; color:#6B4A32; border:none; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer;" ${res.revealTimer <= 5.5 ? '' : 'disabled'}>⏩ 跳过揭晓动画</button>` : ''}
           </div>
         </div>
 
@@ -4871,30 +4874,30 @@ export class UIManager {
           ${gridHtml}
         </div>
 
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+        <div style="background:#FBEBC8; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-size:12px; font-weight:800; color:#fff;">
-              已选格: <span style="color:#14f195;">[${selectedSq + 1}]</span> · 当前投入: <strong style="color:#ffd32a;">${res.deploy[selectedSq] || 0}</strong> 份
+            <div style="font-size:12px; font-weight:800; color:#6B4A32;">
+              已选格: <span style="color:#1E9E8A;">[${selectedSq + 1}]</span> · 当前投入: <strong style="color:#B97E10;">${res.deploy[selectedSq] || 0}</strong> 份
             </div>
-            <div style="font-size:11px; color:rgba(255,255,255,0.5);">
+            <div style="font-size:11px; color:#7D5E47;">
               格数上限: ${k} · 总额上限: ${C} 份
             </div>
           </div>
 
           <div style="display:flex; gap:6px; align-items:center;">
-            <button id="btn-res-sub" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
-            <button id="btn-res-add" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
-            <button id="btn-res-split" style="flex:1; background:rgba(0,206,201,0.15); color:#00cec9; border:1px solid rgba(0,206,201,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
-            <button id="btn-res-allin" style="flex:1; background:rgba(255,211,42,0.15); color:#ffd32a; border:1px solid rgba(255,211,42,0.3); border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
-            <button id="btn-res-commit" style="flex:1.4; background:linear-gradient(135deg, #14f195, #00cec9); color:#0b101b; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
+            <button id="btn-res-sub" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
+            <button id="btn-res-add" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
+            <button id="btn-res-split" style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
+            <button id="btn-res-allin" style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
+            <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
               ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
             </button>
           </div>
 
           ${hasNextScanner ? `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(153,69,255,0.15); border:1px solid rgba(153,69,255,0.3); border-radius:8px; padding:6px 10px; margin-top:2px;">
-              <span style="font-size:11px; color:#e056fd;">背包拥有【地质扫描仪 Mk${nextScannerLv}】</span>
-              <button id="btn-install-scanner" style="background:linear-gradient(135deg, #9945ff, #14f195); border:none; border-radius:6px; padding:3px 10px; color:#0b101b; font-weight:900; font-size:11px; cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#FBEBC8; border:1px solid transparent; border-radius:8px; padding:6px 10px; margin-top:2px;">
+              <span style="font-size:11px; color:#9945ff;">背包拥有【地质扫描仪 Mk${nextScannerLv}】</span>
+              <button id="btn-install-scanner" style="background:#5FD4C8; border:none; border-radius:6px; padding:3px 10px; color:#6B4A32; font-weight:900; font-size:11px; cursor:pointer;">
                 🛠️ 装载 Mk${nextScannerLv}
               </button>
             </div>
@@ -4998,36 +5001,36 @@ export class UIManager {
       <div style="display:flex; flex-direction:column; gap:12px;">
         <!-- 1. 核心算力与出块大看板 -->
         <div style="
-          background:${isTurbo ? 'linear-gradient(135deg, rgba(255,211,42,0.28), rgba(255,118,117,0.2))' : 'linear-gradient(135deg, rgba(153,69,255,0.22), rgba(20,241,149,0.18))'};
-          border:1.5px solid ${isTurbo ? '#ffd32a' : '#14f195'};
+          background:${isTurbo ? '#FFF1D0' : '#FBEBC8'};
+          border:1.5px solid transparent;
           border-radius:14px; padding:14px;
-          box-shadow:0 8px 24px ${isTurbo ? 'rgba(255,211,42,0.28)' : 'rgba(20,241,149,0.15)'};
+          box-shadow:0 10px 24px rgba(142,122,160,0.25);
           transition: all 0.25s ease;
         ">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
             <div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="font-size:22px;">${isTurbo ? '🔥' : '⚡'}</span>
-                <div style="font-size:16px; font-weight:900; color:#fff;">
+                <div style="font-size:16px; font-weight:900; color:#6B4A32;">
                   ${isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)')}
                 </div>
               </div>
-              <div style="font-size:11.5px; color:${isTurbo ? '#fed330' : '#14f195'}; margin-top:2px; font-weight:700;">
+              <div style="font-size:11.5px; color:${isTurbo ? '#B97E10' : '#1E9E8A'}; margin-top:2px; font-weight:700;">
                 运算算力：<span id="mr-hashrate" style="font-size:14px; font-weight:900;">${currentHashrate} MH/s</span> · ${isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电')}
               </div>
             </div>
 
             ${miningRig.unclaimedSol > 0 ? `
               <button id="btn-claim-sol" style="
-                background:linear-gradient(135deg, #ffd32a, #ff9f1a); border:none; border-radius:10px;
-                padding:8px 14px; color:#1e272e; font-weight:900; font-size:12.5px; cursor:pointer;
-                box-shadow:0 4px 18px rgba(255,211,42,0.6); animation:pulse 1.2s infinite;
+                background:#FFD25A; border:none; border-radius:16px;
+                padding:8px 14px; color:#6B4A32; font-weight:900; font-size:12.5px; cursor:pointer;
+                box-shadow:inset 0 -3px 0 #E9B23F, 0 8px 18px rgba(142,122,160,0.30); animation:pulse 1.2s infinite;
                 display:inline-flex; align-items:center; gap:5px;
               ">
                 ${iconHTML('items/sol_token', 16, { eager: true })} 收获 ${miningRig.unclaimedSol} 枚算力代币！
               </button>
             ` : `
-              <div style="font-size:11px; background:rgba(0,0,0,0.3); color:rgba(255,255,255,0.6); padding:4px 8px; border-radius:6px;">
+              <div style="font-size:11px; background:#EADFCB; color:#7D5E47; padding:4px 8px; border-radius:6px;">
                 待出块产出
               </div>
             `}
@@ -5035,14 +5038,14 @@ export class UIManager {
 
           <!-- 当前区块解密进度条 -->
           <div style="margin-bottom:12px;">
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:#fff; margin-bottom:4px; font-weight:700;">
-              <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#14f195;">${progress}%</strong></span>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#6B4A32; margin-bottom:4px; font-weight:700;">
+              <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#1E9E8A;">${progress}%</strong></span>
               <span>已验证区块: #${miningRig.totalBlocksMined} (累计挖出 ${miningRig.totalSolMined} 算力代币)</span>
             </div>
-            <div style="width:100%; height:12px; background:rgba(0,0,0,0.45); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
+            <div style="width:100%; height:12px; background:#EADFCB; border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
               <div id="mr-progress-bar" style="
                 width:${progress}%; height:100%;
-                background:${isTurbo ? 'linear-gradient(90deg, #ff7675, #ffd32a)' : 'linear-gradient(90deg, #9945ff, #14f195)'};
+                background:${isTurbo ? '#FF9F43' : '#5FD4C8'};
                 border-radius:6px; transition:width 0.15s linear;
               "></div>
             </div>
@@ -5050,32 +5053,32 @@ export class UIManager {
 
           <!-- 矿机硬件核心指标 -->
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">晶石装载量</div>
-              <div style="font-size:13px; font-weight:900; color:#14f195;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
+            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:#7D5E47;">晶石装载量</div>
+              <div style="font-size:13px; font-weight:900; color:#1E9E8A;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
             </div>
-            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">蓄电池储能</div>
-              <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#00cec9' : '#ff7675'};">${battery}%</div>
+            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:#7D5E47;">蓄电池储能</div>
+              <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#237A9E' : '#ff7675'};">${battery}%</div>
             </div>
-            <div style="background:rgba(0,0,0,0.32); border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:rgba(255,255,255,0.6);">背包算力储备</div>
-              <div style="font-size:13px; font-weight:900; color:#fed330; display:inline-flex; align-items:center; justify-content:center; gap:4px;">${tokenCount} ${iconHTML('items/sol_token', 14, { eager: true })}</div>
+            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
+              <div style="font-size:10.5px; color:#7D5E47;">背包算力储备</div>
+              <div style="font-size:13px; font-weight:900; color:#B97E10; display:inline-flex; align-items:center; justify-content:center; gap:4px;">${tokenCount} ${iconHTML('items/sol_token', 14, { eager: true })}</div>
             </div>
           </div>
         </div>
 
         <!-- 2. 手动狂暴增压点按核心区 -->
         <div style="
-          background:rgba(255,255,255,0.06); border:1.5px dashed ${isTurbo ? '#ffd32a' : 'rgba(255,255,255,0.22)'};
+          background:#FBEBC8; border:1.5px dashed ${isTurbo ? '#B97E10' : 'rgba(255,255,255,0.22)'};
           border-radius:14px; padding:12px; text-align:center; position:relative; overflow:hidden;
         ">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#fff;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
+            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
             <div id="mr-combo-badge" style="
               font-size:11px; font-weight:900;
-              background:${combo > 5 ? 'linear-gradient(135deg, #ff7675, #d63031)' : 'rgba(255,255,255,0.12)'};
-              color:#fff; padding:2px 8px; border-radius:10px;
+              background:${combo > 5 ? '#C4443A' : '#EADFCB'};
+              color:${combo > 5 ? '#FFF6E3' : '#6B4A32'}; padding:2px 8px; border-radius:10px;
             ">
               ${combo > 0 ? `COMBO x${combo}` : '待增压'}
             </div>
@@ -5083,41 +5086,41 @@ export class UIManager {
 
           <button id="btn-manual-boost" style="
             width:100%; height:48px;
-            background:${isTurbo ? 'linear-gradient(135deg, #ff9f1a, #ff3838)' : 'linear-gradient(135deg, #9945ff, #14f195)'};
+            background:${isTurbo ? '#FF9F43' : '#FBEBC8'};
             border:none; border-radius:12px;
-            color:#fff; font-size:15px; font-weight:900; letter-spacing:0.5px;
+            color:#6B4A32; font-size:15px; font-weight:900; letter-spacing:0.5px;
             cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-            box-shadow:0 6px 20px ${isTurbo ? 'rgba(255,56,56,0.45)' : 'rgba(20,241,149,0.35)'};
+            box-shadow:inset 0 -4px 0 ${isTurbo ? '#E07B2A' : '#E3CFA2'}, 0 8px 18px rgba(142,122,160,0.30);
             user-select:none; -webkit-user-select:none;
             transition:transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           ">
             <span style="font-size:20px;">⚡</span>
             <span>${isTurbo ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！'}</span>
           </button>
-          <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:6px;">
+          <div style="font-size:11px; color:#7D5E47; margin-top:6px;">
             连续点按注入机械动能：算力爆发飞涨 + 立即推进解密进度 + 45%概率出块暴击！
           </div>
         </div>
 
         <!-- 3. 硅晶原石装填区 -->
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#fff;">💎 装填硅晶原石 (提供运算原料)</div>
-            <span style="font-size:11.5px; color:#14f195; font-weight:800;">
+            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">💎 装填硅晶原石 (提供运算原料)</div>
+            <span style="font-size:11.5px; color:#1E9E8A; font-weight:800;">
               背包持有：${crystalCount} 块
             </span>
           </div>
 
           <div style="display:flex; gap:8px;">
             <button id="btn-load-1-crystal" style="
-              flex:1; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:8px;
-              padding:8px 12px; color:#fff; font-size:12px; font-weight:700; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
+              flex:1; background:#FFF6E3; border:1px solid rgba(107,74,50,0.14); box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px;
+              padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:700; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
             " ${crystalCount > 0 ? '' : 'disabled'}>
               ➕ 装填 1 块原石
             </button>
             <button id="btn-load-all-crystals" style="
-              flex:1; background:linear-gradient(135deg, rgba(20,241,149,0.3), rgba(153,69,255,0.3)); border:1px solid #14f195;
-              border-radius:8px; padding:8px 12px; color:#fff; font-size:12px; font-weight:800; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
+              flex:1; background:#E3F4FB; border:1px solid transparent; box-shadow:inset 0 -3px 0 #BFE6F5;
+              border-radius:8px; padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:800; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
             " ${crystalCount > 0 ? '' : 'disabled'}>
               ⚡ 一键填满矿仓
             </button>
@@ -5125,33 +5128,33 @@ export class UIManager {
         </div>
 
         <!-- 4. 生物质与电池储能维护区 -->
-        <div style="background:rgba(255,255,255,0.06); border-radius:12px; padding:12px;">
+        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#fff;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
-            <span style="font-size:11px; color:#00cec9;">太阳能板白天免费供电</span>
+            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
+            <span style="font-size:11px; color:#237A9E;">太阳能板白天免费供电</span>
           </div>
 
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${(inv['battery'] || 0) > 0 ? `
               <button class="btn-feed-power" data-id="battery" style="
-                background:rgba(0,206,201,0.18); border:1px solid #00cec9; border-radius:8px;
-                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+                background:#E3F4FB; border:1px solid transparent; border-radius:8px;
+                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
               ">
                 🔋 充入备用电池 (+50%电量)
               </button>
             ` : ''}
             ${(inv['tree_sap'] || 0) > 0 ? `
               <button class="btn-feed-power" data-id="tree_sap" style="
-                background:rgba(255,170,0,0.15); border:1px solid #ffa801; border-radius:8px;
-                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+                background:#FFF1D0; border:1px solid transparent; border-radius:8px;
+                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
               ">
                 💧 投入树脂生物质 (+25%电量)
               </button>
             ` : ''}
             ${(inv['tree_branch'] || 0) > 0 ? `
               <button class="btn-feed-power" data-id="tree_branch" style="
-                background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:8px;
-                padding:6px 10px; color:#fff; font-size:11.5px; cursor:pointer; font-weight:700;
+                background:#FFF6E3; border:1px solid rgba(107,74,50,0.14); border-radius:8px;
+                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
               ">
                 🥢 投入干燥木柴 (+12%电量)
               </button>
@@ -5160,23 +5163,23 @@ export class UIManager {
         </div>
 
         <!-- 5. Solana 链上算力存证 -->
-        <div style="background:linear-gradient(135deg, rgba(153,69,255,0.18), rgba(20,241,149,0.14)); border:1.5px solid #9945ff; border-radius:12px; padding:12px;">
+        <div style="background:#FBEBC8; border:1.5px solid transparent; border-radius:12px; padding:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#fff; display:flex; align-items:center; gap:6px;">
+            <div style="font-size:12.5px; font-weight:900; color:#6B4A32; display:flex; align-items:center; gap:6px;">
               <span>🔗</span>
               <span>Solana 链上算力存证</span>
             </div>
-            <span style="font-size:11px; color:#14f195; font-weight:800; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">
+            <span style="font-size:11px; color:#237A9E; font-weight:800; background:#E3F4FB; padding:2px 8px; border-radius:6px;">
               ${solanaBridge.isConnected ? (solanaBridge.isGuestMode ? "免钱包沙盒" : "Seed Vault/钱包已连接") : "未连接钱包"}
             </span>
           </div>
-          <div style="font-size:11px; color:#dfe6e9; margin-bottom:8px; line-height:1.4;">
+          <div style="font-size:11px; color:#6B4A32; margin-bottom:8px; line-height:1.4;">
             一键使用 Solana 手机硬件私钥对矿机出块与算力代币产出凭证进行签名，记录至链上成就！
           </div>
           <button id="btn-submit-chain-proof" style="
-            width:100%; background:linear-gradient(135deg, #9945ff, #14f195); border:none; border-radius:8px;
-            padding:8px 12px; color:#fff; font-size:12px; font-weight:800; cursor:pointer;
-            box-shadow:0 4px 12px rgba(153,69,255,0.3);
+            width:100%; background:#5FD4C8; border:none; border-radius:8px;
+            padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:800; cursor:pointer;
+            box-shadow:inset 0 -3px 0 #45B8AB, 0 6px 14px rgba(142,122,160,0.30);
           ">
             📝 签署算力工作证明上链存证 (区块 #${miningRig.totalBlocksMined})
           </button>
@@ -5276,34 +5279,34 @@ export class UIManager {
 
       // 顶部四个功能页签（固定顶栏，绝不被 flex 挤压，绝不被内容滚走）
       const tabNavHtml = `
-        <div class="rig-tabs-nav" style="display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:10px; padding-bottom:8px; overflow-x:auto; flex-shrink:0 !important; min-height:42px !important;">
+        <div class="rig-tabs-nav" style="display:flex; gap:8px; border-bottom:1px solid rgba(107,74,50,0.12); margin-bottom:10px; padding-bottom:8px; overflow-x:auto; flex-shrink:0 !important; min-height:42px !important;">
           <button class="rig-tab-btn ${currentTab === 'decrypt' ? 'active' : ''}" data-tab="decrypt" type="button" style="
-            background:${currentTab === 'decrypt' ? '#14f195' : 'rgba(255,255,255,0.08)'};
-            color:${currentTab === 'decrypt' ? '#0b101b' : '#fff'};
+            background:${currentTab === 'decrypt' ? '#BFE6F5' : '#FBEBC8'};
+            color:${currentTab === 'decrypt' ? '#6B4A32' : '#6B4A32'};
             border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
             white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
-            box-shadow:${currentTab === 'decrypt' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+            box-shadow:${currentTab === 'decrypt' ? 'inset 0 -3px 0 #9CC8DE' : 'inset 0 -3px 0 #E3CFA2'};
           ">⚡ 基础解密</button>
           <button class="rig-tab-btn ${currentTab === 'resonance' ? 'active' : ''}" data-tab="resonance" type="button" style="
-            background:${currentTab === 'resonance' ? '#14f195' : 'rgba(255,255,255,0.08)'};
-            color:${currentTab === 'resonance' ? '#0b101b' : '#fff'};
+            background:${currentTab === 'resonance' ? '#BFE6F5' : '#FBEBC8'};
+            color:${currentTab === 'resonance' ? '#6B4A32' : '#6B4A32'};
             border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
             white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
-            box-shadow:${currentTab === 'resonance' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+            box-shadow:${currentTab === 'resonance' ? 'inset 0 -3px 0 #9CC8DE' : 'inset 0 -3px 0 #E3CFA2'};
           ">📡 矿脉共振</button>
           <button class="rig-tab-btn ${currentTab === 'motherlode' ? 'active' : ''}" data-tab="motherlode" type="button" style="
-            background:${currentTab === 'motherlode' ? '#14f195' : 'rgba(255,255,255,0.08)'};
-            color:${currentTab === 'motherlode' ? '#0b101b' : '#fff'};
+            background:${currentTab === 'motherlode' ? '#BFE6F5' : '#FBEBC8'};
+            color:${currentTab === 'motherlode' ? '#6B4A32' : '#6B4A32'};
             border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
             white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
-            box-shadow:${currentTab === 'motherlode' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+            box-shadow:${currentTab === 'motherlode' ? 'inset 0 -3px 0 #9CC8DE' : 'inset 0 -3px 0 #E3CFA2'};
           ">${iconHTML('hud/motherlode', 14, { eager: true })} 母晶池</button>
           <button class="rig-tab-btn ${currentTab === 'odds' ? 'active' : ''}" data-tab="odds" type="button" style="
-            background:${currentTab === 'odds' ? '#14f195' : 'rgba(255,255,255,0.08)'};
-            color:${currentTab === 'odds' ? '#0b101b' : '#fff'};
+            background:${currentTab === 'odds' ? '#BFE6F5' : '#FBEBC8'};
+            color:${currentTab === 'odds' ? '#6B4A32' : '#6B4A32'};
             border:none; padding:8px 14px; border-radius:10px; font-weight:900; font-size:12.5px; cursor:pointer;
             white-space:nowrap; flex-shrink:0 !important; min-height:36px !important; height:36px;
-            box-shadow:${currentTab === 'odds' ? '0 2px 10px rgba(20,241,149,0.35)' : 'none'};
+            box-shadow:${currentTab === 'odds' ? 'inset 0 -3px 0 #9CC8DE' : 'inset 0 -3px 0 #E3CFA2'};
           ">📜 概率公示</button>
         </div>
       `;
@@ -5324,7 +5327,7 @@ export class UIManager {
         <div style="display:flex; flex-direction:column; height:100%; max-height:calc(100vh - 80px); overflow:hidden; padding:2px;">
           ${tabNavHtml}
           <div style="flex:1; overflow-y:auto; min-height:0; padding-right:2px;">
-            ${['resonance', 'motherlode'].includes(currentTab) ? `<div style="font-size:11px; padding:5px 10px; margin-bottom:8px; border-radius:8px; background:rgba(153,69,255,0.14); border:1px solid rgba(153,69,255,0.28); color:rgba(255,255,255,0.75); text-align:center;">ℹ️ 地脉共振盘面中的其他矿工均为本地模拟矿工（非真人联机）</div>` : ''}
+            ${['resonance', 'motherlode'].includes(currentTab) ? `<div style="font-size:11px; padding:5px 10px; margin-bottom:8px; border-radius:8px; background:#FBEBC8; border:1px solid transparent; color:#7D5E47; text-align:center;">ℹ️ 地脉共振盘面中的其他矿工均为本地模拟矿工（非真人联机）</div>` : ''}
             ${['decrypt', 'resonance'].includes(currentTab) ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `⬆️ 升级矿机 L${miningRig.rigLevel + 1} · 消耗 ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '✅ 矿机已达最高等级'}</button>` : ''}
             ${contentHtml}
           </div>

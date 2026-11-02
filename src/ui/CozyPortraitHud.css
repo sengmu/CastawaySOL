@@ -657,3 +657,20 @@
     flex-shrink: 0 !important;
   }
 }
+
+/* ===== UI 施工轮2：竖屏弹窗（底部抽屉）与矿机页签 ===== */
+@media (orientation: portrait) {
+  .modal-backdrop { align-items: flex-end !important; }
+  .modal-card {
+    width: min(358px, calc(100vw - 16px)) !important;
+    max-width: 358px !important;
+    border-radius: 28px 28px 0 0 !important;
+    max-height: calc(100vh - 108px - var(--sat, 0px)) !important;
+  }
+  .rig-tab-btn { border-radius: 16px !important; font-size: 13px !important; }
+  .res-grid-cell { border-radius: 12px !important; }
+  .npc-shares sup { color: #C4443A; font-weight: 900; }
+}
+@media (orientation: portrait) and (min-width: 480px) {
+  .modal-card { width: 480px !important; max-width: 480px !important; }
+}
