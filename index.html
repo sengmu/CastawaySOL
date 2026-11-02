@@ -42,15 +42,6 @@
         -webkit-user-select: none; user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
-      #orientation-hint {
-        display: none !important;
-      }
-      .orient-icon { font-size: 56px; animation: rotatePhone 1.5s infinite ease-in-out; }
-      @keyframes rotatePhone {
-        0%, 10% { transform: rotate(0deg); }
-        50%, 60% { transform: rotate(-90deg); }
-        100% { transform: rotate(0deg); }
-      }
       #loading-screen {
         position: fixed; inset: 0; background: #79c9bd; overflow: hidden;
         z-index: 9999; font-family: 'Microsoft YaHei', sans-serif;
@@ -67,22 +58,11 @@
       .loading-title { font-size: 30px; font-weight: 800; letter-spacing: 3px; color: #fff8e6; text-shadow: 0 2px 10px rgba(7, 43, 52, .45); }
       .loading-desc { font-size: 13.5px; margin-top: 8px; color: rgba(255, 248, 230, .92); text-shadow: 0 1px 6px rgba(7, 43, 52, .5); animation: loadingPulse 1.6s ease-in-out infinite alternate; }
       @keyframes loadingPulse { from { opacity: .65; } to { opacity: 1; } }
-      @keyframes bounce {
-        from { transform: translateY(0); }
-        to { transform: translateY(-16px); }
-      }
     </style>
     <link rel="preload" as="image" href="/key-art/loading-portrait-dawn.webp" media="(orientation: portrait)">
     <link rel="preload" as="image" href="/key-art/loading-land-dawn.webp" media="(orientation: landscape)">
   </head>
   <body>
-    <div id="orientation-hint">
-      <div class="orient-icon">📱</div>
-      <h2 style="margin: 16px 0 8px; font-size: 20px; font-weight: 800; color: #ffdd59;">请旋转手机至横屏</h2>
-      <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); max-width: 280px; line-height: 1.5;">
-        CastawaySOL 专为横屏触控定制，旋转屏幕获得最佳 3D 海岛冒险视野
-      </p>
-    </div>
     <div id="loading-screen">
       <img class="loading-art loading-art-port" src="/key-art/loading-portrait-dawn.webp" alt="">
       <img class="loading-art loading-art-land" src="/key-art/loading-land-dawn.webp" alt="">
