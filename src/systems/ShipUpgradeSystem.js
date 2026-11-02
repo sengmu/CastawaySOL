@@ -204,7 +204,7 @@ export class ShipUpgradeSystem {
     const solCount = inv['sol_token'] || 0;
     if (solCount < nextTier.solCost) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast(`🪙 所持算力代币不足 (需要 ${nextTier.solCost} 算力代币，当前持有 ${solCount} 算力代币)！请先至营地矿机出块收取！`, 'medium');
+        this.game.ui.showToast(`💎 所持算力代币不足 (需要 ${nextTier.solCost} 算力代币，当前持有 ${solCount} 算力代币)！请先至营地矿机出块收取！`, 'medium');
       }
       return false;
     }
@@ -237,11 +237,11 @@ export class ShipUpgradeSystem {
 
   // 检查是否满足升级至下一级船只的材料要求 (聚合背包与营地储物箱)
   checkCanUpgrade() {
-    if (this.game?.story && this.game.story.currentChapterId < 4) {
-      return { ok: false, reason: '高阶适航改装蓝图尚未解锁（需进入第四章）！' };
-    }
+    const chapterLocked = !!(this.game?.story && this.game.story.currentChapterId < 4);
     const nextTier = this.getNextTier();
-    if (!nextTier || !nextTier.cost) return { ok: false, reason: '已达到最高旗舰等级！' };
+    if (!nextTier || !nextTier.cost) {
+      return { ok: false, reason: '已达到最高旗舰等级！', costDetails: [], missing: [] };
+    }
 
     const inv = this.game && this.game.ui ? this.game.ui.inventory : {};
     const storage = this.game && this.game.storageSystem ? this.game.storageSystem.storageInventory : {};
@@ -273,7 +273,8 @@ export class ShipUpgradeSystem {
     }
 
     return {
-      ok: missing.length === 0,
+      ok: !chapterLocked && missing.length === 0,
+      reason: chapterLocked ? '高阶适航改装蓝图尚未解锁（需进入第四章）' : '',
       nextTier,
       costDetails,
       missing
@@ -285,7 +286,7 @@ export class ShipUpgradeSystem {
     const check = this.checkCanUpgrade();
     if (!check.ok) {
       if (this.game && this.game.ui) {
-        this.game.ui.showToast('❌ 升级资材不足！请根据工程图纸准备充足材料！', 'medium');
+        this.game.ui.showToast(check.reason ? `🔒 ${check.reason}！` : '❌ 升级资材不足！请根据工程图纸准备充足材料！', 'medium');
       }
       return false;
     }

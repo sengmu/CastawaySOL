@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "0f797dc724e3dc8dc491e74121ee0229",
+  "saveSeed": "b3c70983a1518d9dd26285f3a7f9b556",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -17,7 +17,7 @@
       }
     ]
   },
-  "timestamp": 1793619494070,
+  "timestamp": 1793632786146,
   "player": {
     "position": [
       -17,
@@ -317,7 +317,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793619481352,
+      "freeGrantTs": 1793632778714,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,

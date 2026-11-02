@@ -14,32 +14,71 @@ export class VirtualJoystick {
     this.active = false;
 
     // 摇杆物理尺寸参数 (竖屏直径上限 min(30vw, 120px)，即最大半径 60px)
-    this.isSmallScreen = (typeof window !== 'undefined' && window.innerWidth <= 640);
-    const maxAllowedRadius = (typeof window !== 'undefined') ? Math.min(window.innerWidth * 0.15, 60) : 56;
-    const isPortrait = typeof window !== 'undefined' && window.innerWidth < window.innerHeight;
-    this.baseRadius = isPortrait ? Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius) : Math.min(90, window.innerHeight * 0.13); // 底盘半径
+    const { w: initW, h: initH } = this.getViewportSize();
+    this.isSmallScreen = initW <= 640;
+    const maxAllowedRadius = Math.min(initW * 0.15, 60);
+    const isPortrait = initW < initH;
+    this.baseRadius = isPortrait ? Math.max(40, Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius)) : Math.max(44, Math.min(52, initH * 0.13)); // 底盘半径
     this.maxRadius = this.baseRadius * 0.88;             // 最大推移半径
     this.thumbRadius = this.baseRadius * 0.42;           // 摇杆球半径
-    this.deadZone = 0.08;                                // 死区防指尖微颤 (0~1)
+    this.deadZone = 0.05;                                // 死区防指尖微颤 (0~1)
     this.followThreshold = this.maxRadius * 1.35;        // 动态跟随阈值
 
     // 默认待机锚定坐标 (左下角)
-    this.defaultAnchor = { x: 0, y: 0 };
-    this.basePos = { x: 0, y: 0 };
+    this.defaultAnchor = { x: 78, y: 120 };
+    this.basePos = { x: 78, y: 120 };
     this.vector = { x: 0, y: 0 }; // 归一化输入 [-1, 1]
 
     this.createElements();
     this.bindEvents();
     this.updateDefaultAnchor();
 
+    // 启动多阶段自愈看门狗：针对 Android WebView 启动瞬间 window 尺寸初为 0 的特性，持续校正视口
+    let checkCount = 0;
+    const bootTimer = setInterval(() => {
+      checkCount++;
+      if ((typeof window !== 'undefined' && window.innerWidth > 0 && window.innerHeight > 0) || checkCount >= 12) {
+        this.updateDefaultAnchor();
+        if (checkCount >= 12) clearInterval(bootTimer);
+      }
+    }, 300);
+
     window.addEventListener('resize', () => {
       this.updateDefaultAnchor();
     });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => this.updateDefaultAnchor(), 200);
+    });
+  }
+
+  // 稳健获取物理视口真实尺寸（彻底规避 Android WebView 启动期 0 宽度/0 高度陷阱）
+  getViewportSize() {
+    const rawW = Math.max(
+      (typeof window !== 'undefined' ? window.innerWidth : 0) || 0,
+      (typeof document !== 'undefined' && document.documentElement ? document.documentElement.clientWidth : 0) || 0,
+      (typeof document !== 'undefined' && document.body ? document.body.clientWidth : 0) || 0
+    );
+    const rawH = Math.max(
+      (typeof window !== 'undefined' ? window.innerHeight : 0) || 0,
+      (typeof document !== 'undefined' && document.documentElement ? document.documentElement.clientHeight : 0) || 0,
+      (typeof document !== 'undefined' && document.body ? document.body.clientHeight : 0) || 0
+    );
+    if (rawW > 0 && rawH > 0) {
+      return { w: rawW, h: rawH };
+    }
+    const sw = (typeof screen !== 'undefined' ? screen.width : 0) || 890;
+    const sh = (typeof screen !== 'undefined' ? screen.height : 0) || 400;
+    // 游戏在 AndroidManifest 锁定 sensorLandscape 横屏，兜底取长边为宽、短边为高
+    return {
+      w: Math.max(sw, sh, 360),
+      h: Math.max(Math.min(sw, sh), 240)
+    };
   }
 
   // 计算屏幕左下角的默认静息驻留位（支持竖屏与横屏单手拇指人体工程学优化）
   updateDefaultAnchor() {
-    const isPortrait = window.innerWidth < window.innerHeight;
+    const { w, h } = this.getViewportSize();
+    const isPortrait = w < h;
     // 结合 CSS safe-area-inset
     const sal = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sal')) || 0;
     const sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0;
@@ -49,33 +88,28 @@ export class VirtualJoystick {
     const safeBottomMargin = Math.max(16, sab + 8);
 
     // 动态限制底盘半径
-    if (isPortrait && typeof window !== 'undefined') {
-      const maxAllowedRadius = Math.min(window.innerWidth * 0.15, 60);
-      this.baseRadius = Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius);
-      this.maxRadius = this.baseRadius * 0.88;
-      this.thumbRadius = this.baseRadius * 0.42;
-      if (this.base) {
-        this.base.style.width = `${this.baseRadius * 2}px`;
-        this.base.style.height = `${this.baseRadius * 2}px`;
-      }
+    if (isPortrait) {
+      const maxAllowedRadius = Math.min(w * 0.15, 60);
+      this.baseRadius = Math.max(40, Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius));
     } else {
       // 横屏下基座半径约 48~52px（直径约 100px），精巧舒适不挡视野
-      this.baseRadius = Math.min(52, Math.max(44, window.innerHeight * 0.13));
-      this.maxRadius = this.baseRadius * 0.88;
-      this.thumbRadius = this.baseRadius * 0.42;
-      if (this.base) {
-        this.base.style.width = `${this.baseRadius * 2}px`;
-        this.base.style.height = `${this.baseRadius * 2}px`;
-        const ring = this.base.firstElementChild;
-        if (ring) {
-          ring.style.width = `${this.baseRadius * 1.4}px`;
-          ring.style.height = `${this.baseRadius * 1.4}px`;
-        }
+      this.baseRadius = Math.min(52, Math.max(44, h * 0.13));
+    }
+    this.maxRadius = this.baseRadius * 0.88;
+    this.thumbRadius = this.baseRadius * 0.42;
+
+    if (this.base) {
+      this.base.style.width = `${this.baseRadius * 2}px`;
+      this.base.style.height = `${this.baseRadius * 2}px`;
+      const ring = this.base.firstElementChild;
+      if (ring) {
+        ring.style.width = `${this.baseRadius * 1.4}px`;
+        ring.style.height = `${this.baseRadius * 1.4}px`;
       }
-      if (this.thumb) {
-        this.thumb.style.width = `${this.thumbRadius * 2}px`;
-        this.thumb.style.height = `${this.thumbRadius * 2}px`;
-      }
+    }
+    if (this.thumb) {
+      this.thumb.style.width = `${this.thumbRadius * 2}px`;
+      this.thumb.style.height = `${this.thumbRadius * 2}px`;
     }
 
     // 横屏下摇杆垂直中心距底边贴合左手拇指自然握持区（距底约 75~85px），与右侧动作区对称，绝不浮到屏幕中上方
@@ -83,19 +117,9 @@ export class VirtualJoystick {
     const centerXFromLeft = isPortrait ? (Math.max(12, sal) + this.baseRadius + 6) : (safeLeftMargin + this.baseRadius + 18);
 
     this.defaultAnchor = {
-      x: centerXFromLeft,
-      y: window.innerHeight - centerYFromBottom
+      x: Math.max(40, Math.min(Math.round(w * 0.42), Math.round(centerXFromLeft))),
+      y: Math.max(40, Math.min(Math.round(h - 20), Math.round(h - centerYFromBottom)))
     };
-
-    if (this.touchZone) {
-      // 触控感应区：覆盖左侧舒适操作区，避开顶部导航
-      const topOffset = isPortrait ? Math.max(140, window.innerHeight * 0.35) : Math.max(55, window.innerHeight * 0.22);
-      const zoneHeight = window.innerHeight - topOffset;
-      const zoneWidth = isPortrait ? 58 : 48;
-      this.touchZone.style.top = topOffset + 'px';
-      this.touchZone.style.height = zoneHeight + 'px';
-      this.touchZone.style.width = zoneWidth + 'vw';
-    }
 
     if (!this.active) {
       this.setVisualPosition(this.defaultAnchor.x, this.defaultAnchor.y, false);
@@ -103,21 +127,24 @@ export class VirtualJoystick {
   }
 
   createElements() {
-    // 1. 全局感应层：占据整个屏幕左侧半区 (除去顶部状态栏约 60px 和底部快捷栏区域)
+    // 1. 全局感应层：纯 CSS 原生全覆盖左半区，彻底规避 JS 动态高度引发的 0px 塌陷缺陷
     this.touchZone = document.createElement('div');
     this.touchZone.id = 'virtual-joystick-touch-zone';
     this.touchZone.style.cssText = `
-      position: absolute;
-      top: 55px;
-      left: 0;
-      width: 48vw;
-      height: calc(100vh - 55px);
-      z-index: 95;
-      touch-action: none;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      -webkit-user-select: none;
-      pointer-events: auto;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      bottom: 0 !important;
+      width: 55vw !important;
+      height: 100vh !important;
+      min-height: 100% !important;
+      z-index: 95 !important;
+      touch-action: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      pointer-events: auto !important;
+      box-sizing: border-box !important;
     `;
 
     // 2. 摇杆外盘基座 (带有外环渐变、磨砂流光)
@@ -125,7 +152,7 @@ export class VirtualJoystick {
     this.base = document.createElement('div');
     this.base.id = 'joystick-base';
     this.base.style.cssText = `
-      position: absolute;
+      position: fixed !important;
       width: ${baseDiameter}px;
       height: ${baseDiameter}px;
       border-radius: 50%;
@@ -195,10 +222,14 @@ export class VirtualJoystick {
     this.container.appendChild(this.base);
   }
 
-  // 移动底盘视觉位置
+  // 移动底盘视觉位置 (严格约束坐标为正数有效像素，杜绝负坐标飞出屏幕)
   setVisualPosition(x, y, isActivated = false) {
-    this.base.style.left = `${x}px`;
-    this.base.style.top = `${y}px`;
+    if (!this.base) return;
+    const safeX = Math.round(Math.max(20, x));
+    const safeY = Math.round(Math.max(20, y));
+    this.base.style.position = 'fixed';
+    this.base.style.left = `${safeX}px`;
+    this.base.style.top = `${safeY}px`;
 
     if (isActivated) {
       this.base.style.opacity = '0.96';
@@ -214,21 +245,42 @@ export class VirtualJoystick {
   }
 
   bindEvents() {
-    // 1. 手指在左半屏感应区触碰
-    this.touchZone.addEventListener('touchstart', (e) => {
-      // 若已有一个激活的手指正在操控摇杆，忽略后续额外触点（避免双指混乱）
-      if (this.active) return;
+    const shouldIgnoreTouchTarget = (targetElem) => {
+      if (!targetElem) return false;
+      return !!targetElem.closest('.bottom-quick-bar, .hud-nav-item, button, .aux-btn, .modal-backdrop, .modal-content, .animal-dialog, .hud-dialog-scrim, input, select, textarea, .action-btn, .main-action-capsule, #action-btn');
+    };
 
-      const touch = e.changedTouches[0];
+    const handleTouchStartCommon = (touch, e) => {
       if (!touch) return;
-
-      // 避免误触左侧快捷栏等浮层
-      const targetElem = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (targetElem && targetElem.closest('.bottom-quick-bar, .hud-nav-item, button, .aux-btn, .modal-backdrop')) {
+      if (document.body.classList.contains('hud-dialog-open') || document.body.classList.contains('hud-modal-open')) {
         return;
       }
 
-      e.preventDefault();
+      // 避免误触左侧快捷栏等浮层
+      const targetElem = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (shouldIgnoreTouchTarget(targetElem)) {
+        return;
+      }
+
+      // 若旧触点已消失或仅剩单指，自动自愈重接
+      if (this.active) {
+        let oldTouchStillExists = false;
+        if (e.touches && e.touches.length > 0) {
+          for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === this.touchId) {
+              oldTouchStillExists = true;
+              break;
+            }
+          }
+        }
+        if (!oldTouchStillExists || (e.touches && e.touches.length === 1)) {
+          this.reset();
+        } else {
+          return;
+        }
+      }
+
+      if (e.cancelable) e.preventDefault();
 
       this.touchId = touch.identifier;
       this.active = true;
@@ -242,6 +294,26 @@ export class VirtualJoystick {
 
       // 立即计算初始触碰点（通常为原地 0）
       this.handleTouchMove(touch.clientX, touch.clientY);
+    };
+
+    // 1. 手指在左半屏感应区触碰
+    this.touchZone.addEventListener('touchstart', (e) => {
+      const touch = e.changedTouches[0];
+      handleTouchStartCommon(touch, e);
+    }, { passive: false });
+
+    // 2. 全局 window 左半区盲操兜底捕获
+    window.addEventListener('touchstart', (e) => {
+      if (this.active) return;
+      const { w } = this.getViewportSize();
+      const maxLeftX = w * 0.55;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.clientX <= maxLeftX) {
+          handleTouchStartCommon(touch, e);
+          break;
+        }
+      }
     }, { passive: false });
 
     // 2. 窗口级全屏监听手指移动（手指划出左半区时依然可以平滑操作）

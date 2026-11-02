@@ -262,16 +262,7 @@ class Game {
   }
 
   async initLandmarks() {
-    // 露营帐篷放在西侧 (-16, 0, -8)
-    const house = await modelLoader.loadModel('/models/structures/Model/FtrMjkHouse.Nin_NX_NVN/FtrMjkHouse.dae', {
-      scale: 3.0,
-      castShadow: true,
-      receiveShadow: true
-    });
-    house.position.set(25, 1.8, -19);
-    house.rotation.y = -0.4;
-    house.userData.movementBox = true;
-    this.scene.add(house);
+    // 北崖区域保持纯净地标视野，不再加载遮挡灯塔的无交互装饰立牌
   }
 
   // 初始化 Survival Kids 逃脱地标 (沙滩 SOS 巨石阵、出海大木筏、远古神秘宝石)
@@ -924,7 +915,7 @@ class Game {
     }
 
     // 4.4.8 北崖灯塔一期大工程 (24, 1.8, -26)
-    if (this.lighthouse && playerPos.distanceTo(new THREE.Vector3(24, 1.8, -26)) < 4.5) {
+    if (this.lighthouse && playerPos.distanceTo(this.lighthouse.anchor) < 4.5) {
       if (this.lighthouse.isLit) {
         if (this.ui) this.ui.showDialog('🌟 北崖古灯塔（一期已点亮）', '金色探照光柱破浪指航，北崖矿脉共振轰鸣运转！\n\n• 全岛矿机算力达到极致，L4 终极算力许可已解锁！\n• 茫茫海雾已被驱散，远洋自由航行已开启！');
       } else {
@@ -943,7 +934,7 @@ class Game {
               `• 硅晶原石 (sol_crystal): ${raw} / 10\n` +
               `• 高纯度精炼纯晶 (sol_crystal_pure): ${pure} / 3\n` +
               `• 深层海脉晶核 (sol_crystal_deep): ${deep} / 2\n\n` +
-              `💡 备齐上述三梯晶石后，靠近按 [E] 即可注入能量，全域点亮灯塔并完成第五章主线！`
+              `💡 备齐上述三梯晶石后，靠近点按互动按钮即可注入能量，全域点亮灯塔并完成第五章主线！`
             );
           }
         }
@@ -990,7 +981,7 @@ class Game {
         this.weatherSystem.bodyTemp = Math.min(37.0, this.weatherSystem.bodyTemp + 2.5);
         this.weatherSystem.isWet = false;
         soundEngine.playPlaceFurniture();
-        const shelterStatus = this.weatherSystem.hasFireShelter ? '⛺ 已加盖避雨防风石棚（全天候避雨保温）' : '💡 背包携带【石料/燧石 x3 + 坚固树皮 x2】按 [E] 可在此搭建避雨石棚！';
+        const shelterStatus = this.weatherSystem.hasFireShelter ? '⛺ 已加盖避雨防风石棚（全天候避雨保温）' : '💡 背包携带【石料/燧石 x3 + 坚固树皮 x2】点按互动按钮可在此搭建避雨石棚！';
         this.ui.showDialog(
           '🔥 营地温暖篝火',
           `你在跳动的篝火旁烘烤湿透的衣衫与双手……\n当前体温迅速回暖至：【${this.weatherSystem.bodyTemp.toFixed(1)}°C】！\n\n${shelterStatus}`
@@ -1487,7 +1478,7 @@ class Game {
         this.ui.showInteraction(this.timberIsleScene.outpostClaimed ? '🚩 【浮木前哨站】已建成并每日运送浮木' : '点按互动按钮 消耗木板x2+铁钉x1 插旗建立海外前哨');
       } else if (nearTiRes) {
         this.ui.setContextAction('pickup');
-        this.ui.showInteraction(`按 [E] 拾取特产资源：【${nearTiRes.name}】`);
+        this.ui.showInteraction(`点按互动按钮 拾取特产资源：【${nearTiRes.name}】`);
       } else {
         this.ui.setContextAction('default');
         this.ui.hideInteraction();
@@ -1516,18 +1507,18 @@ class Game {
         this.ui.showInteraction('点按互动按钮 扬帆返航 · 返回主岛大本营');
       } else if (isMonolith) {
         this.ui.setContextAction('default');
-        this.ui.showInteraction('按 [E] 参悟【古代水手冶炼石碑】· 领悟熔炉知识');
+        this.ui.showInteraction('点按互动按钮 参悟【古代水手冶炼石碑】· 领悟熔炉知识');
       } else if (isOutpost) {
         this.ui.setContextAction('default');
-        this.ui.showInteraction(this.quarryIsleScene.outpostClaimed ? '🚩 【矿石前哨站】已建立并每日回运铁矿' : '按 [E] 消耗木板x2+玄武石x2+铁钉x1 插旗建立矿业前哨');
+        this.ui.showInteraction(this.quarryIsleScene.outpostClaimed ? '🚩 【矿石前哨站】已建立并每日回运铁矿' : '点按互动按钮 消耗木板x2+玄武石x2+铁钉x1 插旗建立矿业前哨');
       } else if (nearQiRes) {
         if (nearQiRes.isVein) {
           const hasPick = (this.ui.inventory['stone_pickaxe'] || 0) > 0 || (this.ui.inventory['iron_pickaxe'] || 0) > 0;
           this.ui.setContextAction('mine');
-          this.ui.showInteraction(hasPick ? `按 [E] 挥镐开采：【${nearQiRes.name}】` : `⚠️ 靠近【${nearQiRes.name}】· 需装备【采矿石镐】方可凿取`);
+          this.ui.showInteraction(hasPick ? `点按互动按钮 挥镐开采：【${nearQiRes.name}】` : `⚠️ 靠近【${nearQiRes.name}】· 需装备【采矿石镐】方可凿取`);
         } else {
           this.ui.setContextAction('pickup');
-          this.ui.showInteraction(`按 [E] 拾取地表原石：【${nearQiRes.name}】`);
+          this.ui.showInteraction(`点按互动按钮 拾取地表原石：【${nearQiRes.name}】`);
         }
       } else {
         this.ui.setContextAction('default');
@@ -1569,7 +1560,7 @@ class Game {
     const isCampChest = Math.hypot(playerPos.x - (-14.5), playerPos.z - 23.5) < 2.5;
     const isNoticeboard = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.noticeboard) < 2.5 : false;
     const isOrderBoard = this.campEntities?.anchors?.orderBoard ? playerPos.distanceTo(this.campEntities.anchors.orderBoard) < 2.5 : false;
-    const isLighthouse = this.lighthouse && playerPos.distanceTo(new THREE.Vector3(24, 1.8, -26)) < 4.5;
+    const isLighthouse = this.lighthouse && playerPos.distanceTo(this.lighthouse.anchor) < 4.5;
     const isRadioTerminal = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.radioTerminal) < 2.5 : false;
     const isNativePurifier = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.waterPurifier) < 2.5 : false;
     const isBuoyWinch = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.buoyWinch) < 2.8 : false;
@@ -1590,16 +1581,16 @@ class Game {
 
       if (distToPortal < 3.2) {
         this.ui.setContextAction('temple_portal');
-        this.ui.showInteraction('按 [E] 穿越青蓝光阵返回【海岛主地图】');
+        this.ui.showInteraction('点按互动按钮 穿越青蓝光阵返回【海岛主地图】');
       } else if (distToAltar < 3.8) {
         this.ui.setContextAction('temple_altar');
         const stageName = this.templePuzzle ? (this.templePuzzle.stage === 0 ? '第一重·星辰光棱镜对焦' : this.templePuzzle.stage === 1 ? '第二重·太阳图腾矩阵翻转' : '第三重·深渊密室黄金宝藏') : '密室机关';
-        this.ui.showInteraction(`按 [E] 参悟【星辰日冕】机关解谜（${stageName}）`);
+        this.ui.showInteraction(`点按互动按钮 参悟【星辰日冕】机关解谜（${stageName}）`);
       } else if (distToVault < 3.8) {
         this.ui.setContextAction('temple_vault');
         if (this.ancientTempleScene && this.ancientTempleScene.isInnerGateOpen) {
           const isClaimed = this.templePuzzle && this.templePuzzle.vaultClaimed;
-          this.ui.showInteraction(isClaimed ? '👑 远古波塞冬金冠已收取（永久护佑中）' : '按 [E] 开启【远古波塞冬黄金神藏】！');
+          this.ui.showInteraction(isClaimed ? '👑 远古波塞冬金冠已收取（永久护佑中）' : '点按互动按钮 开启【远古波塞冬黄金神藏】！');
         } else {
           this.ui.showInteraction('🔒 前方玄铁大门紧闭，请先参悟前殿日冕机关');
         }
@@ -1621,13 +1612,16 @@ class Game {
 
     if (nearTyphoonLoot) {
       this.ui.setContextAction('pickup');
-      this.ui.showInteraction(`按 [E] 抢救打捞台风巨浪冲刷物：【${nearTyphoonLoot.name}】`);
+      this.ui.showInteraction(`点按互动按钮 抢救打捞台风巨浪冲刷物：【${nearTyphoonLoot.name}】`);
     } else if (nearLoot) {
       this.ui.setContextAction('pickup');
-      this.ui.showInteraction(`按 [E] 拾取战利品包裹：【${nearLoot.mobName} 遗落】`);
+      this.ui.showInteraction(`点按互动按钮 拾取战利品包裹：【${nearLoot.mobName} 遗落】`);
+    } else if (isLighthouse) {
+      this.ui.setContextAction('lighthouse');
+      this.ui.showInteraction(this.lighthouse.isLit ? '🌟 北崖古灯塔（一期已点亮）' : '点按互动按钮 检视/交付【北崖灯塔一期大工程】');
     } else if (nearAggroMob) {
       this.ui.setContextAction('default');
-      this.ui.showInteraction(`⚔️ 警惕【${nearAggroMob.name}】！按 [F] 或右下角 [⚔️] 发动挥刺突击！`);
+      this.ui.showInteraction(`⚔️ 警惕【${nearAggroMob.name}】！点按右下角攻击键发动挥刺突击！`);
     } else if (nearGem) {
       this.ui.setContextAction('gem');
       this.ui.showInteraction(`点按互动按钮 拾取神秘秘宝：【${nearGem.info.name}】`);
@@ -1640,59 +1634,56 @@ class Game {
     } else if (isCrabTrap) {
       this.ui.setContextAction('crab_trap');
       const trapTotal = this.tidalTrap.getTotalCatches();
-      this.ui.showInteraction(`按 [E] 检视【南岸浅滩潮汐捕蟹笼】(当前渔获: ${trapTotal} 件)`);
+      this.ui.showInteraction(`点按互动按钮 检视【南岸浅滩潮汐捕蟹笼】(当前渔获: ${trapTotal} 件)`);
     } else if (isSmoker) {
       this.ui.setContextAction('smoker_rack');
-      this.ui.showInteraction(this.tidalTrap.isSmoking ? '按 [E] 查阅【营地熏烤风干架】(慢火熏制中...)' : '按 [E] 使用【营地熏烤风干架】制作防腐军粮');
+      this.ui.showInteraction(this.tidalTrap.isSmoking ? '点按互动按钮 查阅【营地熏烤风干架】(慢火熏制中...)' : '点按互动按钮 使用【营地熏烤风干架】制作防腐军粮');
     } else if (isMiningRig) {
       this.ui.setContextAction('mining_rig');
       const hasUnclaimed = this.miningRig.unclaimedSol > 0;
-      this.ui.showInteraction(hasUnclaimed ? `按 [E] 操作【绿色解密矿机】(🪙 有 ${this.miningRig.unclaimedSol} 枚算力代币待收取!)` : `按 [E] 操作【绿色解密矿机】(${this.miningRig.isActive ? '⚡正在高速哈希解密中' : '💤待装填硅晶原石'})`);
+      this.ui.showInteraction(hasUnclaimed ? `点按互动按钮 操作【绿色解密矿机】(有 ${this.miningRig.unclaimedSol} 枚算力代币待收取!)` : `点按互动按钮 操作【绿色解密矿机】(${this.miningRig.isActive ? '⚡正在高速哈希解密中' : '💤待装填硅晶原石'})`);
     } else if (isPetNest) {
       this.ui.setContextAction('pet_nest');
       const activePet = this.petCompanion ? this.petCompanion.getActivePet() : null;
-      this.ui.showInteraction(`按 [E] 打开【营地随行异兽暖巢】(当前出战: ${activePet ? activePet.name : '巴布'})`);
+      this.ui.showInteraction(`点按互动按钮 打开【营地随行异兽暖巢】(当前出战: ${activePet ? activePet.name : '巴布'})`);
     } else if (isCampChest) {
       this.ui.setContextAction('storage');
-      this.ui.showInteraction('按 [E] 打开营地储物木箱存取材料');
+      this.ui.showInteraction('点按互动按钮 打开营地储物木箱存取材料');
     } else if (isNoticeboard) {
       this.ui.setContextAction('camp_manage');
       const curJob = this.campFacilities ? this.campFacilities.getResidentJob('second_kid') : null;
-      this.ui.showInteraction(`按 [E] 查阅【营地经营告示板】· 幸存者排班 (当前: ${curJob ? curJob.name : '在岗'})`);
+      this.ui.showInteraction(`点按互动按钮 查阅【营地经营告示板】· 幸存者排班 (当前: ${curJob ? curJob.name : '在岗'})`);
     } else if (isOrderBoard) {
       this.ui.setContextAction('order_board');
-      this.ui.showInteraction('按 [E] 查看【营地日常交付订单板】(每日刷新3项契约)');
-    } else if (isLighthouse) {
-      this.ui.setContextAction('lighthouse');
-      this.ui.showInteraction(this.lighthouse.isLit ? '🌟 北崖古灯塔（一期已点亮）' : '按 [E] 检视/交付【北崖灯塔一期大工程】');
+      this.ui.showInteraction('点按互动按钮 查看【营地日常交付订单板】(每日刷新3项契约)');
     } else if (isRadioTerminal) {
       this.ui.setContextAction('shop');
-      this.ui.showInteraction('按 [E] 接入【救援无线电站】· 呼叫空投与特权');
+      this.ui.showInteraction('点按互动按钮 接入【救援无线电站】· 呼叫空投与特权');
     } else if (isNativePurifier) {
       this.ui.setContextAction('water');
       const wLvl = this.campFacilities ? this.campFacilities.purifierWaterLevel : 0;
-      this.ui.showInteraction(`按 [E] 从【净水滴滤台】畅饮/添柴蒸馏 (蓄水: ${wLvl}/6 份)`);
+      this.ui.showInteraction(`点按互动按钮 从【净水滴滤台】畅饮/添柴蒸馏 (蓄水: ${wLvl}/6 份)`);
     } else if (isCampfire) {
       this.ui.setContextAction('campfire');
       const hasShelter = this.weatherSystem && this.weatherSystem.hasFireShelter;
       const curTemp = this.weatherSystem ? this.weatherSystem.bodyTemp.toFixed(1) : '37.0';
       const shelterHint = hasShelter ? '⛺ 避雨石棚庇护中' : '可造避雨石棚';
-      this.ui.showInteraction(`按 [E] 靠近【营地篝火】烘烤取暖 / ${shelterHint} (当前体温: ${curTemp}°C)`);
+      this.ui.showInteraction(`点按互动按钮 靠近【营地篝火】烘烤取暖 / ${shelterHint} (当前体温: ${curTemp}°C)`);
     } else if (isBuoyWinch) {
       this.ui.setContextAction('default');
       const hasBuoy = this.flotsamSalvage && this.flotsamSalvage.hasAutoSalvageBuoy;
-      this.ui.showInteraction('按 [E] 打开【近海打捞滑轮浮标网与集捞工坊】');
+      this.ui.showInteraction('点按互动按钮 打开【近海打捞滑轮浮标网与集捞工坊】');
     } else if (nearestFacility) {
       if (nearestFacility.isStorage) {
         this.ui.setContextAction('storage');
-        this.ui.showInteraction('按 [E] 打开营地储物木箱存取物资');
+        this.ui.showInteraction('点按互动按钮 打开营地储物木箱存取物资');
       } else if (nearestFacility.isWaterPurifier) {
         this.ui.setContextAction('water');
         const waterLvl = this.campFacilities ? this.campFacilities.purifierWaterLevel : 0;
-        this.ui.showInteraction(`按 [E] 从净水滴滤台取水 (蓄水: ${waterLvl} 份)`);
+        this.ui.showInteraction(`点按互动按钮 从净水滴滤台取水 (蓄水: ${waterLvl} 份)`);
       } else if (nearestFacility.isBed) {
         this.ui.setContextAction('sleep');
-        this.ui.showInteraction('按 [E] 在原木单人床上安稳休息过夜');
+        this.ui.showInteraction('点按互动按钮 在原木单人床上安稳休息过夜');
       }
     } else if (nearestBeachRes) {
       if (nearestBeachRes.isMineable) {
@@ -1701,9 +1692,9 @@ class Game {
         const hasPick = (this.ui.inventory['stone_pickaxe'] || 0) > 0 || (this.ui.inventory['iron_pickaxe'] || 0) > 0;
         if (hasPick) {
           const veinType = nearestBeachRes.type === 'sol_vein' ? '高能硅晶矿脉' : '富铁矿脉';
-          this.ui.showInteraction(`按 [E] 挥镐开采【${nearestBeachRes.name}】(${veinType}，耐久余${nearestBeachRes.hp})`);
+          this.ui.showInteraction(`点按互动按钮 挥镐开采【${nearestBeachRes.name}】(${veinType}，耐久余${nearestBeachRes.hp})`);
         } else if (hasHammer) {
-          this.ui.showInteraction(`按 [E] 挥锤碎石【${nearestBeachRes.name}】(耐久余${nearestBeachRes.hp})`);
+          this.ui.showInteraction(`点按互动按钮 挥锤碎石【${nearestBeachRes.name}】(耐久余${nearestBeachRes.hp})`);
         } else {
           this.ui.showInteraction(`🪨 发现【${nearestBeachRes.name}】(需手持石锤或石镐方可敲凿开采)`);
         }
@@ -1713,7 +1704,7 @@ class Game {
       }
     } else if (nearestFlotsam) {
       this.ui.setContextAction('pickup');
-      this.ui.showInteraction(`按 [E] 打捞海面物资：【${nearestFlotsam.spec.name}】`);
+      this.ui.showInteraction(`点按互动按钮 打捞海面物资：【${nearestFlotsam.spec.name}】`);
     } else if (isFreshwater) {
       this.ui.setContextAction('water');
       this.ui.showInteraction('点按互动按钮 饮用甘甜溪水并装满水壶');
@@ -1754,13 +1745,13 @@ class Game {
       }
     } else if (isWater) {
       this.ui.setContextAction('fishing');
-      this.ui.showInteraction('按 [E] 或点击 [🎣钓鱼] 抛竿垂钓');
+      this.ui.showInteraction('点按互动按钮 或点击 [🎣钓鱼] 抛竿垂钓');
     } else if (isFire) {
       this.ui.setContextAction('cooking');
       this.ui.showInteraction('点按 [🔥烹饪] 烤鱼/烤苹果');
     } else if (isTent) {
       this.ui.setContextAction('sleep');
-      this.ui.showInteraction('按 [E] 或点击 [🛏️睡觉] 消除疲劳过夜');
+      this.ui.showInteraction('点按互动按钮 或点击 [🛏️睡觉] 消除疲劳过夜');
     } else if (nearestTree && !nearestTree.isFelled) {
       const hasAxe = (this.ui.inventory['stone_axe'] || 0) > 0;
       if (hasAxe) {
@@ -1768,7 +1759,7 @@ class Game {
         this.ui.showInteraction(`点按互动按钮 挥舞锋利石斧砍伐【${nearestTree.name}】获取重型圆木 (余${nearestTree.chopHp || 3}斧)`);
       } else if (this.monkeyHelper && this.monkeyHelper.isAvailable() && this.monkeyHelper.energy >= 10) {
         this.ui.setContextAction('monkey_helper');
-        this.ui.showInteraction(`按 [E] 指挥小猴攀爬【${nearestTree.name}】采摘稀有果实 (精力-10)`);
+        this.ui.showInteraction(`点按互动按钮 指挥小猴攀爬【${nearestTree.name}】采摘稀有果实 (精力-10)`);
       } else {
         this.ui.setContextAction('tree');
         this.ui.showInteraction(`点按 [🌲摇树] 摇晃 ${nearestTree.name}`);

@@ -233,7 +233,7 @@ export class WeatherSurvivalSystem {
           inv['battery'] = (inv['battery'] || 0) + 1;
           if (this.game.ui) {
             this.game.ui.renderInventory();
-            this.game.ui.showDialog('🧰 破解沉船黑匣子！', '你撬开了经受巨浪冲刷的加固黑匣子！\n\n获得珍稀物资：\n🪙 古代海盗金币 x35！\n🔩 加固铁钉 x3！\n🔋 强效干电池 x1！');
+            this.game.ui.showDialog('🧰 破解沉船黑匣子！', '你撬开了经受巨浪冲刷的加固黑匣子！\n\n获得珍稀物资：\n💰 古代海盗金币 x35！\n🔩 加固铁钉 x3！\n🔋 强效干电池 x1！');
           }
         } else if (item.id === 'deepsea_shell') {
           if (this.game.ui) {

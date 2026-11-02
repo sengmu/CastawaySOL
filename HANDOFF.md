@@ -1,6 +1,6 @@
 # AI接手说明
 
-更新：2026-10-31，北京时间。
+更新：2026-11-02，北京时间。
 
 ## Solana Web3 钱包连接与链上支付全链路重构升级（2026-10-31）
 
@@ -657,3 +657,31 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
 后续对照效果图补齐顶部双层独立圆角卡片、生命值五颗动态心（每 20 点一颗）、任务条独立定位和物品栏上移。390×844 浏览器截图已更新至 `docs/ui/cozy-portrait-runtime-390x844.png`；截图中角色生命确实为 0，所以五颗心全为空心，不能把截图当作满血样式验收。当前界面仍使用游戏原有 3D 场景，参考图中的高精海岛背景并非实际素材。
 
 现有 12 套 `tests/verify-*.mjs` 全部退出码 0；`npm run build` 通过。浏览器运行时在 390×844 与 360×780 两种视口检查了元素边界、素材加载和控制台错误；390×844 截图存档为 `docs/ui/cozy-portrait-runtime-390x844.png`。浏览器里主互动按钮因现有效果放大约 1.05 倍，视觉底边与摇杆差约 2px。尚需 Seeker 真机手感验收，未安装手机包、未提交。
+
+## Solana Seeker 横竖屏全流程试玩 13 项问题分批修复与 v1.0.28 构建（2026-11-02）
+
+按用户“以用户的角度玩一下找出问题”及“顺序逐批修复这些问题，并在修复后重新编译安装 / 更新到 github”的指示，模拟 Solana Seeker 横屏（890×400）与竖屏（400×890）全流程试玩后，分 P0 / P1 / P2 三批完成 13 项问题及船坞前置锁边界修复：
+
+1. **第一批（P0 核心合规与阻断修复）**：
+   - **货币命名与图标分离（#1）**：全面清理 `UIManager.js`、`ShopManager.js`、`CampFacilitySystem.js`、`MiningRigSystem.js` 中把岛内 `sol_token`（算力代币）混标为 `🪙` 硬币 emoji 或混称真实 `SOL` 的展示，统一替换为 `items/sol_token` 黏土图标与“算力代币”字样，与链上真实 `SOL`、生态代币 `SKR` 严格区分。
+   - **开局摇杆锁死与序章饮水引导（#2）**：修复触控关闭开场对话框后 `body.hud-dialog-open` 残留导致左下摇杆无法拖动的缺陷；新开局随身水壶默认装满 3/3 口甘泉并在快捷栏第 1 格常驻，可直接点按饮水推进序章。
+   - **移动端武器切换与攻击键联动（#3）**：持有 `spear` 或 `wooden_bow` 时右下 `#btn-quick-attack` 自动显现；在快捷栏点选猎弓或战矛即可联动 `wildlifeCombat.toggleCombatMode()` 切换远程/近战状态，同步清理 `[F]` 残留文案。
+   - **合成台蓝图双动作闭环（#4）**：在“荒岛图鉴蓝图”列表同时提供【放入槽】与【⚡制作】双按钮，消除左侧“从右侧点击放入槽位”提示与蓝图一键制作之间的认知割裂。
+
+2. **第二批（P1 界面遮挡、乱码与竖屏适配）**：
+   - **引导卡与模态窗防遮挡（#5）**：修复 `#onboarding-card` 在横屏矮视口下压盖快捷栏、以及打开模态弹窗/更多抽屉时底层引导卡透出的问题。
+   - **损坏 Unicode 替换符清理（#6）**：清理 `UIManager.js`、`VillagerSystem.js` 等文件中残留的 `�` 乱码字符，恢复正常中文与符号。
+   - **顶部任务条交互强化（#7）**：优化 `#quest-banner` 横竖屏字号、折行与点击展开完整任务指引。
+   - **矿机与船坞按钮样式及前置锁防崩（#8）**：补齐 `#btn-rig-upgrade`、`#modal-close-btn` 等按钮圆角与触控尺寸；修复第 4 章前打开船坞升级弹窗时 `ShipUpgradeSystem.checkCanUpgrade()` 未返回 `costDetails` 数组导致的 `undefined.map` 渲染报错。
+   - **竖屏窄视口适配（#9）**：修正 400×890 竖屏下行囊/合成/商店卡片宽度自适应与右下角辅助动作键扇形排布。
+
+3. **第三批（P2 场景交互与渲染细节）**：
+   - **北崖灯塔穿模与交互抢占修复（#10）**：统一 `InteractionFeedbackSystem.js` 与 `main.js` 对 `lighthouse.anchor` `(24, 1.8, -26)` 的感知，移开灯塔正门与视线走廊上的雪松（`TreeInteraction.js`）及堵门野猪 `boar_3`（`WildlifeCombatSystem.js`），移除违和木牌，靠近灯塔正门稳定显示“灯塔”交互。
+   - **桌面按键提示清理（#11）**：清理 `LighthouseEntity.js`、`StorySystem.js`、`main.js` 等交互文案中残留的 `按 [E]` / `[F]` 键盘提示。
+   - **横屏更多抽屉双列防截断（#12）**：在 `@media (orientation: landscape) and (max-height: 500px)` 下为 `.hud-nav-secondary.hud-drawer.open` 启用双列紧凑网格布局并补齐 `.notice-opt` 样式，确保 890×400 视口一屏完整露出底部画质与提示强度开关。
+   - **水体泡沫空纹理警告消除（#13）**：`IslandTerrain.js` 改用独立 `loadTex('/textures/water_foam.png')` 加载浪沫贴图，消除异步图片未就绪时 `.clone()` 触发的 `Texture marked for update but no image data found` 警告。
+
+4. **实际验证与未验证边界**：
+   - **实际验证**：无头 Chrome CDP 在 890×400（横屏）与 400×890（竖屏）下完成全部 13 项修复的 DOM/几何断言与截图目视核验（控制台错误 0 条、空纹理警告 0 条）；`node tools/verify-golden-path.mjs` 序章至第六章黄金路径及每章存档导入导出往返校验通过；`verify-e1-economy-repair`、`verify-g3-economy-gate`、`verify-ship-upgrade-system`、`verify-mobile-adaptability`、`verify-icon-wiring`、`verify-mainline-spine`、`verify-save-schema-v2` 回归通过；`android/app/build.gradle` 升级至 `versionCode 28` / `versionName "1.0.28"`，完成 Capacitor 同步、Debug APK 构建与 `adb install -r` Seeker 真机覆盖安装。
+   - **未验证**：Seeker 真机上的物理手指长时实操手感、刘海/挖孔安全区实机观感、MWA / Seed Vault 真机硬件钱包签名唤起、以及真实链上主网支付（按红线未开启主网支付测试）。
+

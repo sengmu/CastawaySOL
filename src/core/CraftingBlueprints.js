@@ -20,7 +20,7 @@ export const CRAFTING_BLUEPRINTS = [
     count: 1,
     name: '燧石战矛 🗡️',
     hint: '柔韧藤蔓捆绑坚硬燧石，打造远距离强力突刺兵刃',
-    desc: '按 [F] 或右下角攻击键发动强力突刺，造成 38 点伤害，3.2 米攻击范围！'
+    desc: '点按右下角攻击键发动强力突刺，造成 38 点伤害，3.2 米攻击范围！'
   },
   {
     id: 'wooden_bow',
@@ -31,7 +31,7 @@ export const CRAFTING_BLUEPRINTS = [
     count: 1,
     name: '简易猎弓 🏹',
     hint: '加厚兽皮韧弦与弹性硬木结合，制成远程抛物线抛射武器',
-    desc: '按 [R] 键切换远程射击模式，射出物理抛物线羽箭，远距激怒引怪！'
+    desc: '长按右下角攻击键切换远程射击模式，射出物理抛物线羽箭，远距激怒引怪！'
   },
   {
     id: 'flint_arrow',

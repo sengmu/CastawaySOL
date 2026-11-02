@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "0f797dc724e3dc8dc491e74121ee0229",
+  "saveSeed": "b3c70983a1518d9dd26285f3a7f9b556",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -12,7 +12,7 @@
             "resonance_free": 3
           },
           "sol_token": {
-            "decrypt": 6
+            "decrypt": 7
           }
         },
         "outflow": {
@@ -24,7 +24,7 @@
       }
     ]
   },
-  "timestamp": 1793619510118,
+  "timestamp": 1793632794907,
   "player": {
     "position": [
       -12,
@@ -51,7 +51,7 @@
     "battery": 1,
     "nail": 3,
     "tree_sap": 1,
-    "coconut": 2,
+    "coconut": 3,
     "tree_bark": 0,
     "kindling": 1,
     "baked_apple": 1,
@@ -244,9 +244,9 @@
   },
   "miningRig": {
     "loadedCrystals": 0,
-    "unclaimedSol": 6,
+    "unclaimedSol": 7,
     "totalBlocksMined": 3,
-    "totalSolMined": 6,
+    "totalSolMined": 7,
     "batteryPower": 75,
     "hashProgress": 0,
     "isOverclocked": false,
@@ -334,7 +334,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793619481352,
+      "freeGrantTs": 1793632778714,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,

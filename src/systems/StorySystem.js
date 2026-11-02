@@ -210,11 +210,54 @@ export class StorySystem {
     return chapter.steps[this.currentStepIndex] || chapter.steps[chapter.steps.length - 1];
   }
 
+  // 判断当前章节最后一步的叙事条件是否已达成
+  _isLastStepNarrativeMet() {
+    const chapter = this.getCurrentChapter();
+    if (!chapter || this.currentStepIndex !== chapter.steps.length - 1) return false;
+    const stepId = this.getCurrentStep()?.id;
+    if (stepId === 'find_campsite') return this.hasReachedCampsite;
+    if (stepId === 'craft_axe') return this.hasCraftedAxe;
+    if (stepId === 'befriend_monkey') return this.monkeyBefriended;
+    if (stepId === 'radio_contact') return this.radioBroadcasted;
+    if (stepId === 'rescue_partner') return this.secondKidAwake;
+    if (stepId === 'collect_gems') return this.gemsCollected.size >= 3;
+    return false;
+  }
+
+  // 获取当前章节过章挖矿要求文案
+  getChapterGateBannerDesc(chapterId) {
+    const rig = this.game?.miningRig;
+    if (chapterId === 0) {
+      return '过章要求：检视营地绿色矿机并装载至少 1 块硅晶原石！';
+    }
+    if (chapterId === 1) {
+      const blocks = rig?.totalBlocksMined || 0;
+      const tokens = rig?.totalSolMined || 0;
+      return `过章要求：营地矿机完成首次出块 (${Math.min(blocks, 1)}/1) 且累计产出 6 枚算力代币 (${Math.min(tokens, 6)}/6)！`;
+    }
+    if (chapterId === 2) {
+      return '过章要求：研制地质共振扫描仪 Mk1 并完成首次地脉共振勘探结算！';
+    }
+    if (chapterId === 3) {
+      return '过章要求：建造精炼炉提炼高纯纯晶，并将矿机升级至 L2！';
+    }
+    if (chapterId === 4) {
+      return '过章要求：造船出海前往浮木岛救回学者雷蒙德！';
+    }
+    if (chapterId === 5) {
+      return '过章要求：交付晶石点亮北崖灯塔一期工程，并将矿机升级至 L4！';
+    }
+    return '过章要求：达成当前章节挖矿里程碑！';
+  }
+
   // 获得格式化的当前任务引导文案
   getQuestBannerText() {
     if (this.isCompleted) return FREEPLAY_BANNER;
     const chapter = this.getCurrentChapter();
     const step = this.getCurrentStep();
+    if (this._isLastStepNarrativeMet() && !this.canPassChapterGate(this.currentChapterId)) {
+      return `⛏️ [${chapter.title}] ${this.getChapterGateBannerDesc(this.currentChapterId)}`;
+    }
     return `🚩 [${chapter.title}] ${step.desc}`;
   }
 
@@ -287,18 +330,17 @@ export class StorySystem {
 
     // 3. 章节门跨章推进检测：若当前章节末步已达成，但此前受阻于挖矿里程碑，一旦达成自动推进
     if (this.currentStepIndex === this.getCurrentChapter().steps.length - 1) {
-      let stepNarrativeMet = false;
-      const stepId = currentStep.id;
-      if (stepId === 'find_campsite') stepNarrativeMet = this.hasReachedCampsite;
-      else if (stepId === 'craft_axe') stepNarrativeMet = this.hasCraftedAxe;
-      else if (stepId === 'befriend_monkey') stepNarrativeMet = this.monkeyBefriended;
-      else if (stepId === 'radio_contact') stepNarrativeMet = this.radioBroadcasted;
-      else if (stepId === 'rescue_partner') stepNarrativeMet = this.secondKidAwake;
-      else if (stepId === 'collect_gems') stepNarrativeMet = this.gemsCollected.size >= 3;
-
+      const stepNarrativeMet = this._isLastStepNarrativeMet();
       if (stepNarrativeMet && this.canPassChapterGate(this.currentChapterId)) {
         this.#advanceStep();
         return;
+      }
+      if (stepNarrativeMet) {
+        const nextBanner = this.getQuestBannerText();
+        if (this._lastGateBanner !== nextBanner) {
+          this._lastGateBanner = nextBanner;
+          this.game?.ui?.updateObjective?.(nextBanner);
+        }
       }
     }
   }
@@ -426,6 +468,7 @@ export class StorySystem {
       5: '🗼 第五章过章要求：交付多梯晶石点亮北崖灯塔一期大工程，并将矿机升至 L4！'
     };
     const tip = tips[chapterId] || '🚧 尚未达成当前章节挖矿里程碑！';
+    this.game.ui.updateObjective?.(this.getQuestBannerText());
     this.game.ui.showToast(tip, 'medium');
   }
 

@@ -5,6 +5,7 @@
 // 3. 第三重：深渊密室黄金宝藏结算 (波塞冬金冠、深渊附魔燧石巨斧、100金币)
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
+import { iconHTML } from '../ui/IconRegistry.js';
 
 export class TemplePuzzleSystem {
   constructor(game) {
@@ -309,7 +310,7 @@ export class TemplePuzzleSystem {
           <div style="font-size: 12px; color: #fff; line-height: 1.8;">
             👑 <b>远古波塞冬金冠</b>（全地形奔跑速度 +20%，涉水如履平地）<br/>
             🪓 <b>深渊附魔燧石战斧</b>（砍伐与碎石伤害倍增，战斗力爆发）<br/>
-            🪙 <b>纯金古代金币 x100</b>（海量通货）<br/>
+            ${iconHTML('items/ancient_coin', 14, { eager: true })} <b>纯金古代金币 x100</b>（海量通货）<br/>
             🔋 <b>高能古代蓄能核心 x2</b>
           </div>
         </div>
@@ -435,7 +436,7 @@ export class TemplePuzzleSystem {
         '你获得了神殿最珍贵的遗泽：\n' +
         '👑【远古波塞冬金冠】：全地形奔跑速度永久 +20%，涉水如履平地！\n' +
         '🪓【深渊附魔燧石战斧】：摧山断木，破坏力大幅提升！\n' +
-        '🪙【古代海盗金币】+100！\n\n' +
+        '💰【古代海盗金币】+100！\n\n' +
         '神殿的神秘光芒长明，主岛古迹已完全破译！'
       );
     }

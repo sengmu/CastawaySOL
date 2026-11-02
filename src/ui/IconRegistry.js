@@ -59,7 +59,7 @@ const ITEM_EMOJI = {
   spear: '🗡️', wooden_bow: '🏹', bow_arrow: '🏹', flint_arrow: '🏹', fire_arrow: '🏹🔥',
   bone_armor: '🦺', crab_shield: '🛡️', crab_shell: '🛡️', beast_hide: '🧶', beast_trap: '🪤', wooden_spikes: '🪵',
   broken_radio: '📻', workradio: '📡', battery: '🔋', sos_sign: '🆘', escape_raft: '⛵', large_backpack: '🎒',
-  ancient_coin: '🪙', treasure_map_piece: '🗺️', pearl: '🦪', tough_bark: '🍂', sol_crystal: '💎', sol_token: '🪙'
+  ancient_coin: '💰', treasure_map_piece: '🗺️', pearl: '🦪', tough_bark: '🍂', sol_crystal: '💎', sol_token: '💠'
 };
 
 // 界面图标路径没有图时的 emoji
