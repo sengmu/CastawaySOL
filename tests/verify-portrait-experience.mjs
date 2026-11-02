@@ -29,8 +29,8 @@ console.log('  ✅ 竖屏基准相机视距后拉 (1.25x 景深与横向范围) 
 console.log('\n▶ [3/4] 验证 VirtualJoystick 竖屏单手盲操感应区与锚点...');
 const vjCode = fs.readFileSync(path.join(projectRoot, 'src/ui/VirtualJoystick.js'), 'utf8');
 assert.ok(vjCode.includes('isPortrait'), '虚拟摇杆必须感知 isPortrait');
-assert.ok(vjCode.includes('zoneWidth = isPortrait ? 58 : 48'), '竖屏下盲操感应层宽度需扩展至 58vw');
-assert.ok(vjCode.includes('topOffset = isPortrait'), '竖屏下感应区需避开顶部状态栏与导航键');
+assert.ok(vjCode.includes('width: 55vw !important;'), '盲操感应层为纯 CSS 固定 55vw 左半区（v1.0.28 真机修复：规避 JS 动态高度塌陷）');
+assert.ok(vjCode.includes('z-index: 95 !important;'), '感应层 z95 低于 HUD 控件层：顶部状态栏与导航键优先接管触摸（v1.0.28 分层机制，取代旧 topOffset 收缩）');
 console.log('  ✅ 虚拟摇杆单手盲操感应区扩展与避让验证通过！');
 
 // 4. 验证 UIManager 竖屏无重叠顶栏、自适应弹窗与安全区

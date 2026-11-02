@@ -32,7 +32,7 @@ assert.ok(uiCode.includes("width: 16px !important") && uiCode.includes("height: 
 assert.ok(uiCode.includes("top-right-group #txt-hud-sol-token { display: none !important; }"), "竖屏下按钮本体不印数字");
 
 // 4) 底部双锚：摇杆与右下组共用同一 bottom 值（含安全区变量），两组垂直中心同线，摇杆直径上限 min(30vw, 120px)
-assert.ok(vjCode.includes("Math.min(window.innerWidth * 0.15, 60)"), "摇杆底盘半径上限必须限制在 60px (直径 <= 120px 且 <= 30vw)");
+assert.ok(vjCode.includes("Math.min(initW * 0.15, 60)"), "摇杆底盘半径上限必须限制在 60px (直径 <= 120px 且 <= 30vw)");
 assert.ok(vjCode.includes("centerYFromBottom = isPortrait ? (Math.max(16, sab) + this.baseRadius)"), "摇杆底边必须与互动按钮使用同一安全边距");
 assert.ok(cozyCss.includes("bottom: max(16px, var(--sab, 0px)) !important;"), "右下按钮区必须使用同一安全边距");
 
