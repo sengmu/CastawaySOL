@@ -2983,8 +2983,13 @@ export class UIManager {
       button.textContent = label;
       button.addEventListener('click', async () => {
         button.disabled = true;
+        button.textContent = '处理中，请在钱包中确认…';
         try { await action(); this.openProfileModal(); }
-        catch (error) { this.showToast(error.message || '操作失败，本机存档未变', 'medium'); button.disabled = false; }
+        catch (error) {
+          set('profile-account-state', `操作失败：${error.message || '请稍后重试'}`);
+          button.textContent = label;
+          button.disabled = false;
+        }
       });
       actions.appendChild(button);
     };
@@ -3498,6 +3503,16 @@ export class UIManager {
             const result = await solanaBridge.connectWallet(button.dataset.wallet);
             if (!result.success || solanaBridge.isGuest) this.showToast(result.message || '连接未完成，请重试', 'medium');
             this.updateSolanaBtn();
+            const account = window.__game?.accountService;
+            if (result.success && !solanaBridge.isGuest && account?.configured && !account.linked) {
+              button.textContent = '正在请求账号签名…';
+              try {
+                await account.connect();
+                this.showToast('钱包账号已绑定', 'medium');
+              } catch (error) {
+                this.showToast(`账号绑定未完成：${error.message || '请重试'}`, 'medium');
+              }
+            }
           } catch (error) {
             this.showToast('连接未完成，请重试', 'medium');
           } finally {
