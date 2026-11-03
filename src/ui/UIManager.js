@@ -2998,7 +2998,7 @@ export class UIManager {
       set('profile-account-state', walletConnected ? '钱包已连接，尚未签名绑定账号' : '请先连接钱包');
       if (walletConnected) addAction('签名绑定账号', () => account.connect());
     } else {
-      set('profile-account-state', `已绑定 ${account.address.slice(0, 4)}…${account.address.slice(-4)} · 云端版本 ${account.revision}`);
+      set('profile-account-state', `已绑定 ${account.address.slice(0, 4)}…${account.address.slice(-4)} · 云端版本 ${account.revision}${account.syncEnabled ? ' · 自动同步中' : ' · 云端与本机进度不同，请选择恢复或上传'}`);
       addAction('上传本机存档', async () => {
         if (account.remoteRecord && !window.confirm('云端已有存档。确认用本机进度覆盖云端？')) return;
         await account.upload();

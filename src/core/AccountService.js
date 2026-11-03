@@ -1,4 +1,5 @@
 import { solanaBridge } from './SolanaBridge.js';
+import { SAVE_KEY_PRIMARY } from '../systems/SaveSystem.js';
 
 export class AccountService {
   constructor(game) {
@@ -43,6 +44,14 @@ export class AccountService {
     this.remoteRecord = record;
     this.revision = record?.revision || 0;
     this.syncEnabled = false;
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem(SAVE_KEY_PRIMARY) || 'null'); } catch {}
+    if (!record) {
+      await this.upload(local && this.game.saveSystem.validateSaveData(local) ? local : this.game.saveSystem.createSnapshot());
+    } else if (local?.saveSeed === record.snapshot?.saveSeed) {
+      if (local.timestamp > record.snapshot.timestamp) await this.upload(local);
+      else if (local.timestamp === record.snapshot.timestamp) this.syncEnabled = true;
+    }
     return record;
   }
 
@@ -74,6 +83,7 @@ export class AccountService {
   }
 
   queueUpload(snapshot) {
+    if (this.linked && !this.remoteRecord && !this.syncEnabled) this.syncEnabled = true;
     if (!this.linked || this.revision === null || !this.syncEnabled) return;
     this.pendingSnapshot = snapshot;
     if (this.uploading) return;
