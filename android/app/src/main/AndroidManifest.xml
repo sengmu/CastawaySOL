@@ -11,14 +11,14 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
 
-        <!-- 竖屏优先、横屏可兼容。unspecified 不锁轴向：sensorPortrait 会禁横屏，user 会跟随用户已锁的横屏。冷启动默认竖屏见 MainActivity。 -->
+        <!-- 竖屏优先（用户 2026-11-03 定版）：sensorPortrait 锁定竖屏轴向（正/倒竖屏随传感器），真机实测 unspecified 冷启动会落横屏，故不用 unspecified/user。 -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:screenOrientation="unspecified"
+            android:screenOrientation="sensorPortrait"
             android:exported="true">
 
             <intent-filter>

@@ -12,15 +12,11 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    private boolean initialPortraitReleased = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 冷启动先请求正向竖屏，保证默认首帧是竖屏。
-        // manifest 为 unspecified：首帧获得焦点后再交回系统，横屏仍可旋转。
-        if (savedInstanceState == null) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
+        // 竖屏优先（用户定版）：全程锁定竖屏轴向，与 manifest 的 sensorPortrait 一致。
+        // 旧做法「首帧后交回 unspecified」在真机冷启动会落横屏，已废止。
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         super.onCreate(savedInstanceState);
         setupFullscreen();
     }
@@ -36,16 +32,6 @@ public class MainActivity extends BridgeActivity {
         super.onWindowFocusChanged(hasFocus);
         if (!hasFocus) return;
         setupFullscreen();
-        releaseInitialPortraitLock();
-    }
-
-    private void releaseInitialPortraitLock() {
-        if (initialPortraitReleased) return;
-        initialPortraitReleased = true;
-        getWindow().getDecorView().post(() -> {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-            setupFullscreen();
-        });
     }
 
     private void setupFullscreen() {
