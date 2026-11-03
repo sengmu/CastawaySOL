@@ -199,6 +199,7 @@ class Game {
     if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
     if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
     this.templePuzzle = new TemplePuzzleSystem(this);
+    this.initBuildingSelection();
 
     // 12. 键盘交互与战斗快捷键 (E键互动，F键挥矛/射击，R键切换近战与远程模式)
     window.addEventListener('keydown', (e) => {
@@ -448,6 +449,8 @@ class Game {
     // 智能防死锁自愈：如果当前状态与玩家物理位置严重脱节（例如处于神殿但坐标在后山外部），解除拦截强制传送
     const isDesynced = (targetId === 'ancient_temple' && this.currentIslandId === 'ancient_temple' && this.player.position.z < -10);
     if (!forceFlag && !isDesynced && this.currentIslandId === targetId) return;
+
+    this.clearBuildingSelection?.();
 
     if (targetId !== 'main_island' && this.buildSystem && this.buildSystem.isBuildMode) {
       this.buildSystem.exitBuildMode();
@@ -766,6 +769,11 @@ class Game {
 
     const playerPos = this.player.position;
 
+    const selectedBuilding = this.getSelectedBuilding();
+    if (selectedBuilding) {
+      if (this.interactSelectedBuilding(selectedBuilding)) return;
+    }
+
     // 0. 优先检测附近是否有战斗战利品包裹可按 [E] 拾取
     if (this.wildlifeCombat && this.wildlifeCombat.checkLootPickup(playerPos)) {
       return;
@@ -876,6 +884,16 @@ class Game {
         this.travelToIsland('main_island');
         return;
       }
+      return;
+    }
+
+    // 地上的树木掉落物统一由玩家决定是否拾取。
+    if (this.currentIslandId === 'main_island' && this.trees.getNearestDrop(playerPos)) {
+      this.trees.pickupDrop(playerPos, (itemType) => {
+        if (!this.ui.addInventory(itemType)) return false;
+        this.story?.onGatherResource?.(itemType);
+        return true;
+      });
       return;
     }
 
@@ -1464,6 +1482,127 @@ class Game {
     }
   }
 
+  initBuildingSelection() {
+    this.buildingRaycaster = new THREE.Raycaster();
+    this.selectedBuilding = null;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.78, 0.92, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffd166, side: THREE.DoubleSide, transparent: true, opacity: 0.9, depthWrite: false })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.visible = false;
+    this.scene.add(ring);
+    this.buildingSelectionRing = ring;
+
+    let pointerStart = null;
+    this.renderer.domElement.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || this.buildSystem?.isBuildMode) return;
+      pointerStart = { x: event.clientX, y: event.clientY, time: performance.now() };
+    });
+    this.renderer.domElement.addEventListener('pointerup', event => {
+      if (!pointerStart || this.buildSystem?.isBuildMode) return;
+      const moved = Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y);
+      const elapsed = performance.now() - pointerStart.time;
+      pointerStart = null;
+      if (moved > 14 || elapsed > 500) return;
+      this.selectBuildingAt(event.clientX, event.clientY);
+    });
+    this.renderer.domElement.addEventListener('pointercancel', () => { pointerStart = null; });
+  }
+
+  clearBuildingSelection() {
+    this.selectedBuilding = null;
+    if (this.buildingSelectionRing) this.buildingSelectionRing.visible = false;
+  }
+
+  getSelectedBuilding() {
+    const selected = this.selectedBuilding;
+    if (!selected || this.currentIslandId !== 'main_island' || !selected.root.parent || !selected.root.visible || this.buildSystem?.isBuildMode) {
+      if (selected) this.clearBuildingSelection();
+      return null;
+    }
+    if (selected.entry && !this.buildSystem.placedFurniture.includes(selected.entry)) {
+      this.clearBuildingSelection();
+      return null;
+    }
+    const worldPos = selected.root.getWorldPosition(new THREE.Vector3());
+    selected.distance = Math.hypot(this.player.position.x - worldPos.x, this.player.position.z - worldPos.z);
+    if (selected.distance > 7) {
+      this.clearBuildingSelection();
+      return null;
+    }
+    this.buildingSelectionRing.position.set(worldPos.x, worldPos.y + 0.08, worldPos.z);
+    return selected;
+  }
+
+  selectBuildingAt(clientX, clientY) {
+    if (this.currentIslandId !== 'main_island' || this.buildSystem?.isBuildMode || this.ui?.modalBackdrop?.style.display === 'flex') return;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const roots = [
+      ...(this.campEntities?.group?.visible ? this.campEntities.group.children : []),
+      ...(this.tidalTrap?.group?.visible ? this.tidalTrap.group.children : []),
+      ...(this.miningRig?.group?.visible ? this.miningRig.group.children.filter(child => child.userData.interactionId) : []),
+      this.petCompanion?.nestMesh,
+      ...((this.buildSystem?.furnitureGroup?.visible ? this.buildSystem.placedFurniture : []).filter(entry => entry.mesh && (entry.isStorage || entry.isWaterPurifier || entry.isBed || entry.isFurnace)).map(entry => entry.mesh))
+    ].filter(root => root?.visible);
+    const pointer = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.buildingRaycaster.setFromCamera(pointer, this.camera);
+    const hits = this.buildingRaycaster.intersectObjects(roots, true);
+    let picked = null;
+    for (const hit of hits) {
+      let root = hit.object;
+      while (root && !roots.includes(root)) root = root.parent;
+      if (!root) continue;
+      const pos = root.getWorldPosition(new THREE.Vector3());
+      if (Math.hypot(this.player.position.x - pos.x, this.player.position.z - pos.z) <= 7) {
+        picked = root;
+        break;
+      }
+    }
+    if (!picked) {
+      this.clearBuildingSelection();
+      return;
+    }
+    const entry = this.buildSystem.placedFurniture.find(item => item.mesh === picked);
+    const id = entry ? 'furniture' : picked.userData.interactionId;
+    const names = { noticeboard: '营地经营告示板', orderBoard: '日常订单板', radioTerminal: '救援无线电站', waterPurifier: '净水滴滤台', buoyWinch: '打捞滑轮', crabTrap: '潮汐捕蟹笼', smoker: '熏烤风干架', miningRig: '绿色解密矿机', petNest: '伙伴暖巢' };
+    const name = entry ? (entry.isStorage ? '储物木箱' : entry.isWaterPurifier ? '净水设施' : entry.isBed ? '床位' : '耐火熔炉') : names[id];
+    if (!name) return;
+    this.selectedBuilding = { id, root: picked, entry, name, range: id === 'miningRig' ? 3.2 : id === 'buoyWinch' ? 2.8 : 2.6 };
+    this.getSelectedBuilding();
+    this.buildingSelectionRing.visible = true;
+    this.ui.showToast(`已选中【${name}】`, 'small');
+  }
+
+  interactSelectedBuilding(selected) {
+    if (selected.distance > selected.range) {
+      this.ui.showToast(`请靠近【${selected.name}】再互动`, 'small');
+      return true;
+    }
+    switch (selected.id) {
+      case 'noticeboard': this.ui.openCampManageModal(); break;
+      case 'orderBoard': this.ui.openOrderBoardModal(); break;
+      case 'radioTerminal': this.shopManager?.open(); break;
+      case 'waterPurifier': this.campFacilities?.interactWaterPurifier({ isWaterPurifier: true }); break;
+      case 'buoyWinch': this.ui.openAutoSalvageModal(this.flotsamSalvage); break;
+      case 'crabTrap': this.ui.openCrabTrapModal(this.tidalTrap); break;
+      case 'smoker': this.ui.openSmokerModal(this.tidalTrap); break;
+      case 'miningRig': this.ui.openMiningRigModal(this.miningRig); break;
+      case 'petNest': this.ui.openPetCompanionModal(this.petCompanion); break;
+      case 'furniture': {
+        const entry = selected.entry;
+        if (entry.isStorage) this.storageSystem?.openStorage(entry.id);
+        else if (entry.isWaterPurifier) this.campFacilities?.interactWaterPurifier(entry);
+        else if (entry.isBed) this.triggerSleepRoutine('bed');
+        else if (entry.isFurnace) this.ui.openFurnaceModal();
+        break;
+      }
+      default: return false;
+    }
+    return true;
+  }
+
   getAdaptiveFOV() {
     const aspect = window.innerWidth / window.innerHeight;
     // 竖屏（aspect < 1.0）动态扩展垂直视角，兼顾视野开阔度与广角边缘畸变
@@ -1530,12 +1669,7 @@ class Game {
 
     // 更新伙伴与村民 (注入 story 驱动猴子跟随与第二幸存者状态)
     this.villagers.update(delta, this.player.position, this.story);
-    this.trees.update(delta, this.player.position, (itemType) => {
-      this.ui.addInventory(itemType);
-      if (this.story && this.story.onGatherResource) {
-        this.story.onGatherResource(itemType);
-      }
-    });
+    this.trees.update(delta);
 
     // 更新全岛林间落叶漂流与黄昏夜幕萤火虫微光
     if (this.ambientParticles && this.currentIslandId === 'main_island') {
@@ -1779,6 +1913,9 @@ class Game {
     const isRaft = distanceXZ(playerPos, ISLAND_LAYOUT.raft) < 5.0;
     const nearestVillager = this.villagers.getNearestVillager(playerPos, 3.5);
     const nearestTree = this.trees.getNearestTree(playerPos, 3.2);
+    const nearestDrop = this.currentIslandId === 'main_island'
+      ? this.trees.getNearestDrop(playerPos)
+      : null;
 
     // 检查宝石
     const nearGem = this.gemMeshes?.find(g => !g.info.picked && g.group.position.distanceTo(playerPos) < 2.5);
@@ -1849,12 +1986,27 @@ class Game {
       return;
     }
 
-    if (nearTyphoonLoot) {
+    const selectedBuilding = this.getSelectedBuilding();
+    if (selectedBuilding) {
+      this.ui.setContextAction('default');
+      this.ui.showInteraction(selectedBuilding.distance <= selectedBuilding.range
+        ? `已选中【${selectedBuilding.name}】· 点按互动按钮操作，点空地取消`
+        : `已选中【${selectedBuilding.name}】· 请靠近后互动，点空地取消`);
+    } else if (nearTyphoonLoot) {
       this.ui.setContextAction('pickup');
       this.ui.showInteraction(`点按互动按钮 抢救打捞台风巨浪冲刷物：【${nearTyphoonLoot.name}】`);
     } else if (nearLoot) {
       this.ui.setContextAction('pickup');
       this.ui.showInteraction(`点按互动按钮 拾取战利品包裹：【${nearLoot.mobName} 遗落】`);
+    } else if (nearestDrop) {
+      this.ui.setContextAction('pickup');
+      const dropUses = {
+        apple: '可直接吃', coconut: '可吃可补水', tree_branch: '制作工具和引火物',
+        tree_bark: '制作引火物', tree_sap: '制作火把', ivy: '制作鱼竿和绳索',
+        lumber: '建造木筏', wood_plank: '建造设施'
+      };
+      const dropName = this.ui.getItemName(nearestDrop.type);
+      this.ui.showInteraction(`点按互动按钮 拾取【${dropName}】· ${dropUses[nearestDrop.type] || '制作材料'}`);
     } else if (isLighthouse) {
       this.ui.setContextAction('lighthouse');
       this.ui.showInteraction(this.lighthouse.isLit ? '🌟 北崖古灯塔（一期已点亮）' : '点按互动按钮 检视/交付【北崖灯塔一期大工程】');

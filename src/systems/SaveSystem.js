@@ -122,6 +122,8 @@ export class SaveSystem {
         isDead: survival.isDead
       } : null,
       inventory: ui && ui.inventory ? { ...ui.inventory } : {},
+      starterDrops: this.game.trees?.getRemainingStarterDrops?.() ?? null,
+      treeDrops: this.game.trees?.getDropSnapshot?.() ?? null,
       bonusInventorySlots: ui && typeof ui.bonusInventorySlots === 'number' ? ui.bonusInventorySlots : 0,
       storage: this.game.storageSystem && this.game.storageSystem.serialize ? this.game.storageSystem.serialize() : null,
       campFacilities: this.game.campFacilities && this.game.campFacilities.serialize ? this.game.campFacilities.serialize() : null,
@@ -495,6 +497,8 @@ export class SaveSystem {
       }
       this.game.ui.renderInventory();
     }
+    if (Array.isArray(data.treeDrops)) this.game.trees?.restoreDrops?.(data.treeDrops);
+    else this.game.trees?.restoreStarterDrops?.(data.starterDrops);
 
     // 3.5 恢复营地储物箱
     if (data.storage && this.game.storageSystem) {

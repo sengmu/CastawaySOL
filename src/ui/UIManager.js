@@ -510,6 +510,21 @@ export class UIManager {
       .modal-body::-webkit-scrollbar { width: 5px; }
       .modal-body::-webkit-scrollbar-thumb { background: rgba(107, 74, 50, 0.25); border-radius: 3px; }
 
+      .profile-page { display:grid; gap:12px; color:#5a4432; }
+      .profile-hero { display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; background:linear-gradient(135deg,#fff8e9,#f1e1bb); }
+      .profile-portrait { width:68px; height:68px; object-fit:contain; flex:none; }
+      .profile-hero-copy { display:flex; flex-direction:column; gap:4px; min-width:0; }
+      .profile-hero-copy strong { font-size:20px; }
+      .profile-hero-copy span, .profile-note { font-size:12px; color:#806e58; line-height:1.5; }
+      .profile-section-title { font-size:14px; font-weight:800; padding:0 2px; }
+      .profile-facts, .profile-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .profile-facts>div, .profile-stats>div { min-width:0; display:flex; flex-direction:column; gap:4px; padding:11px 12px; border:1px solid #ead9b9; border-radius:12px; background:#fffdf6; }
+      .profile-facts span, .profile-stats span { font-size:12px; color:#89745b; }
+      .profile-facts strong, .profile-stats strong { font-size:14px; overflow-wrap:anywhere; }
+      .profile-wallet { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-radius:12px; background:#fffdf6; border:1px solid #ead9b9; font-size:13px; }
+      .profile-wallet button { min-height:44px; flex:none; border:0; border-radius:10px; padding:0 14px; background:#52694d; color:#fff; font-weight:800; }
+      .profile-note { padding:0 2px 4px; }
+
       /* 双栏横屏布局通用容器 */
       .split-modal-layout {
         display: flex; gap: 14px; min-height: 230px;
@@ -1620,23 +1635,11 @@ export class UIManager {
     const avatar = dashboard.querySelector('.portrait-protagonist-avatar');
     avatar.removeAttribute('aria-hidden');
     avatar.setAttribute('role', 'button');
-    avatar.setAttribute('aria-label', '查看生存状态');
+    avatar.setAttribute('aria-label', '打开个人主页');
     avatar.tabIndex = 0;
-    const showSurvivalDetails = () => {
-      document.getElementById('modal-title').textContent = '生存状态';
-      const body = document.getElementById('modal-body');
-      body.replaceChildren();
-      for (const [label, id] of [['生命', 'strip-val-life'], ['饱食', 'strip-val-hunger'], ['水分', 'strip-val-water'], ['疲劳', 'strip-val-fatigue']]) {
-        const row = document.createElement('div');
-        row.style.cssText = 'padding:14px 8px;border-bottom:1px solid #dfcfae;font-size:16px';
-        row.textContent = `${label}：${document.getElementById(id)?.textContent || '0'} / 100`;
-        body.appendChild(row);
-      }
-      this.modalBackdrop.style.display = 'flex';
-    };
-    avatar.addEventListener('click', showSurvivalDetails);
+    avatar.addEventListener('click', () => this.openProfileModal());
     avatar.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showSurvivalDetails(); }
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.openProfileModal(); }
     });
 
     // 独立任务简条容器（横屏与竖屏统一承载，竖屏默认单行，可点展开全文；无内容时彻底隐藏）
@@ -2911,6 +2914,61 @@ export class UIManager {
         }
       });
     });
+  }
+
+  openProfileModal() {
+    const game = this.game || window.__game;
+    const survival = game?.survival || this.survival;
+    const story = game?.story;
+    const chapter = story?.getCurrentChapter?.();
+    const walletConnected = solanaBridge.isConnected && !solanaBridge.isGuest && !!solanaBridge.walletAddress;
+    const walletAddress = walletConnected ? solanaBridge.walletAddress : '';
+    const islandNames = {
+      main_island: '主岛', timber_isle: '浮木岛', quarry_isle: '矿石岛',
+      mist_reef_isle: '晶雾岛', ancient_temple: '远古神殿'
+    };
+    const stat = value => Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+    if (this.player?.resetInput) this.player.resetInput();
+    document.getElementById('modal-title').textContent = '个人主页';
+    const body = document.getElementById('modal-body');
+    body.innerHTML = `
+      <div class="profile-page">
+        <div class="profile-hero">
+          <img src="/ui/cozy/protagonist-avatar.webp" alt="幸存者头像" class="profile-portrait">
+          <div class="profile-hero-copy"><strong>荒岛幸存者</strong><span>本地冒险档案</span></div>
+        </div>
+        <div class="profile-section-title">冒险进度</div>
+        <div class="profile-facts">
+          <div><span>生存天数</span><strong id="profile-day"></strong></div>
+          <div><span>行走步数</span><strong id="profile-steps"></strong></div>
+          <div><span>所在区域</span><strong id="profile-island"></strong></div>
+          <div><span>当前章节</span><strong id="profile-chapter"></strong></div>
+        </div>
+        <div class="profile-section-title">生存状态</div>
+        <div class="profile-stats">
+          <div><span>❤️ 生命</span><strong id="profile-life"></strong></div>
+          <div><span>🍗 饱食</span><strong id="profile-hunger"></strong></div>
+          <div><span>💧 水分</span><strong id="profile-water"></strong></div>
+          <div><span>⚡ 疲劳</span><strong id="profile-fatigue"></strong></div>
+        </div>
+        <div class="profile-section-title">钱包</div>
+        <div class="profile-wallet"><span id="profile-wallet-state"></span><button type="button" id="profile-wallet-action"></button></div>
+        <div class="profile-note">游戏进度保存在本机。钱包连接不等于玩家账号注册。</div>
+      </div>`;
+    const set = (id, value) => { body.querySelector(`#${id}`).textContent = String(value); };
+    set('profile-day', `第 ${stat(survival?.day)} 天`);
+    set('profile-steps', stat(survival?.steps));
+    set('profile-island', islandNames[game?.currentIslandId] || '主岛');
+    set('profile-chapter', chapter?.title || '序章');
+    set('profile-life', `${stat(survival?.life)} / 100`);
+    set('profile-hunger', `${stat(survival?.hunger)} / 100`);
+    set('profile-water', `${stat(survival?.water)} / 100`);
+    set('profile-fatigue', `${stat(survival?.fatigue)} / 100`);
+    set('profile-wallet-state', walletConnected ? `已连接 · ${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}` : '未连接钱包');
+    const walletButton = body.querySelector('#profile-wallet-action');
+    walletButton.textContent = walletConnected ? '查看钱包' : '连接钱包';
+    walletButton.addEventListener('click', () => this.openSolanaModal());
+    this.modalBackdrop.style.display = 'flex';
   }
 
   // 16 格专业背包网格弹窗 (横屏自适应双栏)
