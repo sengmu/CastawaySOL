@@ -1,6 +1,6 @@
 ﻿# CastawaySOL
 
-手机横屏优先的Three.js海岛游戏。先阅读 HANDOFF.md、docs/GAMEPLAY.md、docs/ROADMAP.md，以及上级 AGENTS.md。
+竖屏 Seeker 优先的 Three.js 海岛游戏。竖屏主规格：设计与验收基准 390×844 CSS 像素（`docs/ui-art-spec.md` 参照屏，`PERF-BASELINE.md` 记为标准移动端竖屏视口）；Solana Seeker 竖屏约 411×914（沿用 `HANDOFF.md` 记录的 411×914 竖屏视口）。横屏仅兼容。先阅读 HANDOFF.md、docs/GAMEPLAY.md、docs/ROADMAP.md，以及上级 AGENTS.md。
 
 当前是本地单人原型；群岛、生产和多人属于待实现规划。
 

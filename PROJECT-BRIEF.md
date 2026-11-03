@@ -1,13 +1,14 @@
 ## Cut 2026-11-03 · CastawaySOL 上线（dApp Store）· 状态：APPROVED（owner musen，2026-11-03）· 取代：无（首份）
 **Decision needed（已完成）：** 已批准；目标 Solana dApp Store（Seeker）；支付开启。
 **结果：** 一个签名的 Android 发布包，在 Seeker 真机跑通主线，素材合法，支付按钮可用，上架材料齐全，最后由 owner 本人点提交。
+**机型口径：** 标准机型为竖屏 Seeker 优先。横屏仅兼容。
 **In：** 替换全部 Nintendo 模型；回归全绿（含 R8/R9）；签名发布版和生产配置；Seeker 真机通关主线；支付开启；上架材料。
 **Out：** Google Play、web/PWA；A1 算力账本 UI、G3 经济闸门（除非 owner 拉进来）；联机 P3、争夺岛 P4；抽卡和 NFT；任何人代 owner 提交商店。
 **D2 台风取值（PM 选）：** 组合方案 0.55 加黎明倍率；AC-2 的 R9 平衡断言按此值重算；owner 可推翻。
 **验收标准**
 - AC-1 `public/models/**` 里 `Nin_NX_NVN` 引用为 0。Proof: SHA。QA: pass if 该 SHA 上扫描结果为 0。
 - AC-2 `tests/verify-*.mjs` 全部退出码 0，`npm run build` 通过，R9 平衡值落在断言范围内（或断言由 owner 书面修改）。Proof: API JSON（Actions 运行结论 success）。QA: pass if 结论 success 且无失败项。
-- AC-3 生产配置：`webContentsDebuggingEnabled`、`cleartext`、`allowMixedContent` 全为 false；manifest `orientation` 和 README 改为竖屏。Proof: SHA。QA: pass if 字段逐项符合。
+- AC-3 生产配置：`webContentsDebuggingEnabled`、`cleartext`、`allowMixedContent` 全为 false；manifest `orientation` 与 README 改为竖屏优先（横屏兼容检查另做）。Proof: SHA。QA: pass if 字段逐项符合。
 - AC-4 固定 keystore（由 owner 提供，Eng 不碰密钥），CI 出签名 AAB/APK，覆盖安装旧版不用卸载。Proof: API JSON（release job）加 SHA。QA: pass if 覆盖安装不报 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`。
 - AC-5 Seeker 真机装 AC-4 的包，走完 golden path 到第 5 章，无 `undefined.story` 崩溃；`final_escape` 已知失败单独列出，不算 pass。Proof: screenshot（每章一张）加 fixture id（golden-path 脚本）。QA: pass if 全程无崩溃。
 - AC-6 支付开启。(a) owner 提供 `TREASURY_ADDRESS` 后写入 `src/config/payment.js`，按钮可点。Proof: SHA 加 screenshot。QA: pass if 地址等于 owner 提供的值。(b) 主网真实小额支付一笔成功，`sol_token` 与真实 SOL/SKR 仍分开。Proof: API JSON（链上交易签名与状态）。QA: pass if 交易确认。**BLOCKED：** 需要 owner 提供支付地址，并书面批准花钱测试及金额上限；此前不得填地址、不得做主网支付。
@@ -24,7 +25,7 @@
 
 ## 这是什么游戏
 
-竖屏优先的 Three.js 海岛生存游戏（Vite + Capacitor 打包 Android，包名 com.castawaysol.game）。
+竖屏 Seeker 优先的 Three.js 海岛生存游戏（Vite + Capacitor 打包 Android，包名 com.castawaysol.game）。横屏仅兼容。
 产品定位（用户定版）：**挖矿是核心**——玩家通过生存远征攒资源、搭建升级基地岛、让矿机产出更大收益；生存（饥饿/水分/疲劳）是远征的燃料与门票，不是目的本身；融合《疯狂水世界》的潮汐/漂流物/台风事件做节奏与赌局。主角是黑猫，舞台是主岛 + 若干外岛（浮木岛、矿石岛等）。
 游戏内货币 `sol_token` 与真实 SOL、与 Seeker 生态代币 SKR 严格分离显示，不得混称、不得承诺收益。
 
