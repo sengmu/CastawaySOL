@@ -4848,12 +4848,14 @@ export class UIManager {
     const isReveal = res.phase === 'REVEAL';
     const winningSq = res.lastResult ? res.lastResult.winningSquare : -1;
 
+    let selectedEv = 0;
     let gridHtml = '';
     for (let i = 0; i < 25; i++) {
       const isSelected = (i === selectedSq);
       const myShares = res.deploy[i] || 0;
       const npcShares = Math.round(visibleBoard[i] || 0);
       const ev = estimateSquareEV(visibleBoard, i, myShares > 0 ? myShares : 1, u);
+      if (i === selectedSq) selectedEv = ev;
 
       let isHeat = false;
       let isMainHint = false;
@@ -4880,11 +4882,11 @@ export class UIManager {
             <span>#${i + 1}</span>
             <span>${isMainHint ? '⭐' : (isHeat ? '🔥' : '')}</span>
           </div>
-          <div style="font-size:11px; font-weight:900; color:${myShares > 0 ? '#1E9E8A' : '#6B4A32'};">
-            ${myShares > 0 ? `💎 ${myShares} · ` : ''}<span class="npc-shares">${npcShares}<sup>模拟</sup></span>
+          <div style="font-size:16px; font-weight:900; line-height:1; color:${myShares > 0 ? '#1E9E8A' : '#6B4A32'};">
+            ${npcShares}
           </div>
-          <div style="font-size:8.5px; color:#7D5E47;">
-            ${isWinner ? '👑获胜' : `EV:${ev}`}
+          <div style="font-size:9px; color:#7D5E47; height:12px;">
+            ${isWinner ? '👑 获胜' : (myShares > 0 ? `💎 我的 ${myShares} 份` : '')}
           </div>
         </div>
       `;
@@ -4904,15 +4906,6 @@ export class UIManager {
                 ${phaseLabels[res.phase] || res.phase}
               </span>
             </div>
-            <div style="font-size:11px; color:#6B4A32;">
-              免费份额: <strong>${res.freeShares}</strong> · 料仓: <strong>${miningRig.loadedCrystals}</strong>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:11px; color:#6B4A32; background:#FBEBC8; padding:4px 8px; border-radius:8px;">
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="全岛母晶池">${iconHTML('hud/motherlode', 14, { eager: true })} 母池: <strong id="mr-motherlode-pool" style="color:#B97E10;">${miningRig.motherlode?.pool || 0}</strong></span>
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="残晶存量">${iconHTML('hud/shard', 14, { eager: true })} 残晶: <strong id="mr-shard-count" style="color:#1E9E8A;">${miningRig.shardCount || 0}</strong></span>
-            <span style="display:inline-flex; align-items:center; gap:4px;" title="赛季算力评分">${iconHTML('hud/score_rs', 14, { eager: true })} 算力评分: <strong id="mr-score-rs" style="color:#237A9E;">${miningRig.season?.rs || 0}</strong></span>
           </div>
 
           <div style="width:100%; height:8px; background:#EADFCB; border-radius:4px; overflow:hidden; border:1px solid rgba(107,74,50,0.14); margin-bottom:6px;">
@@ -4920,7 +4913,7 @@ export class UIManager {
           </div>
 
           <div style="display:flex; justify-content:space-between; font-size:10.5px; color:#7D5E47;">
-            <span>进度: <strong id="mr-res-progress-text" style="color:#1E9E8A;">${progress}%</strong> (80% 锁定测算，100% 揭晓)</span>
+            <span>进度 <strong id="mr-res-progress-text" style="color:#1E9E8A;">${progress}%</strong></span>
             ${isReveal ? `<button id="btn-skip-reveal" style="background:#FBEBC8; color:#6B4A32; border:none; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer;" ${res.revealTimer <= 5.5 ? '' : 'disabled'}>⏩ 跳过揭晓动画</button>` : ''}
           </div>
         </div>
@@ -4932,10 +4925,10 @@ export class UIManager {
         <div style="background:#FBEBC8; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:12px; font-weight:800; color:#6B4A32;">
-              已选格: <span style="color:#1E9E8A;">[${selectedSq + 1}]</span> · 当前投入: <strong style="color:#B97E10;">${res.deploy[selectedSq] || 0}</strong> 份
+              已选格 <span style="color:#1E9E8A;">#${selectedSq + 1}</span> · EV ${selectedEv} · 押注 <strong style="color:#B97E10;">${res.deploy[selectedSq] || 0}</strong> 份
             </div>
             <div style="font-size:11px; color:#7D5E47;">
-              格数上限: ${k} · 总额上限: ${C} 份
+              上限 ${k} 格 / ${C} 份 · 每轮至少部署 2 份
             </div>
           </div>
 
@@ -4945,7 +4938,7 @@ export class UIManager {
             <button id="btn-res-split" style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
             <button id="btn-res-allin" style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">💥 All-In</button>
             <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:12px; height:44px; font-size:12.5px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
-              ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
+              ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份)`}
             </button>
           </div>
 
@@ -4957,6 +4950,10 @@ export class UIManager {
               </button>
             </div>
           ` : ''}
+        </div>
+
+        <div style="text-align:center; font-size:10.5px; color:#7D5E47;">
+          免费份额 <strong>${res.freeShares}</strong> · 料仓 <strong>${miningRig.loadedCrystals}</strong> · <span style="display:inline-flex; align-items:center; gap:3px;">${iconHTML('hud/motherlode', 12, { eager: true })} 母池 <strong id="mr-motherlode-pool" style="color:#B97E10;">${miningRig.motherlode?.pool || 0}</strong></span> · <span style="display:inline-flex; align-items:center; gap:3px;">${iconHTML('hud/shard', 12, { eager: true })} 残晶 <strong id="mr-shard-count" style="color:#1E9E8A;">${miningRig.shardCount || 0}</strong></span> · <span style="display:inline-flex; align-items:center; gap:3px;">${iconHTML('hud/score_rs', 12, { eager: true })} 算力评分 <strong id="mr-score-rs" style="color:#237A9E;">${miningRig.season?.rs || 0}</strong></span>
         </div>
       </div>
     `;

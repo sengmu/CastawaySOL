@@ -745,3 +745,9 @@
   .modal-card.rig-page .rig-slots { padding-top: 4px; padding-bottom: 18px; }
   .modal-card.rig-page .rig-slots-label { top: auto; bottom: 0; }
 }
+
+/* 共振减负修正：横屏操作行换行，确认钮整行 */
+@media (orientation: landscape) {
+  .modal-card.rig-page .res-root > div:nth-child(3) > div:nth-child(2) { flex-wrap: wrap; }
+  .modal-card.rig-page #btn-res-commit { flex: 1 1 100% !important; }
+}
