@@ -435,6 +435,11 @@ class Game {
     if (visible && this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
   }
 
+  // 灯塔二期贯通后先民潮汐传送网可用（晶雾岛残阵激活状态随存档持久化）
+  isTidalNetworkActive() {
+    return Boolean(this.lighthouse?.phase2Complete || this.mistReefIsleScene?.teleportActive);
+  }
+
   // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，全面支持 force 或 options 瞬移参数)
   travelToIsland(islandId, force = false) {
     const opts = (force && typeof force === 'object') ? force : {};
@@ -478,9 +483,10 @@ class Game {
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = false;
         if (this.scene) this.scene.fog = new THREE.FogExp2(0x0a101d, 0.012);
 
-        // 传送到古代神殿入口传送光阵 (0, 0.4, 15)
-        this.player.position.set(0, 0.4, 15);
-        if (this.player.pivot) this.player.pivot.position.set(0, 0.4, 15);
+        // 默认落在入口传送光阵 (0, 0.4, 15)，潮汐瞬移可指定内殿落点
+        const tp = Array.isArray(opts.targetPos) ? opts.targetPos : [0, 0.4, 15];
+        this.player.position.set(tp[0], tp[1], tp[2]);
+        if (this.player.pivot) this.player.pivot.position.set(tp[0], tp[1], tp[2]);
         this.player.rotation = Math.PI; // 朝向神殿大殿内部 (北向)
         if (this.player.mesh) this.player.mesh.rotation.y = Math.PI;
 
@@ -490,14 +496,14 @@ class Game {
         } else if (this.camera && this.player) {
           const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
           const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
-          this.camera.position.set(0, 0.4 + camDistV + 0.8, 15 + camDistH);
+          this.camera.position.set(tp[0], tp[1] + camDistV + 0.8, tp[2] + camDistH);
           if (this.player.cameraTarget) {
-            this.player.cameraTarget.set(0, 0.4 + 1.7, 15 - 2.2);
+            this.player.cameraTarget.set(tp[0], tp[1] + 1.7, tp[2] - 2.2);
             this.camera.lookAt(this.player.cameraTarget);
           }
         }
 
-        this.ui.showDialog(
+        if (!opts.viaTeleport) this.ui.showDialog(
           '🏛️ 踏入 · 后山古代神殿 (Ancient Temple)',
           '穿越呼啸的空间漩涡，你踏入了深埋后山地底千年的远古神殿独立密室！\n\n' +
           '四周耸立着散发幽光的象形符文巨柱，大殿中央伫立着神秘的【星辰日冕祭坛】与【九宫图腾石阵】！\n' +
@@ -570,6 +576,8 @@ class Game {
           this.wildlifeCombat.setActiveIsland('mist_reef_isle');
         }
 
+        // 地宫会改写清屏色与雾，潮汐瞬移可从地宫直达此岛，需立即恢复日光状态
+        if (previousIsland === 'ancient_temple' && this.dayNight) this.dayNight.setMode(this.dayNight.currentMode, true);
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
         if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
 
@@ -610,8 +618,9 @@ class Game {
 
         // 判断返航来源：若从古代神殿出来，传送到后山神殿大门前；若从海上归来，传送到西南码头
         if (previousIsland === 'ancient_temple') {
-          this.player.position.set(0, 0.4, -20.0);
-          if (this.player.pivot) this.player.pivot.position.set(0, 0.4, -20.0);
+          const retPos = Array.isArray(opts.targetPos) ? opts.targetPos : [0, 0.4, -20.0];
+          this.player.position.set(retPos[0], retPos[1], retPos[2]);
+          if (this.player.pivot) this.player.pivot.position.set(retPos[0], retPos[1], retPos[2]);
           this.player.rotation = 0; // 朝向南面海岛腹地
           if (this.player.mesh) this.player.mesh.rotation.y = 0;
 
@@ -620,9 +629,9 @@ class Game {
           } else if (this.camera && this.player) {
             const camDistH = this.player.cameraDistance * Math.cos(this.player.cameraAngleV);
             const camDistV = this.player.cameraDistance * Math.sin(this.player.cameraAngleV);
-            this.camera.position.set(0, 0.4 + camDistV + 0.8, -20.0 + camDistH);
+            this.camera.position.set(retPos[0], retPos[1] + camDistV + 0.8, retPos[2] + camDistH);
             if (this.player.cameraTarget) {
-              this.player.cameraTarget.set(0, 0.4 + 1.7, -20.0 - 2.2);
+              this.player.cameraTarget.set(retPos[0], retPos[1] + 1.7, retPos[2] - 2.2);
               this.camera.lookAt(this.player.cameraTarget);
             }
           }
@@ -1162,6 +1171,8 @@ class Game {
         if (this.ancientTempleScene && this.ancientTempleScene.isInnerGateOpen) {
           if (this.templePuzzle && !this.templePuzzle.vaultClaimed) {
             this.templePuzzle.claimTempleVault();
+          } else if (this.isTidalNetworkActive()) {
+            this.ui.openTidalTeleportModal();
           } else {
             this.ui.showToast('👑 远古波塞冬金冠已入囊，王座永受神光护佑！', 'medium');
           }
@@ -1196,6 +1207,10 @@ class Game {
         soundEngine.playPlaceFurniture();
         this.ui.showToast('✨ 三色圣石共鸣镶嵌！后山远古神殿封印已永久解开！', 'important');
         if (this.saveSystem) this.saveSystem.saveGame('unseal_temple');
+      }
+      if (this.isTidalNetworkActive()) {
+        this.ui.openTidalTeleportModal();
+        return;
       }
       this.travelToIsland('ancient_temple', true);
       return;
@@ -1817,7 +1832,9 @@ class Game {
         this.ui.setContextAction('temple_vault');
         if (this.ancientTempleScene && this.ancientTempleScene.isInnerGateOpen) {
           const isClaimed = this.templePuzzle && this.templePuzzle.vaultClaimed;
-          this.ui.showInteraction(isClaimed ? '👑 远古波塞冬金冠已收取（永久护佑中）' : '点按互动按钮 开启【远古波塞冬黄金神藏】！');
+          this.ui.showInteraction(isClaimed
+            ? (this.isTidalNetworkActive() ? '点按互动按钮 启动【先民潮汐传送网】' : '👑 远古波塞冬金冠已收取（永久护佑中）')
+            : '点按互动按钮 开启【远古波塞冬黄金神藏】！');
         } else {
           this.ui.showInteraction('🔒 前方玄铁大门紧闭，请先参悟前殿日冕机关');
         }
@@ -1856,7 +1873,7 @@ class Game {
       this.ui.setContextAction('temple_enter');
       const unsealed = Boolean(this.story?.templeUnsealed || (this.story?.gemsCollected?.size || 0) >= 3 || this.templePuzzle?.puzzleSolved);
       this.ui.showInteraction(unsealed
-        ? '点按互动按钮 踏入【后山古代神殿】独立地宫密室'
+        ? (this.isTidalNetworkActive() ? '点按互动按钮 启动【先民潮汐传送网】（可瞬移至神殿内殿 / 晶雾回声岛）' : '点按互动按钮 踏入【后山古代神殿】独立地宫密室')
         : `🔒 后山神殿三圣石封印中 (已收集 ${this.story?.gemsCollected?.size || 0}/3) · 点按查看线索`);
     } else if (monkeyCreviceAction && monkeyCreviceAction.type === 'crevice') {
       this.ui.setContextAction('monkey_crevice');

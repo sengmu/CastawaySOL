@@ -50,6 +50,9 @@ globalThis.document = {
 };
 
 const { EconomyLedger } = await import('../src/systems/EconomyLedger.js');
+// Node 环境无法加载 DAE 模型文件，与主线测试一致替换为空模型
+const { modelLoader } = await import('../src/core/ModelLoader.js');
+modelLoader.loadModel = async () => new THREE.Group();
 const { NauticalChartSystem } = await import('../src/systems/NauticalChartSystem.js');
 const { ShipUpgradeSystem } = await import('../src/systems/ShipUpgradeSystem.js');
 const { StorageSystem } = await import('../src/systems/StorageSystem.js');

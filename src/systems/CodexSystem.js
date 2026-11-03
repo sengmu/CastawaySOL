@@ -47,6 +47,20 @@ export const CODEX_VOLUMES = Object.freeze({
   }
 });
 
+// 非背包道具类条目的展示名（道具类条目由 UI 的 getItemName 解析）
+export const CODEX_ENTRY_LABELS = Object.freeze({
+  crab: '海岸巨蟹',
+  boar: '丛林野猪',
+  hermit_crab: '沉船寄居巨蟹',
+  basalt_lizard: '玄武岩甲蜥',
+  crystal_crab: '晶簇棱背蟹',
+  relic_sos_radio: '遇难无线电残骸',
+  relic_quarry_monolith: '先民地脉采石碑',
+  relic_temple_corona: '星辰日冕祭坛',
+  relic_poseidon_crown: '波塞冬海皇金冠',
+  relic_harmonic_tower: '星海谐振塔'
+});
+
 // 《群岛先民编年史》全文（碑文卷满奖励解锁，不包装为链上 NFT）
 export const CHRONICLES_TEXT = `
 【群岛先民编年史·残存版本】
@@ -236,7 +250,7 @@ export class CodexSystem {
       completed,
       claimed: this.claimedVolumes.has(volId),
       rewardDesc: vol.rewardDesc,
-      entries: vol.entries.map(e => ({ id: e, name: e, unlocked: this.unlocked.has(e) }))
+      entries: vol.entries.map(e => ({ id: e, name: CODEX_ENTRY_LABELS[e] || null, unlocked: this.unlocked.has(e) }))
     };
   }
 

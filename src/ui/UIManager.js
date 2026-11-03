@@ -15,6 +15,13 @@ import cozyPortraitHudCSS from './CozyPortraitHud.css?inline';
 import cozyLandscapeHudCSS from './CozyLandscapeHud.css?inline';
 import { ODDS_TABLE, expectedCritMultiplier, clusterWeightTotal, motherlodeProbability, estimateSquareEV, scannerHints, npcArrival } from '../systems/resonance/ResonanceEngine.js';
 
+// 先民潮汐传送网三节点：主岛神殿门前祭台 ⇄ 神殿地宫内殿王座前 ⇄ 晶雾回声岛残阵
+const TIDAL_TELEPORT_NODES = [
+  { id: 'main_altar',   icon: '🏛️', name: '先民祭坛',     desc: '主岛后山神殿门前的先民遗迹祭台',       islandId: 'main_island',    targetPos: [0, 0.4, -19.5] },
+  { id: 'shrine_inner', icon: '⛩️', name: '后山神殿内殿', desc: '神殿地宫深处的波塞冬黄金王座前',       islandId: 'ancient_temple', targetPos: [0, 0.4, -18.5] },
+  { id: 'mist_reef',    icon: '🌫️', name: '晶雾回声岛',   desc: '远洋晶雾笼罩的回声孤岛，深层晶核产地', islandId: 'mist_reef_isle' }
+];
+
 function hudIcon(definition) {
   const svg = createElement(definition);
   svg.setAttribute('class', 'hud-icon');
@@ -4506,14 +4513,6 @@ export class UIManager {
 
     let html = '<div style="padding:4px 0;">';
 
-    const volumes = codex ? codex.constructor.VOLUMES || [] : [];
-    // 静态导入时 CODEX_VOLUMES 已挂在 CodexSystem 上，若无则降级
-    const allVolumes = volumes.length ? volumes : [];
-    // 通过 game.codexSystem 获取图鉴卷数据
-    const { CODEX_VOLUMES } = game?.codexSystem?._volumesDef
-      ? { CODEX_VOLUMES: game.codexSystem._volumesDef }
-      : {};
-
     if (codex) {
       for (const [volId, meta] of Object.entries(VOLUME_META)) {
         const vol = codex.getVolumeSummary(volId);
@@ -4531,10 +4530,11 @@ export class UIManager {
             <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
               ${vol ? vol.entries.map(e => `
                 <div style="font-size:11px; padding:3px 8px; border-radius:6px; background:${e.unlocked ? meta.color + '22' : 'rgba(255,255,255,0.05)'}; color:${e.unlocked ? '#fff' : 'rgba(255,255,255,0.3)'}; border:1px solid ${e.unlocked ? meta.color + '55' : 'transparent'};">
-                  ${e.unlocked ? e.name : '???'}
+                  ${e.unlocked ? (e.name || this.getItemName(e.id)) : '???'}
                 </div>`).join('') : '<div style="color:rgba(255,255,255,0.3); font-size:11px;">尚未发现任何记录</div>'}
             </div>
-            ${claimable ? `<button onclick="window.__game.codexSystem.claimVolumeReward('${volId}');window.__game.ui.openCodexModal();" style="background:linear-gradient(135deg,${meta.color},#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 18px; border-radius:8px; cursor:pointer; width:100%;">🎁 领取满收集奖励</button>` : ''}
+            ${claimable ? `<button onclick="window.__game.codexSystem.claimVolumeReward('${volId}');window.__game.ui.openCodexModal();" style="background:linear-gradient(135deg,${meta.color},#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 18px; border-radius:8px; cursor:pointer; width:100%;">🎁 领取满收集奖励：${vol.rewardDesc}</button>` : ''}
+            ${!vol?.completed && vol?.rewardDesc ? `<div style="font-size:11px; color:rgba(255,255,255,0.45);">满收集奖励：${vol.rewardDesc}</div>` : ''}
             ${claimed ? `<div style="font-size:12px; color:${meta.color}; text-align:center; font-weight:700;">✅ 奖励已领取</div>` : ''}
           </div>`;
       }
@@ -4558,8 +4558,7 @@ export class UIManager {
   openTidalTeleportModal() {
     if (this.player && this.player.resetInput) this.player.resetInput();
     const game = window.__game;
-    const lh = game?.lighthouse;
-    const active = Boolean(lh?.phase2Complete);
+    const active = Boolean(game?.isTidalNetworkActive?.());
 
     document.getElementById('modal-title').innerHTML = '🌊 先民潮汐传送网 · 零补给瞬移';
     const body = document.getElementById('modal-body');
@@ -4578,19 +4577,12 @@ export class UIManager {
       return;
     }
 
-    const NODES = [
-      { id: 'main_altar',   icon: '🏛️', name: '先民祭坛',   desc: '主岛南部先民遗迹核心祭台，传送网发起点',   islandId: 'main_island' },
-      { id: 'shrine_inner', icon: '⛩️', name: '后山神殿内殿', desc: '主岛后山神殿地宫，连接山脉矿脉侧通道',      islandId: 'main_island' },
-      { id: 'mist_reef',    icon: '🌫️', name: '晶雾回声岛',  desc: '远洋晶雾笼罩的回声孤岛，深层晶核产出重地', islandId: 'mist_reef_isle' }
-    ];
-
     const currentIsland = game.currentIslandId || 'main_island';
     let html = '<div style="padding:4px 0;">';
     html += `<div style="text-align:center; margin-bottom:14px; font-size:12px; color:#80ffdb; font-weight:700;">★ 星海谐振塔已激活 · 零补给瞬移可用 ★</div>`;
 
-    NODES.forEach(node => {
-      const isCurrent = (node.islandId === currentIsland && node.id !== 'mist_reef') ||
-                        (node.id === 'mist_reef' && currentIsland === 'mist_reef_isle');
+    TIDAL_TELEPORT_NODES.forEach(node => {
+      const isCurrent = node.islandId === currentIsland;
       html += `
         <div style="background:rgba(0,0,0,0.3); border:1px solid ${isCurrent ? '#80ffdb55' : 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:12px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
           <div style="flex:1;">
@@ -4599,7 +4591,7 @@ export class UIManager {
             ${isCurrent ? ' <span style="font-size:11px; color:#80ffdb;">（当前位置）</span>' : ''}
             <div style="font-size:11px; color:rgba(255,255,255,0.65); margin-top:4px;">${node.desc}</div>
           </div>
-          ${!isCurrent ? `<button onclick="window.__game.ui._doTidalTeleport('${node.islandId}','${node.name}');" style="background:linear-gradient(135deg,#00cec9,#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 16px; border-radius:8px; cursor:pointer; white-space:nowrap; margin-left:10px;">⚡ 瞬移</button>` : ''}
+          ${!isCurrent ? `<button onclick="window.__game.ui._doTidalTeleport('${node.id}');" style="background:linear-gradient(135deg,#00cec9,#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 16px; border-radius:8px; cursor:pointer; white-space:nowrap; margin-left:10px;">⚡ 瞬移</button>` : ''}
         </div>`;
     });
 
@@ -4609,21 +4601,14 @@ export class UIManager {
     this.modalBackdrop.style.display = 'flex';
   }
 
-  // 内部辅助：执行潮汐传送
-  _doTidalTeleport(targetIslandId, targetName) {
+  // 潮汐传送：复用 travelToIsland 的瞬移分支，不消耗补给、不触发远航拖网结算
+  _doTidalTeleport(nodeId) {
     const game = window.__game;
-    if (!game) return;
+    const node = TIDAL_TELEPORT_NODES.find(n => n.id === nodeId);
+    if (!game || !node || !game.isTidalNetworkActive?.()) return;
+    if (node.islandId === game.currentIslandId) return;
     this.closeModal();
-    this.showToast(`🌊 正在通过潮汐传送网瞬移至【${targetName}】…`, 'medium');
-    // 委托给 NauticalChartSystem 切换场景（不消耗补给）
-    if (game.nauticalChart && typeof game.nauticalChart.teleportTo === 'function') {
-      game.nauticalChart.teleportTo(targetIslandId);
-    } else if (game.currentIslandId !== undefined) {
-      game.currentIslandId = targetIslandId;
-      if (game.scene && typeof game.setActiveIsland === 'function') {
-        game.setActiveIsland(targetIslandId);
-      }
-    }
+    game.travelToIsland(node.islandId, { viaTeleport: true, targetPos: node.targetPos });
   }
 
   // 0.5 营地日常交付订单板模态弹窗
