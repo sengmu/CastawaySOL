@@ -22,6 +22,10 @@ export class SaveSystem {
       window.addEventListener('beforeunload', () => {
         this.saveGame('unload');
       });
+      window.addEventListener('pagehide', () => this.saveGame('pagehide'));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.saveGame('background');
+      });
     }
   }
 
