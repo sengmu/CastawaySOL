@@ -6,12 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#87ceeb" />
+    <meta name="theme-color" content="#405b62" />
     <title>CastawaySOL - 荒岛生存与探索 (Solana 3D Adventure)</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏝️</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2330a9ce%22/><text y=%2270%22 x=%2215%22 font-size=%2265%22>🏝️</text></svg>">
     <script>
+      if (/\bwv\b/.test(navigator.userAgent) && /Android/i.test(navigator.userAgent)) {
+        document.documentElement.classList.add('android-app');
+      }
       window.__app_errors = [];
       window.__app_logs = [];
       window.addEventListener('error', (e) => {
@@ -37,7 +40,7 @@
       }
       html, body {
         margin: 0; padding: 0; width: 100%; height: 100%;
-        overflow: hidden; background: #87ceeb;
+        overflow: hidden; background: #405b62;
         touch-action: none;
         -webkit-user-select: none; user-select: none;
         -webkit-tap-highlight-color: transparent;
@@ -49,6 +52,8 @@
       }
       .loading-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
       .loading-art-land { display: none; }
+      .android-app .loading-art-land { display: none !important; }
+      .android-app .loading-art-port { display: block !important; }
       @media (orientation: landscape) {
         .loading-art-land { display: block; }
         .loading-art-port { display: none; }

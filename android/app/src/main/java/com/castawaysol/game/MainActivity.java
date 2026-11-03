@@ -3,6 +3,7 @@ package com.castawaysol.game;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.graphics.Color;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -18,6 +19,9 @@ public class MainActivity extends BridgeActivity {
         // 旧做法「首帧后交回 unspecified」在真机冷启动会落横屏，已废止。
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         super.onCreate(savedInstanceState);
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
+        }
         setupFullscreen();
     }
 
@@ -42,6 +46,7 @@ public class MainActivity extends BridgeActivity {
 
     private void setupFullscreen() {
         Window window = getWindow();
+        window.getDecorView().setBackgroundResource(R.drawable.loading_art);
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
