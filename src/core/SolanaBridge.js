@@ -43,6 +43,28 @@ export class SolanaBridge {
     // 载入本地缓存状态
     this.loadState();
 
+    if (this.adapter && typeof window !== 'undefined') {
+      this.adapter.on('connect', () => {
+        if (!this.adapter.publicKey) return;
+        this.publicKey = this.adapter.publicKey;
+        this.walletAddress = this.publicKey.toBase58();
+        this.isConnected = true;
+        this.isMWA = true;
+        this.isGuest = false;
+        localStorage.setItem('castaway_sol_wallet', JSON.stringify({ address: this.walletAddress, isMWA: true, isGuest: false }));
+        window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+        void this.fetchBalance();
+      });
+      this.adapter.on('disconnect', () => {
+        if (!this.isMWA) return;
+        this.isConnected = false;
+        window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+      });
+      if (this.isMWA && this.walletAddress && !this.isConnected) {
+        void this.adapter.autoConnect().catch(() => {});
+      }
+    }
+
     if (typeof window !== 'undefined') {
       window.solanaBridge = this;
     }
