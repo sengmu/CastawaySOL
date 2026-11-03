@@ -1,0 +1,74 @@
+/* 角色全屏页：独立于 HUD 与通用模态卡，沿用纸面配色与安全区。 */
+.char-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9300;
+  overflow: hidden;
+  color: #6B4A32;
+  background: #F5E7C6 url('/ui/cozy/ivory-paper.webp') center / 512px;
+  pointer-events: auto;
+}
+.char-page {
+  box-sizing: border-box;
+  width: min(100%, 520px);
+  height: 100%;
+  margin: 0 auto;
+  padding: max(12px, var(--sat, 0px)) max(14px, var(--sar, 0px)) max(12px, var(--sab, 0px)) max(14px, var(--sal, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.char-topbar { display: flex; align-items: center; justify-content: space-between; flex: 0 0 44px; }
+.char-topbar h1 { margin: 0; font-size: 25px; font-weight: 900; }
+.char-close { width: 44px; height: 44px; border: 1px solid #CBB18B; border-radius: 18px; background: #FFF5DE; color: #6B4A32; font: inherit; font-size: 30px; cursor: pointer; }
+.char-close:focus-visible { outline: 2px solid #6B4A32; outline-offset: -4px; }
+.char-content { flex: 1; min-height: 0; display: grid; grid-template-rows: 148px 120px 80px 80px minmax(0, 1fr); gap: 10px; }
+.char-card { min-width: 0; min-height: 0; padding: 10px 14px; border: 1px solid #D9C39F; border-radius: 20px; background: rgba(255, 248, 228, .83); box-shadow: 0 3px 0 rgba(140, 100, 59, .08); }
+.char-card h2 { margin: 0 0 6px; font-size: 15px; line-height: 20px; font-weight: 900; }
+.char-hero { display: grid; grid-template-columns: 84px minmax(0, 1fr); grid-template-rows: 1fr 24px; column-gap: 12px; row-gap: 6px; }
+.char-avatar { width: 84px; height: 94px; object-fit: cover; border-radius: 18px; background: #E9D1A6; }
+.char-identity { min-width: 0; align-self: center; }
+.char-identity h2 { font-size: 20px; margin-bottom: 5px; }
+.char-badge { display: inline-block; padding: 3px 7px; border-radius: 10px; background: #EDDBB4; font-size: 11px; font-weight: 800; }
+.char-chapter-name { margin-top: 4px; font-size: 11px; line-height: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.char-day { margin-top: 5px; font-size: 12px; color: #87684F; }
+.char-life { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.char-life strong { font-size: 22px; margin-left: 5px; }
+.char-hearts { display: flex; gap: 7px; }
+.char-heart { color: #D5C9B5; font-size: 23px; line-height: 24px; }
+.char-heart-on { color: #C86350; }
+.char-stat { display: grid; grid-template-columns: 38px minmax(0, 1fr) 40px; gap: 10px; align-items: center; height: 25px; font-size: 13px; }
+.char-stat strong { text-align: right; font-size: 21px; font-variant-numeric: tabular-nums; }
+.char-track { height: 10px; overflow: hidden; border-radius: 8px; background: #E7D7BA; }
+.char-fill { height: 100%; border-radius: inherit; }
+.char-fill-hunger { background: #D9A75F; }
+.char-fill-water { background: #77B6BC; }
+.char-fill-fatigue { background: #B49ABA; }
+.char-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.char-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; font-size: 11px; }
+.char-cell + .char-cell { border-left: 1px solid #E3D2B1; }
+.char-cell strong { font-size: 21px; line-height: 25px; font-variant-numeric: tabular-nums; }
+.char-cell:last-child strong[data-char="camp"] { font-size: 16px; }
+.char-companions { display: flex; flex-direction: column; }
+.char-pet-list { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; align-items: start; padding-top: 8px; }
+.char-pet { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; min-width: 0; }
+.char-pet-avatar { width: 52px; height: 52px; border-radius: 50%; background: #DCC99F; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.char-pet-name { font-size: 13px; }
+.char-pet-locked { filter: grayscale(1); opacity: .55; }
+.char-pet-status { font-size: 11px; color: #87684F; }
+@media (max-height: 740px) and (orientation: portrait) {
+  .char-content { grid-template-rows: 134px 110px 72px 72px minmax(0, 1fr); gap: 6px; }
+  .char-card { padding: 7px 12px; }
+  .char-avatar { height: 84px; }
+  .char-pet-avatar { width: 32px; height: 32px; flex-basis: 32px; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .char-page { width: min(100%, 1100px); }
+  .char-content { grid-template-columns: 1.1fr .8fr 1.1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .char-hero { grid-column: 1; grid-row: 1; }
+  .char-survival { grid-column: 1; grid-row: 2; }
+  .char-card:nth-child(3) { grid-column: 2; grid-row: 1; }
+  .char-card:nth-child(4) { grid-column: 2; grid-row: 2; }
+  .char-companions { grid-column: 3; grid-row: 1 / 3; }
+}

@@ -12,6 +12,8 @@ import { VISUAL_QUALITY_KEY } from '../core/VisualQuality.js';
 import { iconHTML, getSurvivalIconHtml, getWeatherIconHtml } from './IconRegistry.js'; // 黏土图标集成（2026-10-31）
 import { NoticeCenter, NOTICE_MODES } from './NoticeCenter.js'; // 提示系统优化（2026-10-31）
 import cozyPortraitHudCSS from './CozyPortraitHud.css?inline';
+import characterPanelCSS from './CharacterPanel.css?inline';
+import { PET_CATALOG } from '../systems/PetCompanionSystem.js';
 import cozyLandscapeHudCSS from './CozyLandscapeHud.css?inline';
 import { ODDS_TABLE, expectedCritMultiplier, clusterWeightTotal, motherlodeProbability, estimateSquareEV, scannerHints, npcArrival } from '../systems/resonance/ResonanceEngine.js';
 
@@ -1554,6 +1556,7 @@ export class UIManager {
     `;
     style.textContent += cozyPortraitHudCSS;
     style.textContent += cozyLandscapeHudCSS;
+    style.textContent += characterPanelCSS;
     style.textContent += `
       #hud-nav-secondary.hud-drawer { box-sizing:border-box; display:flex!important; flex-direction:column!important; gap:8px!important; width:min(340px,88vw)!important; top:0!important; bottom:0!important; padding:16px max(18px,var(--sar,0px)) max(24px,var(--sab,0px)) 18px!important; background:#fff6e3!important; color:#493e32; border-left:1px solid #dfcfae; border-radius:24px 0 0 24px; box-shadow:-12px 0 40px #231a1733; overscroll-behavior:contain; }
       #hud-nav-secondary .hud-drawer-title { position:sticky; top:-16px; z-index:2; margin:-16px -2px 0; padding:max(12px,var(--sat,0px)) 2px 12px; background:#fff6e3; color:#493e32; font-size:20px; letter-spacing:0; }
@@ -1611,7 +1614,7 @@ export class UIManager {
         <div class="portrait-survival-strip" id="portrait-survival-strip">
           <!-- 第一行：生命数值在左，天数天气弱文本并入右侧 -->
           <div class="strip-row strip-row-top" id="strip-row-top">
-            <img class="portrait-protagonist-avatar" src="/ui/cozy/protagonist-avatar.webp" alt="" aria-hidden="true">
+            <img class="portrait-protagonist-avatar" title="角色" style="cursor:pointer" src="/ui/cozy/protagonist-avatar.webp" alt="" aria-hidden="true">
             <div class="strip-item strip-stat strip-life" title="生命值" aria-label="生命 100">
               <span class="life-hearts" aria-hidden="true"><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i><i>❤️</i></span>
               <b id="strip-val-life">100</b>
@@ -1859,6 +1862,7 @@ export class UIManager {
     });
   }
   bindEvents() {
+    this._bindCharacterEntry();
     // 喝水
     const drink = () => {
       haptics.medium();
@@ -3858,6 +3862,128 @@ export class UIManager {
   // 兼容别名调用
   renderInventory() {
     this.renderQuickBar();
+  }
+
+  _bindCharacterEntry() {
+    const capsule = document.getElementById('portrait-capsule-wrapper');
+    if (!capsule) return;
+    capsule.title = '角色';
+    capsule.style.cursor = 'pointer';
+    capsule.setAttribute('role', 'button');
+    capsule.setAttribute('tabindex', '0');
+    capsule.setAttribute('aria-label', '角色');
+    capsule.addEventListener('click', (event) => {
+      if (event.target.closest('#canteen-btn, .survival-water-row')) return;
+      event.stopPropagation();
+      this.openCharacterModal();
+    });
+    capsule.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      this.openCharacterModal();
+    });
+  }
+
+  openCharacterModal() {
+    this.closeCharacterModal();
+    if (this.player?.resetInput) this.player.resetInput();
+    const overlay = document.createElement('div');
+    overlay.id = 'char-overlay';
+    overlay.className = 'char-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'char-title');
+    overlay.innerHTML = `
+      <div class="char-page">
+        <header class="char-topbar"><h1 id="char-title">角色</h1>
+          <button type="button" class="char-close" aria-label="关闭角色页">×</button>
+        </header>
+        <div class="char-content"></div>
+      </div>`;
+    overlay.querySelector('.char-close').addEventListener('click', () => this.closeCharacterModal());
+    // 与游戏场景的触控输入隔离，关闭钮保留原生 click。
+    ['pointerdown', 'touchstart', 'click'].forEach(type => {
+      overlay.addEventListener(type, event => event.stopPropagation());
+    });
+    document.body.appendChild(overlay);
+    this._characterOverlay = overlay;
+    const render = () => {
+      if (!overlay.isConnected) { this.closeCharacterModal(); return; }
+      this._renderCharacterPanel(overlay.querySelector('.char-content'));
+    };
+    render();
+    this._characterTimer = setInterval(render, 1000);
+    overlay.querySelector('.char-close').focus();
+  }
+
+  closeCharacterModal() {
+    if (this._characterTimer != null) clearInterval(this._characterTimer);
+    this._characterTimer = null;
+    this._characterOverlay?.remove();
+    this._characterOverlay = null;
+  }
+
+  _renderCharacterPanel(body) {
+    const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const number = value => Number.isFinite(value) ? value : null;
+    const display = value => number(value) == null ? '—' : String(Math.round(value));
+    const survival = this.survival || {};
+    const game = this.game || window.__game;
+    const story = game?.story;
+    const chapter = story?.getCurrentChapter();
+    const chapterId = number(story?.currentChapterId);
+    const chapterText = chapterId == null ? '流落者' : chapterId === 0 ? '流落者 · 序章' : `流落者 · 主线第 ${chapterId} 章`;
+    // 与竖屏 HUD 的 strip-weather 使用同一枚举文案。
+    const weatherNames = { clear: '晴朗', cloudy: '多云', rain: '下雨', typhoon: '台风' };
+    const weather = weatherNames[game?.weatherSystem?.currentWeather];
+    const dayWeather = [number(survival.day) == null ? null : `第 ${survival.day} 天`, weather].filter(Boolean).join(' · ');
+    const life = number(survival.life);
+    const hearts = Array.from({ length: 5 }, (_, index) => `<span class="char-heart ${life != null && index < Math.ceil(life / 20) ? 'char-heart-on' : ''}">❤</span>`).join('');
+    const inv = this.inventory || {};
+    const assets = [['sol_token', '算力代币'], ['sol_crystal', '原生晶'], ['sol_crystal_pure', '纯晶']];
+    const rig = number(game?.miningRig?.rigLevel);
+    const tier = number(game?.shipUpgradeSystem?.currentTierLevel);
+    // CampFacilitiesSystem 也使用 buildSystem.placedFurniture 判定设施是否建成。
+    // 只统计工坊设施类，生活家具与装饰不冒充设施。
+    const furniture = this.buildSystem?.placedFurniture;
+    const facilityCount = Array.isArray(furniture) ? furniture.filter(item => item.drawerCategory === 'facility').length : null;
+    const growth = [['rig', '矿机', rig == null ? '—' : `Lv.${rig}`], ['ship', '船坞', tier == null ? '—' : `T${tier}`], ['camp', '营地', facilityCount == null ? '—' : `设施 ${facilityCount} 处`]];
+    const pets = game?.petCompanion;
+    body.innerHTML = `
+      <section class="char-card char-hero">
+        <img class="char-avatar" src="/ui/cozy/protagonist-avatar.webp" alt="主角">
+        <div class="char-identity"><h2>晶雾岛岛主</h2>
+          <div class="char-badge" data-char="chapter">${esc(chapterText)}</div>
+          ${chapter?.title ? `<div class="char-chapter-name">${esc(chapter.title)}</div>` : ''}
+          <div class="char-day" data-char="day-weather">${esc(dayWeather)}</div>
+        </div>
+        <div class="char-life"><span class="char-hearts" aria-hidden="true">${hearts}</span><span>生命 <strong data-char="life">${display(life)}</strong></span></div>
+      </section>
+      <section class="char-card char-survival"><h2>生存</h2>
+        ${[['hunger', '饱食'], ['water', '水分'], ['fatigue', '疲劳']].map(([key, label]) => {
+          const value = number(survival[key]);
+          const percent = value == null ? 0 : Math.max(0, Math.min(100, value));
+          return `<div class="char-stat"><span>${label}</span><div class="char-track" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" ${value == null ? '' : `aria-valuenow="${percent}"`}><div class="char-fill char-fill-${key}" style="width:${percent}%"></div></div><strong data-char="${key}">${display(value)}</strong></div>`;
+        }).join('')}
+      </section>
+      <section class="char-card"><h2>资产</h2><div class="char-grid">
+        ${assets.map(([key, label]) => `<div class="char-cell"><span>${label}</span><strong data-char="${key}">${display(inv[key] || 0)}</strong></div>`).join('')}
+      </div></section>
+      <section class="char-card"><h2>成长</h2><div class="char-grid">
+        ${growth.map(([key, label, value]) => `<div class="char-cell"><span>${label}</span><strong data-char="${key}">${esc(value)}</strong></div>`).join('')}
+      </div></section>
+      <section class="char-card char-companions"><h2>伙伴</h2><div class="char-pet-list">
+        ${Object.values(PET_CATALOG).map(spec => {
+          const unlocked = typeof pets?.isUnlocked === 'function' ? pets.isUnlocked(spec.id)
+            : Array.isArray(pets?.unlockedPets) ? pets.unlockedPets.includes(spec.id) : null;
+          const avatar = spec.id === 'bub_monkey' ? iconHTML('hud/prompt_monkey', 36, { eager: true }) : esc(spec.species.slice(0, 1));
+          return `<div class="char-pet ${unlocked ? '' : 'char-pet-locked'}" data-pet="${esc(spec.id)}">
+            <span class="char-pet-avatar" aria-hidden="true">${avatar}</span>
+            <strong class="char-pet-name">${esc(String(spec.name).split('·').pop())}</strong>
+            <span class="char-pet-status">${unlocked ? esc(spec.species) : unlocked === false ? '尚未结缘' : '—'}</span>
+          </div>`;
+        }).join('')}
+      </div></section>`;
   }
 
   // 营地储物箱双向存取模态弹窗 (左侧随身行囊，右侧营地储物箱)
