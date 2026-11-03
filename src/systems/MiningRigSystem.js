@@ -780,7 +780,7 @@ export class MiningRigSystem {
     }
 
     if (this.resonance.phase === 'REVEAL') {
-      this.resonance.revealTimer -= delta;
+      this.resonance.revealTimer = Math.max(0, this.resonance.revealTimer - delta);
       if (this.resonance.revealTimer <= 0) {
         this.settleResonanceRound();
       }
@@ -864,6 +864,7 @@ export class MiningRigSystem {
     this.resonance.seedReveal = this.resonance.roundSeed;
     this.resonance.roundId++;
     this.resonance.progress = 0;
+    this.resonance.revealTimer = 0;
     this.resonance.phase = 'OPEN';
     this.resonance.deploy = new Array(25).fill(0);
     this.resonance.committed = false;
@@ -1299,7 +1300,8 @@ export class MiningRigSystem {
       this.resonance.roundId = r.roundId || 1;
       this.resonance.phase = r.phase || 'OPEN';
       this.resonance.progress = typeof r.progress === 'number' ? r.progress : 0;
-      this.resonance.revealTimer = typeof r.revealTimer === 'number' ? r.revealTimer : 0;
+      // 负值会被存档校验拒绝并卡死结算，读档时修正为 0
+      this.resonance.revealTimer = typeof r.revealTimer === 'number' && r.revealTimer > 0 ? r.revealTimer : 0;
       for (const key of ['roundSeed', 'seedReveal', 'board', 'cluster', 'lockPool', 'lockU', 'lockWeather', 'lockBuff', 'buffDay', 'fullHeat']) if (r[key] !== undefined) this.resonance[key] = r[key];
       this.resonance.roundSeed ||= r.seedCommit || '';
       if (r.lockPool === undefined && r.lastResult) this.resonance.lockPool = data.motherlode?.pool || 0;
