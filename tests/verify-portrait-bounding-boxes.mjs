@@ -1,4 +1,4 @@
-// CastawaySOL - 竖屏布局：顶部状态带与底部同基线的双手操作区
+// CastawaySOL - 竖屏布局：顶部状态带与底部双手操作区（摇杆锚点以公司定版为准）
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -31,10 +31,10 @@ assert.ok(uiCode.includes("display: none !important;") && uiCode.includes("strip
 assert.ok(uiCode.includes("width: 16px !important") && uiCode.includes("height: 16px !important"), "角标必须统一为 16px 圆点");
 assert.ok(uiCode.includes("top-right-group #txt-hud-sol-token { display: none !important; }"), "竖屏下按钮本体不印数字");
 
-// 4) 底部双锚：摇杆与右下组共用同一 bottom 值（含安全区变量），两组垂直中心同线，摇杆直径上限 min(30vw, 120px)
+// 4) 底部锚点（2026-11-04 用户裁定以公司线为准）：右下按钮组守安全边距基线；摇杆按左手拇指自然摆动弧线抬高锚定，底边恒高于按钮基线 58px，摇杆直径上限 min(30vw, 120px)
 assert.ok(vjCode.includes("Math.min(initW * 0.15, 60)"), "摇杆底盘半径上限必须限制在 60px (直径 <= 120px 且 <= 30vw)");
-assert.ok(vjCode.includes("centerYFromBottom = isPortrait ? (Math.max(16, sab) + this.baseRadius)"), "摇杆底边必须与互动按钮使用同一安全边距");
-assert.ok(cozyCss.includes("bottom: max(16px, var(--sab, 0px)) !important;"), "右下按钮区必须使用同一安全边距");
+assert.ok(vjCode.includes("centerYFromBottom = isPortrait ? (Math.max(74, sab + 58) + this.baseRadius)"), "摇杆必须使用公司定版抬高锚点 max(74, sab + 58)");
+assert.ok(cozyCss.includes("bottom: max(16px, var(--sab, 0px)) !important;"), "右下按钮区必须使用安全边距基线");
 
 // 5) 右下组：44px 小按钮在 88px 主按钮左侧，保留 4px 水平间距与情境攻击替换位置。
 assert.ok(cozyCss.includes("width: 148px !important;"), "右下操作区宽度必须固定为 148px（体积拉升轮新预算）");
@@ -56,7 +56,7 @@ console.log("  ✅ UIManager 与 VirtualJoystick 代码结构 7 项核对全部�
 // 2. 模拟真机分辨率测试四条网格线：
 // 网格线1: 四边距一致 (四边外边距均为 12px + 安全区)
 // 网格线2: 顶部同高 (状态胶囊行高 48px 与右上三按钮 48px 完全一致)
-// 网格线3: 摇杆和互动按钮底边同线
+// 网格线3: 摇杆底边恒高于互动按钮底边 58px（公司定版抬高锚点）
 // 网格线4: 物品栏在操作区上方并留出间隙
 console.log("\n▶ [2/5] 验证典型竖屏机型下的四条关键网格线几何数学严格性...");
 
@@ -75,11 +75,11 @@ function verifyGridLines(screenWidth, screenHeight, sat, sar, sab, sal, phoneMod
   const topButtonsLeft = screenWidth - Math.max(16, sar) - 134;
   assert.ok(topButtonsLeft >= 208, "顶部三按钮不得挤入头像和生命区");
 
-  // 网格线 3: 摇杆中心距底边 = 安全边距 + 半径，所以底边与互动按钮一致
+  // 网格线 3: 摇杆中心距底边 = max(74, sab + 58) + 半径，底边恒高于互动按钮底边 58px（公司定版）
   const radius = Math.min(54, screenWidth * 0.15, 60);
-  const joystickBottomY = screenHeight - (marginB + radius) + radius;
+  const joystickBottomY = screenHeight - (Math.max(74, sab + 58) + radius) + radius;
   const actionBottomY = screenHeight - marginB;
-  assert.equal(joystickBottomY, actionBottomY, "摇杆与互动按钮底边未同线!");
+  assert.equal(actionBottomY - joystickBottomY, 58, "摇杆底边必须恒高于互动按钮底边 58px（公司定版抬高锚点）!");
 
   // 摇杆直径上限检查
   const maxAllowedDiam = Math.min(screenWidth * 0.30, 120);
@@ -100,7 +100,7 @@ function verifyGridLines(screenWidth, screenHeight, sat, sar, sab, sal, phoneMod
   console.log(`  📱 [${phoneModel}] 实测数据:`);
   console.log(`     • 四边安全边距: [T:${marginT}px, R:${marginR}px, B:${marginB}px, L:${marginL}px] (一致)`);
   console.log(`     • 顶部状态带 ${topStripHeight}px 容纳三个 ${topButtonsHeight}px 按钮`);
-  console.log(`     • 底部同线: 摇杆底边 Y ${joystickBottomY}px == 互动按钮底边 Y ${actionBottomY}px`);
+  console.log(`     • 底部锚点: 摇杆底边 Y ${joystickBottomY}px 高于互动按钮底边 Y ${actionBottomY}px 共 58px（公司定版）`);
   console.log(`     • 摇杆尺寸约束: 直径 ${actualDiam}px <= 上限 ${maxAllowedDiam.toFixed(1)}px (达标)`);
   console.log(`     • 物品栏与操作区垂直间距: ${controlsTopY - quickbarBottomY}px`);
   console.log(`     • 顶部常驻占屏比: ${persistentPct.toFixed(2)}% (严格 <=16.5%)`);
