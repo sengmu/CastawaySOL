@@ -7,6 +7,7 @@ export const CHECKIN_REWARD = 5;
 export const CURRENT_SCHEMA_VERSION = 2;
 export const SAVE_KEY_PRIMARY = 'castaway_sol_savegame';
 export const SAVE_KEY_BACKUP = 'castaway_sol_savegame_backup';
+const POSITION_KEY = 'castaway_sol_position_checkpoint';
 
 export class SaveSystem {
   constructor(game) {
@@ -62,9 +63,27 @@ export class SaveSystem {
     this.autoSaveInterval = setInterval(() => {
       this.saveGame('autosave');
     }, intervalMs);
+    if (this.positionInterval) clearInterval(this.positionInterval);
+    this.positionInterval = setInterval(() => this.savePositionCheckpoint(), 2000);
+  }
+
+  savePositionCheckpoint() {
+    const position = this.game?.player?.position;
+    if (!position || !this.saveSeed) return;
+    const next = [position.x, position.y, position.z];
+    if (!next.every(Number.isFinite)) return;
+    if (this.lastPositionCheckpoint && this.lastPositionCheckpoint.every((value, i) => Math.abs(value - next[i]) < 0.1)) return;
+    try {
+      localStorage.setItem(POSITION_KEY, JSON.stringify({ saveSeed: this.saveSeed, currentIslandId: this.game.currentIslandId, position: next, rotation: this.game.player.rotation, timestamp: Date.now() }));
+      this.lastPositionCheckpoint = next;
+    } catch {}
   }
 
   stopAutoSave() {
+    if (this.positionInterval) {
+      clearInterval(this.positionInterval);
+      this.positionInterval = null;
+    }
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval);
       this.autoSaveInterval = null;
@@ -436,6 +455,16 @@ export class SaveSystem {
           return { success: false, msg: '主存档校验失败且无可用备份' };
         }
       }
+
+      try {
+        const checkpoint = JSON.parse(localStorage.getItem(POSITION_KEY) || 'null');
+        if (checkpoint?.saveSeed === data.saveSeed && checkpoint.currentIslandId === data.currentIslandId && checkpoint.timestamp > data.timestamp && Array.isArray(checkpoint.position) && checkpoint.position.length === 3 && checkpoint.position.every(Number.isFinite)) {
+          data.player.position = checkpoint.position;
+          if (Number.isFinite(checkpoint.rotation)) data.player.rotation = checkpoint.rotation;
+          data.timestamp = checkpoint.timestamp;
+          localStorage.setItem(SAVE_KEY_PRIMARY, JSON.stringify(data));
+        }
+      } catch (error) { console.warn('位置检查点恢复失败', error); }
 
       // 将数据应用到各个子系统中
       this.applyDataToGame(data);
