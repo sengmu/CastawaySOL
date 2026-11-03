@@ -4,8 +4,8 @@
 
 - 已实现钱包消息签名登录、按钱包地址隔离的云端存档、版本冲突保护、显式上传和恢复入口；恢复前备份本机存档。游客模式不能绑定。
 - musen 机器 `/opt/castawaysol-account/server` 的独立容器已启动，宿主机仅监听 `127.0.0.1:18787`；远端健康检查返回 `{"ok":true}`。存档位于该目录的 `account-data`，不得删除。
-- 计划子域名 `castawaysol-api.musen-ai.com` 尚未接通。`cloudflared tunnel route dns guangli castawaysol-api.musen-ai.com` 返回 Cloudflare 10000 Authentication error；需在该域名所属 Cloudflare 账户完成 DNS 路由，并将隧道 ingress 指向 `http://localhost:18787`。完成前不要声称手机端云存档已可用。
-- 本地 `server/smoke.mjs` 的签名、认证、存档、冲突检查通过；`npm run build` 通过。未验证真实手机签名与跨设备恢复。
+- 子域名 `castawaysol-api.musen-ai.com` 已在 musen-ai-tunnel 增加 ingress，DNS CNAME 指向该隧道。公网 HTTPS `/health` 返回 200 和 `{"ok":true}`；`https://localhost` 的 CORS 预检返回 204。`.env.production` 指向此 API。
+- 本地 `server/smoke.mjs` 的签名、认证、存档、冲突检查通过；`npm run build`、`npx cap sync android`、Android `assembleDebug` 通过。2026-11-03 构建时 adb 未检测到手机，未安装本轮 APK；真实手机钱包签名、上传及跨设备恢复尚未验证。
 
 更新：2026-11-02，北京时间。
 
