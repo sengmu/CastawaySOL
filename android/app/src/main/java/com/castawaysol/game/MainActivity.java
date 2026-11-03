@@ -3,6 +3,7 @@ package com.castawaysol.game;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.graphics.Color;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -42,6 +43,7 @@ public class MainActivity extends BridgeActivity {
 
     private void setupFullscreen() {
         Window window = getWindow();
+        window.getDecorView().setBackgroundColor(Color.rgb(64, 91, 98));
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
