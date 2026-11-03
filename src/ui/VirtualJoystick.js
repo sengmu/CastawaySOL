@@ -1,5 +1,5 @@
 // CastawaySOL 现代化移动端动态浮动虚拟摇杆 (Dynamic Floating Virtual Joystick)
-// 1. 支持屏幕左半区盲操按下即时呼出，落点即中心，大幅提升横屏操作盲操舒适度
+// 1. 支持屏幕左半区盲操按下即时呼出，落点即中心（竖屏 Seeker 优先，横屏同样可用）
 // 2. 具备动态跟随算法 (Dynamic Follow)：手指长距离拖曳时底盘顺畅平移，彻底避免滑行脱手
 // 3. 0.08 径向滤波死区 (Deadzone) 与二次方渐进响应曲线，微推走位对准精准，推满奔跑敏捷
 // 4. 全局触控安全自愈守护，多指交互或异常失焦时 100% 无残留复位归零
@@ -66,12 +66,17 @@ export class VirtualJoystick {
     if (rawW > 0 && rawH > 0) {
       return { w: rawW, h: rawH };
     }
-    const sw = (typeof screen !== 'undefined' ? screen.width : 0) || 890;
-    const sh = (typeof screen !== 'undefined' ? screen.height : 0) || 400;
-    // 游戏在 AndroidManifest 锁定 sensorLandscape 横屏，兜底取长边为宽、短边为高
+    // 竖屏 Seeker 优先：视口未就绪时按屏幕原始宽高兜底，不再把长边强制当成宽。
+    // 屏幕尺寸也不可用时回到设计基准 390×844。横屏（宽≥高）原样保留，避免锚点算崩。
+    let sw = (typeof screen !== 'undefined' ? screen.width : 0) || 0;
+    let sh = (typeof screen !== 'undefined' ? screen.height : 0) || 0;
+    if (!(sw > 0) || !(sh > 0)) {
+      sw = 390;
+      sh = 844;
+    }
     return {
-      w: Math.max(sw, sh, 360),
-      h: Math.max(Math.min(sw, sh), 240)
+      w: Math.max(sw, 240),
+      h: Math.max(sh, 240)
     };
   }
 
