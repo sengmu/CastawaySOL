@@ -7,7 +7,7 @@
 **验收标准**
 - AC-1 `public/models/**` 里 `Nin_NX_NVN` 引用为 0。Proof: SHA。QA: pass if 该 SHA 上扫描结果为 0。
 - AC-2 `tests/verify-*.mjs` 全部退出码 0，`npm run build` 通过，R9 平衡值落在断言范围内（或断言由 owner 书面修改）。Proof: API JSON（Actions 运行结论 success）。QA: pass if 结论 success 且无失败项。
-- AC-3 生产配置：`webContentsDebuggingEnabled`、`cleartext`、`allowMixedContent` 全为 false；manifest `orientation` 和 README 改为竖屏。Proof: SHA。QA: pass if 字段逐项符合。
+- AC-3 生产配置：`webContentsDebuggingEnabled`、`cleartext`、`allowMixedContent` 全为 false；manifest `orientation` 和 README 改为横屏（标准机型 Solana Seeker，约 914×411，DPR 2.625）。Proof: SHA。QA: pass if 字段逐项符合。
 - AC-4 固定 keystore（由 owner 提供，Eng 不碰密钥），CI 出签名 AAB/APK，覆盖安装旧版不用卸载。Proof: API JSON（release job）加 SHA。QA: pass if 覆盖安装不报 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`。
 - AC-5 Seeker 真机装 AC-4 的包，走完 golden path 到第 5 章，无 `undefined.story` 崩溃；`final_escape` 已知失败单独列出，不算 pass。Proof: screenshot（每章一张）加 fixture id（golden-path 脚本）。QA: pass if 全程无崩溃。
 - AC-6 支付开启。(a) owner 提供 `TREASURY_ADDRESS` 后写入 `src/config/payment.js`，按钮可点。Proof: SHA 加 screenshot。QA: pass if 地址等于 owner 提供的值。(b) 主网真实小额支付一笔成功，`sol_token` 与真实 SOL/SKR 仍分开。Proof: API JSON（链上交易签名与状态）。QA: pass if 交易确认。**BLOCKED：** 需要 owner 提供支付地址，并书面批准花钱测试及金额上限；此前不得填地址、不得做主网支付。
@@ -24,7 +24,7 @@
 
 ## 这是什么游戏
 
-竖屏优先的 Three.js 海岛生存游戏（Vite + Capacitor 打包 Android，包名 com.castawaysol.game）。
+横屏优先的 Three.js 海岛生存游戏（标准机型 Solana Seeker，横屏约 914×411，DPR 2.625；Vite + Capacitor 打包 Android，包名 com.castawaysol.game）。
 产品定位（用户定版）：**挖矿是核心**——玩家通过生存远征攒资源、搭建升级基地岛、让矿机产出更大收益；生存（饥饿/水分/疲劳）是远征的燃料与门票，不是目的本身；融合《疯狂水世界》的潮汐/漂流物/台风事件做节奏与赌局。主角是黑猫，舞台是主岛 + 若干外岛（浮木岛、矿石岛等）。
 游戏内货币 `sol_token` 与真实 SOL、与 Seeker 生态代币 SKR 严格分离显示，不得混称、不得承诺收益。
 

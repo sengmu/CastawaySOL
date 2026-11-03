@@ -1,6 +1,6 @@
 ﻿# CastawaySOL
 
-手机横屏优先的Three.js海岛游戏。先阅读 HANDOFF.md、docs/GAMEPLAY.md、docs/ROADMAP.md，以及上级 AGENTS.md。
+手机横屏优先的Three.js海岛游戏。标准机型 Solana Seeker，横屏约 914×411，DPR 2.625。先阅读 HANDOFF.md、docs/GAMEPLAY.md、docs/ROADMAP.md，以及上级 AGENTS.md。
 
 当前是本地单人原型；群岛、生产和多人属于待实现规划。
 
