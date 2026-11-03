@@ -623,9 +623,88 @@ export class MiningRigSystem {
       this.resonance.buff = { id: 'energy_drink', name: '专注', roundsLeft: 2 };
     } else if (id === 'smoked_fish') {
       this.resonance.buff = { id: 'smoked_fish', name: '稳手', roundsLeft: 3 };
-    } else if (id === 'resonance_crab_pot') {
+    } else if (id === 'resonance_crab_pot' || id === 'crab_pot') {
+      // crab_pot（普通椰子蟹煲）与 resonance_crab_pot（共振增强版）均给予晶爆增益
       this.resonance.buff = { id: 'resonance_crab_pot', name: '晶爆', roundsLeft: 3 };
     }
+  }
+
+  // D3：一键饮用料理增益芯片（从背包扣除道具后激活增益）
+  consumeResonanceBuffItem(itemId) {
+    const inv = this.game?.ui?.inventory;
+    if (!inv) return { ok: false, msg: '背包系统未就绪' };
+    const validItems = ['energy_drink', 'smoked_fish', 'resonance_crab_pot', 'crab_pot', 'captain_lunchbox'];
+    if (!validItems.includes(itemId)) return { ok: false, msg: '该道具不具备共振增益效果' };
+    if ((inv[itemId] || 0) < 1) return { ok: false, msg: `背包中没有【${itemId}】` };
+    // 扣除道具（不经账本，属于消耗品背包操作）
+    inv[itemId] -= 1;
+    if (inv[itemId] <= 0) delete inv[itemId];
+    // captain_lunchbox 同时补充一次免费份额（奖励性）并应用晶爆
+    if (itemId === 'captain_lunchbox') {
+      this.resonance.freeShares = Math.min(this.resonance.freeShares + 2, 25);
+      this.resonance.buff = { id: 'resonance_crab_pot', name: '船长全勤·晶爆', roundsLeft: 3 };
+    } else {
+      this.applyResonanceBuff(itemId);
+    }
+    if (this.game?.ui) {
+      this.game.ui.renderInventory();
+      const buffName = this.resonance.buff?.name || '增益';
+      this.game.ui.showToast(`🍱 已激活共振增益【${buffName}】，本轮勘探命中率提升！`, 'medium');
+    }
+    return { ok: true, buff: this.resonance.buff };
+  }
+
+  // D3：热脉高EV智能均分升级（当矿机扫描器≥2级时优先向热脉集群格均分）
+  autoSplitEvenHighEV() {
+    if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
+    if (this.resonance.committed) return { ok: false, msg: '已提交不可均分' };
+
+    const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
+    const C = levelInfo.C;
+    const available = Math.min(C, this.resonance.freeShares + this.loadedCrystals);
+    if (available <= 0) return { ok: false, msg: '料仓晶石不足' };
+
+    this.ensureResonanceRound();
+    let targetSquares;
+    // 扫描器≥2级且存在热脉集群时，优先向高EV格均分
+    if (this.scannerLevel >= 2 && this.resonance.cluster && this.resonance.cluster.heatIndices?.length > 0) {
+      const k = levelInfo.k || 3;
+      targetSquares = this.resonance.cluster.heatIndices.slice(0, k);
+    } else {
+      // 降级到基础均分
+      return this.autoSplitEven();
+    }
+
+    this.resonance.deploy.fill(0);
+    const perSq = Math.floor(available / targetSquares.length);
+    const rem = available % targetSquares.length;
+    targetSquares.forEach((sq, idx) => {
+      this.resonance.deploy[sq] = perSq + (idx === 0 ? rem : 0);
+    });
+    return { ok: true, deploy: this.resonance.deploy, highEV: true };
+  }
+
+  // D3：获取矿机升级门禁状态（供 UI 解密驾驶舱展示门禁提示）
+  getUpgradeGateStatus() {
+    const next = this.rigLevel + 1;
+    const fee = ODDS_TABLE.UPGRADE_COSTS[next];
+    if (!fee) return { canUpgrade: false, reason: '矿机已达满级', atMax: true };
+    const ch = this.game?.story?.currentChapterId || 1;
+    if (next === 2 && ch < 3) {
+      return { canUpgrade: false, reason: `矿机 L2 解锁需进入第三章（当前：第${ch}章）`, chapterGate: true, needChapter: 3 };
+    }
+    if (next === 3 && (ch < 4 || (!this.game?.story?.raymondRescued && !this.game?.timberIsleScene?.survivorRescued))) {
+      return { canUpgrade: false, reason: '矿机 L3 图纸需第四章远航浮木岛营救学者雷蒙德后解锁', chapterGate: true, needChapter: 4 };
+    }
+    if (next === 4 && (ch < 5 || (!this.game?.story?.lighthouseLit && !this.game?.lighthouse?.isLit))) {
+      return { canUpgrade: false, reason: '矿机 L4 算力图纸需第五章点亮北崖灯塔后解锁', chapterGate: true, needChapter: 5 };
+    }
+    const inv = this.game?.ui?.inventory;
+    const tokens = inv?.sol_token || 0;
+    if (tokens < fee) {
+      return { canUpgrade: false, reason: `算力代币不足（需 ${fee} 枚，当前 ${tokens} 枚）`, tokenGate: true, fee, tokens };
+    }
+    return { canUpgrade: true, fee, nextLevel: next };
   }
 
   // 消费 15% 自动注入母晶池

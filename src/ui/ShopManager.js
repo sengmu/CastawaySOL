@@ -159,7 +159,7 @@ export class ShopManager {
         icon: '🪂',
         priceSOL: 0.03,
         priceToken: 8,
-        desc: '救援直升机向海岛营火旁紧急空投一份物资箱：立即获得【香脆烤鱼】x5、【蜜汁烤苹果】x5、【纯净饮水】x5、【坚韧藤蔓】x3、【加固铁钉】x5！',
+        desc: '远洋补给机向海岛营火旁紧急空投一份物资箱：立即获得【香脆烤鱼】x5、【蜜汁烤苹果】x5、【纯净饮水】x5、【坚韧藤蔓】x3、【加固铁钉】x5！',
         isOwned: () => false,
         onPurchase: () => {
           if (this.game.storageSystem) {

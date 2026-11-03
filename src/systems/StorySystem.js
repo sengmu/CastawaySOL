@@ -43,6 +43,7 @@ export class StorySystem {
     this.raymondRescued = false;           // 学者雷蒙德是否救回大本营
     this.lighthouseLit = false;            // 北崖古灯塔一期大工程是否点亮
     this.firstResonanceSettled = false;    // 首次地脉共振勘探是否完成结算
+    this.templeUnsealed = false;           // 后山远古神殿三宝石封印是否已解封
 
     // 推进防抖锁 (防止同一帧重复触发)
     this.isAdvancing = false;
@@ -129,8 +130,8 @@ export class StorySystem {
           {
             id: 'fix_radio',
             type: 'action',
-            desc: '打捞搁浅物资箱中的零件，在合成台修复为【工作收音机】！',
-            hint: '在合成台使用破损收音机 + 电池合成无线电设备'
+            desc: '打捞搁浅物资箱中的破损收音机，在精炼炉提炼纯晶后合成【工作收音机】！',
+            hint: '先在营地告示板建造纯晶精炼炉过夜提纯，再用高纯硅晶 + 故障无线电合成'
           },
           {
             id: 'radio_contact',
@@ -224,28 +225,73 @@ export class StorySystem {
     return false;
   }
 
-  // 获取当前章节过章挖矿要求文案
-  getChapterGateBannerDesc(chapterId) {
+  // 获取当前章节过章里程碑逐项检查清单（供 HUD 横幅与营地中枢面板实时展示）
+  getChapterGateChecklist(chapterId = this.currentChapterId) {
     const rig = this.game?.miningRig;
+    const inv = this.game?.ui?.inventory || {};
+    const ledger = this.game?.economyLedger;
+
     if (chapterId === 0) {
-      return '过章要求：检视营地绿色矿机并装载至少 1 块硅晶原石！';
+      const hasCrystal = (inv.sol_crystal || 0) > 0 || (rig?.loadedCrystals || 0) > 0 || (rig?.totalBlocksMined || 0) > 0;
+      return [
+        { id: 'c0_crystal', label: '检视营地绿色矿机并采集/装载首块硅晶原石', done: !!rig && hasCrystal }
+      ];
     }
     if (chapterId === 1) {
       const blocks = rig?.totalBlocksMined || 0;
       const tokens = rig?.totalSolMined || 0;
-      return `过章要求：营地矿机完成首次出块 (${Math.min(blocks, 1)}/1) 且累计产出 6 枚算力代币 (${Math.min(tokens, 6)}/6)！`;
+      return [
+        { id: 'c1_block', label: `营地矿机完成首次出块 (${Math.min(blocks, 1)}/1)`, done: blocks >= 1 },
+        { id: 'c1_tokens', label: `累计挖矿产出 6 枚算力代币 (${Math.min(tokens, 6)}/6)`, done: tokens >= 6 }
+      ];
     }
     if (chapterId === 2) {
-      return '过章要求：研制地质共振扫描仪 Mk1 并完成首次地脉共振勘探结算！';
+      const hasScanner = (rig?.scannerLevel || 0) >= 1 || (inv.geo_scanner_mk1 || 0) > 0;
+      const hasResonance = this.firstResonanceSettled === true ||
+        (rig?.resonance?.history?.length || 0) >= 1 ||
+        (rig?.shardCount || 0) > 0 ||
+        Boolean(ledger?.days?.some(d => (d.outflow?.sol_crystal?.resonance_commit || 0) > 0 || (d.inflow?.sol_shard?.resonance_shard || 0) > 0));
+      return [
+        { id: 'c2_scanner', label: '合成并安装地质共振扫描仪 Mk1', done: hasScanner },
+        { id: 'c2_resonance', label: '在矿机【共振】页完成首次地脉勘探结算', done: hasResonance }
+      ];
     }
     if (chapterId === 3) {
-      return '过章要求：建造精炼炉提炼高纯纯晶，并将矿机升级至 L2！';
+      const pureDelivered = this.pureCrystalDelivered === true ||
+        Boolean(ledger?.days?.some(d => (d.outflow?.sol_crystal?.refinery_consume || 0) > 0)) ||
+        (this.game?.campFacilities?.refineryLevel || 0) >= 1;
+      const rigL2 = (rig?.rigLevel || 1) >= 2;
+      return [
+        { id: 'c3_refinery', label: '在营地告示板建造【纯晶精炼炉】并提纯硅晶', done: pureDelivered },
+        { id: 'c3_rig_l2', label: `将营地解密矿机升级至 L2 (当前 L${rig?.rigLevel || 1})`, done: rigL2 }
+      ];
     }
     if (chapterId === 4) {
-      return '过章要求：造船出海前往浮木岛救回学者雷蒙德！';
+      const raymond = this.raymondRescued === true ||
+        this.game?.timberIsleScene?.survivorRescued === true ||
+        this.game?.raymondSettled === true;
+      return [
+        { id: 'c4_ellie', label: '前往东北高台救醒幸存少女艾莉', done: this.secondKidAwake === true },
+        { id: 'c4_raymond', label: '乘船前往【浮木岛】救回学者雷蒙德（解锁 L3 图纸）', done: raymond }
+      ];
     }
     if (chapterId === 5) {
-      return '过章要求：交付晶石点亮北崖灯塔一期工程，并将矿机升级至 L4！';
+      const lit = this.lighthouseLit === true || this.game?.lighthouse?.isLit === true;
+      const rigL4 = (rig?.rigLevel || 1) >= 4;
+      return [
+        { id: 'c5_lighthouse', label: '集齐三梯晶石点亮【北崖古灯塔】一期工程', done: lit },
+        { id: 'c5_rig_l4', label: `将营地解密矿机升级至 L4 (当前 L${rig?.rigLevel || 1})`, done: rigL4 }
+      ];
+    }
+    return [];
+  }
+
+  // 获取当前章节过章挖矿要求文案（精准提示未完成的剩余项）
+  getChapterGateBannerDesc(chapterId) {
+    const list = this.getChapterGateChecklist(chapterId);
+    const pending = list.filter(item => !item.done);
+    if (pending.length > 0) {
+      return `过章要求：${pending.map(item => item.label).join('；')}！`;
     }
     return '过章要求：达成当前章节挖矿里程碑！';
   }
@@ -535,7 +581,7 @@ export class StorySystem {
   buildSosSign() {
     this.sosBuilt = true;
     if (this.game && this.game.ui) {
-      this.game.ui.showDialog('🪨 沙滩 SOS 地标拼装完成！', '你搬运大量海滩巨石与白色贝壳，在平坦南岸沙滩上拼出了直径十余米的巨型【S.O.S】求救符号！\n配合修好的收音机广播，空中搜救机将能一眼看见！');
+      this.game.ui.showDialog('🪨 沙滩 S.O.S 导引阵拼装完成！', '你搬运海滩巨石与白色贝壳，在平坦南岸沙滩上拼出了醒目的【S.O.S】地面信标阵！\n手持精炼纯晶修复的【工作收音机】在此架设天线，即可捕捉远方海平线传来的微弱求救电波！');
     }
   }
 
@@ -574,6 +620,7 @@ export class StorySystem {
       raymondRescued: this.raymondRescued,
       lighthouseLit: this.lighthouseLit,
       firstResonanceSettled: this.firstResonanceSettled,
+      templeUnsealed: this.templeUnsealed,
       endedEndingId: this.endedEndingId,
       onboardingStep: this.onboardingStep,
       onboardingDismissed: this.onboardingDismissed
@@ -602,6 +649,13 @@ export class StorySystem {
     if (typeof data.lighthouseLit === 'boolean') this.lighthouseLit = data.lighthouseLit;
     if (typeof data.firstResonanceSettled === 'boolean') this.firstResonanceSettled = data.firstResonanceSettled;
     if (Array.isArray(data.gemsCollected)) this.gemsCollected = new Set(data.gemsCollected);
+    if (typeof data.templeUnsealed === 'boolean') {
+      this.templeUnsealed = data.templeUnsealed;
+    } else {
+      const hasCrown = Boolean((this.game?.ui?.inventory?.poseidon_crown || 0) > 0 || (this.game?.storageSystem?.storageInventory?.poseidon_crown || 0) > 0);
+      const solved = Boolean(this.game?.templePuzzle?.puzzleSolved || this.game?.templePuzzle?.vaultClaimed);
+      this.templeUnsealed = hasCrown || solved;
+    }
     this.endedEndingId = null;
     // 第六章即成长主线已完成；兼容没有 isCompleted 的旧档。
     this.isCompleted = data.isCompleted === true || this.currentChapterId === 6;

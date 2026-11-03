@@ -13,6 +13,14 @@ export const LIGHTHOUSE_DELIVERY = Object.freeze({
   sol_crystal_deep: 2
 });
 
+// D1 二期【星海谐振塔】升级交付清单（消纳终局高阶产出并共鸣归位波塞冬金冠圣物）
+export const LIGHTHOUSE_PHASE2_DELIVERY = Object.freeze({
+  sol_crystal_pure: 4,
+  sol_crystal_deep: 3,
+  pearl: 2,
+  poseidon_crown: 1
+});
+
 export class LighthouseEntity {
   constructor(scene, game) {
     this.scene = scene;
@@ -21,6 +29,9 @@ export class LighthouseEntity {
 
     this.isLit = false;
     this.phase1Complete = false;
+    this.phase2Complete = false;
+    this.poseidonRelicEnshrined = false;
+    this._phase2Elapsed = 0;
 
     this.group = new THREE.Group();
     this.group.name = 'north-cliff-lighthouse';
@@ -28,6 +39,16 @@ export class LighthouseEntity {
 
     this.beaconGroup = new THREE.Group();
     this.beaconGroup.position.set(0, 9.2, 0);
+
+    this.phase2Group = new THREE.Group();
+    this.phase2Group.name = 'stellar-harmonic-crown';
+    this.phase2Group.position.set(0, 12.8, 0);
+    this.phase2Group.visible = false;
+
+    this.auroraGroup = new THREE.Group();
+    this.auroraGroup.name = 'aurora-dual-beams';
+    this.auroraGroup.position.set(0, 10.2, 0);
+    this.auroraGroup.visible = false;
 
     this.initStructure();
     if (this.scene) {
@@ -168,6 +189,91 @@ export class LighthouseEntity {
     bench.position.set(0, 1.55, 3.2);
     bench.castShadow = true;
     this.group.add(bench);
+
+    // 8. D1 二期【星海谐振塔】双环星冕棱镜与极光双光束 (程序化低多边形黏土几何体)
+    const outerRingGeo = new THREE.TorusGeometry(1.65, 0.09, 8, 24);
+    const outerRingMat = new THREE.MeshStandardMaterial({
+      color: 0xffd166,
+      emissive: 0xd99b26,
+      emissiveIntensity: 0.85,
+      roughness: 0.3,
+      metalness: 0.65,
+      flatShading: true
+    });
+    this.outerCoronaRing = new THREE.Mesh(outerRingGeo, outerRingMat);
+    this.outerCoronaRing.rotation.x = Math.PI / 3;
+    this.phase2Group.add(this.outerCoronaRing);
+
+    const innerRingGeo = new THREE.TorusGeometry(1.15, 0.075, 8, 20);
+    const innerRingMat = new THREE.MeshStandardMaterial({
+      color: 0x56cfe1,
+      emissive: 0x48bfe3,
+      emissiveIntensity: 1.1,
+      roughness: 0.25,
+      metalness: 0.5,
+      flatShading: true
+    });
+    this.innerCoronaRing = new THREE.Mesh(innerRingGeo, innerRingMat);
+    this.innerCoronaRing.rotation.y = Math.PI / 4;
+    this.phase2Group.add(this.innerCoronaRing);
+
+    const prismGeo = new THREE.OctahedronGeometry(0.55, 0);
+    const prismMat = new THREE.MeshStandardMaterial({
+      color: 0x80ffdb,
+      emissive: 0x64dfdf,
+      emissiveIntensity: 1.6,
+      roughness: 0.15,
+      metalness: 0.2,
+      flatShading: true
+    });
+    this.stellarPrism = new THREE.Mesh(prismGeo, prismMat);
+    this.phase2Group.add(this.stellarPrism);
+
+    // 共鸣归位的波塞冬海皇金冠环饰
+    const crownBandGeo = new THREE.CylinderGeometry(0.38, 0.32, 0.22, 8);
+    const crownBandMat = new THREE.MeshStandardMaterial({
+      color: 0xffbe0b,
+      emissive: 0xfb8500,
+      emissiveIntensity: 0.9,
+      roughness: 0.3,
+      metalness: 0.8,
+      flatShading: true
+    });
+    const crownBand = new THREE.Mesh(crownBandGeo, crownBandMat);
+    crownBand.position.y = 0.62;
+    this.phase2Group.add(crownBand);
+    this.group.add(this.phase2Group);
+
+    // 反向交错极光双光束 (青翠极光束 + 星紫极光束)
+    const auroraGeoA = new THREE.ConeGeometry(2.4, 30, 14, 1, true);
+    auroraGeoA.translate(0, 15, 0);
+    auroraGeoA.rotateX(Math.PI / 2.15);
+    const auroraMatA = new THREE.MeshBasicMaterial({
+      color: 0x38ef7d,
+      transparent: true,
+      opacity: 0.24,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const auroraBeamA = new THREE.Mesh(auroraGeoA, auroraMatA);
+    this.auroraGroup.add(auroraBeamA);
+
+    const auroraGeoB = new THREE.ConeGeometry(2.4, 30, 14, 1, true);
+    auroraGeoB.translate(0, 15, 0);
+    auroraGeoB.rotateX(-Math.PI / 2.15);
+    const auroraMatB = new THREE.MeshBasicMaterial({
+      color: 0xa29bfe,
+      transparent: true,
+      opacity: 0.24,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const auroraBeamB = new THREE.Mesh(auroraGeoB, auroraMatB);
+    this.auroraGroup.add(auroraBeamB);
+
+    this.group.add(this.auroraGroup);
   }
 
   // 设置点亮/熄灭状态
@@ -190,10 +296,45 @@ export class LighthouseEntity {
     }
   }
 
-  // 帧更新循环：旋转光束
+  // 设置二期【星海谐振塔】激活状态
+  setPhase2(active) {
+    const enabled = Boolean(active);
+    this.phase2Complete = enabled;
+    this.poseidonRelicEnshrined = enabled;
+    if (enabled && !this.isLit) {
+      this.setLit(true);
+    }
+    if (this.phase2Group) this.phase2Group.visible = enabled;
+    if (this.auroraGroup) this.auroraGroup.visible = enabled;
+    if (enabled && this.pointLight) {
+      this.pointLight.color.setHex(0x80ffdb);
+      this.pointLight.intensity = 3.6;
+    }
+    if (this.game?.mistReefIsleScene) {
+      this.game.mistReefIsleScene.teleportActive = enabled;
+    }
+  }
+
+  // 帧更新循环：旋转探照光束与二期双环星冕棱镜
   update(dt = 0.016) {
     if (this.isLit && this.beaconGroup) {
       this.beaconGroup.rotation.y += dt * 0.75;
+    }
+    if (this.phase2Complete) {
+      this._phase2Elapsed += dt;
+      if (this.auroraGroup) {
+        this.auroraGroup.rotation.y -= dt * 0.58;
+      }
+      if (this.outerCoronaRing) {
+        this.outerCoronaRing.rotation.z += dt * 0.9;
+      }
+      if (this.innerCoronaRing) {
+        this.innerCoronaRing.rotation.x -= dt * 1.25;
+      }
+      if (this.stellarPrism) {
+        this.stellarPrism.rotation.y += dt * 1.5;
+        this.stellarPrism.position.y = Math.sin(this._phase2Elapsed * 2.2) * 0.14;
+      }
     }
   }
 
@@ -249,9 +390,12 @@ export class LighthouseEntity {
     // 视觉点亮
     this.setLit(true);
 
-    // 主线故事标记
+    // 主线故事标记与远洋晶雾航路解锁同步
     if (this.game?.story) {
       this.game.story.lighthouseLit = true;
+    }
+    if (this.game?.nauticalChart && typeof this.game.nauticalChart.syncEndgameRoutes === 'function') {
+      this.game.nauticalChart.syncEndgameRoutes();
     }
 
     soundEngine.playVictory();
@@ -270,10 +414,115 @@ export class LighthouseEntity {
     return { ok: true };
   }
 
+  // 检查二期【星海谐振塔】升级交付条件（支持背包 + 营地储物箱联合核验）
+  checkCanDeliverPhase2() {
+    if (!this.isLit) {
+      return {
+        ok: false,
+        reason: '需先完成北崖古灯塔一期点亮工程',
+        missing: [],
+        requirements: LIGHTHOUSE_PHASE2_DELIVERY
+      };
+    }
+    const inv = this.game?.ui?.inventory || {};
+    const box = this.game?.storageSystem?.storageInventory || {};
+    const missing = [];
+
+    for (const [key, need] of Object.entries(LIGHTHOUSE_PHASE2_DELIVERY)) {
+      const cur = (inv[key] || 0) + (box[key] || 0);
+      if (cur < need) {
+        missing.push({ key, need, cur });
+      }
+    }
+
+    return {
+      ok: missing.length === 0,
+      missing,
+      requirements: LIGHTHOUSE_PHASE2_DELIVERY
+    };
+  }
+
+  // 执行二期【星海谐振塔】交付升级，打通先民三点零补给传送网并激活海皇归位增益
+  deliverPhase2() {
+    if (!this.isLit) {
+      if (this.game?.ui) {
+        this.game.ui.showToast('🗼 请先完成灯塔一期点亮工程！', 'medium');
+      }
+      return { ok: false, msg: '一期尚未点亮' };
+    }
+    if (this.phase2Complete) {
+      if (this.game?.ui) {
+        this.game.ui.showToast('🌌 星海谐振塔已处于满功率共鸣状态！', 'medium');
+      }
+      return { ok: false, msg: '二期已完成' };
+    }
+
+    const check = this.checkCanDeliverPhase2();
+    if (!check.ok) {
+      const labelMap = {
+        sol_crystal_pure: '高纯精炼纯晶',
+        sol_crystal_deep: '深层海脉晶核',
+        pearl: '天然珍珠',
+        poseidon_crown: '波塞冬海皇金冠'
+      };
+      const desc = check.missing
+        .map(m => `• ${labelMap[m.key] || m.key}: 需 ${m.need}，当前共持有 ${m.cur}`)
+        .join('\n');
+      if (this.game?.ui) {
+        this.game.ui.showDialog(
+          '🌌【星海谐振塔·二期】共鸣资材不足',
+          `升级星海谐振塔并贯通先民潮汐传送网，尚缺以下资材（支持背包+储物箱合并计入）：\n\n${desc}\n\n【二期清单：高纯精炼纯晶 ×4、深层海脉晶核 ×3、天然珍珠 ×2、波塞冬海皇金冠 ×1】`
+        );
+      }
+      return { ok: false, msg: '材料不足', missing: check.missing };
+    }
+
+    const inv = this.game?.ui?.inventory || {};
+    const box = this.game?.storageSystem?.storageInventory || {};
+
+    // 优先扣减背包，差额从营地储物箱扣减
+    for (const [key, need] of Object.entries(LIGHTHOUSE_PHASE2_DELIVERY)) {
+      const fromBag = Math.min(inv[key] || 0, need);
+      const fromBox = need - fromBag;
+      if (fromBag > 0) {
+        inv[key] -= fromBag;
+        if (inv[key] <= 0) delete inv[key];
+      }
+      if (fromBox > 0) {
+        box[key] = Math.max(0, (box[key] || 0) - fromBox);
+        if (box[key] <= 0) delete box[key];
+      }
+    }
+
+    this.setPhase2(true);
+
+    if (this.game?.codexSystem) {
+      this.game.codexSystem.unlockEntry('relic_poseidon_crown');
+      this.game.codexSystem.unlockEntry('relic_harmonic_tower');
+    }
+
+    soundEngine.playVictory();
+    if (this.game?.ui) {
+      this.game.ui.renderInventory();
+      this.game.ui.showDialog(
+        '🌌【星海谐振塔·二期大工程圆满落成】！',
+        '波塞冬海皇金冠悬浮升入塔顶双环星冕棱镜，青紫极光双光束横贯群岛天际！\n\n• 【先民潮汐传送网】已全面贯通：主岛先民祭坛 ⇄ 后山神殿内殿 ⇄ 晶雾回声岛实现零补给瞬移！\n• 【海皇圣物归位护佑】永久生效：群岛远航淡水消耗减半，近海垂钓稀有海产率大幅提升！'
+      );
+    }
+
+    if (this.game?.saveSystem) {
+      this.game.saveSystem.saveGame('lighthouse_phase2');
+    }
+
+    return { ok: true };
+  }
+
   serialize() {
     return {
       isLit: this.isLit,
-      phase1Complete: this.phase1Complete
+      phase1Complete: this.phase1Complete,
+      phase2Complete: this.phase2Complete,
+      poseidonRelicEnshrined: this.poseidonRelicEnshrined
     };
   }
 
@@ -284,6 +533,11 @@ export class LighthouseEntity {
     }
     if (typeof data.phase1Complete === 'boolean') {
       this.phase1Complete = data.phase1Complete;
+    }
+    if (typeof data.phase2Complete === 'boolean') {
+      this.setPhase2(data.phase2Complete);
+    } else if (typeof data.poseidonRelicEnshrined === 'boolean' && data.poseidonRelicEnshrined) {
+      this.setPhase2(true);
     }
   }
 }

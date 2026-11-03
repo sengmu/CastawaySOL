@@ -41,6 +41,21 @@ export const ARCHIPELAGO_ISLANDS = {
     discovered: false,
     outpostBuilt: false,
     thumbnailIcon: '🌋'
+  },
+  mist_reef_isle: {
+    id: 'mist_reef_isle',
+    name: '晶雾回声岛 (Mist Reef Isle)',
+    badge: '🔮 终局晶海 · 地脉共鸣源',
+    desc: '隐匿在 12.8 海里风暴浓雾深处的环礁秘岛，生长着璀璨的荧光深层海脉晶核、孔雀铜矿与深海母贝珍珠，并残存着先民潮汐传送阵。',
+    climate: '浓雾潮涌 · 荧光晶脉冲盈',
+    dangerLevel: '高度危险 (3★)',
+    distanceKm: 12.8,
+    requiredSupplies: { food: 4, water: 4 },
+    discovered: false,
+    outpostBuilt: false,
+    requiresLighthouse: true,
+    requiredTierLevel: 3,
+    thumbnailIcon: '🔮'
   }
 };
 
@@ -54,10 +69,23 @@ export class NauticalChartSystem {
   // 解锁指定岛屿
   discoverIsland(islandId) {
     if (this.islands[islandId]) {
+      const wasDiscovered = this.islands[islandId].discovered;
       this.islands[islandId].discovered = true;
-      if (this.game && this.game.ui) {
+      if (!wasDiscovered && this.game && this.game.ui) {
         this.game.ui.showToast(`🧭 航海图更新：已标记【${this.islands[islandId].name}】！`, 'medium');
       }
+    }
+  }
+
+  // 当灯塔一期点亮或船坞升级时同步检测晶雾回声岛航路探明状态
+  syncEndgameRoutes() {
+    const isLighthouseLit = Boolean(
+      (this.game && this.game.lighthouse && this.game.lighthouse.isLit) ||
+      (this.game && this.game.story && this.game.story.lighthouseLit)
+    );
+    const tierLevel = this.game && this.game.shipUpgradeSystem ? this.game.shipUpgradeSystem.currentTierLevel : 1;
+    if (this.islands.mist_reef_isle && (isLighthouseLit || tierLevel >= 3)) {
+      this.discoverIsland('mist_reef_isle');
     }
   }
 
@@ -67,8 +95,29 @@ export class NauticalChartSystem {
     if (!target) return { ok: false, reason: '目标海域不存在' };
     if (islandId === this.currentIslandId) return { ok: false, reason: '当前已在此岛屿' };
 
+    // 0.0 检查终局海域双锁（北崖灯塔一期已点亮 + 要求船体阶梯）
+    if (target.requiresLighthouse) {
+      const isLighthouseLit = Boolean(
+        (this.game && this.game.lighthouse && this.game.lighthouse.isLit) ||
+        (this.game && this.game.story && this.game.story.lighthouseLit)
+      );
+      if (!isLighthouseLit) {
+        return {
+          ok: false,
+          reason: '目标海域被浓厚晶雾风暴封锁！需先点亮【北崖地脉灯塔一期】照破迷雾，方能校准远洋航向！'
+        };
+      }
+    }
+
     // 0. 检查出海船只等级与适航距离
     const shipSys = this.game ? this.game.shipUpgradeSystem : null;
+    if (shipSys && target.requiredTierLevel && shipSys.currentTierLevel < target.requiredTierLevel) {
+      const curTier = shipSys.getCurrentTier();
+      return {
+        ok: false,
+        reason: `【${target.name}】外围暗礁狂浪凶险！当前座驾【${curTier.name}】无法突破，需升级至 T${target.requiredTierLevel}【铁甲远洋探索舰】！`
+      };
+    }
     if (shipSys && target.distanceKm > 0) {
       if (!shipSys.canReachDistance(target.distanceKm)) {
         const curTier = shipSys.getCurrentTier();
@@ -82,9 +131,11 @@ export class NauticalChartSystem {
     const inv = this.game.ui ? this.game.ui.inventory : {};
     const survival = this.game.survival;
 
-    // 计算实际补给需求 (享受船只等级折扣)
+    // 计算实际补给需求 (享受船只等级折扣 + D1 海皇圣物归位淡水消耗减半护佑)
     const discount = shipSys ? shipSys.getCurrentTier().supplyDiscount : 0;
-    const actualWaterNeed = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.water * (1 - discount))) : target.requiredSupplies.water);
+    const shipWaterNeed = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.water * (1 - discount))) : target.requiredSupplies.water);
+    const poseidonBlessed = Boolean(this.game?.lighthouse?.phase2Complete || this.game?.lighthouse?.poseidonRelicEnshrined);
+    const actualWaterNeed = shipWaterNeed > 0 && poseidonBlessed ? Math.max(1, Math.floor(shipWaterNeed * 0.5)) : shipWaterNeed;
     const actualFoodNeed = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.food * (1 - discount))) : target.requiredSupplies.food);
 
     // 1. 水分检查
@@ -122,7 +173,9 @@ export class NauticalChartSystem {
 
     const shipSys = this.game ? this.game.shipUpgradeSystem : null;
     const discount = shipSys ? shipSys.getCurrentTier().supplyDiscount : 0;
-    const needWater = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.water * (1 - discount))) : target.requiredSupplies.water);
+    const shipWaterNeed = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.water * (1 - discount))) : target.requiredSupplies.water);
+    const poseidonBlessed = Boolean(this.game?.lighthouse?.phase2Complete || this.game?.lighthouse?.poseidonRelicEnshrined);
+    const needWater = shipWaterNeed > 0 && poseidonBlessed ? Math.max(1, Math.floor(shipWaterNeed * 0.5)) : shipWaterNeed;
     let needFood = discount >= 1.0 ? 0 : (discount > 0 ? Math.max(1, Math.ceil(target.requiredSupplies.food * (1 - discount))) : target.requiredSupplies.food);
 
     const inv = this.game.ui ? this.game.ui.inventory : {};
@@ -169,6 +222,7 @@ export class NauticalChartSystem {
 
   // 打开海图航海导航弹窗
   openChartModal() {
+    this.syncEndgameRoutes();
     if (this.game && this.game.ui) {
       this.game.ui.openNauticalChartModal(this);
     }
@@ -182,13 +236,22 @@ export class NauticalChartSystem {
     };
   }
 
-  // 反序列化
+  // 反序列化（合并新增岛屿默认配置以无缝兼容旧存档）
   deserialize(data) {
     if (data && data.islands) {
-      this.islands = { ...data.islands };
+      const defaults = JSON.parse(JSON.stringify(ARCHIPELAGO_ISLANDS));
+      const merged = {};
+      for (const [k, defVal] of Object.entries(defaults)) {
+        merged[k] = data.islands[k] ? { ...defVal, ...data.islands[k] } : defVal;
+      }
+      for (const [k, savedVal] of Object.entries(data.islands)) {
+        if (!merged[k]) merged[k] = { ...savedVal };
+      }
+      this.islands = merged;
       if (data.currentIslandId) {
         this.currentIslandId = data.currentIslandId;
       }
+      this.syncEndgameRoutes();
     }
   }
 }

@@ -4,6 +4,7 @@ import { VirtualJoystick } from './VirtualJoystick.js';
 import { solanaBridge } from '../core/SolanaBridge.js';
 import { CraftingSystem } from '../systems/CraftingSystem.js';
 import { CRAFTING_CATEGORIES, CRAFTING_BLUEPRINTS, CraftingBlueprintManager } from '../core/CraftingBlueprints.js';
+import { GAME_ASSETS } from '../core/AssetRegistry.js';
 import { ShopManager } from './ShopManager.js';
 import { haptics } from '../core/HapticFeedback.js';
 import { createElement, Backpack, Hammer, BookOpen, Maximize, Minimize, MoreHorizontal, Wallet, Zap, ArrowUp, Droplets, MessageCircle, Gem, Mountain, Sailboat, PawPrint, Heart, Fish, Flame, Bed, Trees, Drumstick, Menu } from 'lucide';
@@ -1622,6 +1623,7 @@ export class UIManager {
       <button class="hud-nav-btn hud-nav-sol" id="btn-quick-mining" aria-label="矿机中枢">
         ${iconHTML('hud/mining_rig', 26, { eager: true })} <span id="txt-hud-sol-token" style="font-size:13px; font-weight:900;">0</span><span class="hud-sol-unit" style="font-size:12px; font-weight:900; margin-left:2px;">算力</span><span class="hud-sol-gift" id="hud-sol-gift" hidden></span>
       </button>
+      <button class="hud-nav-btn" id="btn-hud-build" aria-label="营地建造">🏗️ <span class="hud-nav-desktop-label">营建</span></button>
       <button class="hud-nav-btn" id="btn-hud-more" aria-label="菜单" aria-expanded="false" aria-controls="hud-nav-secondary">☰ <span class="hud-nav-desktop-label">菜单</span></button>
     `;
     document.body.appendChild(topNav);
@@ -1638,6 +1640,7 @@ export class UIManager {
     drawer.innerHTML = `
       <div class="hud-drawer-title">菜单</div>
       <button class="hud-nav-btn" id="btn-open-merge" aria-label="合成台">🔨 <span class="hud-nav-desktop-label">合成台</span></button>
+      <button class="hud-nav-btn" id="btn-drawer-build">🏗️ 营地规划与建造</button>
       <button class="hud-nav-btn" id="btn-camp-manage">🏕️ 营地经营中枢</button>
       <button class="hud-nav-btn" id="btn-open-shop">🛒 补给与特权</button>
       <button class="hud-nav-btn" id="btn-open-help" aria-label="手册">📖 <span class="hud-nav-desktop-label">手册</span></button>
@@ -1937,6 +1940,25 @@ export class UIManager {
       haptics.light();
       this.openHelpModal();
     });
+    const toggleCampBuild = () => {
+      haptics.medium();
+      const bs = this.buildSystem || window.__game?.buildSystem;
+      if (!bs) return;
+      if (bs.isBuildMode) {
+        bs.exitBuildMode();
+      } else {
+        this.closeModal();
+        bs.enterBuildMode('facility');
+      }
+    };
+    const hudBuildBtn = document.getElementById('btn-hud-build');
+    if (hudBuildBtn) {
+      hudBuildBtn.addEventListener('click', toggleCampBuild);
+    }
+    const drawerBuildBtn = document.getElementById('btn-drawer-build');
+    if (drawerBuildBtn) {
+      drawerBuildBtn.addEventListener('click', toggleCampBuild);
+    }
     // UI 第二步优化：右侧「☰ 菜单」抽屉，打开时 HUD 淡化，点空白处关闭，点功能项后自动收起
     const moreBtn = document.getElementById('btn-hud-more');
     const secondaryNav = document.getElementById('hud-nav-secondary');
@@ -2717,6 +2739,15 @@ export class UIManager {
       const game = this.buildSystem.game;
       economyLedger(game).credit(type, count, source, this.inventory);
     } else this.inventory[type] = (this.inventory[type] || 0) + count;
+
+    // D2 博物图鉴：通知物品获取（非经济账本资源，对 sol_token 等走账本路径的资源豁免）
+    if (!isEconomyResource(type)) {
+      const game = this.buildSystem?.game;
+      if (game?.codexSystem) {
+        game.codexSystem.recordItemObtained(type);
+      }
+    }
+
     this.renderQuickBar();
     this.bottomBar.querySelectorAll('[data-id]').forEach(slot => {
       if (slot.dataset.id === type) slot.classList.add('received');
@@ -3771,6 +3802,16 @@ export class UIManager {
         window.__game.miningRig.applyResonanceBuff('resonance_crab_pot');
       }
       this.showToast('🍲✨ 享用了【共振浓香椰子蟹煲】！饥饿+70，生命+30，并获得 3 轮共振【晶爆概率 x1.5】灵感增益！', 'small');
+    } else if (id === 'camp_breakfast') {
+      this.inventory.camp_breakfast -= 1;
+      this.survival.consume({ id: 'camp_breakfast' });
+      soundEngine.playCooking();
+      this.showToast('🥐 享用了【居民手制早点】！生命+25，饱食+45，饮水+20，疲劳消除-25！', 'small');
+    } else if (id === 'captain_lunchbox') {
+      this.inventory.captain_lunchbox -= 1;
+      this.survival.consume({ id: 'captain_lunchbox' });
+      soundEngine.playCooking();
+      this.showToast('🍱 享用了【船长全勤餐盒】！生命+35，饱食+60，饮水+35，疲劳大减-40！', 'small');
     } else if (id === 'bamboo_canteen') {
       this.inventory.bamboo_canteen -= 1;
       this.survival.consume({ water: 45, life: 10 });
@@ -3998,6 +4039,15 @@ export class UIManager {
       const isAuto = camp.isAutoProductionActive;
 
       const tabsHtml = `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:linear-gradient(135deg, rgba(0,184,148,0.18), rgba(9,132,227,0.18)); border:1px solid rgba(85,239,196,0.35); border-radius:12px; padding:10px 12px; margin-bottom:10px;">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="font-size:13px; font-weight:900; color:#55efc4;">🏗️ 触屏营地规划与工坊建造</span>
+            <span style="font-size:11px; color:rgba(255,255,255,0.78);">自由摆放耐火熔炉、精炼炉与生活景观家具，提升营地舒适度</span>
+          </div>
+          <button id="btn-camp-enter-build" style="padding:8px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:900; font-size:12px; white-space:nowrap; background:linear-gradient(135deg, #00b894, #00cec9); color:#0b1e22; box-shadow:0 4px 12px rgba(0,184,148,0.3);">
+            营地规划与建造 ➔
+          </button>
+        </div>
         <div style="display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px; margin-bottom:12px;">
           <button class="camp-tab-btn ${currentTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard" style="
             flex:1; padding:9px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:900; font-size:13px;
@@ -4024,8 +4074,119 @@ export class UIManager {
         const waterBalColor = summary.waterBalance >= 0 ? '#00b894' : '#ff7675';
         const waterBalTag = summary.waterBalance >= 0 ? '🟢 稳健自给 (盈余)' : '🔴 赤字预警 (需增源)';
 
+        const curChap = story ? story.currentChapterId : 0;
+        const gateChecklist = (story && typeof story.getChapterGateChecklist === 'function')
+          ? story.getChapterGateChecklist(curChap)
+          : [];
+
+        const refLvl = camp.refineryLevel || 0;
+        const inv = this.inventory || {};
+        const storage = game.storageSystem?.storageInventory || {};
+        const totalTokens = inv['sol_token'] || 0;
+        const totalStone = (inv['stone_chunk'] || 0) + (storage['stone_chunk'] || 0);
+        const totalIron = (inv['iron_ingot'] || 0) + (storage['iron_ingot'] || 0);
+        const invCrystals = inv['sol_crystal'] || 0;
+        const invSap = inv['tree_sap'] || 0;
+        const stCrystals = storage['sol_crystal'] || 0;
+        const stSap = storage['tree_sap'] || 0;
+        const stPure = storage['sol_crystal_pure'] || 0;
+        const queuedBatches = Math.min(Math.floor(stCrystals / 2), stSap);
+        const dailyCap = refLvl === 1 ? 3 : (refLvl >= 2 ? 6 : 0);
+
+        const nextRefCostText = refLvl === 0
+          ? `建造消耗：算力代币×20 (持${totalTokens}) · 碎石×4 (持${totalStone}) · 铁锭×2 (持${totalIron})`
+          : (refLvl === 1
+            ? `升级 L2 消耗：算力代币×50 (持${totalTokens}) · 铁锭×4 (持${totalIron})`
+            : '已升至满级 L2（每晚最高提纯 6 批高纯度精炼硅晶）');
+
+        const gateCardHtml = (!story?.isCompleted && gateChecklist.length > 0) ? `
+          <div style="background:rgba(108,92,231,0.14); border:1px solid rgba(162,155,254,0.32); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:13px; font-weight:900; color:#dcdde1; display:flex; justify-content:space-between; align-items:center;">
+              <span>🧭 当前章节里程碑 (${story.getCurrentChapter()?.title || ''})</span>
+              <span style="font-size:11px; color:#a29bfe;">达成后解锁下一章</span>
+            </div>
+            ${gateChecklist.map(item => `
+              <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:${item.done ? '#55efc4' : '#ffeaa7'}; font-weight:700;">
+                <span>${item.done ? '✅' : '⏳'}</span>
+                <span>${item.label}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
+
+        const refineryCardHtml = `
+          <div style="background:rgba(253,203,110,0.1); border:1px solid rgba(253,203,110,0.28); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-size:13px; font-weight:900; color:#ffeaa7; display:flex; align-items:center; gap:6px;">
+                <span>🔥</span> 古法纯晶精炼炉 ${refLvl > 0 ? `(L${refLvl} · 日产能 ${dailyCap} 批)` : '(未建造)'}
+              </div>
+              <span style="font-size:11px; color:#55efc4; font-weight:800;">箱内纯晶: ${stPure} 枚</span>
+            </div>
+            <div style="font-size:11.5px; color:rgba(255,255,255,0.82); line-height:1.45;">
+              ${curChap < 3 && refLvl === 0
+                ? '🔒 进入第三章后解锁纯晶精炼技术（每晚自动将储物箱内【硅晶原石×2 + 粘性松脂×1】提纯为高纯硅晶×1）。'
+                : `${nextRefCostText}<br/>📦 储物箱待炼库存：原石 ${stCrystals} · 松脂 ${stSap}（已备妥 <b>${queuedBatches}/${dailyCap || 3}</b> 批，就寝自动提纯）`
+              }
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              ${refLvl < 2 ? `
+                <button id="btn-camp-build-refinery" ${curChap < 3 ? 'disabled' : ''} style="
+                  flex:1; min-width:140px; padding:8px 12px; border-radius:9px; border:none; font-weight:900; font-size:12px;
+                  cursor:${curChap < 3 ? 'not-allowed' : 'pointer'};
+                  background:${curChap < 3 ? 'rgba(255,255,255,0.12)' : 'linear-gradient(135deg, #fdcb6e, #e17055)'};
+                  color:${curChap < 3 ? 'rgba(255,255,255,0.45)' : '#1e272e'};
+                ">
+                  ${refLvl === 0 ? '🔨 建造纯晶精炼炉 L1' : '⬆️ 升级精炼炉至 L2'}
+                </button>
+              ` : ''}
+              ${refLvl > 0 ? `
+                <button id="btn-camp-deposit-refinery" style="
+                  flex:1; min-width:150px; padding:8px 12px; border-radius:9px; border:1px solid rgba(85,239,196,0.4);
+                  background:rgba(0,184,148,0.22); color:#55efc4; font-weight:900; font-size:12px; cursor:pointer;
+                ">
+                  📥 划转待炼原料入箱 (包内原石${invCrystals}/松脂${invSap})
+                </button>
+                <button id="btn-camp-open-refinery-modal" style="
+                  padding:8px 12px; border-radius:9px; border:1px solid rgba(253,203,110,0.45);
+                  background:rgba(253,203,110,0.16); color:#ffeaa7; font-weight:900; font-size:12px; cursor:pointer;
+                ">
+                  🔥 独立精炼面板
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        const comfort = summary.comfort || (game.buildSystem ? game.buildSystem.getComfortOverview() : {
+          score: 0, maxScore: 100, level: 1, title: 'Lv.1 简陋营帐', uniqueTypes: 0, nextThreshold: 20
+        });
+        const comfortBonusDesc = comfort.level >= 4
+          ? '已激活：睡眠生命+15/疲劳多减15 · 普通采集产出×1.15 · 每日清晨储物箱获赠【居民手制早点】×1'
+          : (comfort.level >= 3
+            ? '已激活：睡眠生命+15/疲劳多减15 · 居民普通木材/石块/野果采集×1.15（满80分解锁每日早点）'
+            : (comfort.level >= 2
+              ? '已激活：睡眠额外恢复+15生命、疲劳额外多减15点（满50分解锁普通采集×1.15）'
+              : '摆放不重复家具满 20 分可升至 Lv.2（解锁睡眠恢复强化；对硅晶与算力零加成）'));
+        const comfortCardHtml = `
+          <div style="background:rgba(85,239,196,0.08); border:1px solid rgba(85,239,196,0.28); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:7px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:900; color:#55efc4;">🏡 营地生活舒适度 · ${comfort.title}</span>
+              <span style="font-size:12px; font-weight:900; color:#ffeaa7;">${comfort.score} / ${comfort.maxScore} 分（已摆 ${comfort.uniqueTypes} 种）</span>
+            </div>
+            <div style="height:8px; border-radius:999px; background:rgba(255,255,255,0.1); overflow:hidden;">
+              <div style="height:100%; width:${Math.min(100, comfort.score)}%; background:linear-gradient(90deg, #00b894, #55efc4, #ffeaa7); border-radius:999px;"></div>
+            </div>
+            <div style="font-size:11.5px; color:rgba(255,255,255,0.82); line-height:1.4;">
+              ${comfortBonusDesc}
+            </div>
+          </div>
+        `;
+
         contentHtml = `
           <div style="display:flex; flex-direction:column; gap:12px;">
+            ${gateCardHtml}
+            ${comfortCardHtml}
+            ${refineryCardHtml}
             <!-- 核心指标四宫格 -->
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
               <!-- 1. 人口与居所 -->
@@ -4077,10 +4238,10 @@ export class UIManager {
                   <span style="font-size:14px;">🚩</span>
                 </div>
                 <div style="font-size:18px; font-weight:900; color:#00cec9;">
-                  ${summary.timberOutpost ? '1 座 (浮木岛)' : '0 座 (待开拓)'}
+                  ${summary.outpostCount || 0} / 3 座
                 </div>
-                <div style="font-size:11px; color:${summary.timberOutpost ? '#55efc4' : '#b2bec3'};">
-                  ${summary.timberOutpost ? '每日潮汐自动回运' : '乘木筏出海插旗设立'}
+                <div style="font-size:11px; color:${(summary.outpostCount || 0) > 0 ? '#55efc4' : '#b2bec3'};">
+                  ${(summary.outpostCount || 0) > 0 ? '每日潮汐自动回运' : '乘船出海插旗设立'}
                 </div>
               </div>
             </div>
@@ -4138,7 +4299,21 @@ export class UIManager {
                   </div>
                 ` : `
                   <div style="color:rgba(255,255,255,0.5); font-size:11px;">
-                    • 【矿石前哨站】未开拓：乘木筏前往海蚀矿石岛插旗可每日回运富铁矿与玄武石。
+                    • 【矿石前哨站】未开拓：乘船前往海蚀矿石岛插旗可每日回运富铁矿与玄武石。
+                  </div>
+                `}
+
+                ${summary.mistReefOutpost ? `
+                  <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,210,211,0.12); padding:8px 10px; border-radius:8px; border:1px solid rgba(0,210,211,0.28);">
+                    <div>
+                      <span style="font-weight:900; color:#48dbfb;">【晶雾观测前哨站】</span>
+                      <span style="color:rgba(255,255,255,0.85);">浓雾环礁共鸣稳定</span>
+                    </div>
+                    <span style="font-weight:800; color:#7bed9f;">每日回运：深层晶核/铜矿x1、纯白珍珠x1</span>
+                  </div>
+                ` : `
+                  <div style="color:rgba(255,255,255,0.5); font-size:11px;">
+                    • 【晶雾观测前哨站】未开拓：点亮北崖灯塔并乘 T3 探索舰前往晶雾回声岛插旗设立。
                   </div>
                 `}
               </div>
@@ -4260,6 +4435,36 @@ export class UIManager {
         });
       });
 
+      // 绑定纯晶精炼炉建造/升级与一键原料划转
+      const buildRefBtn = body.querySelector('#btn-camp-build-refinery');
+      if (buildRefBtn) {
+        buildRefBtn.addEventListener('click', () => {
+          const res = camp.buildRefinery();
+          if (res && res.ok) render();
+        });
+      }
+      const depositRefBtn = body.querySelector('#btn-camp-deposit-refinery');
+      if (depositRefBtn) {
+        depositRefBtn.addEventListener('click', () => {
+          const res = camp.depositRefineryMaterials(6);
+          if (res && res.ok) render();
+        });
+      }
+      const openRefModalBtn = body.querySelector('#btn-camp-open-refinery-modal');
+      if (openRefModalBtn) {
+        openRefModalBtn.addEventListener('click', () => {
+          this.openRefineryModal();
+        });
+      }
+      const enterBuildBtn = body.querySelector('#btn-camp-enter-build');
+      if (enterBuildBtn) {
+        enterBuildBtn.addEventListener('click', () => {
+          this.closeModal();
+          const bs = this.buildSystem || game.buildSystem;
+          if (bs) bs.enterBuildMode('facility');
+        });
+      }
+
       // 绑定打开储物箱
       const openStorageBtn = body.querySelector('#btn-open-camp-storage');
       if (openStorageBtn) {
@@ -4275,6 +4480,143 @@ export class UIManager {
     render();
     this.modalBackdrop.style.display = 'flex';
     soundEngine.playPlaceFurniture();
+  }
+
+  // D2 博物图鉴单屏弹窗：4卷32项本地探索档案
+  openCodexModal() {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    const game = window.__game;
+    const codex = game?.codexSystem;
+    document.getElementById('modal-title').innerHTML = '📖 荒岛博物图鉴 · 群岛自然志';
+    const body = document.getElementById('modal-body');
+
+    const VOLUME_META = {
+      ecology:    { icon: '🌿', name: '第一卷 · 岛屿生态志',   color: '#55efc4' },
+      geology:    { icon: '🪨', name: '第二卷 · 地脉矿物志',   color: '#fdcb6e' },
+      bestiary:   { icon: '🦀', name: '第三卷 · 荒野怪兽谱',   color: '#ff7675' },
+      chronicles: { icon: '📜', name: '第四卷 · 先民编年史',   color: '#a29bfe' }
+    };
+
+    let html = '<div style="padding:4px 0;">';
+
+    const volumes = codex ? codex.constructor.VOLUMES || [] : [];
+    // 静态导入时 CODEX_VOLUMES 已挂在 CodexSystem 上，若无则降级
+    const allVolumes = volumes.length ? volumes : [];
+    // 通过 game.codexSystem 获取图鉴卷数据
+    const { CODEX_VOLUMES } = game?.codexSystem?._volumesDef
+      ? { CODEX_VOLUMES: game.codexSystem._volumesDef }
+      : {};
+
+    if (codex) {
+      for (const [volId, meta] of Object.entries(VOLUME_META)) {
+        const vol = codex.getVolumeSummary(volId);
+        const claimable = vol && vol.completed && !vol.claimed;
+        const claimed = vol && vol.claimed;
+        html += `
+          <div style="background:rgba(0,0,0,0.28); border:1px solid ${meta.color}33; border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-weight:900; color:${meta.color}; font-size:14px;">${meta.icon} ${meta.name}</div>
+              <div style="font-size:12px; color:rgba(255,255,255,0.7);">
+                ${vol ? `${vol.unlocked}/${vol.total}` : '0/?'}
+                ${vol && vol.completed ? ' <span style="color:#55efc4;">★满收集</span>' : ''}
+              </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+              ${vol ? vol.entries.map(e => `
+                <div style="font-size:11px; padding:3px 8px; border-radius:6px; background:${e.unlocked ? meta.color + '22' : 'rgba(255,255,255,0.05)'}; color:${e.unlocked ? '#fff' : 'rgba(255,255,255,0.3)'}; border:1px solid ${e.unlocked ? meta.color + '55' : 'transparent'};">
+                  ${e.unlocked ? e.name : '???'}
+                </div>`).join('') : '<div style="color:rgba(255,255,255,0.3); font-size:11px;">尚未发现任何记录</div>'}
+            </div>
+            ${claimable ? `<button onclick="window.__game.codexSystem.claimVolumeReward('${volId}');window.__game.ui.openCodexModal();" style="background:linear-gradient(135deg,${meta.color},#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 18px; border-radius:8px; cursor:pointer; width:100%;">🎁 领取满收集奖励</button>` : ''}
+            ${claimed ? `<div style="font-size:12px; color:${meta.color}; text-align:center; font-weight:700;">✅ 奖励已领取</div>` : ''}
+          </div>`;
+      }
+      if (codex.hasWatcherTitle) {
+        html += `<div style="text-align:center; margin-top:6px; padding:10px; background:rgba(162,155,254,0.12); border:1px solid #a29bfe44; border-radius:10px; color:#a29bfe; font-weight:900; font-size:13px;">🏆 本地荣誉称号：【群岛守望者】（本地成就，不上链）</div>`;
+      }
+      if (codex.chroniclesUnlocked) {
+        html += `<div style="margin-top:10px; padding:12px 14px; background:rgba(162,155,254,0.08); border:1px solid #a29bfe33; border-radius:12px; max-height:180px; overflow-y:auto; font-size:11px; line-height:1.7; color:rgba(255,255,255,0.75); white-space:pre-wrap;">${window.__game?.codexSystem?.chroniclesText || ''}</div>`;
+      }
+    } else {
+      html += '<div style="color:rgba(255,255,255,0.5); text-align:center; padding:30px;">博物图鉴系统初始化中…</div>';
+    }
+
+    html += `<div style="font-size:10px; color:rgba(255,255,255,0.3); text-align:center; margin-top:10px;">📌 本地博物档案 · 不作商业用途 · 不上链</div>`;
+    html += '</div>';
+    body.innerHTML = html;
+    this.modalBackdrop.style.display = 'flex';
+  }
+
+  // D1 先民潮汐传送网面板（三点零补给瞬移：先民祭坛⇄后山神殿内殿⇄晶雾回声岛）
+  openTidalTeleportModal() {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    const game = window.__game;
+    const lh = game?.lighthouse;
+    const active = Boolean(lh?.phase2Complete);
+
+    document.getElementById('modal-title').innerHTML = '🌊 先民潮汐传送网 · 零补给瞬移';
+    const body = document.getElementById('modal-body');
+
+    if (!active) {
+      body.innerHTML = `
+        <div style="text-align:center; padding:30px 20px;">
+          <div style="font-size:48px; margin-bottom:16px; opacity:0.4;">🗼</div>
+          <div style="color:rgba(255,255,255,0.5); font-size:14px; line-height:1.6;">
+            先民潮汐传送网尚未贯通。<br>
+            需先完成<b style="color:#fdcb6e;">星海谐振塔二期升级</b>并完成<br>
+            <b style="color:#a29bfe;">海皇圣物归位</b>，方可激活三点零瞬移。
+          </div>
+        </div>`;
+      this.modalBackdrop.style.display = 'flex';
+      return;
+    }
+
+    const NODES = [
+      { id: 'main_altar',   icon: '🏛️', name: '先民祭坛',   desc: '主岛南部先民遗迹核心祭台，传送网发起点',   islandId: 'main_island' },
+      { id: 'shrine_inner', icon: '⛩️', name: '后山神殿内殿', desc: '主岛后山神殿地宫，连接山脉矿脉侧通道',      islandId: 'main_island' },
+      { id: 'mist_reef',    icon: '🌫️', name: '晶雾回声岛',  desc: '远洋晶雾笼罩的回声孤岛，深层晶核产出重地', islandId: 'mist_reef_isle' }
+    ];
+
+    const currentIsland = game.currentIslandId || 'main_island';
+    let html = '<div style="padding:4px 0;">';
+    html += `<div style="text-align:center; margin-bottom:14px; font-size:12px; color:#80ffdb; font-weight:700;">★ 星海谐振塔已激活 · 零补给瞬移可用 ★</div>`;
+
+    NODES.forEach(node => {
+      const isCurrent = (node.islandId === currentIsland && node.id !== 'mist_reef') ||
+                        (node.id === 'mist_reef' && currentIsland === 'mist_reef_isle');
+      html += `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid ${isCurrent ? '#80ffdb55' : 'rgba(255,255,255,0.1)'}; border-radius:12px; padding:12px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="flex:1;">
+            <div style="font-size:20px; display:inline-block; margin-right:8px;">${node.icon}</div>
+            <span style="font-weight:900; color:#fff; font-size:14px;">${node.name}</span>
+            ${isCurrent ? ' <span style="font-size:11px; color:#80ffdb;">（当前位置）</span>' : ''}
+            <div style="font-size:11px; color:rgba(255,255,255,0.65); margin-top:4px;">${node.desc}</div>
+          </div>
+          ${!isCurrent ? `<button onclick="window.__game.ui._doTidalTeleport('${node.islandId}','${node.name}');" style="background:linear-gradient(135deg,#00cec9,#6c5ce7); border:none; color:#fff; font-size:13px; font-weight:900; padding:8px 16px; border-radius:8px; cursor:pointer; white-space:nowrap; margin-left:10px;">⚡ 瞬移</button>` : ''}
+        </div>`;
+    });
+
+    html += `<div style="font-size:10px; color:rgba(255,255,255,0.3); text-align:center; margin-top:6px;">潮汐传送无需消耗补给，由星海谐振塔地脉共振维持</div>`;
+    html += '</div>';
+    body.innerHTML = html;
+    this.modalBackdrop.style.display = 'flex';
+  }
+
+  // 内部辅助：执行潮汐传送
+  _doTidalTeleport(targetIslandId, targetName) {
+    const game = window.__game;
+    if (!game) return;
+    this.closeModal();
+    this.showToast(`🌊 正在通过潮汐传送网瞬移至【${targetName}】…`, 'medium');
+    // 委托给 NauticalChartSystem 切换场景（不消耗补给）
+    if (game.nauticalChart && typeof game.nauticalChart.teleportTo === 'function') {
+      game.nauticalChart.teleportTo(targetIslandId);
+    } else if (game.currentIslandId !== undefined) {
+      game.currentIslandId = targetIslandId;
+      if (game.scene && typeof game.setActiveIsland === 'function') {
+        game.setActiveIsland(targetIslandId);
+      }
+    }
   }
 
   // 0.5 营地日常交付订单板模态弹窗
@@ -6114,23 +6456,33 @@ export class UIManager {
     const body = document.getElementById('modal-body');
 
     const islands = Object.values(nauticalChart.islands);
-    const shipSys = window.__game ? window.__game.shipUpgradeSystem : null;
+    const gameRef = window.__game || nauticalChart.game || null;
+    const shipSys = gameRef ? gameRef.shipUpgradeSystem : null;
     const curTier = shipSys ? shipSys.getCurrentTier() : null;
+    const isLighthouseLit = Boolean(
+      (gameRef && gameRef.lighthouse && gameRef.lighthouse.isLit) ||
+      (gameRef && gameRef.story && gameRef.story.lighthouseLit)
+    );
 
     const islandCardsHtml = islands.map(isl => {
-      const isCurrent = isl.id === nauticalChart.currentIslandId;
+      const normalizedCurrent = nauticalChart.currentIslandId === 'main_island' ? 'home_island' : nauticalChart.currentIslandId;
+      const isCurrent = isl.id === normalizedCurrent;
       const isDiscovered = isl.discovered;
-      const canReach = !shipSys || isl.distanceKm <= 0 || shipSys.canReachDistance(isl.distanceKm);
+      const meetsLighthouse = !isl.requiresLighthouse || isLighthouseLit;
+      const meetsTier = !isl.requiredTierLevel || !shipSys || shipSys.currentTierLevel >= isl.requiredTierLevel;
+      const canReach = (!shipSys || isl.distanceKm <= 0 || shipSys.canReachDistance(isl.distanceKm)) && meetsTier;
 
       let actionBtnHtml = '';
       if (isCurrent) {
         actionBtnHtml = `<span style="font-size:12px; font-weight:800; color:#00cec9; background:rgba(0,206,201,0.15); padding:6px 12px; border-radius:8px;">📍 当前停靠港</span>`;
       } else if (!isDiscovered) {
         actionBtnHtml = `<span style="font-size:12px; font-weight:700; color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.06); padding:6px 12px; border-radius:8px;">🔒 海雾笼罩 (未探明)</span>`;
+      } else if (!meetsLighthouse) {
+        actionBtnHtml = `<span style="font-size:11.5px; font-weight:800; color:#ffeaa7; background:rgba(253,203,110,0.16); border:1px solid rgba(253,203,110,0.4); padding:6px 10px; border-radius:8px;">🏮 需点亮北崖灯塔</span>`;
       } else if (!canReach) {
         actionBtnHtml = `
           <button class="btn-ship-upgrade-shortcut" style="background:rgba(225,112,85,0.25); border:1.5px solid #e17055; border-radius:10px; padding:7px 12px; color:#ff7675; font-weight:900; font-size:12px; cursor:pointer;">
-            ⚠️ 航程不足 (点此升级)
+            ⚠️ ${!meetsTier ? `需 T${isl.requiredTierLevel} 探索舰` : '航程不足'} (点此升级)
           </button>
         `;
       } else {
@@ -6213,7 +6565,7 @@ export class UIManager {
         this.modalBackdrop.style.display = 'none';
 
         if (window.__game && window.__game.travelToIsland) {
-          window.__game.travelToIsland(targetId);
+          window.__game.travelToIsland(targetId, { viaChart: true });
         } else {
           this.showToast(`⛵ 正在扬帆驶向【${nauticalChart.islands[targetId].name}】……`, 'medium');
         }
@@ -6284,11 +6636,20 @@ export class UIManager {
       sardine: '随海潮游入潮汐笼的银鳞小沙丁鱼，鲜活肥嫩，可作为生食、鱼饵或熏制军粮。',
       smoked_fish: '经营地烟熏架慢火风干的极品熏鱼干！远洋特权军粮，永久防腐不烂，出海 1 份抵 2 份！',
       sol_crystal: '后山高能矿脉开采的高频硅晶原石！蕴藏大量链上哈希数据，投入营地矿机可解密出荒岛算力代币！',
+      sol_crystal_pure: '经古法纯晶精炼炉提纯的高纯度硅晶！装填矿机具备 2.5 倍算力能量，亦可用于北崖灯塔与神殿核心工程（仅限岛内采集提纯，不可购买）。',
+      sol_crystal_deep: '远海环礁与浮木暗礁深处孕育的深层海脉晶核！是高阶量子扫描仪与终局海皇信标的珍稀共鸣核心。',
+      copper_ore: '泛着孔雀绿光泽的天然富铜原矿，可在营地耐火熔炉中冶炼成导电与防腐蚀俱佳的精铜锭。',
+      copper_ingot: '高温熔铸锻打而成的精炼紫铜锭，用于精密仪器、高阶工具与远洋海皇信标建造。',
+      sol_shard: '晶化生物甲壳剥离出的共鸣碎晶，每集齐 4 枚可在矿机碎晶槽内自动凝结为 1 枚硅晶原石。',
       sol_token: '矿机成功计算哈希区块产出的荒岛算力代币（游戏内货币）。可在黑市兑换特权蓝图，与真实 SOL 严格分离。',
       geo_scanner_mk1: '初阶地脉行波探测仪。在矿机控制台安装后，每轮可勘探出 1 条包含主矿脉的行或列！',
       geo_scanner_mk2: '高精度地质扫描仪。在矿机控制台安装后，每轮锁定 4 个高能候选格，大幅提升勘探中签率！',
       geo_scanner_mk3: '终极量子地质扫描仪。在矿机控制台安装后，精确透视 3 个热脉格，主脉预测准确率达 80%！',
-      resonance_crab_pot: '海岛珍馐美食。食用后获得「晶爆」灵感：接下来 3 轮共振勘探晶爆触发概率提升 1.5 倍！'
+      resonance_crab_pot: '海岛珍馐美食。食用后获得「晶爆」灵感：接下来 3 轮共振勘探晶爆触发概率提升 1.5 倍！',
+      metal_scrap: '由孔雀绿铜矿与粘性松脂经高温耐火熔炉锻铸而成的沉船青铜船板，是远洋船体升级与高阶订单的重要构件。',
+      driftwood: '潮汐冲刷上岸的海滩干燥浮木，可用于营地建造或投入耐火熔炉转化为应急电池。',
+      camp_breakfast: '营地舒适度达到 Lv.4 世外桃源后，居民每日清晨精心烹制的手制早点。食用恢复生命+25、饱食+45、饮水+20、消除疲劳-25。',
+      captain_lunchbox: '单日完成全部 3 单契约订单获赠的船长全勤营养餐盒。食用大幅恢复生命+35、饱食+60、饮水+35、消除疲劳-40。'
     };
     return descs[id] || '荒岛上搜集到的珍贵物资。';
   }
@@ -6304,6 +6665,8 @@ export class UIManager {
       spear: '燧石战矛 🗡️', wooden_bow: '简易猎弓 🏹', flint_arrow: '燧石羽箭 🏹',
       fire_arrow: '烈焰爆燃箭 🏹🔥', bone_armor: '甲壳兽皮胸甲 🦺', herbal_paste: '止血树脂敷膏 🩹',
       energy_drink: '清甜鲜萃果浆 🧃', bamboo_canteen: '便携树皮水壶 🍶', stone_pickaxe: '骨柄石镐 ⛏️', iron_ore: '富铁矿石 ⛏️', iron_ingot: '精炼铁质构件 🧱',
+      copper_ore: '孔雀绿铜矿石 🪨', copper_ingot: '精炼紫铜锭 🧱', stone_hammer: '碎石重锤 🔨', stone_axe: '燧石手斧 🪓',
+      iron_axe: '精钢伐木斧 🪓✨', iron_pickaxe: '精钢破岩镐 ⛏️✨', steel_spear: '百炼精钢战矛 🔱',
       beast_trap: '齿状捕兽夹 🪤', wooden_spikes: '防兽尖木拒马 🪵', crab_shield: '坚甲木盾 🛡️',
       raw_meat: '野兽生肉 🥩', cooked_meat: '香烤野味排骨 🍖',
       crab_meat: '新鲜红蟹肉 🦀', cooked_crab: '香烤极品红蟹 🦀',
@@ -6315,11 +6678,18 @@ export class UIManager {
       sea_crab: '生猛青花海蟹 🦀', sardine: '银鳞小沙丁鱼 🐟',
       smoked_fish: '极品熏鱼干 🍱✨',
       sol_crystal: '未解密硅晶原石 💎',
+      sol_crystal_pure: '高纯精炼硅晶 💠',
+      sol_crystal_deep: '深层海脉晶核 🔮',
+      sol_shard: '共鸣碎晶 🔹',
       sol_token: '荒岛算力代币',
       geo_scanner_mk1: '地质共振扫描仪 Mk1 📡',
       geo_scanner_mk2: '精密共振扫描仪 Mk2 🛰️',
       geo_scanner_mk3: '全域量子扫描仪 Mk3 🌌',
-      resonance_crab_pot: '共振浓香椰子蟹煲 🍲✨'
+      resonance_crab_pot: '共振浓香椰子蟹煲 🍲✨',
+      metal_scrap: '沉船青铜船板 🛡️',
+      driftwood: '海滩干燥浮木 🪵',
+      camp_breakfast: '居民手制早点 🥐',
+      captain_lunchbox: '船长全勤餐盒 🍱'
     };
     return names[id] || id;
   }
@@ -6844,6 +7214,427 @@ export class UIManager {
         </div>
       </section>
     `;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 专题 C：主岛触屏营建底部抽屉、悬浮操作条与双炉单屏工坊面板
+  // ---------------------------------------------------------------------------
+
+  setBuildHudVisible(visible) {
+    const hudBtn = document.getElementById('btn-hud-build');
+    const drawerBtn = document.getElementById('btn-drawer-build');
+    if (hudBtn) hudBtn.style.display = visible ? '' : 'none';
+    if (drawerBtn) drawerBtn.style.display = visible ? '' : 'none';
+    if (!visible) this.closeBuildDrawer();
+  }
+
+  ensureBuildOverlayDOM() {
+    if (this._buildOverlayEl) return this._buildOverlayEl;
+    const overlay = document.createElement('div');
+    overlay.id = 'camp-build-overlay';
+    overlay.style.cssText = `
+      position:fixed; left:0; right:0; bottom:0; z-index:9200;
+      pointer-events:none; display:none; flex-direction:column; align-items:center;
+      gap:8px; padding:0 10px calc(env(safe-area-inset-bottom, 0px) + 8px);
+    `;
+    overlay.innerHTML = `
+      <div id="camp-build-status-pill" style="
+        pointer-events:auto; max-width:94vw; padding:6px 14px; border-radius:999px;
+        background:rgba(24,30,36,0.88); border:1px solid rgba(85,239,196,0.45);
+        color:#f5f6fa; font-size:12px; font-weight:800; text-align:center;
+        box-shadow:0 6px 18px rgba(0,0,0,0.35); backdrop-filter:blur(8px);
+      ">点击或拖拽海岛地面移动预览，或点选已建家具进行移位/拆卸</div>
+
+      <div id="camp-build-action-bar" style="
+        pointer-events:auto; display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+        padding:8px 12px; border-radius:16px; background:rgba(30,39,46,0.92);
+        border:1px solid rgba(255,255,255,0.16); box-shadow:0 8px 24px rgba(0,0,0,0.42);
+        backdrop-filter:blur(10px);
+      "></div>
+
+      <div id="camp-build-drawer" style="
+        pointer-events:auto; width:min(740px, 98vw); border-radius:18px;
+        background:linear-gradient(180deg, rgba(44,34,26,0.95), rgba(28,22,18,0.97));
+        border:1.5px solid rgba(253,203,110,0.38); padding:10px 12px;
+        box-shadow:0 12px 32px rgba(0,0,0,0.52); display:flex; flex-direction:column; gap:8px;
+      ">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div id="camp-build-tabs" style="display:flex; gap:6px; flex:1;">
+            <button type="button" class="camp-build-cat-btn" data-cat="facility" style="flex:1; padding:7px 10px; border-radius:10px; border:none; font-size:12px; font-weight:900; cursor:pointer;">⚙️ 工坊设施</button>
+            <button type="button" class="camp-build-cat-btn" data-cat="comfort" style="flex:1; padding:7px 10px; border-radius:10px; border:none; font-size:12px; font-weight:900; cursor:pointer;">🛏️ 生活起居</button>
+            <button type="button" class="camp-build-cat-btn" data-cat="decor" style="flex:1; padding:7px 10px; border-radius:10px; border:none; font-size:12px; font-weight:900; cursor:pointer;">🌿 景观装饰</button>
+          </div>
+          <span id="camp-build-comfort-chip" style="font-size:11px; font-weight:900; color:#55efc4; padding:5px 9px; border-radius:9px; background:rgba(0,184,148,0.16); border:1px solid rgba(85,239,196,0.3); white-space:nowrap;">舒适度 0/100</span>
+        </div>
+        <div id="camp-build-cards" style="
+          display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px;
+          scrollbar-width:thin; -webkit-overflow-scrolling:touch;
+        "></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    this._buildOverlayEl = overlay;
+    this._activeBuildCat = 'facility';
+
+    overlay.querySelectorAll('.camp-build-cat-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        haptics.light();
+        this._activeBuildCat = btn.getAttribute('data-cat') || 'facility';
+        this.refreshBuildDrawerCosts();
+      });
+    });
+
+    return overlay;
+  }
+
+  openBuildDrawer(initialCategory = 'facility') {
+    const overlay = this.ensureBuildOverlayDOM();
+    this._activeBuildCat = initialCategory || this._activeBuildCat || 'facility';
+    overlay.style.display = 'flex';
+    if (this.bottomBar) this.bottomBar.style.display = 'none';
+    const hudBtn = document.getElementById('btn-hud-build');
+    if (hudBtn) hudBtn.classList.add('active');
+
+    const bs = this.buildSystem || window.__game?.buildSystem;
+    if (bs && !bs.selectedItem && !bs.editingEntry && !bs.relocatingEntry) {
+      const firstItem = (GAME_ASSETS.furniture || []).find((it) => (it.drawerCategory || 'decor') === this._activeBuildCat);
+      if (firstItem) bs.selectFurniture(firstItem);
+    }
+    this.refreshBuildDrawerCosts();
+    this.refreshBuildOverlayState();
+  }
+
+  closeBuildDrawer() {
+    if (this._buildOverlayEl) {
+      this._buildOverlayEl.style.display = 'none';
+    }
+    if (this.bottomBar) this.bottomBar.style.display = '';
+    const hudBtn = document.getElementById('btn-hud-build');
+    if (hudBtn) hudBtn.classList.remove('active');
+  }
+
+  refreshBuildDrawerCosts() {
+    if (!this._buildOverlayEl || this._buildOverlayEl.style.display === 'none') return;
+    const bs = this.buildSystem || window.__game?.buildSystem;
+    if (!bs) return;
+
+    const comfort = bs.getComfortOverview();
+    const chip = this._buildOverlayEl.querySelector('#camp-build-comfort-chip');
+    if (chip) {
+      chip.textContent = `🏡 ${comfort.title} (${comfort.score}/100)`;
+    }
+
+    this._buildOverlayEl.querySelectorAll('.camp-build-cat-btn').forEach((btn) => {
+      const active = btn.getAttribute('data-cat') === this._activeBuildCat;
+      btn.style.background = active ? 'linear-gradient(135deg, #fdcb6e, #e17055)' : 'rgba(255,255,255,0.08)';
+      btn.style.color = active ? '#1e272e' : 'rgba(255,255,255,0.75)';
+    });
+
+    const cardsWrap = this._buildOverlayEl.querySelector('#camp-build-cards');
+    if (!cardsWrap) return;
+
+    const items = (GAME_ASSETS.furniture || []).filter((it) => (it.drawerCategory || 'decor') === this._activeBuildCat);
+    const placedIds = new Set(comfort.uniqueIds || []);
+    const refLvl = window.__game?.campFacilities?.refineryLevel || 0;
+
+    cardsWrap.innerHTML = items.map((item) => {
+      const isSelected = bs.selectedItem?.id === item.id;
+      const affordable = bs.canAfford(item);
+      const alreadyCounted = placedIds.has(item.id);
+      const isStoredRefinery = item.isRefinery && refLvl > 0;
+      const costEntries = isStoredRefinery
+        ? '<span style="color:#55efc4;">已解锁 L' + refLvl + ' · 免费摆放</span>'
+        : Object.entries(item.cost || {}).map(([k, need]) => {
+            const have = bs.getCombinedCount(k);
+            const ok = have >= need;
+            const shortName = this.getItemName(k).replace(/\s*[^一-龥A-Za-z0-9]+$/g, '');
+            return `<span style="color:${ok ? '#7bed9f' : '#ff7675'};">${shortName} ${have}/${need}</span>`;
+          }).join(' · ');
+
+      return `
+        <button type="button" class="camp-build-item-card" data-fid="${item.id}" style="
+          min-width:142px; max-width:158px; flex-shrink:0; text-align:left; cursor:pointer;
+          padding:8px 10px; border-radius:12px; display:flex; flex-direction:column; gap:4px;
+          background:${isSelected ? 'rgba(253,203,110,0.22)' : 'rgba(255,255,255,0.06)'};
+          border:1.5px solid ${isSelected ? '#fdcb6e' : (affordable ? 'rgba(255,255,255,0.15)' : 'rgba(255,118,117,0.35)')};
+          color:#fff;
+        ">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
+            <span style="font-size:13px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.icon || '🪵'} ${item.name}</span>
+            <span style="font-size:10px; font-weight:800; padding:1px 5px; border-radius:6px; background:${alreadyCounted ? 'rgba(255,255,255,0.12)' : 'rgba(85,239,196,0.2)'}; color:${alreadyCounted ? '#dfe6e9' : '#55efc4'};">
+              ${alreadyCounted ? '已计分' : `+${item.comfortScore || 0}舒适`}
+            </span>
+          </div>
+          <div style="font-size:10.5px; line-height:1.35; color:rgba(255,255,255,0.82);">
+            ${costEntries || '免建材'}
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    cardsWrap.querySelectorAll('.camp-build-item-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        haptics.light();
+        const fid = card.getAttribute('data-fid');
+        const found = (GAME_ASSETS.furniture || []).find((it) => it.id === fid);
+        if (found) {
+          bs.selectFurniture(found);
+          this.refreshBuildDrawerCosts();
+        }
+      });
+    });
+  }
+
+  refreshBuildOverlayState() {
+    if (!this._buildOverlayEl || this._buildOverlayEl.style.display === 'none') return;
+    const bs = this.buildSystem || window.__game?.buildSystem;
+    if (!bs) return;
+
+    const pill = this._buildOverlayEl.querySelector('#camp-build-status-pill');
+    const bar = this._buildOverlayEl.querySelector('#camp-build-action-bar');
+    if (!pill || !bar) return;
+
+    const btnStyle = (bg, color = '#fff') => `
+      padding:8px 13px; border-radius:11px; border:none; cursor:pointer;
+      font-size:12px; font-weight:900; background:${bg}; color:${color};
+      display:inline-flex; align-items:center; gap:4px;
+    `;
+
+    if (bs.editingEntry && !bs.relocatingEntry) {
+      const target = bs.editingEntry;
+      pill.style.borderColor = 'rgba(253,203,110,0.65)';
+      pill.innerHTML = `✏️ 已选中【${target.icon || '🪵'} ${target.name}】· 可移位、旋转 90° 或 100% 返还建材拆卸`;
+      bar.innerHTML = `
+        <button type="button" id="btn-b-relocate" style="${btnStyle('linear-gradient(135deg,#0984e3,#00cec9)')}">📍 移动位置</button>
+        <button type="button" id="btn-b-rot-edit" style="${btnStyle('rgba(255,255,255,0.14)')}">↻ 旋转90°</button>
+        <button type="button" id="btn-b-dismantle" style="${btnStyle('linear-gradient(135deg,#d63031,#e17055)')}">
+          ${target.isRefinery ? '📥 收起炉体' : '♻️ 拆卸回收'}
+        </button>
+        <button type="button" id="btn-b-exit" style="${btnStyle('rgba(255,255,255,0.12)')}">✖ 退出</button>
+      `;
+      bar.querySelector('#btn-b-relocate')?.addEventListener('click', () => { haptics.light(); bs.startRelocateSelected(); });
+      bar.querySelector('#btn-b-rot-edit')?.addEventListener('click', () => { haptics.light(); bs.rotateSelectedFurniture(1); });
+      bar.querySelector('#btn-b-dismantle')?.addEventListener('click', () => {
+        haptics.medium();
+        bs.dismantleSelected();
+        this.refreshBuildDrawerCosts();
+      });
+      bar.querySelector('#btn-b-exit')?.addEventListener('click', () => { haptics.light(); bs.exitBuildMode(); });
+      return;
+    }
+
+    const v = bs.lastValidation || { valid: true, reason: '' };
+    const activeTarget = bs.relocatingEntry || bs.selectedItem;
+    const modePrefix = bs.relocatingEntry ? `📍 移位【${bs.relocatingEntry.name}】` : (activeTarget ? `🔨 预览【${activeTarget.name}】` : '🏗️ 营地建造');
+
+    pill.style.borderColor = v.valid ? 'rgba(0,230,118,0.65)' : 'rgba(255,71,87,0.75)';
+    pill.innerHTML = v.valid
+      ? `<span style="color:#55efc4;">🟢 ${modePrefix} · 位置合法（0.5m 网格对齐，点地面可移动）</span>`
+      : `<span style="color:#ff7675;">🔴 ${modePrefix} · ${v.reason || '当前位置不可放置'}</span>`;
+
+    bar.innerHTML = `
+      <button type="button" id="btn-b-rot-l" style="${btnStyle('rgba(255,255,255,0.14)')}">↺ 左旋90°</button>
+      <button type="button" id="btn-b-rot-r" style="${btnStyle('rgba(255,255,255,0.14)')}">↻ 右旋90°</button>
+      <button type="button" id="btn-b-confirm" ${!v.valid ? 'disabled' : ''} style="${btnStyle(
+        v.valid ? 'linear-gradient(135deg,#00b894,#55efc4)' : 'rgba(255,255,255,0.12)',
+        v.valid ? '#0b1e22' : 'rgba(255,255,255,0.4)'
+      )}">${bs.relocatingEntry ? '✅ 确认移位' : '✅ 确认建造'}</button>
+      <button type="button" id="btn-b-exit" style="${btnStyle('rgba(255,255,255,0.12)')}">✖ 退出</button>
+    `;
+
+    bar.querySelector('#btn-b-rot-l')?.addEventListener('click', () => { haptics.light(); bs.rotatePreview(-1); });
+    bar.querySelector('#btn-b-rot-r')?.addEventListener('click', () => { haptics.light(); bs.rotatePreview(1); });
+    bar.querySelector('#btn-b-confirm')?.addEventListener('click', async () => {
+      haptics.medium();
+      await bs.placeCurrentFurniture();
+      this.refreshBuildDrawerCosts();
+      this.refreshBuildOverlayState();
+    });
+    bar.querySelector('#btn-b-exit')?.addEventListener('click', () => { haptics.light(); bs.exitBuildMode(); });
+  }
+
+  // C3：耐火锻造熔炉单屏高温冶炼面板
+  openFurnaceModal() {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    const game = window.__game;
+    const bs = this.buildSystem || game?.buildSystem;
+    if (!bs) return;
+
+    document.getElementById('modal-title').innerHTML = '🔥 高温耐火锻造熔炉 · 冶炼工坊';
+    const body = document.getElementById('modal-body');
+
+    const render = () => {
+      const recipes = bs.getFurnaceRecipes();
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:10px; max-height:66vh; overflow-y:auto; padding:4px;">
+          <div style="font-size:12px; color:rgba(255,255,255,0.78); background:rgba(225,112,85,0.14); border:1px solid rgba(225,112,85,0.35); border-radius:12px; padding:9px 12px;">
+            🔥 鼓风炉膛已达高温工况：自动联合读取【随身背包 + 营地储物箱】内的矿石与木料，产物优先存入背包。
+          </div>
+          ${recipes.map((r) => {
+            const can1 = r.unlocked && r.maxBatch >= 1;
+            const can5 = r.unlocked && r.allowBatch5 && r.maxBatch >= 1;
+            const batch5Count = Math.min(5, Math.max(1, r.maxBatch));
+            const inputsHtml = r.inputsStatus.map((inp) => {
+              const ok = inp.have >= inp.count;
+              return `<span style="color:${ok ? '#7bed9f' : '#ff7675'}; font-weight:800;">${inp.label} ×${inp.count} (持${inp.have})</span>`;
+            }).join(' + ');
+            const outHave = bs.getCombinedCount(r.output.key);
+
+            return `
+              <div style="background:rgba(255,255,255,0.05); border:1px solid ${r.unlocked ? 'rgba(253,203,110,0.28)' : 'rgba(255,255,255,0.1)'}; border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <div style="font-size:14px; font-weight:900; color:#ffeaa7;">${r.icon || '🔥'} ${r.name}</div>
+                  <span style="font-size:11px; color:#55efc4; font-weight:800;">当前持有产物: ${outHave}</span>
+                </div>
+                <div style="font-size:11.5px; color:rgba(255,255,255,0.75); line-height:1.4;">${r.desc}</div>
+                <div style="font-size:12px; background:rgba(0,0,0,0.26); padding:7px 10px; border-radius:9px;">
+                  ${r.unlocked ? `${inputsHtml} ➔ <b style="color:#ffeaa7;">${r.output.label} ×${r.output.count}</b>` : '🔒 尚未解锁：需前往【海蚀矿石岛】研读先民冶金石碑后解锁青铜锻造术'}
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn-furnace-smelt" data-rid="${r.id}" data-batch="1" ${!can1 ? 'disabled' : ''} style="
+                    flex:1; min-width:120px; padding:8px 12px; border-radius:10px; border:none; font-size:12px; font-weight:900;
+                    cursor:${can1 ? 'pointer' : 'not-allowed'};
+                    background:${can1 ? 'linear-gradient(135deg, #fdcb6e, #e17055)' : 'rgba(255,255,255,0.1)'};
+                    color:${can1 ? '#1e272e' : 'rgba(255,255,255,0.4)'};
+                  ">🔥 冶炼 ×1</button>
+                  ${r.allowBatch5 ? `
+                    <button type="button" class="btn-furnace-smelt" data-rid="${r.id}" data-batch="${batch5Count}" ${!can5 ? 'disabled' : ''} style="
+                      flex:1; min-width:130px; padding:8px 12px; border-radius:10px; border:1px solid ${can5 ? 'rgba(253,203,110,0.55)' : 'rgba(255,255,255,0.1)'};
+                      font-size:12px; font-weight:900; cursor:${can5 ? 'pointer' : 'not-allowed'};
+                      background:${can5 ? 'rgba(225,112,85,0.24)' : 'rgba(255,255,255,0.06)'};
+                      color:${can5 ? '#ffeaa7' : 'rgba(255,255,255,0.35)'};
+                    ">⚡ 批量冶炼 ×${r.maxBatch >= 5 ? 5 : batch5Count}</button>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      body.querySelectorAll('.btn-furnace-smelt').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          haptics.medium();
+          const rid = btn.getAttribute('data-rid');
+          const batch = Number(btn.getAttribute('data-batch')) || 1;
+          const res = bs.smeltInFurnace(rid, batch);
+          if (res && res.ok) render();
+        });
+      });
+    };
+
+    render();
+    this.modalBackdrop.style.display = 'flex';
+    soundEngine.playPlaceFurniture();
+  }
+
+  // C3：古法纯晶精炼炉单屏交互面板
+  openRefineryModal() {
+    if (this.player && this.player.resetInput) this.player.resetInput();
+    const game = window.__game;
+    const camp = game?.campFacilities;
+    if (!camp) return;
+
+    document.getElementById('modal-title').innerHTML = '💠 古法纯晶精炼炉 · 石英导流工坊';
+    const body = document.getElementById('modal-body');
+
+    const render = () => {
+      const refLvl = camp.refineryLevel || 0;
+      const curChap = game.story ? game.story.currentChapterId : 0;
+      const inv = this.inventory || {};
+      const st = game.storageSystem?.storageInventory || {};
+      const invCrystals = inv['sol_crystal'] || 0;
+      const invSap = inv['tree_sap'] || 0;
+      const stCrystals = st['sol_crystal'] || 0;
+      const stSap = st['tree_sap'] || 0;
+      const stPure = st['sol_crystal_pure'] || 0;
+      const bagPure = inv['sol_crystal_pure'] || 0;
+      const totalTokens = inv['sol_token'] || 0;
+      const totalIron = (inv['iron_ingot'] || 0) + (st['iron_ingot'] || 0);
+      const totalStone = (inv['stone_chunk'] || 0) + (st['stone_chunk'] || 0);
+      const dailyCap = refLvl === 1 ? 3 : (refLvl >= 2 ? 6 : 0);
+      const queuedBatches = Math.min(Math.floor(stCrystals / 2), stSap);
+
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; max-height:66vh; overflow-y:auto; padding:4px;">
+          <div style="background:linear-gradient(135deg, rgba(0,206,201,0.16), rgba(108,92,231,0.16)); border:1px solid rgba(85,239,196,0.38); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:14px; font-weight:900; color:#55efc4;">
+                ${refLvl === 0 ? '🔒 精炼炉尚未点火建造' : (refLvl === 1 ? '🔥 L1 石砌坩埚精炼炉' : '💠 L2 双腔石英导流精炼塔')}
+              </span>
+              <span style="font-size:12px; font-weight:900; color:#ffeaa7;">日产能上限: ${dailyCap} 批/晚</span>
+            </div>
+            <div style="font-size:11.5px; color:rgba(255,255,255,0.82); line-height:1.45;">
+              提纯法则：每晚在营地安眠过夜时，自动消耗储物箱内【硅晶原石×2 + 天然树脂×1】提纯产出【高纯精炼硅晶×1】（纯晶仅限岛内实业提纯产出）。
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px;">
+              <div style="font-size:11px; color:rgba(255,255,255,0.6);">今晚待炼队列</div>
+              <div style="font-size:18px; font-weight:900; color:${queuedBatches > 0 ? '#55efc4' : '#fab1a0'}; margin-top:2px;">
+                ${queuedBatches} / ${dailyCap || 3} 批
+              </div>
+              <div style="font-size:11px; color:rgba(255,255,255,0.72);">箱内原石 ${stCrystals} · 树脂 ${stSap}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px;">
+              <div style="font-size:11px; color:rgba(255,255,255,0.6);">高纯硅晶总储备</div>
+              <div style="font-size:18px; font-weight:900; color:#74b9ff; margin-top:2px;">
+                ${stPure + bagPure} 枚
+              </div>
+              <div style="font-size:11px; color:rgba(255,255,255,0.72);">储物箱 ${stPure} · 随身包 ${bagPure}</div>
+            </div>
+          </div>
+
+          ${refLvl > 0 ? `
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" id="btn-ref-dep-1" style="flex:1; min-width:130px; padding:9px 12px; border-radius:10px; border:1px solid rgba(85,239,196,0.45); background:rgba(0,184,148,0.2); color:#55efc4; font-weight:900; font-size:12px; cursor:pointer;">
+                📥 划转 1 批入箱
+              </button>
+              <button type="button" id="btn-ref-dep-6" style="flex:1; min-width:150px; padding:9px 12px; border-radius:10px; border:none; background:linear-gradient(135deg, #00b894, #00cec9); color:#0b1e22; font-weight:900; font-size:12px; cursor:pointer;">
+                ⚡ 一键满额划转 (包内原石${invCrystals}/树脂${invSap})
+              </button>
+            </div>
+          ` : ''}
+
+          ${refLvl < 2 ? `
+            <div style="background:rgba(253,203,110,0.09); border:1px solid rgba(253,203,110,0.3); border-radius:12px; padding:11px; display:flex; flex-direction:column; gap:8px;">
+              <div style="font-size:12px; color:#ffeaa7; font-weight:800;">
+                ${refLvl === 0
+                  ? `🔨 建造 L1 石砌坩埚炉：算力代币×20 (持${totalTokens}) · 碎石×4 (持${totalStone}) · 铁锭×2 (持${totalIron})`
+                  : `⬆️ 升级 L2 双腔石英导流塔（日产能翻倍至 6 批/晚）：算力代币×50 (持${totalTokens}) · 铁锭×4 (持${totalIron})`}
+              </div>
+              <button type="button" id="btn-ref-upgrade" ${curChap < 3 ? 'disabled' : ''} style="
+                padding:9px 14px; border-radius:10px; border:none; font-size:12px; font-weight:900;
+                cursor:${curChap < 3 ? 'not-allowed' : 'pointer'};
+                background:${curChap < 3 ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #fdcb6e, #e17055)'};
+                color:${curChap < 3 ? 'rgba(255,255,255,0.4)' : '#1e272e'};
+              ">${curChap < 3 ? '🔒 第三章解锁纯晶精炼技术' : (refLvl === 0 ? '🔨 立即建造纯晶精炼炉 L1' : '⬆️ 升级为双腔石英导流塔 L2')}</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      body.querySelector('#btn-ref-dep-1')?.addEventListener('click', () => {
+        haptics.light();
+        const res = camp.depositRefineryMaterials(1);
+        if (res && res.ok) render();
+      });
+      body.querySelector('#btn-ref-dep-6')?.addEventListener('click', () => {
+        haptics.medium();
+        const res = camp.depositRefineryMaterials(6);
+        if (res && res.ok) render();
+      });
+      body.querySelector('#btn-ref-upgrade')?.addEventListener('click', () => {
+        haptics.medium();
+        const res = camp.buildRefinery();
+        if (res && res.ok) render();
+      });
+    };
+
+    render();
+    this.modalBackdrop.style.display = 'flex';
+    soundEngine.playPlaceFurniture();
   }
 
 }

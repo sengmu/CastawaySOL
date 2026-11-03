@@ -14,8 +14,8 @@ export class VillagerManager {
     this.routines = {
       second_kid: {
         sunrise: {
-          targetPos: new THREE.Vector3(12.5, 0.05, 2.0), // 晨曦东侧泉潭溪流边
-          targetRot: 1.2,
+          targetPos: new THREE.Vector3(-9.5, 0.05, 26.2), // 晨曦营地净水溪畔
+          targetRot: 0.9,
           action: 'freshen_up',
           actionDesc: '在清凉溪水边打水梳洗',
           dialogs: [
@@ -25,7 +25,7 @@ export class VillagerManager {
         },
         day: [
           {
-            targetPos: new THREE.Vector3(-15.0, 0.05, -5.0), // 西侧果园采摘
+            targetPos: new THREE.Vector3(-15.5, 0.05, 18.5), // 营地北侧果树带采摘
             targetRot: -0.4,
             action: 'gathering',
             actionDesc: '在果树下采摘新鲜野果',
@@ -36,8 +36,8 @@ export class VillagerManager {
             ]
           },
           {
-            targetPos: new THREE.Vector3(-5.5, 0.05, -4.8), // 净水滴滤台
-            targetRot: 0.6,
+            targetPos: new THREE.Vector3(-11.2, 0.05, 25.2), // 净水滴滤台旁
+            targetRot: 0.4,
             action: 'inspect_water',
             actionDesc: '检查净水滴滤台蓄水',
             duration: 30.0,
@@ -47,8 +47,8 @@ export class VillagerManager {
             ]
           },
           {
-            targetPos: new THREE.Vector3(-10.5, 0.05, -1.8), // 营地告示板
-            targetRot: -1.6,
+            targetPos: new THREE.Vector3(-13.0, 0.05, 22.4), // 营地经营告示板前
+            targetRot: 2.8,
             action: 'reading_board',
             actionDesc: '在营地经营告示板前核对分工',
             duration: 30.0,
@@ -59,8 +59,8 @@ export class VillagerManager {
           }
         ],
         sunset: {
-          targetPos: new THREE.Vector3(-8.0, 0.05, -3.2), // 中央温暖篝火旁座
-          targetRot: 0.8,
+          targetPos: new THREE.Vector3(-13.2, 0.05, 24.4), // 营地中央篝火西侧暖座
+          targetRot: 1.2,
           action: 'warming',
           actionDesc: '在篝火旁揉手烤火取暖',
           dialogs: [
@@ -69,8 +69,8 @@ export class VillagerManager {
           ]
         },
         night: {
-          targetPos: new THREE.Vector3(-13.5, 0.05, -7.0), // 西侧帐篷与原木单人床
-          targetRot: 0.0,
+          targetPos: new THREE.Vector3(-16.2, 0.05, 23.6), // 西南主营地帐篷旁
+          targetRot: 0.4,
           action: 'sleeping',
           actionDesc: '在柔软的树叶木床上安稳就寝',
           dialogs: [
@@ -81,8 +81,8 @@ export class VillagerManager {
       },
       raymond: {
         sunrise: {
-          targetPos: new THREE.Vector3(-10.2, 0.05, -1.5),
-          targetRot: -1.5,
+          targetPos: new THREE.Vector3(-12.2, 0.05, 21.0),
+          targetRot: -0.3,
           action: 'planning',
           actionDesc: '推眼镜核对今日工匠图纸',
           dialogs: [
@@ -103,8 +103,8 @@ export class VillagerManager {
             ]
           },
           {
-            targetPos: new THREE.Vector3(-9.5, 0.05, -3.8), // 营地工匠木工箱
-            targetRot: 1.2,
+            targetPos: new THREE.Vector3(-14.2, 0.05, 22.8), // 营地工匠木工箱
+            targetRot: 1.1,
             action: 'working_wood',
             actionDesc: '在工匠工作台加工方木与铁钉',
             duration: 35.0,
@@ -115,8 +115,8 @@ export class VillagerManager {
           }
         ],
         sunset: {
-          targetPos: new THREE.Vector3(-5.8, 0.05, -2.5), // 篝火另一侧木桩
-          targetRot: -1.2,
+          targetPos: new THREE.Vector3(-10.8, 0.05, 23.8), // 篝火另一侧木桩
+          targetRot: -1.3,
           action: 'warming',
           actionDesc: '在篝火旁记录航海日志',
           dialogs: [
@@ -125,8 +125,8 @@ export class VillagerManager {
           ]
         },
         night: {
-          targetPos: new THREE.Vector3(-15.5, 0.05, -9.0), // 营地避风棚
-          targetRot: 0.4,
+          targetPos: new THREE.Vector3(-17.8, 0.05, 22.4), // 营地避风棚
+          targetRot: 0.6,
           action: 'sleeping',
           actionDesc: '取下眼镜安歇就寝',
           dialogs: [
@@ -298,8 +298,8 @@ export class VillagerManager {
       console.log('🏛️ [VillagerManager] 激活学者雷蒙德入驻主岛营地');
       await this.loadSingleVillager({
         id: 'raymond',
-        pos: new THREE.Vector3(-10.2, 0.05, -1.5),
-        rot: -1.5
+        pos: new THREE.Vector3(-12.2, 0.05, 21.0),
+        rot: -0.3
       });
     }
   }
@@ -336,9 +336,9 @@ export class VillagerManager {
       } else if (v.id === 'second_kid') {
         if (!v.hasMovedToCamp) {
           v.hasMovedToCamp = true;
-          // 苏醒后正式迁入主岛营地生活区
-          v.group.position.set(-8.0, 0.05, -3.2);
-          v.targetPos.set(-8.0, 0.05, -3.2);
+          // 苏醒后正式迁入西南主营地生活区
+          v.group.position.set(-13.2, 0.05, 24.4);
+          v.targetPos.set(-13.2, 0.05, 24.4);
         }
         v.group.rotation.z = 0;
       }
@@ -448,8 +448,8 @@ export class VillagerManager {
   updateMonkeyBub(v, delta, playerPos, monkeyBefriended, mode) {
     if (monkeyBefriended) {
       if (mode === 'night') {
-        // 夜间小猴依偎在篝火旁打盹 (-6.8, 0, -3.8)
-        const fireSleepPos = new THREE.Vector3(-6.8, 0.05, -3.8);
+        // 夜间小猴依偎在西南主营地篝火旁打盹 (-12.8, 0.05, 23.2)
+        const fireSleepPos = new THREE.Vector3(-12.8, 0.05, 23.2);
         v.group.position.lerp(fireSleepPos, 3.0 * delta);
         v.group.rotation.y = 1.0;
         v.isWalking = false;

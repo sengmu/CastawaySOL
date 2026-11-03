@@ -3,17 +3,52 @@ import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
 
 export class FishingSystem {
-  constructor(scene, player, ui, survival) {
+  constructor(scene, player, ui, survival, game = null) {
     this.scene = scene;
     this.player = player;
     this.ui = ui;
     this.survival = survival;
+    this.game = game;
 
     this.state = 'idle'; // idle | waiting | bite | hooked
     this.biteTimer = 0;
     this.bobber = null;
 
     this.createBobber();
+  }
+
+  // 检测海皇圣物是否已在北崖星海谐振塔归位（对晶石与声望 RS 严格零影响，仅提升稀有海产率）
+  isPoseidonRelicActive() {
+    const g = this.game || (typeof window !== 'undefined' ? window.__game : null);
+    return Boolean(g?.lighthouse?.phase2Complete || g?.lighthouse?.poseidonRelicEnshrined);
+  }
+
+  // 获取当前垂钓稀有海产概率（基础 10%，海皇圣物归位后提升至 45%）
+  getRareSeafoodChance() {
+    return this.isPoseidonRelicActive() ? 0.45 : 0.10;
+  }
+
+  // 按当前权重抽取收竿渔获
+  rollCatchOutcome(rng = Math.random) {
+    const r = rng();
+    if (r < 0.20) {
+      return { itemId: 'broken_radio', isRareSeafood: false, notice: '🍾 钓出了一个装有零件的漂流罐，获得了【坏收音机】！' };
+    }
+    const rareChance = this.getRareSeafoodChance();
+    if (r < 0.20 + rareChance) {
+      const sub = (r - 0.20) / rareChance;
+      if (sub < 0.26) {
+        return { itemId: 'pearl', isRareSeafood: true, notice: '🦪 海皇潮汐眷顾！钓获了晶莹温润的【天然珍珠】！' };
+      }
+      if (sub < 0.52) {
+        return { itemId: 'sea_crab', isRareSeafood: true, notice: '🦀 成功钓起一只膏满黄肥的【潮间带红蟹】！' };
+      }
+      if (sub < 0.76) {
+        return { itemId: 'clam', isRareSeafood: true, notice: '🐚 钓起了一枚鲜甜饱满的【浅滩花蛤】！' };
+      }
+      return { itemId: 'sardine', isRareSeafood: true, notice: '🐟 收获了一条银光闪闪的【银鳞沙丁鱼】！' };
+    }
+    return { itemId: 'fish', isRareSeafood: false, notice: '🎉 哇！成功钓到了一条鲜活肥美的大鱼 🐟！' };
   }
 
   createBobber() {
@@ -83,14 +118,10 @@ export class FishingSystem {
       haptics.success();
       soundEngine.playSplash();
 
-      // 80% 几率钓到大鱼，20% 几率钓到漂流瓶
-      if (Math.random() > 0.2) {
-        this.ui.addInventory('fish', 1);
-        this.ui.showBubbleNotice('🎉 哇！成功钓到了一条鲜活肥美的大鱼 🐟！', 'small');
-      } else {
-        this.ui.addInventory('broken_radio', 1);
-        this.ui.showBubbleNotice('🍾 钓出了一个装有零件的漂流罐，获得了【坏收音机】！', 'small');
-      }
+      // 抽取渔获（海皇圣物归位后大幅提升天然珍珠/红蟹/花蛤/沙丁鱼等稀有海产钓获率）
+      const outcome = this.rollCatchOutcome();
+      this.ui.addInventory(outcome.itemId, 1);
+      this.ui.showBubbleNotice(outcome.notice, 'small');
       return true;
     } else if (this.state === 'waiting') {
       // 太早起竿，鱼惊跑了

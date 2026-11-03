@@ -2,6 +2,7 @@ import { economyLedger } from './EconomyLedger.js';
 // CastawaySOL - 营地设施与居民生产经营中枢 (Camp Facilities & Resident Production System)
 // 统一管理：净水滴滤台淡水蓄积与快速蒸馏、营地床位绑定、居民幸存者自动采集生产、自动化排班特权与清晨经营简报
 import { soundEngine } from '../core/AudioSystem.js';
+import { haptics } from '../core/HapticFeedback.js';
 
 export const CAMP_MINER_CRYSTALS = 2;
 export const REFINERY_CRYSTAL_COST = 2;
@@ -119,6 +120,22 @@ export class CampFacilitiesSystem {
       game.nauticalChart.islands['quarry_isle'] &&
       game.nauticalChart.islands['quarry_isle'].outpostBuilt;
 
+    const mistReefOutpost = game && game.nauticalChart &&
+      game.nauticalChart.islands['mist_reef_isle'] &&
+      game.nauticalChart.islands['mist_reef_isle'].outpostBuilt;
+
+    const outpostCount = (timberOutpost ? 1 : 0) + (quarryOutpost ? 1 : 0) + (mistReefOutpost ? 1 : 0);
+    const comfort = game?.buildSystem?.getComfortOverview?.() || {
+      score: 0,
+      maxScore: 100,
+      level: 1,
+      title: 'Lv.1 简陋营帐',
+      uniqueTypes: 0,
+      nextThreshold: 20,
+      gatherYieldMultiplier: 1.0,
+      dailyBreakfastGift: 0
+    };
+
     return {
       population,
       companions,
@@ -137,9 +154,12 @@ export class CampFacilitiesSystem {
       foodStock,
       timberOutpost,
       quarryOutpost,
+      mistReefOutpost,
+      outpostCount,
       ellieAwake,
       isRaymond,
-      bubFriended
+      bubFriended,
+      comfort
     };
   }
 
@@ -256,8 +276,14 @@ export class CampFacilitiesSystem {
       }
     }
 
-    // 2. 检查是否有床位供幸存者入驻并开展生产
+    // 2. 检查是否有床位供幸存者入驻并开展生产（叠加 C4 舒适度普通采集增益，严格遵守 R3 晶石零加成隔离）
     const bedCount = this.getBedCapacity();
+    const comfort = this.game?.buildSystem?.getComfortOverview?.() || {
+      level: 1,
+      gatherYieldMultiplier: 1.0,
+      dailyBreakfastGift: 0
+    };
+    const applyComfortGather = (val) => (comfort.level >= 3 ? Math.ceil(val * comfort.gatherYieldMultiplier) : val);
 
     // 2.1 幸存者艾莉 (Ellie) - 根据当前任命的岗位产出
     if (story && story.secondKidAwake) {
@@ -266,14 +292,14 @@ export class CampFacilitiesSystem {
 
       if (storage) {
         if (job.id === 'salvager') {
-          const planks = Math.max(1, Math.round(2 * efficiency));
+          const planks = applyComfortGather(Math.max(1, Math.round(2 * efficiency)));
           const nails = Math.max(1, Math.round(1 * efficiency));
           storage['wood_plank'] = (storage['wood_plank'] || 0) + planks;
           storage['nail'] = (storage['nail'] || 0) + nails;
           reports.push(`👧 【艾莉·${job.name}】清晨巡岸，打捞入库：木板 x${planks}、铁钉 x${nails}`);
         } else if (job.id === 'forager') {
-          const apples = Math.max(1, Math.round(2 * efficiency));
-          const branches = Math.max(1, Math.round(3 * efficiency));
+          const apples = applyComfortGather(Math.max(1, Math.round(2 * efficiency)));
+          const branches = applyComfortGather(Math.max(1, Math.round(3 * efficiency)));
           const ivy = Math.round(1 * efficiency);
           storage['apple'] = (storage['apple'] || 0) + apples;
           storage['tree_branch'] = (storage['tree_branch'] || 0) + branches;
@@ -285,9 +311,9 @@ export class CampFacilitiesSystem {
           storage['canteen_clean_water'] = (storage['canteen_clean_water'] || 0) + 1;
           reports.push(`👧 【艾莉·${job.name}】细心维护滴滤台，额外蓄水 +${bonusWater} 份，并装备纯净水 x1 入库`);
         } else if (job.id === 'miner') {
-          // F5 补齐实现：硅晶矿脉探采员产出（执照的 x1.5 不作用于晶石）
+          // F5 + R3 差分隔离：硅晶矿脉探采员晶石固定为 CAMP_MINER_CRYSTALS，不受执照与舒适度任何加成；仅普通碎石享舒适度增益
           const baseCrystals = CAMP_MINER_CRYSTALS;
-          const stones = Math.max(1, Math.round(2 * efficiency));
+          const stones = applyComfortGather(Math.max(1, Math.round(2 * efficiency)));
           economyLedger(this.game).credit('sol_crystal', baseCrystals, 'camp_miner', storage);
           storage['stone_chunk'] = (storage['stone_chunk'] || 0) + stones;
           reports.push(`👧 【艾莉·${job.name}】勘探矿脉，采集入库：硅晶原石 x${baseCrystals}、玄武碎石 x${stones}`);
@@ -301,8 +327,8 @@ export class CampFacilitiesSystem {
 
     // 2.2 灵猴巴布 (Bub) - 负责丛林果实采摘
     if (story && story.monkeyBefriended && storage) {
-      const apples = Math.floor(Math.random() * 2) + 1;
-      const branches = 2;
+      const apples = applyComfortGather(Math.floor(Math.random() * 2) + 1);
+      const branches = applyComfortGather(2);
       storage['apple'] = (storage['apple'] || 0) + apples;
       storage['tree_branch'] = (storage['tree_branch'] || 0) + branches;
       reports.push(`🐒 【巴布】穿梭树梢翻跟头采摘，送来了：苹果 x${apples}、木棍 x${branches}`);
@@ -312,7 +338,7 @@ export class CampFacilitiesSystem {
     const isRaymondSettled = (this.game && this.game.raymondSettled) || (this.game && this.game.timberIsleScene && this.game.timberIsleScene.survivorRescued);
     if (isRaymondSettled && storage) {
       const efficiency = bedCount >= 2 ? (this.isAutoProductionActive ? 1.5 : 1.0) : 0.5;
-      const lumberCount = Math.max(1, Math.round(1 * efficiency));
+      const lumberCount = applyComfortGather(Math.max(1, Math.round(1 * efficiency)));
       const nailCount = Math.max(1, Math.round(1 * efficiency));
       storage['lumber'] = (storage['lumber'] || 0) + lumberCount;
       storage['nail'] = (storage['nail'] || 0) + nailCount;
@@ -321,6 +347,12 @@ export class CampFacilitiesSystem {
       if (bedCount < 2) {
         reports.push(`  ↳ ⚠️ 营地床位短缺 (需 2 张床位)！雷蒙德疲倦受挫，生产效率受限`);
       }
+    }
+
+    // 2.32 营地舒适度 Lv.4 世外桃源每日馈赠：居民手制早点 1 份存入储物箱
+    if (comfort.dailyBreakfastGift > 0 && storage) {
+      storage['camp_breakfast'] = (storage['camp_breakfast'] || 0) + comfort.dailyBreakfastGift;
+      reports.push(`🥐 【${comfort.title}】伙伴们清晨为你烘焙了热腾腾的【居民手制早点】x${comfort.dailyBreakfastGift}！`);
     }
 
     // 2.35 纯晶精炼炉连夜淬炼产出 (R9: 2原石 + 1树脂 -> 1高纯度硅晶 2.5份额)
@@ -363,6 +395,17 @@ export class CampFacilitiesSystem {
         storage['stone_chunk'] = (storage['stone_chunk'] || 0) + outpostStone;
         reports.push(`🚩 【矿石前哨站】火山矿脉回运：富铁矿石 x${outpostIron}、玄武原石 x${outpostStone}`);
       }
+
+      // 晶雾观测前哨站（深层海脉晶核 / 孔雀铜矿按日轮替 + 深海纯白珍珠）
+      if (this.game.nauticalChart.islands['mist_reef_isle'] && this.game.nauticalChart.islands['mist_reef_isle'].outpostBuilt) {
+        const dayVal = this.game.survival && typeof this.game.survival.day === 'number' ? this.game.survival.day : 1;
+        const isDeepDay = (dayVal % 2 === 1);
+        const primaryKey = isDeepDay ? 'sol_crystal_deep' : 'copper_ore';
+        const primaryLabel = isDeepDay ? '深层海脉晶核' : '孔雀绿铜矿石';
+        storage[primaryKey] = (storage[primaryKey] || 0) + 1;
+        storage['pearl'] = (storage['pearl'] || 0) + 1;
+        reports.push(`🚩 【晶雾观测前哨站】浓雾环礁回运：${primaryLabel} x1、深海纯白珍珠 x1`);
+      }
     }
 
     // 3. 弹出晨间生产经营简报
@@ -376,7 +419,7 @@ export class CampFacilitiesSystem {
   }
 
   // 建造与升级古法纯晶精炼炉 (L1: 3批/日, L2: 6批/日)
-  buildRefinery() {
+  buildRefinery(opts = {}) {
     if (this.game?.story && this.game.story.currentChapterId < 3) {
       const msg = '纯晶精炼技术尚未解锁（需进入第三章）！';
       if (this.game?.ui) this.game.ui.showToast(msg, 'medium');
@@ -446,6 +489,10 @@ export class CampFacilitiesSystem {
     soundEngine.playPlaceFurniture();
     haptics.success();
 
+    if (!opts.skipAutoSpawn && this.game?.buildSystem?.syncRefineryEntity) {
+      this.game.buildSystem.syncRefineryEntity(this.refineryLevel);
+    }
+
     if (this.game?.ui) {
       this.game.ui.renderInventory();
       this.game.ui.showToast(`🔥 营地【古法纯晶精炼炉 L${this.refineryLevel}】建造成功！`, 'important');
@@ -454,6 +501,50 @@ export class CampFacilitiesSystem {
       this.game.saveSystem.saveGame('build_refinery');
     }
     return { ok: true, level: this.refineryLevel };
+  }
+
+  // 一键将随身背包中的精炼原料（每批：硅晶原石 x2 + 粘性松脂 x1）划入营地储物箱待过夜提纯
+  depositRefineryMaterials(maxRequestedBatches = 1) {
+    if (this.refineryLevel <= 0) {
+      const msg = '尚未建造纯晶精炼炉，请先在营地中枢建造！';
+      this.game?.ui?.showToast?.(msg, 'medium');
+      return { ok: false, batches: 0, msg };
+    }
+    const inv = this.game?.ui?.inventory;
+    const storage = this.game?.storageSystem?.storageInventory;
+    if (!inv || !storage) return { ok: false, batches: 0, msg: '储物系统未就绪' };
+
+    const dailyCap = this.refineryLevel === 1 ? 3 : 6;
+    const alreadyQueued = Math.min(Math.floor((storage['sol_crystal'] || 0) / 2), storage['tree_sap'] || 0);
+    const needBatches = Math.max(1, Math.min(maxRequestedBatches, Math.max(1, dailyCap - alreadyQueued)));
+    const canMove = Math.min(
+      needBatches,
+      Math.floor((inv['sol_crystal'] || 0) / 2),
+      inv['tree_sap'] || 0
+    );
+
+    if (canMove <= 0) {
+      const msg = '随身背包待炼原料不足（每批需硅晶原石×2 + 粘性松脂×1）！';
+      this.game?.ui?.showToast?.(msg, 'medium');
+      return { ok: false, batches: 0, msg };
+    }
+
+    const moveCrystals = canMove * 2;
+    const moveSap = canMove;
+
+    // 使用 EconomyLedger transfer 接口确保 sol_crystal 划转记账（守恒不产出）
+    const ledger = economyLedger(this.game);
+    ledger.transfer('sol_crystal', moveCrystals, 'storage_deposit', inv, 'sol_crystal', storage, 'sol_crystal');
+    inv['tree_sap'] -= moveSap;
+    if (inv['tree_sap'] <= 0) delete inv['tree_sap'];
+    storage['tree_sap'] = (storage['tree_sap'] || 0) + moveSap;
+
+    soundEngine.playPlaceFurniture();
+    this.game?.ui?.renderInventory?.();
+    const totalQueued = Math.min(Math.floor((storage['sol_crystal'] || 0) / 2), storage['tree_sap'] || 0);
+    this.game?.ui?.showToast?.(`🔥 已划转 ${canMove} 批原料入箱（箱内共备齐 ${totalQueued} 批，今夜就寝自动提纯）！`, 'medium');
+    this.game?.saveSystem?.saveGame?.('deposit_refinery');
+    return { ok: true, batches: canMove, totalQueued };
   }
 
   // 序列化

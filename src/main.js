@@ -30,6 +30,7 @@ import { ShipUpgradeSystem } from './systems/ShipUpgradeSystem.js';
 import { DockShipEntity } from './entities/DockShipEntity.js';
 import { TimberIsleScene } from './island/TimberIsleScene.js';
 import { QuarryIsleScene } from './island/QuarryIsleScene.js';
+import { MistReefIsleScene } from './island/MistReefIsleScene.js';
 import { WildlifeCombatSystem } from './systems/WildlifeCombatSystem.js';
 import { SaveSystem } from './systems/SaveSystem.js';
 import { ShopManager } from './ui/ShopManager.js';
@@ -40,6 +41,7 @@ import { TidalTrapSystem } from './systems/TidalTrapSystem.js';
 import { MiningRigSystem } from './systems/MiningRigSystem.js';
 import { LighthouseEntity } from './entities/LighthouseEntity.js';
 import { OrderBoardSystem } from './systems/OrderBoardSystem.js';
+import { CodexSystem } from './systems/CodexSystem.js';
 import { PetCompanionSystem } from './systems/PetCompanionSystem.js';
 import { WeatherSurvivalSystem } from './systems/WeatherSurvivalSystem.js';
 import { AncientTempleEntity } from './entities/AncientTempleEntity.js';
@@ -134,9 +136,10 @@ class Game {
     // 7.985 出海船升级系统与随船货运仓 (T1原木筏 -> T2龙骨风帆艇 -> T3铁甲探索舰)
     this.shipUpgradeSystem = new ShipUpgradeSystem(this);
 
-    // 7.99 浮木岛 (Timber Isle) 与海蚀矿石岛 (Quarry Isle) 小群岛生态
+    // 7.99 浮木岛 (Timber Isle)、海蚀矿石岛 (Quarry Isle) 与晶雾回声岛 (Mist Reef Isle) 小群岛生态
     this.timberIsleScene = new TimberIsleScene(this.scene, this);
     this.quarryIsleScene = new QuarryIsleScene(this.scene, this);
+    this.mistReefIsleScene = new MistReefIsleScene(this.scene, this);
     this.currentIslandId = 'main_island';
     this.raymondSettled = false;
 
@@ -149,7 +152,7 @@ class Game {
     });
 
     // 10. 装配 CastawaySOL 垂钓与烹饪系统
-    this.fishing = new FishingSystem(this.scene, this.player, this.ui, this.survival);
+    this.fishing = new FishingSystem(this.scene, this.player, this.ui, this.survival, this);
     this.cooking = new CookingSystem(this.ui, this.survival);
 
     // 10.5 引入 Survival Kids 经典主线剧情引擎
@@ -187,6 +190,7 @@ class Game {
     this.miningRig = new MiningRigSystem(this);
     this.lighthouse = new LighthouseEntity(this.scene, this);
     this.orderBoard = new OrderBoardSystem(this);
+    this.codexSystem = new CodexSystem(this);
     this.petCompanion = new PetCompanionSystem(this);
     this.weatherSystem = new WeatherSurvivalSystem(this);
     this.ancientTemple = new AncientTempleEntity(this.scene);
@@ -412,7 +416,8 @@ class Game {
     if (this.beachResources && this.beachResources.group) this.beachResources.group.visible = visible;
     if (this.flotsamSalvage && this.flotsamSalvage.group) this.flotsamSalvage.group.visible = visible;
     if (this.villagers && this.villagers.group) this.villagers.group.visible = visible;
-    if (this.wildlifeCombat && this.wildlifeCombat.group) this.wildlifeCombat.group.visible = visible;
+    // wildlifeCombat.group 保持挂载可见，由 wildlifeCombat.setActiveIsland 按当前岛屿精确隔离显隐
+    if (this.wildlifeCombat && this.wildlifeCombat.group) this.wildlifeCombat.group.visible = true;
     if (this.buildSystem && this.buildSystem.furnitureGroup) this.buildSystem.furnitureGroup.visible = visible;
     if (this.landmarksGroup) this.landmarksGroup.visible = visible;
     if (this.campfireGroup) this.campfireGroup.visible = visible;
@@ -420,33 +425,53 @@ class Game {
     if (this.ancientTemple && this.ancientTemple.group) this.ancientTemple.group.visible = visible;
     if (this.dockShipEntity) this.dockShipEntity.setVisible(visible);
     if (this.ambientParticles && this.ambientParticles.group) this.ambientParticles.group.visible = visible;
+    if (this.buildSystem && this.buildSystem.group) this.buildSystem.group.visible = visible;
+    if (!visible && this.buildSystem && this.buildSystem.isBuildMode) {
+      this.buildSystem.exitBuildMode();
+    }
+    if (this.ui && typeof this.ui.setBuildHudVisible === 'function') {
+      this.ui.setBuildHudVisible(visible);
+    }
     if (visible && this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
   }
 
-  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，全面支持 force 强制纠正脱节状态)
+  // 跨岛航行与地宫场景平滑跳转 (带有音效与黑幕淡入淡出，全面支持 force 或 options 瞬移参数)
   travelToIsland(islandId, force = false) {
+    const opts = (force && typeof force === 'object') ? force : {};
+    const forceFlag = typeof force === 'boolean' ? force : Boolean(opts.force || opts.viaTeleport);
+    const targetId = islandId === 'home_island' ? 'main_island' : islandId;
     // 智能防死锁自愈：如果当前状态与玩家物理位置严重脱节（例如处于神殿但坐标在后山外部），解除拦截强制传送
-    const isDesynced = (islandId === 'ancient_temple' && this.currentIslandId === 'ancient_temple' && this.player.position.z < -10);
-    if (!force && !isDesynced && this.currentIslandId === islandId) return;
+    const isDesynced = (targetId === 'ancient_temple' && this.currentIslandId === 'ancient_temple' && this.player.position.z < -10);
+    if (!forceFlag && !isDesynced && this.currentIslandId === targetId) return;
+
+    if (targetId !== 'main_island' && this.buildSystem && this.buildSystem.isBuildMode) {
+      this.buildSystem.exitBuildMode();
+    }
 
     const previousIsland = this.currentIslandId;
     soundEngine.playPlaceFurniture();
-    if (islandId === 'ancient_temple') {
+    if (targetId === 'ancient_temple') {
       this.ui.showToast('🏛️ 穿越青蓝秘境漩涡……踏入远古神殿独立地宫！', 'medium');
     } else if (previousIsland === 'ancient_temple') {
       this.ui.showToast('🌀 踏入青蓝符文传送阵……返回海岛主地图！', 'medium');
+    } else if (opts.viaTeleport) {
+      this.ui.showToast('🌀 潮汐共鸣阵列启动！跨越迷雾瞬移抵达目标锚点……', 'medium');
     } else {
       this.ui.showToast('⛵ 扬帆起航！破浪驶向远方海域……', 'medium');
     }
     this.ui.createTransitionFade();
 
     setTimeout(() => {
-      if (islandId === 'ancient_temple') {
+      if (targetId === 'ancient_temple') {
         this.currentIslandId = 'ancient_temple';
         this.setMainIslandVisible(false);
         if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
+        if (this.mistReefIsleScene) this.mistReefIsleScene.setVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(true);
+        if (this.wildlifeCombat) {
+          this.wildlifeCombat.group.visible = false;
+        }
 
         // 切换为地宫幽暗氛围光与深渊轻雾，严密同步清除底色
         this.renderer.setClearColor(0x0a101d);
@@ -479,13 +504,19 @@ class Game {
           '深入殿堂参悟机关解谜，轰开内殿玄铁大门，探寻沉睡的远古波塞冬黄金神藏！\n\n' +
           '💡 提示：若需返回海岛，随时走入身后的【青蓝符文光阵】即可！'
         );
-      } else if (islandId === 'timber_isle') {
+      } else if (targetId === 'timber_isle') {
         this.currentIslandId = 'timber_isle';
         if (this.nauticalChart) this.nauticalChart.currentIslandId = 'timber_isle';
         this.setMainIslandVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
+        if (this.mistReefIsleScene) this.mistReefIsleScene.setVisible(false);
         this.timberIsleScene.setVisible(true);
+        if (this.wildlifeCombat) {
+          this.wildlifeCombat.group.visible = true;
+          this.wildlifeCombat.cachedWalkSurfaces = [];
+          this.wildlifeCombat.setActiveIsland('timber_isle');
+        }
 
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
         if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
@@ -497,15 +528,21 @@ class Game {
 
         this.ui.showDialog(
           '⛵ 抵达 · 漂流浮木岛 (Timber Isle)',
-          '历经数海里乘风破浪，你驾筏冲上了一处被海浪包围的沉船沙洲！\n四周散落着厚重的风化原木方料与破损龙骨，沉船避风处传来微弱的求救呼唤！\n在岛上搜索遇难同伴，建立前哨，并收集珍贵的造船方料吧！'
+          '历经数海里乘风破浪，你驾船冲上了一处被海浪包围的沉船沙洲！\n四周散落着厚重的风化原木方料与破损龙骨，滩涂间游荡着背负沉船木箱的寄居巨蟹！\n在岛上搜索遇难同伴，建立前哨，并收集珍贵的造船方料吧！'
         );
-      } else if (islandId === 'quarry_isle') {
+      } else if (targetId === 'quarry_isle') {
         this.currentIslandId = 'quarry_isle';
         if (this.nauticalChart) this.nauticalChart.currentIslandId = 'quarry_isle';
         this.setMainIslandVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
         if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
+        if (this.mistReefIsleScene) this.mistReefIsleScene.setVisible(false);
         this.quarryIsleScene.setVisible(true);
+        if (this.wildlifeCombat) {
+          this.wildlifeCombat.group.visible = true;
+          this.wildlifeCombat.cachedWalkSurfaces = [];
+          this.wildlifeCombat.setActiveIsland('quarry_isle');
+        }
 
         if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
         if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
@@ -517,16 +554,50 @@ class Game {
 
         this.ui.showDialog(
           '🌋 抵达 · 海蚀矿石岛 (Quarry Isle)',
-          '狂暴的黑礁海浪将木筏推上了一处险峻的火山碎屑岩滩！\n四周耸立着刀削般的玄武岩立柱，空气中弥漫着硫磺与金属的气息！\n在岛上寻找露天富铁矿脉，参悟古代水手石碑，并插旗建立矿业前哨吧！'
+          '狂暴的黑礁海浪将船推上了一处险峻的火山碎屑岩滩！\n四周耸立着刀削般的玄武岩立柱，岩隙间栖息着正面披甲的玄武岩甲蜥！\n在岛上寻找露天富铁与孔雀铜矿脉，参悟古代水手石碑，并插旗建立矿业前哨吧！'
         );
-      } else if (islandId === 'main_island') {
-        const wasSurvivorRescued = this.timberIsleScene && this.timberIsleScene.survivorRescued;
-        this.currentIslandId = 'main_island';
-        if (this.nauticalChart) this.nauticalChart.currentIslandId = 'main_island';
+      } else if (targetId === 'mist_reef_isle') {
+        this.currentIslandId = 'mist_reef_isle';
+        if (this.nauticalChart) this.nauticalChart.currentIslandId = 'mist_reef_isle';
+        this.setMainIslandVisible(false);
         if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
         if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
         if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
+        if (this.mistReefIsleScene) this.mistReefIsleScene.setVisible(true);
+        if (this.wildlifeCombat) {
+          this.wildlifeCombat.group.visible = true;
+          this.wildlifeCombat.cachedWalkSurfaces = [];
+          this.wildlifeCombat.setActiveIsland('mist_reef_isle');
+        }
+
+        if (this.dayNight && this.dayNight.dirLight) this.dayNight.dirLight.visible = true;
+        if (this.dayNight) this.dayNight.applyAtmosphere(this.dayNight.currentMode);
+
+        const spawnPos = opts.viaTeleport ? [-1.5, 1.05, -2.6] : [0, 0.4, 11.5];
+        this.player.position.set(spawnPos[0], spawnPos[1], spawnPos[2]);
+        if (this.player.pivot) this.player.pivot.position.set(spawnPos[0], spawnPos[1], spawnPos[2]);
+        if (this.player && this.player.snapCamera) this.player.snapCamera(0, 0.42, 12.0);
+
+        if (!opts.viaTeleport) {
+          this.ui.showDialog(
+            '🔮 抵达 · 晶雾回声岛 (Mist Reef Isle)',
+            '借着北崖地脉灯塔穿透迷雾的领航光束，你的铁甲远洋探索舰终于冲破 12.8 海里风暴暗礁，驶入这座梦幻的荧光环礁潟湖！\n\n岛上耸立着流光溢彩的深层海脉晶簇，游荡着会释放环形震波的【晶簇棱背蟹】，环礁北侧还留存着远古先民的【潮汐传送残阵】！'
+          );
+        }
+      } else if (targetId === 'main_island') {
+        const wasSurvivorRescued = this.timberIsleScene && this.timberIsleScene.survivorRescued;
+        this.currentIslandId = 'main_island';
+        if (this.nauticalChart) this.nauticalChart.currentIslandId = 'home_island';
+        if (this.ancientTempleScene) this.ancientTempleScene.setVisible(false);
+        if (this.timberIsleScene) this.timberIsleScene.setVisible(false);
+        if (this.quarryIsleScene) this.quarryIsleScene.setVisible(false);
+        if (this.mistReefIsleScene) this.mistReefIsleScene.setVisible(false);
         this.setMainIslandVisible(true);
+        if (this.wildlifeCombat) {
+          this.wildlifeCombat.group.visible = true;
+          this.wildlifeCombat.cachedWalkSurfaces = [];
+          this.wildlifeCombat.setActiveIsland('home_island');
+        }
 
         // 恢复海岛蓝天日光与清润海雾与天空清除底色
         if (this.dayNight) {
@@ -558,13 +629,19 @@ class Game {
 
           this.ui.showToast('🏛️ 穿过符文传送光阵，回到了后山海风之中！', 'medium');
         } else {
-          // 传送到西南出航湾码头栈桥
-          this.player.position.set(-22, 0.05, 38.0);
-          if (this.player.pivot) this.player.pivot.position.set(-22, 0.05, 38.0);
+          // 传送到西南出航湾码头栈桥（或瞬移目标点）
+          const retPos = Array.isArray(opts.targetPos) ? opts.targetPos : [-22, 0.05, 38.0];
+          this.player.position.set(retPos[0], retPos[1], retPos[2]);
+          if (this.player.pivot) this.player.pivot.position.set(retPos[0], retPos[1], retPos[2]);
 
           if (this.dockShipEntity && this.shipUpgradeSystem) {
             this.dockShipEntity.vesselGroup.visible = true;
             this.dockShipEntity.updateModel(this.shipUpgradeSystem.currentTierLevel);
+          }
+
+          // 若非瞬移且未由海图面板结算，而是从外岛码头乘船归港，触发 T3 深海自动拖网起获
+          if (!opts.viaTeleport && !opts.viaChart && this.shipUpgradeSystem && typeof this.shipUpgradeSystem.onVoyageCompleted === 'function') {
+            this.shipUpgradeSystem.onVoyageCompleted();
           }
 
           // 若成功营救了学者雷蒙德并返航主岛
@@ -601,7 +678,8 @@ class Game {
 
     if (this.ui && this.ui.triggerSleepFade) {
       this.ui.triggerSleepFade(sleepIcon, sleepTitle, () => {
-        this.survival.sleepOvernight();
+        const comfortOverview = this.buildSystem ? this.buildSystem.getComfortOverview() : null;
+        this.survival.sleepOvernight(isBed ? 1.1 : 1.0, comfortOverview);
         this.ui.updateSurvivalHUD();
         soundEngine.playPlaceFurniture();
 
@@ -620,6 +698,20 @@ class Game {
 
         if (this.miningRig && this.miningRig.onNewDay) {
           this.miningRig.onNewDay(this.survival.day);
+        }
+
+        // 外岛资源分级再生与野兽跨天恢复
+        if (this.timberIsleScene && this.timberIsleScene.onDayPassed) {
+          this.timberIsleScene.onDayPassed(this.survival.day);
+        }
+        if (this.quarryIsleScene && this.quarryIsleScene.onDayPassed) {
+          this.quarryIsleScene.onDayPassed(this.survival.day);
+        }
+        if (this.mistReefIsleScene && this.mistReefIsleScene.onDayPassed) {
+          this.mistReefIsleScene.onDayPassed(this.survival.day);
+        }
+        if (this.wildlifeCombat && this.wildlifeCombat.onDayPassed) {
+          this.wildlifeCombat.onDayPassed(this.survival.day);
         }
 
         const dn = this.dayNight || this.dayNightCycle;
@@ -644,6 +736,10 @@ class Game {
       soundEngine.playPlaceFurniture();
       if (this.campFacilities) this.campFacilities.onDayPassed();
       if (this.orderBoard && this.orderBoard.onDayPassed) this.orderBoard.onDayPassed();
+      if (this.timberIsleScene && this.timberIsleScene.onDayPassed) this.timberIsleScene.onDayPassed(this.survival.day);
+      if (this.quarryIsleScene && this.quarryIsleScene.onDayPassed) this.quarryIsleScene.onDayPassed(this.survival.day);
+      if (this.mistReefIsleScene && this.mistReefIsleScene.onDayPassed) this.mistReefIsleScene.onDayPassed(this.survival.day);
+      if (this.wildlifeCombat && this.wildlifeCombat.onDayPassed) this.wildlifeCombat.onDayPassed(this.survival.day);
       if (this.saveSystem) this.saveSystem.saveGame("sleep_overnight");
       this.ui.showToast(`⛺ 熟睡了一夜，迎来第 ${this.survival.day} 天！`, "important");
       this._isSleeping = false;
@@ -673,10 +769,16 @@ class Game {
 
     // === 0. 浮木岛专属场景行为响应 ===
     if (this.currentIslandId === 'timber_isle') {
-      // 0.1 拾取浮木岛资源
+      // 0.1 拾取浮木岛资源（支持满包自动转存随船货仓）
       const picked = this.timberIsleScene.checkPickup(playerPos, (itemType, resName) => {
+        if (this.shipUpgradeSystem && this.shipUpgradeSystem.collectOutlyingResource) {
+          const ok = this.shipUpgradeSystem.collectOutlyingResource(itemType, 1, resName);
+          if (ok && this.story && this.story.onGatherResource) this.story.onGatherResource(itemType);
+          return ok;
+        }
         this.ui.addInventory(itemType, 1);
         this.ui.showToast(`拾取了【${resName}】！`, 'small');
+        return true;
       });
       if (picked) return;
 
@@ -702,10 +804,16 @@ class Game {
 
     // === 0.5 海蚀矿石岛专属场景行为响应 ===
     if (this.currentIslandId === 'quarry_isle') {
-      // 0.5.1 开采或拾取矿石岛资源
+      // 0.5.1 开采或拾取矿石岛资源（支持满包自动转存随船货仓）
       const mined = this.quarryIsleScene.checkMineOrPickup(playerPos, (itemType, resName) => {
+        if (this.shipUpgradeSystem && this.shipUpgradeSystem.collectOutlyingResource) {
+          const ok = this.shipUpgradeSystem.collectOutlyingResource(itemType, 1, resName);
+          if (ok && this.story && this.story.onGatherResource) this.story.onGatherResource(itemType);
+          return ok;
+        }
         this.ui.addInventory(itemType, 1);
         this.ui.showToast(`成功获取了【${resName}】！`, 'small');
+        return true;
       });
       if (mined) return;
 
@@ -729,6 +837,39 @@ class Game {
       return;
     }
 
+    // === 0.8 晶雾回声岛专属场景行为响应 ===
+    if (this.currentIslandId === 'mist_reef_isle' && this.mistReefIsleScene) {
+      const mined = this.mistReefIsleScene.checkMineOrPickup(playerPos, (itemType, resName, economySource) => {
+        if (this.shipUpgradeSystem && this.shipUpgradeSystem.collectOutlyingResource) {
+          const ok = this.shipUpgradeSystem.collectOutlyingResource(itemType, 1, resName, economySource);
+          if (ok && this.story && this.story.onGatherResource) this.story.onGatherResource(itemType);
+          return ok;
+        }
+        this.ui.addInventory(itemType, 1, economySource);
+        return true;
+      });
+      if (mined) return;
+
+      // 先民潮汐传送残阵 (-1.5, 0.9, -4.8)
+      if (playerPos.distanceTo(new THREE.Vector3(-1.5, 0.9, -4.8)) < 3.0) {
+        this.mistReefIsleScene.interactTidalPortal();
+        return;
+      }
+
+      // 晶雾观测前哨站 (3.8, 0.9, -1.8)
+      if (playerPos.distanceTo(new THREE.Vector3(3.8, 0.9, -1.8)) < 3.0) {
+        this.mistReefIsleScene.claimOutpost();
+        return;
+      }
+
+      // 滩头返航探索船 (0, 0.05, 14.0)
+      if (playerPos.distanceTo(new THREE.Vector3(0, 0.05, 14.0)) < 3.8) {
+        this.travelToIsland('main_island');
+        return;
+      }
+      return;
+    }
+
     // 1. 优先检测附近是否有远古宝石可拾取
     for (const gemItem of this.gemMeshes) {
       if (!gemItem.info.picked && gemItem.group.position.distanceTo(playerPos) < 2.5) {
@@ -736,7 +877,7 @@ class Game {
         gemItem.group.visible = false;
         this.story.gemsCollected.add(gemItem.info.id);
         soundEngine.playPlaceFurniture();
-        this.ui.showDialog('💎 发现远古秘宝！', `你拾取了【${gemItem.info.name}】！\n神秘的光芒在手心流转……集齐 3 颗古代宝石即可解开荒岛远古神殿的终极生还之谜！（当前已收集：${this.story.gemsCollected.size} / 3）`);
+        this.ui.showDialog('💎 发现远古秘宝！', `你拾取了【${gemItem.info.name}】！\n神秘的光芒在手心流转……集齐 3 颗古代圣石即可解封后山远古神殿的玄石大门！（当前已收集：${this.story.gemsCollected.size} / 3）`);
         this.story.update(playerPos, this.ui.inventory, this.survival);
         return;
       }
@@ -942,7 +1083,7 @@ class Game {
       return;
     }
 
-    // 4.5 检查是否在摆放的营地功能设施旁 (储物木箱、净水滴滤台、营地单人床)
+    // 4.5 检查是否在摆放的营地功能设施旁 (储物木箱、净水滴滤台、营地单人床、耐火熔炉、纯晶精炼炉)
     if (this.buildSystem) {
       const facility = this.buildSystem.getNearestInteractable(playerPos, 2.6);
       if (facility) {
@@ -959,6 +1100,16 @@ class Game {
         } else if (facility.isBed) {
           this.triggerSleepRoutine("bed");
           return;
+        } else if (facility.isFurnace) {
+          if (this.ui && typeof this.ui.openFurnaceModal === 'function') {
+            this.ui.openFurnaceModal();
+            return;
+          }
+        } else if (facility.isRefinery) {
+          if (this.ui && typeof this.ui.openRefineryModal === 'function') {
+            this.ui.openRefineryModal();
+            return;
+          }
         }
       }
     }
@@ -1020,7 +1171,32 @@ class Game {
         return;
       }
     } else if (this.ancientTemple && distanceXZ(playerPos, [this.ancientTemple.altarWorldPos.x, 0, this.ancientTemple.altarWorldPos.z]) < 4.2) {
-      // 在主岛后山神殿门前，点击或按E直接踏入独立地图 (传入 force=true 确保任何旧存档状态下均可瞬移进入)
+      // 在主岛后山神殿门前校验三宝石封印（老档若已解封/解谜/持有金冠直接放行）
+      const hasCrownOrSolved = Boolean(
+        this.story?.templeUnsealed ||
+        this.templePuzzle?.puzzleSolved ||
+        this.templePuzzle?.vaultClaimed ||
+        (this.ui?.inventory?.poseidon_crown || 0) > 0 ||
+        (this.storageSystem?.storageInventory?.poseidon_crown || 0) > 0
+      );
+      const collectedCount = this.story?.gemsCollected ? this.story.gemsCollected.size : 0;
+      if (!hasCrownOrSolved && collectedCount < 3) {
+        const missingHints = [];
+        if (!this.story?.gemsCollected?.has('star_gem')) missingHints.push('🔴【星形红宝石】：东侧山麓溪谷石台 (18, 6)');
+        if (!this.story?.gemsCollected?.has('diamond_gem')) missingHints.push('🔵【菱形蓝宝石】：东北悬崖高台密林 (26, -15)');
+        if (!this.story?.gemsCollected?.has('moon_gem')) missingHints.push('🟢【圆月苍翠宝石】：西北幽谷遗迹石雕 (-20, -18)');
+        this.ui.showDialog(
+          '🏛️ 远古神殿 · 三圣石封印紧闭',
+          `古老石门上的三处圣石凹槽黯淡无光（当前已收集 ${collectedCount}/3 颗圣石）。\n\n尚未寻获的圣石线索：\n${missingHints.join('\n')}\n\n集齐三颗远古圣石后再来触碰祭坛，即可轰然开启地宫大门！`
+        );
+        return;
+      }
+      if (this.story && !this.story.templeUnsealed) {
+        this.story.templeUnsealed = true;
+        soundEngine.playPlaceFurniture();
+        this.ui.showToast('✨ 三色圣石共鸣镶嵌！后山远古神殿封印已永久解开！', 'important');
+        if (this.saveSystem) this.saveSystem.saveGame('unseal_temple');
+      }
       this.travelToIsland('ancient_temple', true);
       return;
     }
@@ -1079,7 +1255,7 @@ class Game {
           }
           this.ui.showDialog('📡 无线电频段接收 · 邻岛求救呼号！', '滋……滋滋……无线电指示灯急促闪烁！\n\n扬声器中传来微弱急切的人声：“呼叫……这里是东北方漂流浮木岛……我们的双桅帆船触礁搁浅了……受困在沉船沙洲，淡水和干粮即将耗尽……有人能听到吗……”\n\n电波信号在您的海图上清晰标定出了【浮木岛 (Timber Isle)】的精确航向坐标！\n立即前往西南浅滩登上木筏，带足干粮与淡水展开出海营救！');
         } else {
-          this.ui.showDialog('沙滩 S.O.S 呼救地标', '巨石地标已排布成型！\n空中机群与邻岛需要配合无线电频率定位，请在工作台用【损坏收音机 + 干电池】合成【工作收音机】后前来架设天线！');
+          this.ui.showDialog('沙滩 S.O.S 呼救地标', '巨石信号导引阵已排布成型！\n请先在营地【纯晶精炼炉】提纯高纯度硅晶，于合成台用【故障无线电 + 高纯度精炼硅晶】修复【工作收音机】后前来架设天线！');
         }
         return;
       }
@@ -1386,12 +1562,15 @@ class Game {
       this.flotsamSalvage.update(delta);
     }
 
-    // 更新浮木岛与矿石岛生态动画
+    // 更新浮木岛、矿石岛与晶雾回声岛生态动画
     if (this.timberIsleScene) {
       this.timberIsleScene.update(delta);
     }
     if (this.quarryIsleScene) {
       this.quarryIsleScene.update(delta);
+    }
+    if (this.mistReefIsleScene) {
+      this.mistReefIsleScene.update(delta);
     }
     if (this.ancientTempleScene) {
       this.ancientTempleScene.update(delta);
@@ -1411,7 +1590,7 @@ class Game {
     if (this.wildlifeCombat) {
       this.wildlifeCombat.update(delta);
       if (this.player && this.ui) {
-        const hasSpear = (this.ui.inventory['spear'] || 0) > 0;
+      const hasSpear = (this.ui.inventory['spear'] || 0) > 0 || (this.ui.inventory['steel_spear'] || 0) > 0;
         this.player.hasSpearEquipped = hasSpear;
         if (!this.player.isAttacking && this.player.weaponGroup) {
           this.player.weaponGroup.visible = hasSpear;
@@ -1441,6 +1620,9 @@ class Game {
     }
     if (this.petCompanion) {
       this.petCompanion.update(delta);
+    }
+    if (this.buildSystem) {
+      this.buildSystem.update(delta);
     }
     if (this.weatherSystem) {
       this.weatherSystem.update(delta);
@@ -1535,6 +1717,51 @@ class Game {
     if (this.devMetrics) this.devMetrics.update();
       return;
     }
+
+    // === 0.8 晶雾回声岛专属感知提示 ===
+    if (this.currentIslandId === 'mist_reef_isle' && this.mistReefIsleScene) {
+      const isReturnRaft = playerPos.distanceTo(new THREE.Vector3(0, 0.05, 14.0)) < 3.8;
+      const isPortal = playerPos.distanceTo(new THREE.Vector3(-1.5, 0.9, -4.8)) < 3.0;
+      const isOutpost = playerPos.distanceTo(new THREE.Vector3(3.8, 0.9, -1.8)) < 3.0;
+      const nearMriRes = this.mistReefIsleScene.islandResources.find(r => !r.collected && playerPos.distanceTo(r.group.position) < 2.2);
+      const nearIslLoot = this.wildlifeCombat?.lootDrops.find(d => !d.picked && (d.islandId || 'home_island') === 'mist_reef_isle' && playerPos.distanceTo(d.group.position) < 2.5);
+      const nearIslMob = this.wildlifeCombat?.wildlifeList.find(m => !m.isDead && m.islandId === 'mist_reef_isle' && playerPos.distanceTo(m.group.position) < 5.0);
+
+      if (nearIslLoot) {
+        this.ui.setContextAction('pickup');
+        this.ui.showInteraction('点按互动按钮 拾取晶兽战利品包裹');
+      } else if (isReturnRaft) {
+        this.ui.setContextAction('raft');
+        this.ui.showInteraction('点按互动按钮 扬帆返航 · 返回避风家园主岛');
+      } else if (isPortal) {
+        this.ui.setContextAction('default');
+        this.ui.showInteraction(this.mistReefIsleScene.teleportActive ? '🌀 点按互动按钮 启动先民潮汐瞬移阵' : '点按互动按钮 检视休眠中的【先民潮汐传送残阵】');
+      } else if (isOutpost) {
+        this.ui.setContextAction('default');
+        this.ui.showInteraction(this.mistReefIsleScene.outpostClaimed ? '🚩 【晶雾观测前哨站】已建立并每日回运晶核珍珠' : '点按互动按钮 消耗铁锭x2+木板x2+铁钉x2 建立晶雾前哨');
+      } else if (nearMriRes) {
+        if (nearMriRes.isVein) {
+          const hasPick = (this.ui.inventory['stone_pickaxe'] || 0) > 0 || (this.ui.inventory['iron_pickaxe'] || 0) > 0;
+          this.ui.setContextAction('mine');
+          this.ui.showInteraction(hasPick ? `点按互动按钮 挥镐开采：【${nearMriRes.name}】` : `⚠️ 靠近【${nearMriRes.name}】· 需携带【采矿镐】凿取`);
+        } else {
+          this.ui.setContextAction('pickup');
+          this.ui.showInteraction(`点按互动按钮 拾取深海珍宝：【${nearMriRes.name}】`);
+        }
+      } else if (nearIslMob) {
+        this.ui.setContextAction('attack');
+        this.ui.showInteraction(`⚔️ 警惕【${nearIslMob.name}】！注意躲避红圈震波预警！`);
+      } else {
+        this.ui.setContextAction('default');
+        this.ui.hideInteraction();
+      }
+
+      if (this.interactionFeedback) this.interactionFeedback.update(delta);
+      if (this.contactShadows) this.contactShadows.update();
+      this.renderer.render(this.scene, this.camera);
+      if (this.devMetrics) this.devMetrics.update();
+      return;
+    }
     const isWater = this.fishing.isNearWater(playerPos);
     const isFire = this.cooking.isNearCampfire(playerPos);
     const isTent = distanceXZ(playerPos, ISLAND_LAYOUT.tent) < 4.5;
@@ -1550,10 +1777,10 @@ class Game {
     const isFreshwater = this.beachResources?.isNearFreshwater(playerPos);
     const nearestFacility = this.buildSystem?.getNearestInteractable(playerPos, 2.6);
 
-    // 战斗战利品与野兽交战态势检测
-    const nearLoot = this.wildlifeCombat?.lootDrops.find(d => !d.picked && distanceXZ(playerPos, [d.group.position.x, d.group.position.y, d.group.position.z]) < 2.5);
+    // 战斗战利品与野兽交战态势检测（仅统计主岛作用域实体）
+    const nearLoot = this.wildlifeCombat?.lootDrops.find(d => !d.picked && (d.islandId || 'home_island') === 'home_island' && distanceXZ(playerPos, [d.group.position.x, d.group.position.y, d.group.position.z]) < 2.5);
     const nearTyphoonLoot = this.weatherSystem?.typhoonWashedItems.find(i => !i.picked && i.pos.distanceTo(playerPos) < 2.5);
-    const nearAggroMob = this.wildlifeCombat?.wildlifeList.find(m => !m.isDead && distanceXZ(playerPos, [m.group.position.x, m.group.position.y, m.group.position.z]) < 5.0);
+    const nearAggroMob = this.wildlifeCombat?.wildlifeList.find(m => !m.isDead && (m.islandId || 'home_island') === 'home_island' && distanceXZ(playerPos, [m.group.position.x, m.group.position.y, m.group.position.z]) < 5.0);
 
     // 营地原生 3D 实体近距检测
     const isCampfire = distanceXZ(playerPos, ISLAND_LAYOUT.campfire) < 3.2;
@@ -1627,7 +1854,10 @@ class Game {
       this.ui.showInteraction(`点按互动按钮 拾取神秘秘宝：【${nearGem.info.name}】`);
     } else if (isTempleAltar) {
       this.ui.setContextAction('temple_enter');
-      this.ui.showInteraction('点按互动按钮 踏入【后山古代神殿】独立地宫密室');
+      const unsealed = Boolean(this.story?.templeUnsealed || (this.story?.gemsCollected?.size || 0) >= 3 || this.templePuzzle?.puzzleSolved);
+      this.ui.showInteraction(unsealed
+        ? '点按互动按钮 踏入【后山古代神殿】独立地宫密室'
+        : `🔒 后山神殿三圣石封印中 (已收集 ${this.story?.gemsCollected?.size || 0}/3) · 点按查看线索`);
     } else if (monkeyCreviceAction && monkeyCreviceAction.type === 'crevice') {
       this.ui.setContextAction('monkey_crevice');
       this.ui.showInteraction(`点按互动按钮 指派小猴钻入【${monkeyCreviceAction.target.name}】探宝 (精力-15)`);
@@ -1684,6 +1914,13 @@ class Game {
       } else if (nearestFacility.isBed) {
         this.ui.setContextAction('sleep');
         this.ui.showInteraction('点按互动按钮 在原木单人床上安稳休息过夜');
+      } else if (nearestFacility.isFurnace) {
+        this.ui.setContextAction('campfire');
+        this.ui.showInteraction('点按互动按钮 打开【耐火冶炼面板】熔炼铁锭 / 青铜船板 / 应急电池');
+      } else if (nearestFacility.isRefinery) {
+        this.ui.setContextAction('default');
+        const refLvl = this.campFacilities ? this.campFacilities.refineryLevel : 1;
+        this.ui.showInteraction(`点按互动按钮 打开【纯晶精炼面板】(L${refLvl} · 划转待炼原料与炉腔升级)`);
       }
     } else if (nearestBeachRes) {
       if (nearestBeachRes.isMineable) {

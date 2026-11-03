@@ -16,8 +16,8 @@ export class CraftingSystem {
       iron_ore: { name: '富铁矿石', icon: '⛏️', category: 'material', desc: '火山海蚀矿石岛开采出的赤铁原矿，可在营地熔炉冶炼纯净铁锭。' },
       copper_ore: { name: '孔雀铜矿', icon: '🪨', category: 'material', desc: '泛着古铜青绿的铜矿原石，用于精密机械与前哨电气元件。' },
       iron_ingot: { name: '精密铁锭', icon: '🧱', category: 'material', desc: '高温熔炉锻打冶炼的高硬度纯铁锭，是工业级高阶工具的核心。' },
-      broken_radio: { name: '故障无线电', icon: '📻', category: 'special', desc: '被海水浸湿的便携应急电台，装入干燥电池即可恢复呼救功能。' },
-      battery: { name: '高能干电池', icon: '🔋', category: 'special', desc: '完好无损的应急干电池，可为无线电设备供应充足电能。' },
+      broken_radio: { name: '故障无线电', icon: '📻', category: 'special', desc: '被海水浸湿的便携应急电台，镶嵌高纯度精炼硅晶即可恢复高频收发功能。' },
+      battery: { name: '高能干电池', icon: '🔋', category: 'special', desc: '完好无损的应急干电池，可为营地矿机蓄电池供应充沛电能。' },
       sol_crystal_pure: { name: '高纯度精炼硅晶', icon: '💎', category: 'special', desc: '纯晶精炼炉提炼出的高纯度晶石，质地澄澈，是高阶科技与灯塔工程核心。' },
       sol_crystal_deep: { name: '深层海脉晶核', icon: '🔮', category: 'special', desc: '浮木岛沉船海沟与深海矿脉产出的幽蓝晶核，蕴含充沛地脉能量。' },
 
@@ -30,9 +30,9 @@ export class CraftingSystem {
       iron_pickaxe: { name: '精钢锻镐', icon: '⚒️', category: 'tool', desc: '由纯铁锭与圆木打造的耐用重型矿镐，开采效率极大提升！' },
       stone_hammer: { name: '重装石锤', icon: '🔨', category: 'tool', desc: '重石与坚固木棍合成的石锤，敲打矿石或在沙滩固定大木筏。' },
       bow_arrow: { name: '简易猎弓', icon: '🏹', category: 'tool', desc: '藤蔓与柔韧枝条弯制的猎弓，配备羽毛箭矢，可狩猎野鹿。' },
-      workradio: { name: '工作收音机', icon: '📡', category: 'tool', desc: '成功组装的无线电台！在沙滩发射 SOS 搜救广播即可呼叫直升机！' },
-      sos_sign: { name: 'SOS 巨石阵', icon: '🆘', category: 'build', desc: '在平坦开阔的南岸沙滩排布的巨型 SOS 标志，高空极易侦测。' },
-      escape_raft: { name: '求生大木筏', icon: '⛵', category: 'build', desc: '4根圆木+2根藤蔓+铁钉牢固组装的航海大木筏，能容纳全员起航！' },
+      workradio: { name: '工作收音机', icon: '📡', category: 'tool', desc: '嵌装精炼纯晶修复的高频电台，可在南岸 S.O.S 地标侦听邻岛求救信号！' },
+      sos_sign: { name: 'SOS 巨石阵', icon: '🆘', category: 'build', desc: '在平坦开阔的南岸沙滩排布的巨型信号地标，可增强无线电波收发指向。' },
+      escape_raft: { name: '求生大木筏', icon: '⛵', category: 'build', desc: '4根圆木+2根藤蔓+铁钉牢固组装的航海大木筏，可前往邻近外岛开拓！' },
 
       // 食材与料理类
       apple: { name: '野生红苹果', icon: '🍎', category: 'food', desc: '摇树掉落的脆甜野苹果，恢复 15% 饱食与 10% 饮水。' },
@@ -142,28 +142,21 @@ export class CraftingSystem {
       {
         id: 'workradio',
         name: '工作收音机 (Work Radio)',
-        desc: '故障电台 + 高纯精炼硅晶（或干电池）：【ED1 直升机结局】在沙滩广播呼叫搜救！',
+        desc: '故障电台 + 高纯度精炼硅晶：修复高频调谐模块，在南岸沙滩侦听邻岛求救信号！',
         req: { broken_radio: 1, sol_crystal_pure: 1 },
-        result: { id: 'workradio', name: '工作收音机', count: 1 }
-      },
-      {
-        id: 'workradio_battery',
-        name: '工作收音机 (电池备选)',
-        desc: '故障电台 + 干电池：在沙滩广播呼叫搜救！',
-        req: { broken_radio: 1, battery: 1 },
         result: { id: 'workradio', name: '工作收音机', count: 1 }
       },
       {
         id: 'sos_sign',
         name: '沙滩 SOS 地标 (S.O.S Sign)',
-        desc: '海滩大礁石 × 2：在南岸沙滩拼出巨大醒目的白色求救字样！',
+        desc: '海滩大礁石 × 2：在南岸沙滩拼出醒目的无线电地面导引阵列！',
         req: { big_rock: 2 },
         result: { id: 'sos_sign', name: 'SOS 巨石阵', count: 1 }
       },
       {
         id: 'escape_raft',
         name: '求生大木筏 (Escape Raft)',
-        desc: '【ED2/ED6 航海结局】重型圆木 × 4 + 藤蔓 × 2 + 铁钉 × 2：横渡大洋！',
+        desc: '重型圆木 × 4 + 藤蔓 × 2 + 铁钉 × 2：打造首艘近海航行木筏，开拓浮木岛！',
         req: { lumber: 4, ivy: 2, nail: 2 },
         result: { id: 'escape_raft', name: '求生大木筏', count: 1 }
       }

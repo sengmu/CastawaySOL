@@ -15,6 +15,8 @@ export class TimberIsleScene {
 
     // 岛上资源拾取物列表
     this.islandResources = [];
+    // 资源分级跨天再生冷却字典：{ [resourceId]: respawnDay }
+    this.resourceCooldowns = {};
     // 幸存者 NPC 状态
     this.survivorRescued = false;
     this.outpostClaimed = false;
@@ -403,20 +405,61 @@ export class TimberIsleScene {
     }
   }
 
+  // 获取某类资源的再生周期（天）：普通木料铁钉 2 天，深层海脉晶核 4 天
+  _getResourceCooldownDays(type) {
+    if (type === 'sol_crystal_deep') return 4;
+    return 2;
+  }
+
+  _getCurrentDay() {
+    if (this.game && this.game.survival && typeof this.game.survival.day === 'number') {
+      return this.game.survival.day;
+    }
+    if (this.game && this.game.dayNight && typeof this.game.dayNight.dayCount === 'number') {
+      return this.game.dayNight.dayCount;
+    }
+    return 1;
+  }
+
   // 拾取岛上散落资源
   checkPickup(playerPos, onPickup) {
+    const currentDay = this._getCurrentDay();
     for (const item of this.islandResources) {
       if (item.collected) continue;
       const d = playerPos.distanceTo(item.group.position);
       if (d < 1.8) {
+        let granted = true;
+        if (typeof onPickup === 'function') {
+          const res = onPickup(item.type, item.name);
+          if (res === false) granted = false;
+        }
+        if (!granted) return null;
+
         item.collected = true;
         item.group.visible = false;
+        this.resourceCooldowns[item.id] = currentDay + this._getResourceCooldownDays(item.type);
         soundEngine.playItemDrop();
-        onPickup(item.type, item.name);
         return item;
       }
     }
     return null;
+  }
+
+  // 跨天结算：到期资源自动刷新再生
+  onDayPassed(currentDay) {
+    const day = typeof currentDay === 'number' ? currentDay : this._getCurrentDay();
+    let respawnedCount = 0;
+    for (const item of this.islandResources) {
+      if (!item.collected) continue;
+      const targetDay = this.resourceCooldowns[item.id];
+      if (typeof targetDay === 'number' && day >= targetDay) {
+        item.collected = false;
+        if (item.group) item.group.visible = true;
+        delete this.resourceCooldowns[item.id];
+        respawnedCount++;
+      }
+    }
+    return respawnedCount;
   }
 
   // 帧循环驱动脉动特效
@@ -449,11 +492,12 @@ export class TimberIsleScene {
     return {
       survivorRescued: this.survivorRescued,
       outpostClaimed: this.outpostClaimed,
-      collectedResourceIds: this.islandResources.filter(r => r.collected).map(r => r.id)
+      collectedResourceIds: this.islandResources.filter(r => r.collected).map(r => r.id),
+      resourceCooldowns: { ...this.resourceCooldowns }
     };
   }
 
-  // 反序列化
+  // 反序列化（兼容旧档仅含 collectedResourceIds 的情况）
   deserialize(data) {
     if (!data) return;
     this.survivorRescued = Boolean(data.survivorRescued);
@@ -466,14 +510,28 @@ export class TimberIsleScene {
       this.flagMat.color.set(0x00cec9);
     }
 
-    if (Array.isArray(data.collectedResourceIds)) {
-      const set = new Set(data.collectedResourceIds);
-      this.islandResources.forEach(r => {
-        if (set.has(r.id)) {
-          r.collected = true;
-          r.group.visible = false;
-        }
+    this.resourceCooldowns = {};
+    const curDay = this._getCurrentDay();
+    if (data.resourceCooldowns && typeof data.resourceCooldowns === 'object') {
+      for (const [id, day] of Object.entries(data.resourceCooldowns)) {
+        this.resourceCooldowns[id] = Number(day);
+      }
+    } else if (Array.isArray(data.collectedResourceIds)) {
+      data.collectedResourceIds.forEach(id => {
+        const found = this.islandResources.find(r => r.id === id);
+        this.resourceCooldowns[id] = curDay + this._getResourceCooldownDays(found ? found.type : 'lumber');
       });
     }
+
+    const set = new Set(Object.keys(this.resourceCooldowns));
+    this.islandResources.forEach(r => {
+      if (set.has(r.id)) {
+        r.collected = true;
+        r.group.visible = false;
+      } else {
+        r.collected = false;
+        r.group.visible = true;
+      }
+    });
   }
 }

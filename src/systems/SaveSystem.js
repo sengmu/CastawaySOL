@@ -87,9 +87,11 @@ export class SaveSystem {
       });
     }
 
-    // 提取家具数据
+    // 提取家具数据（统一走 BuildSystem.serialize 单一快照口径）
     let furnitureData = [];
-    if (build && Array.isArray(build.placedFurniture)) {
+    if (build && typeof build.serialize === 'function') {
+      furnitureData = build.serialize();
+    } else if (build && Array.isArray(build.placedFurniture)) {
       furnitureData = build.placedFurniture.map(f => ({
         id: f.id,
         path: f.path,
@@ -137,9 +139,12 @@ export class SaveSystem {
       story: story && story.serialize ? story.serialize() : null,
       miningRig: this.game.miningRig && this.game.miningRig.serialize ? this.game.miningRig.serialize() : null,
       quarryIsle: this.game.quarryIsleScene && this.game.quarryIsleScene.serialize ? this.game.quarryIsleScene.serialize() : null,
+      mistReefIsle: this.game.mistReefIsleScene && this.game.mistReefIsleScene.serialize ? this.game.mistReefIsleScene.serialize() : null,
+      wildlife: this.game.wildlifeCombat && this.game.wildlifeCombat.serialize ? this.game.wildlifeCombat.serialize() : null,
       flotsamSalvage: flotsam && flotsam.serialize ? flotsam.serialize() : null,
       lighthouse: this.game.lighthouse && this.game.lighthouse.serialize ? this.game.lighthouse.serialize() : null,
       orderBoard: this.game.orderBoard && this.game.orderBoard.serialize ? this.game.orderBoard.serialize() : null,
+      codex: this.game.codexSystem && this.game.codexSystem.serialize ? this.game.codexSystem.serialize() : null,
       world: {
         collectedBeachResources: beach && beach.serialize ? beach.serialize().collectedIds : [],
         collectedFlotsam: flotsam && flotsam.serialize ? flotsam.serialize().collectedIds : [],
@@ -496,9 +501,12 @@ export class SaveSystem {
       this.game.storageSystem.deserialize(data.storage);
     }
 
-    // 3.8 恢复营地设施与净水台
+    // 3.8 恢复营地设施与净水台，并同步恢复主存档营地家具与工坊双炉实体
     if (data.campFacilities && this.game.campFacilities) {
       this.game.campFacilities.deserialize(data.campFacilities);
+    }
+    if (this.game.buildSystem && typeof this.game.buildSystem.deserialize === 'function') {
+      this.game.buildSystem.deserialize(data.furniture);
     }
 
     // 3.9 恢复群岛海图与航海导航状态
@@ -592,9 +600,29 @@ export class SaveSystem {
       });
     }
 
-    // 5.4 恢复矿石岛资源与前哨状态
+    // 5.4 恢复矿石岛、晶雾回声岛与野生晶兽状态
     if (data.quarryIsle && this.game.quarryIsleScene) {
       this.game.quarryIsleScene.deserialize(data.quarryIsle);
+    }
+    if (data.mistReefIsle && this.game.mistReefIsleScene) {
+      this.game.mistReefIsleScene.deserialize(data.mistReefIsle);
+    }
+    if (data.wildlife && this.game.wildlifeCombat && typeof this.game.wildlifeCombat.deserialize === 'function') {
+      this.game.wildlifeCombat.deserialize(data.wildlife);
+    }
+    if (data.currentIslandId === 'quarry_isle' && this.game.quarryIsleScene) {
+      this.game.currentIslandId = 'quarry_isle';
+      if (this.game.nauticalChart) this.game.nauticalChart.currentIslandId = 'quarry_isle';
+      this.game.setMainIslandVisible(false);
+      this.game.quarryIsleScene.setVisible(true);
+    } else if (data.currentIslandId === 'mist_reef_isle' && this.game.mistReefIsleScene) {
+      this.game.currentIslandId = 'mist_reef_isle';
+      if (this.game.nauticalChart) this.game.nauticalChart.currentIslandId = 'mist_reef_isle';
+      this.game.setMainIslandVisible(false);
+      this.game.mistReefIsleScene.setVisible(true);
+    }
+    if (this.game.wildlifeCombat && typeof this.game.wildlifeCombat.setActiveIsland === 'function') {
+      this.game.wildlifeCombat.setActiveIsland(this.game.currentIslandId);
     }
 
     // 5.5 恢复海面漂流物打捞状态 (优先全量 flotsamSalvage，兼顾兼容 world.collectedFlotsam)
@@ -613,7 +641,7 @@ export class SaveSystem {
       this.game.miningRig.deserialize(data.miningRig);
     }
 
-    // 5.7 恢复北崖灯塔一期实体状态
+    // 5.7 恢复北崖灯塔一期与二期实体状态
     if (data.lighthouse && this.game.lighthouse && typeof this.game.lighthouse.deserialize === 'function') {
       this.game.lighthouse.deserialize(data.lighthouse);
     }
@@ -621,6 +649,15 @@ export class SaveSystem {
     // 5.8 恢复营地日常交付订单板状态
     if (data.orderBoard && this.game.orderBoard && typeof this.game.orderBoard.deserialize === 'function') {
       this.game.orderBoard.deserialize(data.orderBoard);
+    }
+
+    // 5.9 恢复博物图鉴系统状态（并触发老档回溯点亮）
+    if (this.game.codexSystem) {
+      if (data.codex) {
+        this.game.codexSystem.deserialize(data.codex);
+      } else {
+        this.game.codexSystem.retroactiveSync();
+      }
     }
 
     // 6. 恢复宝石拾取状态

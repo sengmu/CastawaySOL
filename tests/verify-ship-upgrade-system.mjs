@@ -181,7 +181,7 @@ assert.equal(t3Check.actualFoodNeed, 0, 'T3 干粮 0 消耗');
 // 扣除消耗与航行结束，触发 T3 自动拖网
 chart.deductSupplies('quarry_isle');
 const cargoKeys = Object.keys(ship.cargoInventory);
-assert.ok(cargoKeys.includes('fish') || cargoKeys.includes('diamond_gem') || (game.ui.inventory.fish || 0) > 0, '航行返航后应触发船尾拖网渔获收获');
+assert.ok(cargoKeys.includes('fish') || cargoKeys.includes('pearl') || (game.ui.inventory.fish || 0) > 0, '航行返航后应触发船尾拖网渔获收获');
 console.log('  ✅ 适航海里严格拦截、阶梯补给豁免与全天候自动渔网验证通过！');
 
 // ==========================================

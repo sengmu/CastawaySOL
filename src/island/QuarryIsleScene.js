@@ -14,8 +14,11 @@ export class QuarryIsleScene {
 
     // 岛上可采集与开采矿石列表
     this.islandResources = [];
-    // 矿业前哨开拓状态
+    // 资源分级跨天再生冷却字典：{ [resourceId]: respawnDay }
+    this.resourceCooldowns = {};
+    // 矿业前哨开拓状态与古代冶炼石碑研读标记
     this.outpostClaimed = false;
+    this.monolithRead = false;
 
     this.initTerrain();
     this.initVolcanicCrags();
@@ -299,8 +302,9 @@ export class QuarryIsleScene {
     this.group.add(this.raftGroup);
   }
 
-  // 交互：检视古代冶炼石碑 (阅读古代手记，领悟熔炉配方)
+  // 交互：检视古代冶炼石碑 (阅读古代手记，领悟熔炉配方并持久化标记)
   readMonolith() {
+    this.monolithRead = true;
     if (!this.game || !this.game.ui) return;
     this.game.ui.showDialog(
       '📜 古代冶炼遗迹石碑',
@@ -313,10 +317,26 @@ export class QuarryIsleScene {
     );
   }
 
+  _getResourceCooldownDays(type) {
+    if (type === 'iron_ore' || type === 'copper_ore') return 3;
+    return 2;
+  }
+
+  _getCurrentDay() {
+    if (this.game && this.game.survival && typeof this.game.survival.day === 'number') {
+      return this.game.survival.day;
+    }
+    if (this.game && this.game.dayNight && typeof this.game.dayNight.dayCount === 'number') {
+      return this.game.dayNight.dayCount;
+    }
+    return 1;
+  }
+
   // 交互：开采或拾取矿产资源 (若为矿脉，优先检查是否装备石镐；未装配则提示)
   checkMineOrPickup(playerPos, onMined) {
     const inv = this.game && this.game.ui ? this.game.ui.inventory : {};
     const hasPickaxe = (inv['stone_pickaxe'] || 0) > 0 || (inv['iron_pickaxe'] || 0) > 0;
+    const currentDay = this._getCurrentDay();
 
     for (const item of this.islandResources) {
       if (item.collected) continue;
@@ -330,14 +350,38 @@ export class QuarryIsleScene {
           return null;
         }
 
+        let granted = true;
+        if (typeof onMined === 'function') {
+          const res = onMined(item.type, item.name);
+          if (res === false) granted = false;
+        }
+        if (!granted) return null;
+
         item.collected = true;
         item.group.visible = false;
+        this.resourceCooldowns[item.id] = currentDay + this._getResourceCooldownDays(item.type);
         soundEngine.playPlaceFurniture();
-        onMined(item.type, item.name);
         return item;
       }
     }
     return null;
+  }
+
+  // 跨天结算：到期矿脉自动刷新再生
+  onDayPassed(currentDay) {
+    const day = typeof currentDay === 'number' ? currentDay : this._getCurrentDay();
+    let respawnedCount = 0;
+    for (const item of this.islandResources) {
+      if (!item.collected) continue;
+      const targetDay = this.resourceCooldowns[item.id];
+      if (typeof targetDay === 'number' && day >= targetDay) {
+        item.collected = false;
+        if (item.group) item.group.visible = true;
+        delete this.resourceCooldowns[item.id];
+        respawnedCount++;
+      }
+    }
+    return respawnedCount;
   }
 
   // 交互：插旗建立海外矿业前哨
@@ -413,11 +457,13 @@ export class QuarryIsleScene {
   serialize() {
     return {
       outpostClaimed: this.outpostClaimed,
-      collectedResourceIds: this.islandResources.filter(r => r.collected).map(r => r.id)
+      monolithRead: this.monolithRead,
+      collectedResourceIds: this.islandResources.filter(r => r.collected).map(r => r.id),
+      resourceCooldowns: { ...this.resourceCooldowns }
     };
   }
 
-  // 反序列化恢复
+  // 反序列化恢复（兼容旧档仅含 collectedResourceIds 的情况）
   deserialize(data) {
     if (!data) return;
     if (data.outpostClaimed !== undefined) {
@@ -426,17 +472,35 @@ export class QuarryIsleScene {
         this.flagMat.color.set(0xe67e22);
       }
     }
-    if (Array.isArray(data.collectedResourceIds)) {
-      const set = new Set(data.collectedResourceIds);
-      this.islandResources.forEach(item => {
-        if (set.has(item.id)) {
-          item.collected = true;
-          if (item.group) {
-            item.group.visible = false;
-          }
-        }
+    if (data.monolithRead !== undefined) {
+      this.monolithRead = Boolean(data.monolithRead);
+    }
+
+    this.resourceCooldowns = {};
+    const curDay = this._getCurrentDay();
+    if (data.resourceCooldowns && typeof data.resourceCooldowns === 'object') {
+      for (const [id, day] of Object.entries(data.resourceCooldowns)) {
+        this.resourceCooldowns[id] = Number(day);
+      }
+    }
+    // 兼容旧档或仅有 collectedResourceIds 的情况（cooldowns 为空时 fallback）
+    if (Object.keys(this.resourceCooldowns).length === 0 && Array.isArray(data.collectedResourceIds)) {
+      data.collectedResourceIds.forEach(id => {
+        const found = this.islandResources.find(r => r.id === id);
+        this.resourceCooldowns[id] = curDay + this._getResourceCooldownDays(found ? found.type : 'stone_chunk');
       });
     }
+
+    const set = new Set(Object.keys(this.resourceCooldowns));
+    this.islandResources.forEach(item => {
+      if (set.has(item.id)) {
+        item.collected = true;
+        if (item.group) item.group.visible = false;
+      } else {
+        item.collected = false;
+        if (item.group) item.group.visible = true;
+      }
+    });
   }
 
 }

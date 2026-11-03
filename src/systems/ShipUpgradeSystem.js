@@ -223,6 +223,9 @@ export class ShipUpgradeSystem {
     if (this.game && this.game.dockShipEntity) {
       this.game.dockShipEntity.updateVesselTier(this.currentTierLevel);
     }
+    if (this.game && this.game.nauticalChart && typeof this.game.nauticalChart.syncEndgameRoutes === 'function') {
+      this.game.nauticalChart.syncEndgameRoutes();
+    }
 
     if (this.game && this.game.ui) {
       this.game.ui.renderInventory();
@@ -341,6 +344,9 @@ export class ShipUpgradeSystem {
       if (this.game.dockShipEntity) {
         this.game.dockShipEntity.updateModel(this.currentTierLevel);
       }
+      if (this.game.nauticalChart && typeof this.game.nauticalChart.syncEndgameRoutes === 'function') {
+        this.game.nauticalChart.syncEndgameRoutes();
+      }
     }
 
     return true;
@@ -352,15 +358,44 @@ export class ShipUpgradeSystem {
     return distanceKm <= tier.maxDistanceKm;
   }
 
+  // 外岛采集辅助：优先放入随身行囊；若行囊格满且随船货仓有空位（非经济管控资产），自动转存入随船货仓
+  collectOutlyingResource(itemKey, count = 1, resName = '', economySource = null) {
+    const ui = this.game && this.game.ui ? this.game.ui : null;
+    if (!ui) return false;
+
+    const isFull = typeof ui.isInventoryFull === 'function' ? ui.isInventoryFull(itemKey) : false;
+    if (!isFull) {
+      const ok = economySource ? ui.addInventory(itemKey, count, economySource) : ui.addInventory(itemKey, count);
+      if (ok !== false) return true;
+    }
+
+    // 经济受控资产（如 sol_crystal）为保持 EconomyLedger 划转契约，仅存入随身背包或提示腾格子
+    if (economySource || itemKey === 'sol_crystal' || itemKey === 'sol_token' || itemKey === 'sol_shard') {
+      ui.showToast(`❌ 行囊已满！请先腾出背包空位或将普通建材转入随船货仓后再采集【${resName || itemKey}】！`, 'medium');
+      return false;
+    }
+
+    // 普通外岛物资自动转存随船货仓
+    if (this.getMaxCargoSlots() > 0 && (this.getUsedCargoSlots() < this.getMaxCargoSlots() || this.cargoInventory[itemKey])) {
+      this.cargoInventory[itemKey] = (this.cargoInventory[itemKey] || 0) + count;
+      ui.showToast(`🚢 行囊已满，采集的【${resName || (ui.getItemName ? ui.getItemName(itemKey) : itemKey)}】x${count} 已自动转存入随船货仓！`, 'medium');
+      return true;
+    }
+
+    ui.showToast(`❌ 随身行囊与随船货仓均已满载！请先返航卸货或清理空间！`, 'medium');
+    return false;
+  }
+
   // 跨岛航行返航时结算随船拖网特权产出 (T3 探索舰专属)
   onVoyageCompleted() {
     const tier = this.getCurrentTier();
     if (!tier.hasAutoFishingNet) return null;
 
-    // 随机产出鲜鱼或珍珠
-    const isRare = Math.random() < 0.25;
-    const rewardKey = isRare ? 'diamond_gem' : 'fish';
-    const rewardName = isRare ? '深海碧蓝珍珠宝石' : '肥美深海鲜鱼';
+    // 随机产出鲜鱼或天然珍珠（若灯塔二期海皇圣物归位，稀有珍珠概率小幅提升）
+    const rareChance = (this.game && this.game.lighthouse && this.game.lighthouse.phase2Complete) ? 0.38 : 0.25;
+    const isRare = Math.random() < rareChance;
+    const rewardKey = isRare ? 'pearl' : 'fish';
+    const rewardName = isRare ? '深海纯白珍珠' : '肥美深海鲜鱼';
     const rewardCount = isRare ? 1 : (Math.floor(Math.random() * 2) + 1);
 
     // 尝试存入随船货仓或背包

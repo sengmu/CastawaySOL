@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { soundEngine } from '../core/AudioSystem.js';
 import { iconHTML } from '../ui/IconRegistry.js'; // 黏土图标集成（2026-10-31）
 import { distanceXZ, ISLAND_LAYOUT } from '../core/IslandLayout.js';
+import { economyLedger } from './EconomyLedger.js';
 
 // 伤害飘字画布生成工具
 function createDamageSprite(text, color = '#ff4757') {
@@ -138,6 +139,235 @@ export class WildlifeCombatSystem {
     this.createBoar('boar_1', '丛林狂暴野猪', [-22, 0.0, -5]);
     this.createBoar('boar_2', '黑鬃尖牙野猪', [-14, 0.0, -16]);
     this.createBoar('boar_3', '斑纹剑齿小野猪', [34, 1.8, -16]);
+
+    // 3. 外岛特有种演化晶兽（按所在岛屿隔离显隐与 AI）
+    this.createHermitCrab('ti_hermit_1', '沉船寄居蟹', [9.5, 0.25, -4.5], 'timber_isle');
+    this.createHermitCrab('ti_hermit_2', '背箱铁螯蟹', [-10.5, 0.25, 5.2], 'timber_isle');
+
+    this.createBasaltLizard('qi_lizard_1', '玄武岩甲蜥', [-6.5, 0.5, 3.5], 'quarry_isle');
+    this.createBasaltLizard('qi_lizard_2', '熔岩重甲巨蜥', [8.5, 0.5, -4.5], 'quarry_isle');
+
+    this.createCrystalCrab('mri_crab_1', '晶簇棱背蟹', [-6.2, 0.5, 2.2], 'mist_reef_isle');
+    this.createCrystalCrab('mri_crab_2', '深海共鸣晶蟹', [7.2, 0.5, -1.5], 'mist_reef_isle');
+
+    this.setActiveIsland(this._getActiveIslandId());
+  }
+
+  // 获取当前玩家所在岛屿 ID（统一把 home_island / main_island 归一为 home_island）
+  _getActiveIslandId() {
+    if (this.activeIslandId) return this.activeIslandId;
+    const raw = (this.game && this.game.currentIslandId)
+      || (this.game && this.game.nauticalChart && this.game.nauticalChart.currentIslandId)
+      || 'home_island';
+    return raw === 'main_island' ? 'home_island' : raw;
+  }
+
+  _getCurrentDay() {
+    if (this.game && this.game.survival && typeof this.game.survival.day === 'number') {
+      return this.game.survival.day;
+    }
+    if (this.game && this.game.dayNight && typeof this.game.dayNight.dayCount === 'number') {
+      return this.game.dayNight.dayCount;
+    }
+    return 1;
+  }
+
+  // 切岛时同步野兽与战利品的显隐状态，防止跨岛误伤或幻影模型
+  setActiveIsland(islandId) {
+    const activeId = islandId === 'main_island' ? 'home_island' : (islandId || 'home_island');
+    this.activeIslandId = activeId;
+    for (const mob of this.wildlifeList) {
+      const mobIsl = mob.islandId || 'home_island';
+      mob.group.visible = (!mob.isDead) && (mobIsl === activeId);
+    }
+    for (const drop of this.lootDrops) {
+      if (drop.picked) continue;
+      const dropIsl = drop.islandId || 'home_island';
+      drop.group.visible = (dropIsl === activeId);
+    }
+  }
+
+  // 浮木岛特有种：【沉船寄居蟹】（背负沉船木箱甲壳，掉落蟹肉与冲岸木板）
+  createHermitCrab(id, name, spawnPos, islandId = 'timber_isle') {
+    const mob = this.createCrab(id, name, spawnPos);
+    mob.type = 'hermit_crab';
+    mob.islandId = islandId;
+    mob.group.position.set(spawnPos[0], spawnPos[1], spawnPos[2]);
+    mob.maxHp = 80;
+    mob.hp = 80;
+    mob.attackDamage = 14;
+    mob.speed = 2.4;
+
+    // 背负沉船木箱壳装饰
+    const crateMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.95, 0.62, 0.85),
+      new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.88, flatShading: true })
+    );
+    crateMesh.position.set(0, 0.55, -0.08);
+    crateMesh.rotation.set(-0.15, 0.12, 0.08);
+    crateMesh.castShadow = true;
+    mob.group.add(crateMesh);
+    mob.hpBar.group.position.set(0, 1.15, 0);
+
+    mob.loot = [
+      { id: 'crab_meat', name: '新鲜红蟹肉', count: 2, chance: 1.0 },
+      { id: 'wood_plank', name: '沉船坚固木板', count: 1, chance: 1.0 }
+    ];
+    return mob;
+  }
+
+  // 矿石岛特有种：【玄武岩甲蜥】（正面近战甲壳减伤 30%，引导侧翼/猎弓/陷阱破甲）
+  createBasaltLizard(id, name, spawnPos, islandId = 'quarry_isle') {
+    const lizGroup = new THREE.Group();
+    lizGroup.position.set(spawnPos[0], spawnPos[1], spawnPos[2]);
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x2f3640,
+      roughness: 0.82,
+      metalness: 0.35,
+      flatShading: true
+    });
+    const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.52, 1.45), bodyMat);
+    bodyMesh.position.y = 0.45;
+    bodyMesh.castShadow = true;
+    lizGroup.add(bodyMesh);
+
+    // 背脊玄武岩装甲板与头盾
+    const crestMat = new THREE.MeshStandardMaterial({ color: 0x576574, metalness: 0.5, roughness: 0.6, flatShading: true });
+    const headShield = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.56, 0.42), crestMat);
+    headShield.position.set(0, 0.52, 0.82);
+    headShield.castShadow = true;
+    lizGroup.add(headShield);
+
+    for (let i = 0; i < 3; i++) {
+      const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.36, 4), crestMat);
+      dorsal.position.set(0, 0.82, 0.35 - i * 0.42);
+      lizGroup.add(dorsal);
+    }
+
+    const tailMesh = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.95, 5), bodyMat);
+    tailMesh.position.set(0, 0.42, -1.12);
+    tailMesh.rotation.x = -Math.PI / 2.2;
+    lizGroup.add(tailMesh);
+
+    const legGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.38, 6);
+    const legs = [];
+    [[-0.42, 0.2, 0.45], [0.42, 0.2, 0.45], [-0.42, 0.2, -0.45], [0.42, 0.2, -0.45]].forEach(pos => {
+      const leg = new THREE.Mesh(legGeo, bodyMat);
+      leg.position.set(...pos);
+      lizGroup.add(leg);
+      legs.push(leg);
+    });
+
+    const hpBar = this.createHealthBarMesh();
+    hpBar.group.position.set(0, 1.25, 0);
+    lizGroup.add(hpBar.group);
+
+    const stunGroup = new THREE.Group();
+    stunGroup.position.set(0, 1.35, 0.2);
+    stunGroup.visible = false;
+    lizGroup.add(stunGroup);
+
+    this.group.add(lizGroup);
+
+    const creature = {
+      id,
+      name,
+      type: 'basalt_lizard',
+      islandId,
+      frontalArmorReduction: 0.30, // 正面近战减伤 30%
+      group: lizGroup,
+      bodyMesh,
+      legs,
+      tailMesh,
+      hpBar,
+      stunGroup,
+      maxHp: 115,
+      hp: 115,
+      attackDamage: 19,
+      attackRange: 1.85,
+      attackCooldownTimer: 0,
+      attackCooldown: 2.0,
+      isStunned: false,
+      stunTimer: 0,
+      speed: 3.1,
+      alertRadius: 8.0,
+      state: 'PATROL',
+      stateTimer: Math.random() * 3,
+      patrolCenter: new THREE.Vector3(...spawnPos),
+      patrolTarget: new THREE.Vector3(...spawnPos),
+      staggerTimer: 0,
+      animCycle: Math.random() * 10,
+      isDead: false,
+      loot: [
+        { id: 'iron_ore', name: '赤铁原矿', count: 1, chance: 1.0 },
+        { id: 'stone_chunk', name: '坚硬玄武岩块', count: 1, chance: 1.0 }
+      ]
+    };
+
+    this.wildlifeList.push(creature);
+    return creature;
+  }
+
+  // 晶雾岛特有种：【晶簇棱背蟹】（周期蓄力环形震波预警，掉落走冻结账本的 sol_shard + 蟹肉）
+  createCrystalCrab(id, name, spawnPos, islandId = 'mist_reef_isle') {
+    const mob = this.createCrab(id, name, spawnPos);
+    mob.type = 'crystal_crab';
+    mob.islandId = islandId;
+    mob.group.position.set(spawnPos[0], spawnPos[1], spawnPos[2]);
+    mob.maxHp = 130;
+    mob.hp = 130;
+    mob.attackDamage = 20;
+    mob.speed = 2.9;
+    mob.shockwaveCooldownTimer = 3.5 + Math.random() * 2.0;
+    mob.shockwaveCooldown = 6.5;
+    mob.shockwavePrepareTimer = 0;
+    mob.shockwaveRadius = 3.2;
+
+    // 替换背甲为青紫半透晶壳并生长晶刺
+    mob.shellMesh.material = new THREE.MeshStandardMaterial({
+      color: 0x48dbfb,
+      emissive: 0x0abde3,
+      emissiveIntensity: 0.45,
+      roughness: 0.25,
+      metalness: 0.4,
+      flatShading: true
+    });
+    const spireMat = new THREE.MeshStandardMaterial({
+      color: 0xa29bfe,
+      emissive: 0x6c5ce7,
+      emissiveIntensity: 0.65,
+      roughness: 0.2
+    });
+    [[-0.25, 0.62, -0.05, 0.2], [0.05, 0.72, 0.05, -0.1], [0.28, 0.60, -0.1, -0.22]].forEach(([cx, cy, cz, rz]) => {
+      const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), spireMat);
+      crystal.position.set(cx, cy, cz);
+      crystal.rotation.z = rz;
+      mob.group.add(crystal);
+    });
+
+    // 地面环形红圈震波预警投影
+    const ringWarnGeo = new THREE.RingGeometry(0.4, mob.shockwaveRadius, 28);
+    ringWarnGeo.rotateX(-Math.PI / 2);
+    const ringWarnMat = new THREE.MeshBasicMaterial({
+      color: 0xff3f34,
+      transparent: true,
+      opacity: 0.0,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const ringWarnMesh = new THREE.Mesh(ringWarnGeo, ringWarnMat);
+    ringWarnMesh.position.y = 0.06;
+    ringWarnMesh.visible = false;
+    mob.group.add(ringWarnMesh);
+    mob.ringWarnMesh = ringWarnMesh;
+    mob.hpBar.group.position.set(0, 1.15, 0);
+
+    mob.loot = [
+      { id: 'sol_shard', name: '地脉共鸣晶碎', count: 1, chance: 1.0 },
+      { id: 'crab_meat', name: '深海晶蟹鲜肉', count: 2, chance: 1.0 }
+    ];
+    return mob;
   }
 
   // 构建低多边形沙滩巨蟹 3D 模型
@@ -684,10 +914,11 @@ export class WildlifeCombatSystem {
         continue;
       }
 
-      // 5. 命中野兽实体碰撞检测 (半径 0.85 米)
+      // 5. 命中野兽实体碰撞检测 (半径 0.85 米，仅检测当前所在岛屿野兽)
+      const activeIsl = this._getActiveIslandId();
       let hitMob = null;
       for (const mob of this.wildlifeList) {
-        if (mob.isDead) continue;
+        if (mob.isDead || (mob.islandId || 'home_island') !== activeIsl) continue;
         const mobCenter = mob.group.position.clone();
         mobCenter.y += (mob.type === 'boar' ? 0.65 : 0.35);
 
@@ -708,7 +939,7 @@ export class WildlifeCombatSystem {
 
         // 远程箭矢伤害结算 (基础 28 点，若野兽破绽眩晕则双倍暴击 56 点)
         const hitDir = new THREE.Vector3(arrow.velocity.x, 0, arrow.velocity.z).normalize();
-        this.applyDamageToMob(hitMob, 28, hitDir, 0.7);
+        this.applyDamageToMob(hitMob, 28, hitDir, 0.7, 'ranged');
 
         // 若命中前处于非战斗状态，强制拉入狂暴 CHASE 状态！
         if (wasPeaceful || hitMob.state === 'STAGGER') {
@@ -897,9 +1128,10 @@ export class WildlifeCombatSystem {
         trap.beaconMesh.material.opacity = Math.sin(Date.now() * 0.006) * 0.2 + 0.35;
       }
 
-      // 触碰检测：寻找踏入陷阱判定圈 (0.78米) 内的存活野兽
+      // 触碰检测：寻找踏入陷阱判定圈 (0.78米) 内的当前岛屿存活野兽
+      const activeIsl = this._getActiveIslandId();
       for (const mob of this.wildlifeList) {
-        if (mob.isDead) continue;
+        if (mob.isDead || (mob.islandId || 'home_island') !== activeIsl) continue;
         const d = trap.position.distanceTo(mob.group.position);
 
         if (d <= 0.78 && trap.armed) {
@@ -941,11 +1173,10 @@ export class WildlifeCombatSystem {
       const sp = this.spikes[i];
       if (sp.hitCooldown > 0) sp.hitCooldown -= delta;
 
+      const activeIsl = this._getActiveIslandId();
       for (const mob of this.wildlifeList) {
-        if (mob.isDead) continue;
+        if (mob.isDead || (mob.islandId || 'home_island') !== activeIsl) continue;
         const d = sp.position.distanceTo(mob.group.position);
-
-        // 检测冲刺突进中的野猪撞上拒马
         if (d <= 1.25 && sp.hitCooldown <= 0) {
           if (mob.state === 'CHARGING' || mob.state === 'CHASE') {
             sp.hitCooldown = 1.0;
@@ -997,13 +1228,16 @@ export class WildlifeCombatSystem {
 
     if (this.nightRaidCooldown > 0) this.nightRaidCooldown -= delta;
 
-    // 当入夜且冷却就绪时，检查是否有野兽靠近营地中心 (篝火半径 15 米)
+    // 夜间袭营仅在主岛触发
+    if (this._getActiveIslandId() !== 'home_island') return;
+
+    // 当入夜且冷却就绪时，检查是否有主岛野兽靠近营地中心 (篝火半径 15 米)
     const campfirePos = new THREE.Vector3(...ISLAND_LAYOUT.campfire);
     let nearestBeastToCamp = null;
     let minCampDist = 999;
 
     for (const mob of this.wildlifeList) {
-      if (mob.isDead) continue;
+      if (mob.isDead || (mob.islandId || 'home_island') !== 'home_island') continue;
       const d = mob.group.position.distanceTo(campfirePos);
       if (d < minCampDist) {
         minCampDist = d;
@@ -1095,9 +1329,10 @@ export class WildlifeCombatSystem {
     // 玩家正前方向量
     const forwardVec = new THREE.Vector3(Math.sin(playerRot), 0, Math.cos(playerRot)).normalize();
 
+    const activeIsl = this._getActiveIslandId();
     let hitCount = 0;
     for (const mob of this.wildlifeList) {
-      if (mob.isDead) continue;
+      if (mob.isDead || (mob.islandId || 'home_island') !== activeIsl) continue;
 
       const mobPos = mob.group.position;
       const toMob = new THREE.Vector3(mobPos.x - playerPos.x, 0, mobPos.z - playerPos.z);
@@ -1112,7 +1347,7 @@ export class WildlifeCombatSystem {
         if (angle <= hitAngle / 2) {
           // 判定命中！
           hitCount++;
-          this.applyDamageToMob(mob, damage, forwardVec, knockbackDist);
+          this.applyDamageToMob(mob, damage, forwardVec, knockbackDist, 'melee');
         }
       }
     }
@@ -1132,7 +1367,7 @@ export class WildlifeCombatSystem {
   }
 
   // 对野兽结算伤害、击退与死亡掉落
-  applyDamageToMob(mob, damage, attackDir, knockbackDist) {
+  applyDamageToMob(mob, damage, attackDir, knockbackDist, damageSource = 'melee') {
     // 检查是否命中处于破绽眩晕中的野兽 (Vulnerability Exploitation)
     const isVulnerable = mob.state === 'STUNNED' || mob.isStunned;
     let actualDmg = damage;
@@ -1150,6 +1385,22 @@ export class WildlifeCombatSystem {
       knockbackDist *= 1.8;
       if (mob.stunGroup) mob.stunGroup.visible = false;
       mob.isStunned = false;
+    } else if (mob.frontalArmorReduction && damageSource === 'melee' && attackDir && attackDir.lengthSq() > 0.01) {
+      // 玄武岩甲蜥正面硬甲判定：怪物正前方向量与玩家攻击方向相反（cos < -0.25）则触发正面甲壳减伤
+      const mobForward = new THREE.Vector3(Math.sin(mob.group.rotation.y), 0, Math.cos(mob.group.rotation.y)).normalize();
+      const cos = mobForward.dot(attackDir.clone().normalize());
+      if (cos < -0.25) {
+        actualDmg = Math.max(1, Math.round(damage * (1 - mob.frontalArmorReduction)));
+        knockbackDist *= 0.4;
+        this.spawnDamageNumber(mob.group.position, `🛡️ 硬甲 -${actualDmg}`, '#95a5a6');
+        if (this.game && this.game.ui) {
+          this.game.ui.showToast('🛡️ 正面玄武硬甲减伤 30%！绕向侧后方、使用猎弓或捕兽夹可全额破防！', 'small');
+        }
+      } else {
+        isCrit = Math.random() < 0.25;
+        actualDmg = isCrit ? Math.round(damage * 1.5) : damage;
+        this.spawnDamageNumber(mob.group.position, `-${actualDmg}${isCrit ? '!' : ''}`, isCrit ? '#ffdd59' : '#ff4757');
+      }
     } else {
       isCrit = Math.random() < 0.25;
       actualDmg = isCrit ? Math.round(damage * 1.5) : damage;
@@ -1170,10 +1421,11 @@ export class WildlifeCombatSystem {
     // 贴合击退后地面高度
     mob.group.position.y = this.sampleFloorHeight(mob.group.position.x, mob.group.position.z, mob.group.position.y);
 
-    // 陷入硬直并激活仇恨追逐
+    // 陷入硬直并激活仇恨追逐（若正在蓄力环形震波则隐藏预警光环）
     mob.state = 'STAGGER';
     mob.staggerTimer = 0.35;
     if (mob.telegraphMesh) mob.telegraphMesh.visible = false;
+    if (mob.ringWarnMesh) mob.ringWarnMesh.visible = false;
 
     // 检查是否死亡
     if (mob.hp <= 0 && !mob.isDead) {
@@ -1183,7 +1435,9 @@ export class WildlifeCombatSystem {
 
   // 受击闪白/闪红表现
   flashMobHit(mob) {
-    const mat = mob.type === 'crab' ? mob.shellMesh.material : mob.bodyMesh.material;
+    const targetMesh = mob.shellMesh || mob.bodyMesh;
+    if (!targetMesh || !targetMesh.material) return;
+    const mat = targetMesh.material;
     const origColor = mat.color.getHex();
     mat.color.setHex(0xffffff); // 瞬间白炽
     setTimeout(() => {
@@ -1194,18 +1448,26 @@ export class WildlifeCombatSystem {
     }, 80);
   }
 
-  // 野兽阵亡与战利品结算
+  // 野兽阵亡与战利品结算（记录 respawnDay = currentDay + 2 供跨天复活）
   killMob(mob) {
     mob.isDead = true;
     mob.state = 'DEAD';
+    mob.respawnDay = this._getCurrentDay() + 2;
     mob.hpBar.group.visible = false;
+    if (mob.ringWarnMesh) mob.ringWarnMesh.visible = false;
+    if (mob.telegraphMesh) mob.telegraphMesh.visible = false;
     soundEngine.playVictory();
+
+    // D2 博物图鉴：通知击杀记录（独立于战利品，不影响经济账本）
+    if (this.game?.codexSystem) {
+      this.game.codexSystem.recordMobKill(mob.type);
+    }
 
     const dropPosition = mob.group.position.clone();
     // 击败瞬间地表爆出金色战利品包裹，打击感清脆即时！
-    this.spawnLootDrop(dropPosition, mob.loot, mob.name);
+    this.spawnLootDrop(dropPosition, mob.loot, mob.name, mob.islandId || 'home_island');
 
-    // 怪物躯体微仰倾斜并逐渐缩微光辉消散
+    // 怪物躯体微仰倾斜并逐渐缩微光辉消散（隐藏但保留实例供跨天复活）
     let collapseTimer = 0;
     const deadAnim = setInterval(() => {
       collapseTimer += 0.05;
@@ -1213,7 +1475,9 @@ export class WildlifeCombatSystem {
       mob.group.scale.multiplyScalar(0.92);
       if (collapseTimer >= 0.6) {
         clearInterval(deadAnim);
-        this.group.remove(mob.group);
+        mob.group.visible = false;
+        mob.group.rotation.x = 0;
+        mob.group.scale.set(1, 1, 1);
       }
     }, 50);
 
@@ -1223,7 +1487,8 @@ export class WildlifeCombatSystem {
   }
 
   // 生成地表物理战利品包 (发光皮囊 + 旋转金色光环)
-  spawnLootDrop(pos, lootTable, mobName) {
+  spawnLootDrop(pos, lootTable, mobName, islandId = null) {
+    const targetIslandId = islandId || this._getActiveIslandId();
     const lootGroup = new THREE.Group();
     lootGroup.position.copy(pos);
     lootGroup.position.y = Math.max(0.05, pos.y);
@@ -1270,18 +1535,21 @@ export class WildlifeCombatSystem {
       bagMesh,
       items,
       mobName,
+      islandId: targetIslandId,
       picked: false,
       pulseTimer: 0
     };
+    lootGroup.visible = (targetIslandId === this._getActiveIslandId());
 
     this.lootDrops.push(drop);
     return drop;
   }
 
-  // 检查玩家靠近按 [E] 拾取战利品
+  // 检查玩家靠近按 [E] 拾取战利品（仅拾取当前所在岛屿掉落，sol_shard 走冻结账本入矿机并满 4 自动凝结）
   checkLootPickup(playerPos) {
+    const activeIsl = this._getActiveIslandId();
     for (const drop of this.lootDrops) {
-      if (drop.picked) continue;
+      if (drop.picked || (drop.islandId || 'home_island') !== activeIsl) continue;
 
       const dist = distanceXZ(playerPos, [drop.group.position.x, drop.group.position.y, drop.group.position.z]);
       if (dist <= 2.2) {
@@ -1291,7 +1559,23 @@ export class WildlifeCombatSystem {
 
         const receivedNames = [];
         drop.items.forEach(it => {
-          if (this.game && this.game.ui) {
+          if (it.id === 'sol_shard') {
+            if (this.game && this.game.miningRig) {
+              const rig = this.game.miningRig;
+              economyLedger(this.game).credit('sol_shard', it.count, 'resonance_shard', rig, 'shardCount');
+              let condensed = 0;
+              const maxCap = typeof rig.getMaxCrystalCapacity === 'function' ? rig.getMaxCrystalCapacity() : (rig.maxCrystalCapacity || 12);
+              while (rig.shardCount >= 4 && rig.loadedCrystals < maxCap) {
+                economyLedger(this.game).debit('sol_shard', 4, 'shard_condense', rig, 'shardCount');
+                economyLedger(this.game).credit('sol_crystal', 1, 'shard_condense', rig, 'loadedCrystals');
+                condensed++;
+              }
+              receivedNames.push(`${it.name} x${it.count}${condensed > 0 ? `（自动凝结硅晶原石 +${condensed}）` : ''}`);
+            }
+          } else if (this.game && this.game.shipUpgradeSystem && activeIsl !== 'home_island') {
+            this.game.shipUpgradeSystem.collectOutlyingResource(it.id, it.count, it.name);
+            receivedNames.push(`${it.name} x${it.count}`);
+          } else if (this.game && this.game.ui) {
             this.game.ui.addInventory(it.id, it.count);
             receivedNames.push(`${it.name} x${it.count}`);
           }
@@ -1340,9 +1624,10 @@ export class WildlifeCombatSystem {
     this.updateTraps(delta);
     this.updateSpikes(delta);
 
-    // 1. 更新所有存活野兽 AI
+    // 1. 更新当前岛屿所有存活野兽 AI
+    const activeIsl = this._getActiveIslandId();
     for (const mob of this.wildlifeList) {
-      if (mob.isDead) continue;
+      if (mob.isDead || (mob.islandId || 'home_island') !== activeIsl) continue;
 
       mob.animCycle += delta * 4.0;
       if (mob.attackCooldownTimer > 0) mob.attackCooldownTimer -= delta;
@@ -1354,11 +1639,12 @@ export class WildlifeCombatSystem {
 
       const mobPos = mob.group.position;
       const distToPlayer = distanceXZ(playerPos, [mobPos.x, mobPos.y, mobPos.z]);
-      const distToCampfire = distanceXZ(campfirePos, [mobPos.x, mobPos.y, mobPos.z]);
+      const distToCampfire = activeIsl === 'home_island'
+        ? distanceXZ(campfirePos, [mobPos.x, mobPos.y, mobPos.z])
+        : 999;
 
-      // === 营火避险驱兽法则 (Campfire Repellent Safe Zone) ===
-      // 野兽极端惧怕火焰，距离营火 7.5 米内时惊恐尖叫逃跑
-      if (distToCampfire < 7.5) {
+      // === 营火避险驱兽法则 (Campfire Repellent Safe Zone，仅主岛营火生效) ===
+      if (activeIsl === 'home_island' && distToCampfire < 7.5) {
         mob.state = 'FLEE';
       }
 
@@ -1543,6 +1829,28 @@ export class WildlifeCombatSystem {
           break;
         }
 
+        case 'RING_SHOCKWAVE': {
+          // 晶簇棱背蟹环形震波蓄力预警（1.1 秒地面红圈呼吸闪烁后引爆范围冲击）
+          mob.shockwavePrepareTimer -= delta;
+          if (mob.ringWarnMesh) {
+            mob.ringWarnMesh.visible = true;
+            mob.ringWarnMesh.material.opacity = Math.sin((1.1 - mob.shockwavePrepareTimer) * Math.PI * 5.0) * 0.28 + 0.52;
+          }
+          if (mob.shockwavePrepareTimer <= 0) {
+            if (mob.ringWarnMesh) mob.ringWarnMesh.visible = false;
+            soundEngine.playHitImpact();
+            const dNow = distanceXZ(playerPos, [mobPos.x, mobPos.y, mobPos.z]);
+            if (dNow <= (mob.shockwaveRadius || 3.2)) {
+              this.mobAttackPlayer(mob, 24);
+            } else if (game.ui) {
+              game.ui.showToast('✨ 成功撤出晶簇震波范围！', 'small');
+            }
+            mob.shockwaveCooldownTimer = mob.shockwaveCooldown || 6.5;
+            mob.state = 'CHASE';
+          }
+          break;
+        }
+
         case 'CHASE': {
           // 野猪冲锋冷却计时与触发判定
           if (mob.type === 'boar') {
@@ -1552,6 +1860,17 @@ export class WildlifeCombatSystem {
               mob.state = 'PREPARE_CHARGE';
               mob.chargePrepareTimer = 1.0;
               soundEngine.playMonsterGrowl();
+              break;
+            }
+          } else if (mob.type === 'crystal_crab') {
+            if (mob.shockwaveCooldownTimer > 0) mob.shockwaveCooldownTimer -= delta;
+            if (mob.shockwaveCooldownTimer <= 0 && distToPlayer <= (mob.shockwaveRadius || 3.2)) {
+              mob.state = 'RING_SHOCKWAVE';
+              mob.shockwavePrepareTimer = 1.1;
+              soundEngine.playMonsterGrowl();
+              if (game.ui) {
+                game.ui.showToast('🚨 【晶簇棱背蟹】正在蓄力环形晶爆！迅速撤出红圈范围！', 'important');
+              }
               break;
             }
           }
@@ -1581,20 +1900,22 @@ export class WildlifeCombatSystem {
         }
       }
 
-      // === 全局地表高度实时采样贴合 (彻底消除飞天或穿地) ===
-      const floorY = this.sampleFloorHeight(mob.group.position.x, mob.group.position.z, mob.group.position.y);
+      // === 全局地表高度实时采样贴合 (主岛采样真实高度，外岛贴合出生基准面) ===
+      const floorY = activeIsl === 'home_island'
+        ? this.sampleFloorHeight(mob.group.position.x, mob.group.position.z, mob.group.position.y)
+        : mob.patrolCenter.y;
       mob.group.position.y = THREE.MathUtils.lerp(mob.group.position.y, floorY, Math.min(1.0, 16.0 * delta));
 
       // 躯体微动画与步态
-      if (mob.type === 'crab') {
+      if (mob.type === 'crab' || mob.type === 'hermit_crab' || mob.type === 'crystal_crab') {
         // 巨蟹螯剪与侧向步足
         mob.clawL.rotation.y = Math.sin(mob.animCycle * 2.0) * 0.35;
         mob.clawR.rotation.y = -Math.sin(mob.animCycle * 2.0) * 0.35;
         mob.legs.forEach((leg, i) => {
           leg.rotation.x = Math.sin(mob.animCycle * 3.0 + i) * 0.25;
         });
-      } else if (mob.type === 'boar') {
-        // 野猪四蹄与微倾
+      } else if (mob.type === 'boar' || mob.type === 'basalt_lizard') {
+        // 野猪与甲蜥四肢步态
         mob.legs[0].rotation.x = Math.sin(mob.animCycle * 3.0) * 0.45;
         mob.legs[1].rotation.x = -Math.sin(mob.animCycle * 3.0) * 0.45;
         mob.legs[2].rotation.x = -Math.sin(mob.animCycle * 3.0) * 0.45;
@@ -1704,5 +2025,67 @@ export class WildlifeCombatSystem {
     if (game.survival.life <= 20 && game.ui) {
       game.ui.showToast(`🚨 生命值告急！请迅速撤回营火安全区或食用食物急救！`, 'important');
     }
+  }
+
+  // 跨天结算：已阵亡且到达 respawnDay（+2 天）的野兽在原巡逻中枢满血再生
+  onDayPassed(currentDay) {
+    const day = typeof currentDay === 'number' ? currentDay : this._getCurrentDay();
+    const activeIsl = this._getActiveIslandId();
+    let respawnCount = 0;
+
+    for (const mob of this.wildlifeList) {
+      if (!mob.isDead) continue;
+      if (typeof mob.respawnDay === 'number' && day >= mob.respawnDay) {
+        mob.isDead = false;
+        delete mob.respawnDay;
+        mob.hp = mob.maxHp;
+        mob.state = 'PATROL';
+        mob.isStunned = false;
+        mob.hpBar.update(mob.hp, mob.maxHp);
+        mob.hpBar.group.visible = false;
+        mob.group.position.copy(mob.patrolCenter);
+        mob.group.rotation.set(0, 0, 0);
+        mob.group.scale.set(1, 1, 1);
+        if (!mob.group.parent) {
+          this.group.add(mob.group);
+        }
+        mob.group.visible = ((mob.islandId || 'home_island') === activeIsl);
+        respawnCount++;
+      }
+    }
+    return respawnCount;
+  }
+
+  // 序列化野兽讨伐与重生冷却状态
+  serialize() {
+    const deadMobs = {};
+    for (const mob of this.wildlifeList) {
+      if (mob.isDead && typeof mob.respawnDay === 'number') {
+        deadMobs[mob.id] = mob.respawnDay;
+      }
+    }
+    return { deadMobs };
+  }
+
+  // 反序列化恢复野兽阵亡与重生冷却状态
+  deserialize(data) {
+    if (!data || !data.deadMobs || typeof data.deadMobs !== 'object') {
+      this.setActiveIsland(this._getActiveIslandId());
+      return;
+    }
+    const deadMap = data.deadMobs;
+    for (const mob of this.wildlifeList) {
+      if (deadMap[mob.id] !== undefined) {
+        mob.isDead = true;
+        mob.state = 'DEAD';
+        mob.respawnDay = Number(deadMap[mob.id]);
+        mob.group.visible = false;
+      } else {
+        mob.isDead = false;
+        mob.hp = mob.maxHp;
+        mob.state = 'PATROL';
+      }
+    }
+    this.setActiveIsland(this._getActiveIslandId());
   }
 }

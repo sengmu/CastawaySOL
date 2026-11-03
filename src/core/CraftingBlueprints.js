@@ -335,18 +335,7 @@ export const CRAFTING_BLUEPRINTS = [
     count: 1,
     name: '精炼工作收音机 📻',
     hint: '高纯度精炼硅晶谐振模块装入故障电台调谐槽',
-    desc: '【逃脱结局1：直升机救援】前往南岸平坦沙滩 S.O.S 地标发报呼叫空中搜救！'
-  },
-  {
-    id: 'workradio_battery',
-    category: 'escape_base',
-    a: 'battery',
-    b: 'broken_radio',
-    result: 'workradio',
-    count: 1,
-    name: '工作收音机 📻 (电池备选)',
-    hint: '高能干电池准确装入故障电台干燥电池槽',
-    desc: '【逃脱结局1：直升机救援】前往南岸平坦沙滩 S.O.S 地标发报呼叫空中搜救！'
+    desc: '【群岛通讯核心】前往南岸平坦沙滩 S.O.S 地标架设天线，侦听邻岛幸存者求救信号！'
   },
   {
     id: 'escape_raft',
@@ -357,7 +346,7 @@ export const CRAFTING_BLUEPRINTS = [
     count: 1,
     name: '求生大木筏 ⛵',
     hint: '4根粗壮圆木以坚固铁钉与榫卯紧密排布加固',
-    desc: '【逃脱结局2/6/8：扬帆起航】前往西南浅滩简易码头起航横渡大洋！'
+    desc: '【近海开拓载具】前往西南浅滩码头下水，开启浮木岛与群岛航线探索！'
   }
 ];
 

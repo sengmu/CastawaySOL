@@ -105,6 +105,12 @@ export class SurvivalSystem {
         hungerGain = 25; fatigueReduce = 15; break;
       case 'honey':
         lifeGain = 30; hungerGain = 50; waterGain = 10; fatigueReduce = 50; break;
+      case 'camp_breakfast':
+        lifeGain = 25; hungerGain = 45; waterGain = 20; fatigueReduce = 25; break;
+      case 'captain_lunchbox':
+        lifeGain = 35; hungerGain = 60; waterGain = 35; fatigueReduce = 40; break;
+      case 'energy_drink':
+        lifeGain = 10; waterGain = 30; fatigueReduce = 45; break;
       default:
         hungerGain = 10; break;
     }
@@ -118,11 +124,13 @@ export class SurvivalSystem {
     return { lifeGain, hungerGain, waterGain };
   }
 
-  // 在帐篷/小屋/篝火旁睡觉休整推进天数
-  sleep(quality = 1.0) {
+  // 在帐篷/小屋/篝火旁睡觉休整推进天数（支持叠加 C4 营地舒适度睡眠加成）
+  sleep(quality = 1.0, comfortBonus = null) {
     this.day++;
-    this.fatigue = Math.max(0, this.fatigue - Math.round(75 * quality));
-    this.life = Math.min(100, this.life + Math.round(30 * quality));
+    const extraLife = Number(comfortBonus?.sleepLifeBonus) || 0;
+    const extraFatigue = Number(comfortBonus?.sleepFatigueBonus) || 0;
+    this.fatigue = Math.max(0, this.fatigue - (Math.round(75 * quality) + extraFatigue));
+    this.life = Math.min(100, this.life + Math.round(30 * quality) + extraLife);
     // 睡眠也会轻微消耗水分和饱食
     this.water = Math.max(0, this.water - 15);
     this.hunger = Math.max(0, this.hunger - 15);
@@ -130,8 +138,8 @@ export class SurvivalSystem {
   }
 
   // 兼容别名
-  sleepOvernight(quality = 1.0) {
-    this.sleep(quality);
+  sleepOvernight(quality = 1.0, comfortBonus = null) {
+    this.sleep(quality, comfortBonus);
   }
 
   triggerDeath(reason) {
