@@ -48,6 +48,7 @@ export class TidalTrapSystem {
   // 1. 潮汐捕蟹笼 (竹篾编织框与海面系绳浮筒)
   createCrabTrapMesh() {
     const trapGroup = new THREE.Group();
+    trapGroup.userData.interactionId = 'crabTrap';
     trapGroup.position.copy(this.crabTrapAnchor);
 
     const woodMat = new THREE.MeshStandardMaterial({
@@ -104,6 +105,7 @@ export class TidalTrapSystem {
   // 2. 营地熏鱼风干烤架 (三角原木支架与风干悬绳)
   createSmokerRackMesh() {
     const smokerGroup = new THREE.Group();
+    smokerGroup.userData.interactionId = 'smoker';
     smokerGroup.position.copy(this.smokerAnchor);
 
     const timberMat = new THREE.MeshStandardMaterial({

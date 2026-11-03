@@ -14,40 +14,6 @@ import {
 } from '@solana-mobile/wallet-adapter-mobile';
 
 // 安装针对 Android WebView / Capacitor 环境的 MWA 协议桥接补丁
-function installMwaWebViewBridge() {
-  if (typeof window === 'undefined' || !window.location || typeof window.location.assign !== 'function') return;
-  if (window.__mwa_bridge_installed) return;
-  window.__mwa_bridge_installed = true;
-
-  try {
-    // 拦截 window.addEventListener('blur')
-    // MWA 官方库在 launchAssociation 时会等待 window.blur 事件（3000ms 超时）。
-    // 在 Android WebView 宿主环境中拉起系统 BottomSheet 时，WebView 不会触发 blur 事件导致伪超时报错。
-    // 此处捕获该监听器并在 80ms 内主动派发 blur，保证底层 WebSocket 顺利建立连接。
-    const origAddEventListener = window.addEventListener.bind(window);
-    window.addEventListener = function(type, listener, options) {
-      if (type === 'blur' && typeof listener === 'function') {
-        const fnStr = listener.toString();
-        if (fnStr.includes('handleBlur') || fnStr.includes('cleanup')) {
-          console.log('🎯 [SolanaBridge] 捕获到 MWA getDetectionPromise 注册的 blur 探针！');
-          setTimeout(() => {
-            console.log('⚡ [SolanaBridge] 主动派发 blur 事件放行 MWA WebSocket 会话！');
-            try {
-              listener(new Event('blur'));
-            } catch (err) {
-              console.warn('派发 blur 事件异常:', err);
-            }
-          }, 80);
-        }
-      }
-      return origAddEventListener(type, listener, options);
-    };
-    console.log('✅ [SolanaBridge] MWA 原生 WebView 桥接补丁已装载');
-  } catch (e) {
-    console.warn('⚠️ 安装 MWA WebView 桥接失败:', e);
-  }
-}
-
 export class SolanaBridge {
   constructor() {
     this.walletAddress = null;
@@ -76,6 +42,28 @@ export class SolanaBridge {
 
     // 载入本地缓存状态
     this.loadState();
+
+    if (this.adapter && typeof window !== 'undefined') {
+      this.adapter.on('connect', () => {
+        if (!this.adapter.publicKey) return;
+        this.publicKey = this.adapter.publicKey;
+        this.walletAddress = this.publicKey.toBase58();
+        this.isConnected = true;
+        this.isMWA = true;
+        this.isGuest = false;
+        localStorage.setItem('castaway_sol_wallet', JSON.stringify({ address: this.walletAddress, isMWA: true, isGuest: false }));
+        window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+        void this.fetchBalance();
+      });
+      this.adapter.on('disconnect', () => {
+        if (!this.isMWA) return;
+        this.isConnected = false;
+        window.dispatchEvent(new CustomEvent('solana-wallet-changed'));
+      });
+      if (this.isMWA && this.walletAddress && !this.isConnected) {
+        void this.adapter.autoConnect().catch(() => {});
+      }
+    }
 
     if (typeof window !== 'undefined') {
       window.solanaBridge = this;
@@ -224,14 +212,14 @@ export class SolanaBridge {
   }
 
   initMWA() {
-    installMwaWebViewBridge();
+
     try {
       this.adapter = new SolanaMobileWalletAdapter({
         addressSelector: createDefaultAddressSelector(),
         appIdentity: {
           name: 'CastawaySOL',
           uri: 'https://castawaysol.game',
-          icon: 'https://castawaysol.game/icon.png'
+          icon: 'icon-192.png'
         },
         authorizationResultCache: createDefaultAuthorizationResultCache(),
         chain: 'solana:devnet',
@@ -258,9 +246,9 @@ export class SolanaBridge {
             this.publicKey = new PublicKey(this.walletAddress);
           } catch (e) {}
         }
-        this.isConnected = true;
-        // 异步查询真实 Devnet 余额
-        this.fetchBalance();
+        // A saved address is only a hint. Wallet authorization must be
+        // re-established before the UI or payment flow considers it connected.
+        this.isConnected = Boolean(this.isGuest);
       }
     } catch (e) {
       console.warn('读取本地钱包存储异常:', e);
@@ -336,7 +324,26 @@ export class SolanaBridge {
     if (this.adapter && (preferType === 'mwa' || (preferType === 'auto' && (this.isSeeker || this.detectMobileDevice())))) {
       try {
         console.log('📱 [SolanaBridge] 正在通过 MWA 唤起移动钱包 / Seed Vault...');
-        await this.adapter.connect();
+        // This SDK version returns before authorization finishes; await its events.
+        await new Promise((resolve, reject) => {
+          const adapter = this.adapter;
+          let timer;
+          const cleanup = () => {
+            clearTimeout(timer);
+            adapter.off('connect', onConnect);
+            adapter.off('error', onError);
+            adapter.off('disconnect', onDisconnect);
+          };
+          const onConnect = () => { cleanup(); resolve(); };
+          const onError = (error) => { cleanup(); reject(error); };
+          const onDisconnect = () => onError(new Error('Wallet disconnected'));
+          adapter.on('connect', onConnect);
+          adapter.on('error', onError);
+          adapter.on('disconnect', onDisconnect);
+          timer = setTimeout(() => onError(new Error('Wallet authorization timed out')), 90000);
+          if (adapter.connected) { onConnect(); return; }
+          Promise.resolve(adapter.connect()).catch(onError);
+        });
         if (this.adapter.publicKey) {
           this.publicKey = this.adapter.publicKey;
           this.walletAddress = this.publicKey.toBase58();
@@ -521,7 +528,7 @@ export class SolanaBridge {
       return { success: false, message: '官方收款地址无效，支付功能已安全禁用' };
     }
 
-    if (!this.isConnected) {
+    if (!this.isConnected || (this.isMWA && !this.adapter?.connected)) {
       return { success: false, message: '请先连接钱包' };
     }
 
@@ -572,11 +579,12 @@ export class SolanaBridge {
       }
 
       console.log('⏳ 交易已广播，等待链上确认... 签名:', signature);
-      await this.connection.confirmTransaction({
+      const confirmation = await this.connection.confirmTransaction({
         signature,
         blockhash,
         lastValidBlockHeight
       }, 'confirmed');
+      if (confirmation.value?.err) throw new Error(`交易执行失败: ${JSON.stringify(confirmation.value.err)}`);
 
       console.log('✅ 交易已被网络确认！');
       await this.fetchBalance();
@@ -632,12 +640,12 @@ export class SolanaBridge {
           day,
           steps,
           timestamp,
-          signature: signatureHex.substring(0, 32) + '...',
-          isHardwareSigned: true,
+          signature: signatureHex,
+          isHardwareSigned: false,
           signer: this.walletAddress
         };
         this.saveCheckinRecord(record);
-        return { success: true, record, hardwareSigned: true };
+        return { success: true, record, hardwareSigned: false };
       } catch (err) {
         console.warn('MWA 签名未完成:', err);
         return { success: false, message: err.message || '签名被取消' };
@@ -672,6 +680,19 @@ export class SolanaBridge {
       this.saveCheckinRecord(record);
       return { success: true, record, hardwareSigned: false, isGuest: true };
     }
+  }
+
+  async signAccountChallenge(message) {
+    if (!this.isConnected || this.isGuest || !this.walletAddress || !message?.includes(`Wallet: ${this.walletAddress}\n`)) {
+      throw new Error('请先连接对应的钱包');
+    }
+    const bytes = new TextEncoder().encode(message);
+    let signature;
+    if (this.isMWA && this.adapter?.connected) signature = await this.adapter.signMessage(bytes);
+    else if (window.solana?.signMessage) signature = (await window.solana.signMessage(bytes, 'utf8')).signature;
+    else throw new Error('当前钱包不支持消息签名');
+    if (!(signature instanceof Uint8Array) || signature.length !== 64) throw new Error('钱包签名格式无效');
+    return btoa(String.fromCharCode(...signature));
   }
 
   saveCheckinRecord(record) {

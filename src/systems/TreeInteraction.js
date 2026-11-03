@@ -103,13 +103,80 @@ export class TreeInteraction {
 
     this.initTrees();
     // 少量真实可拾取漂流木，引导玩家从沙滩走向内陆。
-    [[-8, 39.4], [-11.5, 38.6], [-9, 36.8], [-12, 35.8]].forEach(([x, z]) => {
+    [[-8, 39.4], [-11.5, 38.6], [-9, 36.8], [-12, 35.8]].forEach(([x, z], index) => {
       this.spawnDropItem(new THREE.Vector3(x, -0.15, z), 'tree_branch');
       const item = this.droppedItems[this.droppedItems.length - 1];
+      item.starterId = index;
       item.t = 1;
       item.targetX = x;
       item.targetZ = z;
       item.group.position.set(x, 0.05, z);
+    });
+  }
+
+  getRemainingStarterDrops() {
+    return this.droppedItems.filter(item => Number.isInteger(item.starterId)).map(item => item.starterId);
+  }
+
+  getDropSnapshot() {
+    return this.droppedItems.map(item => ({
+      type: item.type,
+      x: item.targetX,
+      y: item.targetY,
+      z: item.targetZ,
+      ...(Number.isInteger(item.starterId) ? { starterId: item.starterId } : {})
+    }));
+  }
+
+  restoreDrops(saved) {
+    if (!Array.isArray(saved)) return;
+    const allowed = new Set(['apple', 'coconut', 'tree_branch', 'tree_bark', 'tree_sap', 'ivy', 'lumber', 'wood_plank']);
+    for (const item of this.droppedItems) this.group.remove(item.group);
+    this.droppedItems = [];
+    for (const data of saved.slice(0, 500)) {
+      if (!data || !allowed.has(data.type) || ![data.x, data.y, data.z].every(Number.isFinite)) continue;
+      this.spawnDropItem(new THREE.Vector3(data.x, data.y - 0.2, data.z), data.type);
+      const item = this.droppedItems[this.droppedItems.length - 1];
+      item.targetX = data.x;
+      item.targetY = data.y;
+      item.targetZ = data.z;
+      item.group.position.set(data.x, data.y, data.z);
+      item.t = 1;
+      if (Number.isInteger(data.starterId) && data.starterId >= 0 && data.starterId < 4) item.starterId = data.starterId;
+    }
+  }
+
+  getNearestDrop(playerPos, maxDist = 2.2) {
+    let nearest = null;
+    let nearestDist = maxDist;
+    for (const item of this.droppedItems) {
+      if (item.t < 1) continue;
+      const dist = Math.hypot(item.group.position.x - playerPos.x, item.group.position.z - playerPos.z);
+      if (dist < nearestDist) {
+        nearest = item;
+        nearestDist = dist;
+      }
+    }
+    return nearest;
+  }
+
+  pickupDrop(playerPos, inventoryCallback) {
+    const item = this.getNearestDrop(playerPos);
+    if (!item || !inventoryCallback(item.type)) return false;
+    soundEngine.playItemDrop();
+    haptics.light();
+    this.group.remove(item.group);
+    this.droppedItems.splice(this.droppedItems.indexOf(item), 1);
+    return true;
+  }
+
+  restoreStarterDrops(remaining) {
+    if (!Array.isArray(remaining)) return;
+    const ids = new Set(remaining.filter(id => Number.isInteger(id) && id >= 0 && id < 4));
+    this.droppedItems = this.droppedItems.filter(item => {
+      if (!Number.isInteger(item.starterId) || ids.has(item.starterId)) return true;
+      this.group.remove(item.group);
+      return false;
     });
   }
 
@@ -408,7 +475,7 @@ export class TreeInteraction {
     });
   }
 
-  update(delta, playerPos, inventoryCallback) {
+  update(delta) {
     this.windTime += delta;
 
     // 海岛自然海风动力学微摆 + 摇树物理震荡复合
@@ -457,17 +524,6 @@ export class TreeInteraction {
         }
       }
 
-      // 主角走近自动拾取检测 (距离 < 1.4 米)
-      const dist = item.group.position.distanceTo(playerPos);
-      if (dist < 1.4) {
-        soundEngine.playItemDrop();
-        haptics.light();
-        this.group.remove(item.group);
-        this.droppedItems.splice(i, 1);
-        if (inventoryCallback) {
-          inventoryCallback(item.type);
-        }
-      }
     }
   }
 

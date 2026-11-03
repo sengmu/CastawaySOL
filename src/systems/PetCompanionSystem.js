@@ -170,6 +170,7 @@ export class PetCompanionSystem {
     nestGroup.add(ring);
 
     this.nestMesh = nestGroup;
+    this.nestMesh.userData.interactionId = 'petNest';
     this.group.add(nestGroup);
   }
 

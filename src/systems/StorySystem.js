@@ -58,8 +58,8 @@ export class StorySystem {
           {
             id: 'collect_driftwood',
             type: 'action',
-            desc: '探索南岸沙滩，走近并点按互动按钮拾取散落的【漂流木棍】！',
-            hint: '在海滩四周走动，靠近发光的树枝点按互动按钮拾取'
+            desc: '探索南岸沙滩，靠近并点按互动按钮拾取【漂流木棍】！',
+            hint: '从海难出生点沿沙滩向内陆走，靠近发光木棍后点按互动按钮'
           },
           {
             id: 'find_food_water',

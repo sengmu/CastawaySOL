@@ -127,6 +127,7 @@ export class MiningRigSystem {
   // 构建矿机 3D 拟真模型
   initEntityMesh() {
     const rigGroup = new THREE.Group();
+    rigGroup.userData.interactionId = 'miningRig';
     rigGroup.position.copy(this.anchor);
 
     // 1. 原木加固基座

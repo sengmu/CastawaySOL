@@ -1,0 +1,6 @@
+**
+!package.json
+!package-lock.json
+!server/
+!server/account-server.js
+!server/Dockerfile

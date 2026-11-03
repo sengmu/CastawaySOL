@@ -41,6 +41,7 @@ export class CampInteractiveEntities {
   // 1. 营地经营与居民排班告示牌 (Noticeboard)
   createNoticeboard() {
     const boardGroup = new THREE.Group();
+    boardGroup.userData.interactionId = 'noticeboard';
     boardGroup.position.copy(this.anchors.noticeboard);
     boardGroup.rotation.y = -0.35; // 朝向营地中心营火
 
@@ -119,6 +120,7 @@ export class CampInteractiveEntities {
   // 1.5 营地日常交付订单板 (Order Board)
   createOrderBoard() {
     const orderGroup = new THREE.Group();
+    orderGroup.userData.interactionId = 'orderBoard';
     orderGroup.position.copy(this.anchors.orderBoard);
     orderGroup.rotation.y = -0.15;
 
@@ -177,6 +179,7 @@ export class CampInteractiveEntities {
   // 2. 救援空投与商业化特权无线电站 (Radio Terminal)
   createRadioTerminal() {
     const radioGroup = new THREE.Group();
+    radioGroup.userData.interactionId = 'radioTerminal';
     radioGroup.position.copy(this.anchors.radioTerminal);
     radioGroup.rotation.y = 0.4;
 
@@ -261,6 +264,7 @@ export class CampInteractiveEntities {
   // 3. 原生多孔火山石与竹节净水滴滤台 (Water Purifier)
   createWaterPurifier() {
     const purifierGroup = new THREE.Group();
+    purifierGroup.userData.interactionId = 'waterPurifier';
     purifierGroup.position.copy(this.anchors.waterPurifier);
     purifierGroup.rotation.y = 0.1;
 
@@ -323,6 +327,7 @@ export class CampInteractiveEntities {
   // 4. 南岸自动打捞浮标岸边滑轮锚桩 (Buoy Winch & Pulley)
   createBuoyWinch() {
     const winchGroup = new THREE.Group();
+    winchGroup.userData.interactionId = 'buoyWinch';
     winchGroup.position.copy(this.anchors.buoyWinch);
     winchGroup.rotation.y = -0.6;
 

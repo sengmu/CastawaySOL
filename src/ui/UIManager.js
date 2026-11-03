@@ -512,6 +512,26 @@ export class UIManager {
       .modal-body::-webkit-scrollbar { width: 5px; }
       .modal-body::-webkit-scrollbar-thumb { background: rgba(107, 74, 50, 0.25); border-radius: 3px; }
 
+      .profile-page { display:grid; gap:12px; color:#5a4432; }
+      .profile-hero { display:flex; align-items:center; gap:14px; padding:16px; border-radius:18px; background:linear-gradient(135deg,#fff8e9,#f1e1bb); }
+      .profile-portrait { width:68px; height:68px; object-fit:contain; flex:none; }
+      .profile-hero-copy { display:flex; flex-direction:column; gap:4px; min-width:0; }
+      .profile-hero-copy strong { font-size:20px; }
+      .profile-hero-copy span, .profile-note { font-size:12px; color:#806e58; line-height:1.5; }
+      .profile-section-title { font-size:14px; font-weight:800; padding:0 2px; }
+      .profile-facts, .profile-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .profile-facts>div, .profile-stats>div { min-width:0; display:flex; flex-direction:column; gap:4px; padding:11px 12px; border:1px solid #ead9b9; border-radius:12px; background:#fffdf6; }
+      .profile-facts span, .profile-stats span { font-size:12px; color:#89745b; }
+      .profile-facts strong, .profile-stats strong { font-size:14px; overflow-wrap:anywhere; }
+      .profile-wallet { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-radius:12px; background:#fffdf6; border:1px solid #ead9b9; font-size:13px; }
+      .profile-wallet button { min-height:44px; flex:none; border:0; border-radius:10px; padding:0 14px; background:#52694d; color:#fff; font-weight:800; }
+      .profile-account { padding:12px; border:1px solid #ead9b9; border-radius:12px; background:#fffdf6; font-size:13px; line-height:1.5; }
+      .profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; }
+      #profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+      #profile-account-actions button { min-height:44px; border:0; border-radius:10px; padding:0 12px; background:#52694d; color:white; font-weight:800; }
+      #profile-account-actions button:disabled { opacity:.55; }
+      .profile-note { padding:0 2px 4px; }
+
       /* 双栏横屏布局通用容器 */
       .split-modal-layout {
         display: flex; gap: 14px; min-height: 230px;
@@ -1537,6 +1557,25 @@ export class UIManager {
     style.textContent += cozyPortraitHudCSS;
     style.textContent += cozyLandscapeHudCSS;
     style.textContent += characterPanelCSS;
+    style.textContent += `
+      #hud-nav-secondary.hud-drawer { box-sizing:border-box; display:flex!important; flex-direction:column!important; gap:8px!important; width:min(340px,88vw)!important; top:0!important; bottom:0!important; padding:16px max(18px,var(--sar,0px)) max(24px,var(--sab,0px)) 18px!important; background:#fff6e3!important; color:#493e32; border-left:1px solid #dfcfae; border-radius:24px 0 0 24px; box-shadow:-12px 0 40px #231a1733; overscroll-behavior:contain; }
+      #hud-nav-secondary .hud-drawer-title { position:sticky; top:-16px; z-index:2; margin:-16px -2px 0; padding:max(12px,var(--sat,0px)) 2px 12px; background:#fff6e3; color:#493e32; font-size:20px; letter-spacing:0; }
+      #hud-nav-secondary .drawer-section-label { flex-shrink:0; padding:14px 4px 2px; color:#8c785b; font-size:12px; font-weight:700; letter-spacing:1px; }
+      #hud-nav-secondary .hud-nav-btn { box-sizing:border-box; width:100%; min-height:48px!important; height:auto!important; padding:10px 14px!important; display:flex; justify-content:flex-start; gap:10px; border:1px solid #e5d7bb!important; border-radius:12px!important; background:#fffcf4!important; box-shadow:none!important; color:#493e32!important; font-size:14px!important; line-height:1.5; white-space:normal!important; text-align:left; }
+      #hud-nav-secondary .hud-nav-btn:active { background:#efe2c6!important; }
+      #hud-nav-secondary .hud-drawer-quality { display:grid; grid-template-columns:40px repeat(3,minmax(0,1fr)); gap:6px; align-items:center; padding:4px 0; }
+      #hud-nav-secondary .hud-drawer-qlabel { color:#79674e; font-size:12px; min-width:0; }
+      #hud-nav-secondary .quality-opt, #hud-nav-secondary .notice-opt { min-height:44px!important; padding:6px 2px; border:1px solid #dfcfae; border-radius:10px; background:#fffcf4; color:#67543d; font-size:12px!important; }
+      #hud-nav-secondary [aria-pressed="true"] { background:#52694d!important; color:#fff9e9!important; border-color:#52694d!important; }
+      #hud-nav-secondary.hud-drawer { width:100vw!important; max-width:none!important; height:100dvh!important; left:0!important; right:0!important; display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; column-gap:12px!important; row-gap:10px!important; padding:16px max(20px,var(--sar,0px)) max(28px,var(--sab,0px)) max(20px,var(--sal,0px))!important; border:0!important; border-radius:0!important; z-index:600; }
+      #hud-nav-secondary .hud-drawer-title { grid-column:1/-1; top:-16px; margin:-16px -4px 0; padding-left:4px; padding-right:4px; }
+      #hud-nav-secondary .drawer-section-label, #hud-nav-secondary .hud-drawer-quality { grid-column:1/-1; }
+      #hud-nav-secondary .hud-nav-btn { min-height:76px!important; flex-direction:column; align-items:flex-start; justify-content:center; padding:14px 16px!important; gap:6px; }
+      #hud-nav-secondary .hud-nav-btn .hud-nav-desktop-label { display:inline!important; }
+      #hud-nav-secondary .hud-drawer-quality { grid-template-columns:52px repeat(3,minmax(0,1fr)); padding:6px 0; }
+      #hud-nav-secondary #btn-close-drawer { min-width:64px!important; }
+      @media(min-width:700px) { #hud-nav-secondary.hud-drawer { padding-left:max(28px,calc((100vw - 760px)/2))!important; padding-right:max(28px,calc((100vw - 760px)/2))!important; } }
+    `;
     document.head.appendChild(style);
 
     // 1. 顶部 CastawaySOL 主仪表盘（兼容横屏经典面板 + 竖屏极简单行Survival Kids状态条）
@@ -1601,6 +1640,15 @@ export class UIManager {
       <div class="survival-warning" id="survival-warning" role="status" hidden></div>
     `);
     document.body.appendChild(dashboard);
+    const avatar = dashboard.querySelector('.portrait-protagonist-avatar');
+    avatar.removeAttribute('aria-hidden');
+    avatar.setAttribute('role', 'button');
+    avatar.setAttribute('aria-label', '打开个人主页');
+    avatar.tabIndex = 0;
+    avatar.addEventListener('click', () => this.openProfileModal());
+    avatar.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.openProfileModal(); }
+    });
 
     // 独立任务简条容器（横屏与竖屏统一承载，竖屏默认单行，可点展开全文；无内容时彻底隐藏）
     const questCard = document.createElement('div');
@@ -1648,14 +1696,18 @@ export class UIManager {
     drawer.id = 'hud-nav-secondary';
     drawer.setAttribute('aria-label', '菜单');
     drawer.innerHTML = `
-      <div class="hud-drawer-title">菜单</div>
+      <div class="hud-drawer-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px">菜单<button type="button" id="btn-close-drawer" aria-label="关闭菜单" style="min-width:48px;min-height:44px;border:1px solid #b9aa93;border-radius:10px;background:#fff6e3;color:#493e32;font-size:14px;pointer-events:auto;touch-action:manipulation">关闭</button></div>
+      <div class="drawer-section-label">营地与制作</div>
       <button class="hud-nav-btn" id="btn-open-merge" aria-label="合成台">🔨 <span class="hud-nav-desktop-label">合成台</span></button>
-      <button class="hud-nav-btn" id="btn-drawer-build">🏗️ 营地规划与建造</button>
-      <button class="hud-nav-btn" id="btn-camp-manage">🏕️ 营地经营中枢</button>
-      <button class="hud-nav-btn" id="btn-open-shop">🛒 补给与特权</button>
+      <button class="hud-nav-btn" id="btn-drawer-build">🏗️ 营地建造</button>
+      <button class="hud-nav-btn" id="btn-camp-manage">🏕️ 营地管理</button>
+      <button class="hud-nav-btn" id="btn-open-shop">🛒 补给商店</button>
+      <div class="drawer-section-label">账户与帮助</div>
+      <button class="hud-nav-btn" id="btn-current-objective">${iconHTML('hud/quest', 24, { eager: true })} 当前任务</button>
       <button class="hud-nav-btn" id="btn-open-help" aria-label="手册">📖 <span class="hud-nav-desktop-label">手册</span></button>
       <button class="hud-nav-btn hud-nav-sol" id="btn-solana">${iconHTML('hud/solana', 18, { eager: true })} SOL 钱包连接</button>
       <button class="hud-nav-btn" id="btn-fullscreen" title="进入全屏沉浸模式" aria-label="全屏">⛶ <span class="hud-nav-desktop-label">全屏</span></button>
+      <div class="drawer-section-label">偏好设置</div>
       <div class="hud-drawer-quality" role="group" aria-label="画质设置"><span class="hud-drawer-qlabel">画质</span><button type="button" class="quality-opt" data-quality="low" aria-pressed="false">低</button><button type="button" class="quality-opt" data-quality="medium" aria-pressed="false">中</button><button type="button" class="quality-opt" data-quality="high" aria-pressed="false">高</button></div>
       <div class="hud-drawer-quality hud-drawer-notice" role="group" aria-label="提示强度"><span class="hud-drawer-qlabel">提示</span><button type="button" class="notice-opt" data-notice="full" aria-pressed="false">完整</button><button type="button" class="notice-opt" data-notice="lite" aria-pressed="false">精简</button><button type="button" class="notice-opt" data-notice="important" aria-pressed="false">仅重要</button></div>
     `;
@@ -1975,7 +2027,6 @@ export class UIManager {
     const secondaryNav = document.getElementById('hud-nav-secondary');
     const drawerScrim = document.getElementById('hud-drawer-scrim');
     const setDrawer = (open) => {
-      if (secondaryNav.classList.contains('open') === open) return;
       secondaryNav.classList.toggle('open', open);
       if (drawerScrim) drawerScrim.classList.toggle('open', open);
       document.body.classList.toggle('hud-drawer-open', open);
@@ -1983,6 +2034,20 @@ export class UIManager {
       if (open) this.syncQualityButtons();
     };
     this.closeDrawer = () => setDrawer(false);
+    document.getElementById('btn-current-objective').addEventListener('click', () => {
+      setDrawer(false);
+      document.getElementById('modal-title').textContent = '当前任务';
+      const body = document.getElementById('modal-body');
+      body.textContent = formatKeyHints(this.currentQuest || '当前没有待完成的任务');
+      this.modalBackdrop.style.display = 'flex';
+    });
+    document.getElementById('btn-close-drawer').addEventListener('click', (event) => {
+      event.stopPropagation();
+      setDrawer(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setDrawer(false);
+    });
     moreBtn.addEventListener('click', (event) => {
       event.stopPropagation();
       haptics.light();
@@ -2538,10 +2603,24 @@ export class UIManager {
     const container = document.getElementById('quest-card-container');
     const textEl = document.getElementById('quest-text');
     const hasText = !!(text && String(text).trim());
+    const next = formatKeyHints(text).replace(/^🚩\s*/, '');
+    if (textEl) textEl.textContent = next;
+    const story = window.__game?.story;
+    const stageKey = story ? `${story.currentChapterId}:${story.currentStepIndex}` : next;
+    if (this._objectiveHintKey === stageKey) return;
+    this._objectiveHintKey = stageKey;
+    clearTimeout(this._objectiveHideTimer);
+    this._objectiveVisibleUntil = hasText ? Date.now() + 5000 : 0;
     if (container) {
       container.style.display = hasText ? '' : 'none';
+      if (hasText) this._objectiveHideTimer = setTimeout(() => {
+        container.style.display = 'none';
+      }, 5000);
     }
-    const next = formatKeyHints(text).replace(/^🚩\s*/, '');
+    if (banner) {
+      banner.classList.remove('expanded');
+      banner.setAttribute('aria-expanded', 'false');
+    }
     if (textEl) {
       if (textEl.textContent !== next) textEl.textContent = next;
     } else if (banner && banner.textContent !== next) {
@@ -2552,8 +2631,20 @@ export class UIManager {
   updateTutorial(hint, step, total) {
     const card = document.getElementById('onboarding-card');
     if (!card) return;
-    card.style.display = hint ? 'block' : 'none';
-    if (!hint) return;
+    if (!hint) {
+      clearTimeout(this._tutorialHideTimer);
+      this._tutorialHintKey = null;
+      card.style.display = 'none';
+      return;
+    }
+    const hintKey = JSON.stringify([step, hint.title, hint.text]);
+    if (hintKey === this._tutorialHintKey) return;
+    this._tutorialHintKey = hintKey;
+    clearTimeout(this._tutorialHideTimer);
+    card.style.display = 'block';
+    this._tutorialHideTimer = setTimeout(() => {
+      card.style.display = 'none';
+    }, 6000);
     const title = card.querySelector('#onboarding-title');
     const body = card.querySelector('#onboarding-text');
     const count = card.querySelector('#onboarding-count');
@@ -2832,6 +2923,98 @@ export class UIManager {
         }
       });
     });
+  }
+
+  openProfileModal() {
+    const game = this.game || window.__game;
+    const survival = game?.survival || this.survival;
+    const story = game?.story;
+    const chapter = story?.getCurrentChapter?.();
+    const walletConnected = solanaBridge.isConnected && !solanaBridge.isGuest && !!solanaBridge.walletAddress;
+    const walletAddress = walletConnected ? solanaBridge.walletAddress : '';
+    const islandNames = {
+      main_island: '主岛', timber_isle: '浮木岛', quarry_isle: '矿石岛',
+      mist_reef_isle: '晶雾岛', ancient_temple: '远古神殿'
+    };
+    const stat = value => Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+    if (this.player?.resetInput) this.player.resetInput();
+    document.getElementById('modal-title').textContent = '个人主页';
+    const body = document.getElementById('modal-body');
+    body.innerHTML = `
+      <div class="profile-page">
+        <div class="profile-hero">
+          <img src="/ui/cozy/protagonist-avatar.webp" alt="幸存者头像" class="profile-portrait">
+          <div class="profile-hero-copy"><strong>荒岛幸存者</strong><span>本地冒险档案</span></div>
+        </div>
+        <div class="profile-section-title">冒险进度</div>
+        <div class="profile-facts">
+          <div><span>生存天数</span><strong id="profile-day"></strong></div>
+          <div><span>行走步数</span><strong id="profile-steps"></strong></div>
+          <div><span>所在区域</span><strong id="profile-island"></strong></div>
+          <div><span>当前章节</span><strong id="profile-chapter"></strong></div>
+        </div>
+        <div class="profile-section-title">生存状态</div>
+        <div class="profile-stats">
+          <div><span>❤️ 生命</span><strong id="profile-life"></strong></div>
+          <div><span>🍗 饱食</span><strong id="profile-hunger"></strong></div>
+          <div><span>💧 水分</span><strong id="profile-water"></strong></div>
+          <div><span>⚡ 疲劳</span><strong id="profile-fatigue"></strong></div>
+        </div>
+        <div class="profile-section-title">钱包</div>
+        <div class="profile-wallet"><span id="profile-wallet-state"></span><button type="button" id="profile-wallet-action"></button></div>
+        <div id="profile-account-panel" style="display:none"><div class="profile-section-title">账号与存档</div>
+        <div class="profile-account"><span id="profile-account-state"></span><div id="profile-account-actions"></div></div>
+        <div class="profile-note">绑定账号需要钱包签名，不会发起链上交易。选择云端恢复前会保留当前本机存档备份。</div></div>
+      </div>`;
+    const set = (id, value) => { body.querySelector(`#${id}`).textContent = String(value); };
+    set('profile-day', `第 ${stat(survival?.day)} 天`);
+    set('profile-steps', stat(survival?.steps));
+    set('profile-island', islandNames[game?.currentIslandId] || '主岛');
+    set('profile-chapter', chapter?.title || '序章');
+    set('profile-life', `${stat(survival?.life)} / 100`);
+    set('profile-hunger', `${stat(survival?.hunger)} / 100`);
+    set('profile-water', `${stat(survival?.water)} / 100`);
+    set('profile-fatigue', `${stat(survival?.fatigue)} / 100`);
+    set('profile-wallet-state', walletConnected ? `已连接 · ${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}` : '未连接钱包');
+    const walletButton = body.querySelector('#profile-wallet-action');
+    walletButton.textContent = walletConnected ? '查看钱包' : '连接钱包';
+    walletButton.addEventListener('click', () => this.openSolanaModal());
+    const account = game?.accountService;
+    const accountPanel = body.querySelector('#profile-account-panel');
+    if (account?.configured && walletConnected && !account.syncEnabled) accountPanel.style.display = '';
+    const actions = body.querySelector('#profile-account-actions');
+    const addAction = (label, action) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        button.textContent = '处理中，请在钱包中确认…';
+        try { await action(); this.openProfileModal(); }
+        catch (error) {
+          set('profile-account-state', `操作失败：${error.message || '请稍后重试'}`);
+          button.textContent = label;
+          button.disabled = false;
+        }
+      });
+      actions.appendChild(button);
+    };
+    if (!account?.configured) set('profile-account-state', '云端账号服务尚未配置；当前仍为本机存档');
+    else if (!account.linked) {
+      set('profile-account-state', walletConnected ? '钱包已连接，尚未签名绑定账号' : '请先连接钱包');
+      if (walletConnected) addAction('签名绑定账号', () => account.connect());
+    } else {
+      set('profile-account-state', `已绑定 ${account.address.slice(0, 4)}…${account.address.slice(-4)} · 云端版本 ${account.revision}${account.syncEnabled ? ' · 自动同步中' : ' · 云端与本机进度不同，请选择恢复或上传'}`);
+      addAction('上传本机存档', async () => {
+        if (account.remoteRecord && !window.confirm('云端已有存档。确认用本机进度覆盖云端？')) return;
+        await account.upload();
+      });
+      if (account.remoteRecord) addAction('恢复云端存档', async () => {
+        if (!window.confirm('确认恢复云端进度？当前本机进度会先保存到本地备份。')) return;
+        await account.restore();
+      });
+    }
+    this.modalBackdrop.style.display = 'flex';
   }
 
   // 16 格专业背包网格弹窗 (横屏自适应双栏)
@@ -3288,257 +3471,63 @@ export class UIManager {
   // Solana Seeker Web3 专属控制台与硬件级交互面板
   openSolanaModal() {
     soundEngine.playPlaceFurniture();
-    document.getElementById('modal-title').innerHTML = `🟣 Solana Web3 钱包管理中心`;
+    document.getElementById('modal-title').textContent = '钱包';
     const body = document.getElementById('modal-body');
-
-    const renderModal = () => {
-      const isConn = solanaBridge.isConnected;
-      const addr = solanaBridge.walletAddress || '';
-      const balance = solanaBridge.balance.toFixed(3);
-      const isMwa = solanaBridge.isMWA;
-      const isGuest = solanaBridge.isGuest;
-      const isSeeker = solanaBridge.isSeeker;
-      const currentNet = solanaBridge.network;
-      const checkins = solanaBridge.getCheckinRecords();
-      const availableWallets = solanaBridge.getAvailableWallets();
-
-      const typeLabel = isMwa ? '📱 Solana Mobile (Seed Vault)' : (isGuest ? '👤 免钱包游客沙盒' : '💻 浏览器插件 (Phantom/Backpack)');
-      const statusBadge = isConn ? `<span style="background:#2ed573; color:#fff; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 0 10px rgba(46,213,115,0.4);">● 已接入</span>` : `<span style="background:rgba(255,255,255,0.15); color:#cbd5e1; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600;">○ 未连接</span>`;
-
-      let checkinListHtml = '';
-      if (checkins.length > 0) {
-        checkinListHtml = checkins.slice(0, 3).map(c => `
-          <div style="background:rgba(255,255,255,0.06); border-radius:8px; padding:6px 10px; margin-top:5px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <span style="color:#14F195; font-weight:bold;">第 ${c.day} 天签到</span>
-              <span style="color:rgba(255,255,255,0.5); margin-left:6px;">${new Date(c.timestamp).toLocaleTimeString()}</span>
-            </div>
-            <div style="color:${c.isHardwareSigned ? '#9945FF' : '#fffa65'}; font-weight:bold;">
-              ${c.isHardwareSigned ? '📱 硬件签名认证' : (c.isGuest ? '👤 游客存证' : '✍️ 链上签名')}
-            </div>
-          </div>
-        `).join('');
-      } else {
-        checkinListHtml = `<div style="color:rgba(255,255,255,0.4); font-size:12px; padding:6px 0;">暂无链上签到存证，点击下方按钮完成今日求生打卡</div>`;
-      }
-
-      // 钱包选择项列表
-      const walletItemsHtml = availableWallets.map(w => {
-        const isRec = w.recommended;
-        const borderStyle = isRec ? 'border:1.5px solid #14F195; background:rgba(20,241,149,0.08);' : 'border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04);';
-        return `
-          <div class="wallet-option-item" data-wallet="${w.id}" style="${borderStyle} border-radius:12px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s ease;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:22px;">${w.icon}</span>
-              <div>
-                <div style="font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
-                  <span>${w.name}</span>
-                  ${isRec ? `<span style="background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; font-size:10px; font-weight:900; padding:1px 6px; border-radius:6px;">推荐</span>` : ''}
-                </div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:2px;">${w.description}</div>
-              </div>
-            </div>
-            <div>
-              <span style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.8); font-size:11px; padding:3px 8px; border-radius:8px;">${w.badge}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
+    const render = () => {
+      const connected = solanaBridge.isConnected && !solanaBridge.isGuest;
+      const wallets = solanaBridge.getAvailableWallets().filter(w => w.id !== 'guest' && w.available);
       body.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; font-family:-apple-system, BlinkMacSystemFont, sans-serif; color:#ffffff; max-height:75vh; overflow-y:auto; padding-right:2px;">
-          <!-- 顶部状态卡与网络选择 -->
-          <div style="background:linear-gradient(135deg, rgba(153, 69, 255, 0.15), rgba(20, 241, 149, 0.15)); border:1px solid rgba(20, 241, 149, 0.35); border-radius:14px; padding:12px 16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:18px;">🟣</span>
-                <span style="font-size:14px; font-weight:800; color:#14F195;">${isSeeker ? 'Solana Seeker 认证设备' : 'Solana Web3 生态'}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <select id="wallet-network-select" style="background:rgba(0,0,0,0.5); color:#14F195; border:1px solid rgba(20,241,149,0.4); border-radius:8px; padding:2px 6px; font-size:11px; outline:none; cursor:pointer;">
-                  <option value="devnet" ${currentNet === 'devnet' ? 'selected' : ''}>Devnet (开发网)</option>
-                  <option value="testnet" ${currentNet === 'testnet' ? 'selected' : ''}>Testnet (测试网)</option>
-                </select>
-                ${statusBadge}
-              </div>
-            </div>
-
-            <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; flex-direction:column; gap:4px;">
-              <div>连接通道：<strong style="color:#14F195;">${typeLabel}</strong></div>
-              ${isConn ? `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-                  <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    钱包地址：<code style="background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px; color:#ffeaa7; word-break:break-all;">${addr}</code>
-                  </div>
-                  <button id="btn-copy-address" style="flex-shrink:0; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer;">复制</button>
-                </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
-                  <div>当前余额：<strong style="color:#fffa65; font-size:14px;">${balance} SOL</strong></div>
-                  <button id="btn-refresh-balance" style="background:none; border:none; color:#14F195; font-size:12px; cursor:pointer; padding:0 4px;">🔄 刷新</button>
-                </div>
-              ` : `
-                <div style="color:rgba(255,255,255,0.5); font-size:11px; margin-top:2px;">选择下方任意方式连接钱包，开启链上求生打卡与特权兑换</div>
-              `}
-            </div>
-          </div>
-
-          <!-- 未连接时：多钱包选择通道 -->
-          ${!isConn ? `
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <div style="font-size:12px; font-weight:700; color:rgba(255,255,255,0.85); margin-left:2px;">选择连接方式：</div>
-              ${walletItemsHtml}
-            </div>
+        <div style="display:flex;flex-direction:column;gap:16px;padding:8px;color:var(--text-primary,#493e32)">
+          <div style="font-size:16px;font-weight:700">${connected ? '已连接钱包' : '连接你的钱包'}</div>
+          ${connected ? `
+            <div id="wallet-address" style="padding:16px;border-radius:12px;background:rgba(128,105,65,.08);overflow-wrap:anywhere;font-family:monospace;font-size:14px"></div>
+            <button id="wallet-copy" class="btn-primary" style="min-height:48px">复制地址</button>
+            <button id="wallet-disconnect" style="min-height:48px;border:1px solid #b9aa93;border-radius:12px;background:transparent;color:inherit">断开连接</button>
           ` : `
-            <!-- 已连接时：控制中心操作栏 -->
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                <button id="btn-seeker-checkin" ${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? 'disabled' : ''} style="opacity:${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? 0.45 : 1};background:linear-gradient(135deg, #14F195, #0ea569); color:#081b11; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(20,241,149,0.35);">
-                  ${window.__game.saveSystem.hasClaimedCheckin(this.survival.day) ? '今日已领取' : '📝 链上生存打卡 (+5 算力代币)'}
-                </button>
-                ${!isGuest ? `
-                  <button id="btn-devnet-airdrop" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 4px 12px rgba(153,69,255,0.35);">
-                    🪂 申请 1 SOL 测试币
-                  </button>
-                ` : `
-                  <button id="btn-switch-real-wallet" style="background:linear-gradient(135deg, #9945FF, #7429d8); color:#fff; border:none; border-radius:10px; padding:10px 8px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
-                    🔗 切换至正式钱包
-                  </button>
-                `}
-              </div>
-              <button id="btn-disconnect-wallet" style="background:rgba(235, 77, 75, 0.15); border:1px solid rgba(235, 77, 75, 0.4); color:#ff7675; border-radius:10px; padding:7px 10px; font-size:12px; cursor:pointer; margin-top:2px;">
-                断开当前钱包连接
-              </button>
-            </div>
+            <div style="font-size:13px;opacity:.75">选择钱包并在钱包中确认授权。</div>
+            ${wallets.map(w => `<button data-wallet="${w.id}" style="min-height:56px;padding:12px 16px;border:1px solid #b9aa93;border-radius:12px;background:rgba(128,105,65,.08);color:inherit;font-size:15px;font-weight:700">${w.id === 'mwa' ? '连接手机钱包' : w.name}</button>`).join('')}
+            ${wallets.length ? '' : '<div>未检测到可用钱包，请在支持钱包的设备或浏览器中打开。</div>'}
           `}
-
-          <!-- 链上生存签到存证记录 -->
-          <div style="background:rgba(0,0,0,0.25); border-radius:12px; padding:10px 14px;">
-            <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.85); display:flex; justify-content:space-between;">
-              <span>📜 链上签到与存证凭据</span>
-              <span style="font-size:11px; color:#14F195;">${isSeeker ? 'Seed Vault 硬件级保护' : 'ED25519 签名存证'}</span>
-            </div>
-            ${checkinListHtml}
-          </div>
-        </div>
-      `;
-
-      // 绑定网络切换
-      const netSelect = document.getElementById('wallet-network-select');
-      if (netSelect) {
-        netSelect.onchange = (e) => {
-          solanaBridge.setNetwork(e.target.value);
-          this.showToast(`🌐 网络已切换为: ${e.target.value}`, 'small');
+        </div>`;
+      if (connected) {
+        document.getElementById('wallet-address').textContent = solanaBridge.walletAddress;
+        document.getElementById('wallet-copy').onclick = async () => {
+          const result = await solanaBridge.copyWalletAddress();
+          this.showToast(result.message, 'small');
+        };
+        document.getElementById('wallet-disconnect').onclick = async () => {
+          await solanaBridge.disconnect();
           this.updateSolanaBtn();
-          renderModal();
+          render();
         };
       }
-
-      // 绑定复制地址
-      const btnCopy = document.getElementById('btn-copy-address');
-      if (btnCopy) {
-        btnCopy.onclick = async () => {
-          const res = await solanaBridge.copyWalletAddress();
-          this.showToast(res.message, 'small');
-        };
-      }
-
-      // 绑定刷新余额
-      const btnRefresh = document.getElementById('btn-refresh-balance');
-      if (btnRefresh) {
-        btnRefresh.onclick = async () => {
-          btnRefresh.disabled = true;
-          await solanaBridge.fetchBalance();
-          this.showToast('✅ 余额已刷新', 'small');
-          this.updateSolanaBtn();
-          renderModal();
-        };
-      }
-
-      // 绑定多钱包选择项点击
-      const optionItems = document.querySelectorAll('.wallet-option-item');
-      optionItems.forEach(item => {
-        item.onclick = async () => {
-          const walletType = item.getAttribute('data-wallet');
-          this.showToast(`正在唤起 ${walletType} 钱包连接...`, 'small');
-          const res = await solanaBridge.connectWallet(walletType);
-          if (res.success) {
-            soundEngine.playPlaceFurniture();
-            this.showToast(`🎉 已成功接入: ${res.type}！`, 'medium');
+      body.querySelectorAll('[data-wallet]').forEach(button => {
+        button.onclick = async () => {
+          body.querySelectorAll('[data-wallet]').forEach(item => { item.disabled = true; });
+          button.textContent = '请在钱包中确认…';
+          try {
+            const result = await solanaBridge.connectWallet(button.dataset.wallet);
+            if (!result.success || solanaBridge.isGuest) this.showToast(result.message || '连接未完成，请重试', 'medium');
             this.updateSolanaBtn();
-            renderModal();
-          } else {
-            this.showToast(`连接未完成: ${res.message || '未授权'}`, 'medium');
-            renderModal();
+            const account = window.__game?.accountService;
+            if (result.success && !solanaBridge.isGuest && account?.configured && !account.linked) {
+              button.textContent = '正在请求账号签名…';
+              try {
+                await account.connect();
+                this.showToast('钱包账号已绑定', 'medium');
+              } catch (error) {
+                this.showToast(`账号绑定未完成：${error.message || '请重试'}`, 'medium');
+              }
+            }
+          } catch (error) {
+            this.showToast('连接未完成，请重试', 'medium');
+          } finally {
+            render();
           }
         };
       });
-
-      // 切换至正式钱包按钮
-      const btnSwitchReal = document.getElementById('btn-switch-real-wallet');
-      if (btnSwitchReal) {
-        btnSwitchReal.onclick = async () => {
-          await solanaBridge.disconnect();
-          renderModal();
-        };
-      }
-
-      // 签到存证按钮
-      const btnCheckin = document.getElementById('btn-seeker-checkin');
-      if (btnCheckin) {
-        btnCheckin.onclick = async () => {
-          const claimDay = this.survival.day;
-          if (window.__game.saveSystem.hasClaimedCheckin(claimDay)) return;
-          btnCheckin.disabled = true;
-          btnCheckin.innerText = '✍️ 签名确认中...';
-          const res = await solanaBridge.signSurvivalCheckin(claimDay, this.survival.steps);
-          btnCheckin.disabled = false;
-          if (res.success) {
-            soundEngine.playPlaceFurniture();
-            if (!window.__game.saveSystem.claimDailyCheckin(claimDay)) { this.showToast('今日已领取或存档失败', 'medium'); renderModal(); return; }
-            const tipText = res.hardwareSigned
-              ? `🌟 恭喜！已使用 Seeker 硬件私钥完成第 ${claimDay} 天链上打卡！(+5 算力代币)`
-              : `✅ 完成今日打卡存证！(+5 算力代币)`;
-            this.showToast(tipText, 'medium');
-            renderModal();
-          } else {
-            this.showToast(`打卡未完成: ${res.message || '用户取消'}`, 'medium');
-            renderModal();
-          }
-        };
-      }
-
-      // 申请空投测试币
-      const btnAirdrop = document.getElementById('btn-devnet-airdrop');
-      if (btnAirdrop) {
-        btnAirdrop.onclick = async () => {
-          btnAirdrop.disabled = true;
-          btnAirdrop.innerText = '🪂 申请 Devnet 空投中...';
-          const res = await solanaBridge.requestAirdrop();
-          btnAirdrop.disabled = false;
-          if (res.success) {
-            soundEngine.playPlaceFurniture();
-            this.showToast(`🎉 成功领取 1.0 SOL 测试币！余额: ${res.balance.toFixed(3)} SOL`, 'important');
-            this.updateSolanaBtn();
-            renderModal();
-          } else {
-            this.showToast(`空投提示: ${res.message}`, 'medium');
-          }
-        };
-      }
-
-      // 断开连接
-      const btnDisconnect = document.getElementById('btn-disconnect-wallet');
-      if (btnDisconnect) {
-        btnDisconnect.onclick = async () => {
-          await solanaBridge.disconnect();
-          this.showToast('已断开钱包连接', 'medium');
-          this.updateSolanaBtn();
-          renderModal();
-        };
-      }
     };
-
-    renderModal();
+    render();
     this.modalBackdrop.style.display = 'flex';
   }
 
@@ -7015,7 +7004,7 @@ export class UIManager {
     // 恢复任务简条
     const questCard = document.getElementById('quest-card-container');
     if (questCard && this._questCardPrevDisplay !== undefined) {
-      questCard.style.display = this._questCardPrevDisplay;
+      questCard.style.display = Date.now() < (this._objectiveVisibleUntil || 0) ? this._questCardPrevDisplay : 'none';
       this._questCardPrevDisplay = undefined;
     }
   }

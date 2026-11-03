@@ -7,6 +7,7 @@ export const CHECKIN_REWARD = 5;
 export const CURRENT_SCHEMA_VERSION = 2;
 export const SAVE_KEY_PRIMARY = 'castaway_sol_savegame';
 export const SAVE_KEY_BACKUP = 'castaway_sol_savegame_backup';
+const POSITION_KEY = 'castaway_sol_position_checkpoint';
 
 export class SaveSystem {
   constructor(game) {
@@ -21,6 +22,10 @@ export class SaveSystem {
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
         this.saveGame('unload');
+      });
+      window.addEventListener('pagehide', () => this.saveGame('pagehide'));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.saveGame('background');
       });
     }
   }
@@ -58,9 +63,27 @@ export class SaveSystem {
     this.autoSaveInterval = setInterval(() => {
       this.saveGame('autosave');
     }, intervalMs);
+    if (this.positionInterval) clearInterval(this.positionInterval);
+    this.positionInterval = setInterval(() => this.savePositionCheckpoint(), 2000);
+  }
+
+  savePositionCheckpoint() {
+    const position = this.game?.player?.position;
+    if (!position || !this.saveSeed) return;
+    const next = [position.x, position.y, position.z];
+    if (!next.every(Number.isFinite)) return;
+    if (this.lastPositionCheckpoint && this.lastPositionCheckpoint.every((value, i) => Math.abs(value - next[i]) < 0.1)) return;
+    try {
+      localStorage.setItem(POSITION_KEY, JSON.stringify({ saveSeed: this.saveSeed, currentIslandId: this.game.currentIslandId, position: next, rotation: this.game.player.rotation, timestamp: Date.now() }));
+      this.lastPositionCheckpoint = next;
+    } catch {}
   }
 
   stopAutoSave() {
+    if (this.positionInterval) {
+      clearInterval(this.positionInterval);
+      this.positionInterval = null;
+    }
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval);
       this.autoSaveInterval = null;
@@ -122,6 +145,8 @@ export class SaveSystem {
         isDead: survival.isDead
       } : null,
       inventory: ui && ui.inventory ? { ...ui.inventory } : {},
+      starterDrops: this.game.trees?.getRemainingStarterDrops?.() ?? null,
+      treeDrops: this.game.trees?.getDropSnapshot?.() ?? null,
       bonusInventorySlots: ui && typeof ui.bonusInventorySlots === 'number' ? ui.bonusInventorySlots : 0,
       storage: this.game.storageSystem && this.game.storageSystem.serialize ? this.game.storageSystem.serialize() : null,
       campFacilities: this.game.campFacilities && this.game.campFacilities.serialize ? this.game.campFacilities.serialize() : null,
@@ -379,6 +404,7 @@ export class SaveSystem {
       const jsonStr = JSON.stringify(snapshot);
       localStorage.setItem(SAVE_KEY_PRIMARY, jsonStr);
       this.lastSavedTimestamp = snapshot.timestamp;
+      this.game.accountService?.queueUpload(snapshot);
 
       // 同时兼容同步家具到旧版键位，防止老逻辑丢失
       if (snapshot.furniture && snapshot.furniture.length > 0) {
@@ -429,6 +455,16 @@ export class SaveSystem {
           return { success: false, msg: '主存档校验失败且无可用备份' };
         }
       }
+
+      try {
+        const checkpoint = JSON.parse(localStorage.getItem(POSITION_KEY) || 'null');
+        if (checkpoint?.saveSeed === data.saveSeed && checkpoint.currentIslandId === data.currentIslandId && checkpoint.timestamp > data.timestamp && Array.isArray(checkpoint.position) && checkpoint.position.length === 3 && checkpoint.position.every(Number.isFinite)) {
+          data.player.position = checkpoint.position;
+          if (Number.isFinite(checkpoint.rotation)) data.player.rotation = checkpoint.rotation;
+          data.timestamp = checkpoint.timestamp;
+          localStorage.setItem(SAVE_KEY_PRIMARY, JSON.stringify(data));
+        }
+      } catch (error) { console.warn('位置检查点恢复失败', error); }
 
       // 将数据应用到各个子系统中
       this.applyDataToGame(data);
@@ -495,6 +531,8 @@ export class SaveSystem {
       }
       this.game.ui.renderInventory();
     }
+    if (Array.isArray(data.treeDrops)) this.game.trees?.restoreDrops?.(data.treeDrops);
+    else this.game.trees?.restoreStarterDrops?.(data.starterDrops);
 
     // 3.5 恢复营地储物箱
     if (data.storage && this.game.storageSystem) {
@@ -718,6 +756,8 @@ export class SaveSystem {
       if (!this.validateSaveData(migrated)) {
         return { success: false, error: 'Validation failed for imported save data' };
       }
+      const currentRaw = localStorage.getItem(SAVE_KEY_PRIMARY);
+      if (currentRaw) localStorage.setItem(SAVE_KEY_BACKUP, currentRaw);
       this.applyDataToGame(migrated);
       localStorage.setItem(SAVE_KEY_PRIMARY, JSON.stringify(migrated));
       return { success: true, data: migrated };

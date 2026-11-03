@@ -1,5 +1,36 @@
 # AI接手说明
 
+## 快速关闭时的位置检查点（2026-11-03）
+
+用户复测仍报告位置回营地。通过 Seeker WebView 调试接口直接读取，确认后台切换后本机存档坐标从 `[-14.58,0,25.87]` 更新至 `[-9.20,0,24.69]`，强制停止并重开时运行角色与本机坐标一致，云端随后同步至相同坐标。为覆盖从前台直接强杀、未触发 `visibilitychange` 的情况，新增每 2 秒仅在坐标变化时写入小型位置检查点；启动时若检查点比完整存档更新且岛屿/种子匹配，则合并坐标并持久化，再按原有流程加载。已构建并安装到 Seeker，设备上确认检查点写入；用户原先具体的关闭手势仍需复测。
+
+## 手机退出位置保存（2026-11-03）
+
+真机反馈探索后直接关闭应用又回营地。存档本来包含玩家坐标并在启动时恢复，但原先仅依赖 60 秒自动保存和 `beforeunload`；Android WebView 退出不保证触发后者。已增加 `visibilitychange` 隐藏与 `pagehide` 时同步写本机存档，恢复账号会话后再将较新的本机存档同步云端。网页和 Android 构建通过，ADB 覆盖安装 Success；走动后立即退出再打开的位置保持需要真机复测。
+
+## 后台账号会话与存档同步（2026-11-03）
+
+客户端保存钱包账号会话，重启后待 MWA 授权静默恢复，自动读取云端并继续同步；服务端会话在 musen 的 `account-data/sessions.json` 持久化，期限 30 天。个人主页在正常同步时隐藏账号存档面板，仅在需重新签名或两端进度冲突时显示处理入口。旧版未保存会话，升级后可能需再签名一次。已重建 musen 容器，公网 HTTPS 健康检查 200，网页与 Android 构建通过，ADB 覆盖安装 Success；尚未实际验证重启后的无签名恢复与跨设备同步。
+
+## 首次绑定自动上传与后续同步（2026-11-03）
+
+钱包签名绑定后，若云端无存档立即上传本机有效存档并开启后续自动同步。云端与本机属于同一存档且本机时间戳更新时，自动上传本机进度；两端时间戳相同则直接开启同步。云端较新或存档种子不同时暂停同步，并在个人主页提示选择恢复或上传，避免静默覆盖。`npm run build`、Android 构建与 ADB 覆盖安装通过；实际账号上传结果待真机操作确认。
+
+## 钱包连接后账号绑定交互（2026-11-03）
+
+真机反馈“签名绑定账号”点击无反馈。个人主页按钮现在立即显示“处理中，请在钱包中确认…”，错误直接显示在账号区域；用户主动连接真实钱包成功后自动发起一次账号签名绑定，仍需在钱包内确认。云端存档不会在绑定时自动覆盖，本机上传和云端恢复仍由用户选择。网页和 Android 构建通过，ADB 覆盖安装返回 Success；钱包签名弹窗与绑定完成状态待真机操作确认。
+
+## 钱包重启状态修复（2026-11-03）
+
+Seeker 重启应用后钱包端仍保留授权，但游戏只恢复地址提示并显示未连接。现在仅对上次使用 MWA 的真实钱包调用适配器静默恢复，并监听 connect/disconnect 事件同步 UI。`npm run build`、`npx cap sync android` 和 `assembleDebug` 通过，ADB 覆盖安装返回 Success；尚待用户在真机上观察重启后的钱包显示及签名流程。
+
+## 玩家账号与存档绑定（2026-11-03）
+
+- 已实现钱包消息签名登录、按钱包地址隔离的云端存档、版本冲突保护、显式上传和恢复入口；恢复前备份本机存档。游客模式不能绑定。
+- musen 机器 `/opt/castawaysol-account/server` 的独立容器已启动，宿主机仅监听 `127.0.0.1:18787`；远端健康检查返回 `{"ok":true}`。存档位于该目录的 `account-data`，不得删除。
+- 子域名 `castawaysol-api.musen-ai.com` 已在 musen-ai-tunnel 增加 ingress，DNS CNAME 指向该隧道。公网 HTTPS `/health` 返回 200 和 `{"ok":true}`；`https://localhost` 的 CORS 预检返回 204。`.env.production` 指向此 API。
+- 本地 `server/smoke.mjs` 的签名、认证、存档、冲突检查通过；`npm run build`、`npx cap sync android`、Android `assembleDebug` 通过。2026-11-03 构建时 adb 未检测到手机，未安装本轮 APK；真实手机钱包签名、上传及跨设备恢复尚未验证。
+
 更新：2026-11-02，北京时间。
 
 ## Solana Web3 钱包连接与链上支付全链路重构升级（2026-10-31）
@@ -686,3 +717,34 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
    - **实际验证**：无头 Chrome CDP 在 890×400（横屏）与 400×890（竖屏）下完成全部 13 项修复的 DOM/几何断言与截图目视核验（控制台错误 0 条、空纹理警告 0 条）；合并后复测 `verify-mainline-spine`、`verify-ship-upgrade-system`、`verify-g3-economy-gate`、`verify-a1-ledger-ui` 及 `tools/verify-golden-path.mjs`（序章至第六章全流程）100% 通过；完成 `npm run build:android` 与 Gradle `assembleDebug`，最新安装包已归档至 `E:\CastawaySOL\apks\CastawaySOL-v1.0.28-debug.apk`。
    - **未验证**：打包完成时 Seeker 手机 USB 连接断开（`adb devices` 为空），`v1.0.28` APK 尚未写入真机；Seeker 真机物理手指长时实操手感、刘海/挖孔安全区实机观感、MWA / Seed Vault 真机硬件钱包签名唤起及真实链上主网支付均未验证（按红线未开启主网支付测试）。
 
+
+## Release 专用安全配置（2026-11-03）
+新增 android/app/src/release/AndroidManifest.xml 与 assets/capacitor.config.json，使用 Android release source set 覆盖调试配置：关闭明文流量、混合内容、WebView 调试。debug 配置保留。当前本地 HEAD=8b166e8（1.0.30），方向实际为 sensorPortrait；Notion 中 unspecified 的说明已过时。
+验证：npm run build 成功（主包约 2.12 MB，仍有分包警告）；Gradle mergeReleaseAssets/processReleaseMainManifest 因本环境缺 JAVA_HOME/java 未执行成功，尚未验证最终 APK 中配置合并。未签名、未安装、未提交商店。后续需在有 JDK 的环境完成 release 合并与 APK 检查，并做 MWA 真机验证。
+
+## MWA 真机连接误报修复（2026-11-03）
+Seeker v1.0.30 日志确认钱包 MWABottomSheetActivity 启动且 WebSocket server 开始监听，但网页 3 秒后误报未安装钱包。SDK 使用 window.blur 检测启动；旧补丁靠 listener.toString 的函数名识别，压缩后不可靠。移除该全局监听劫持，改由 MainActivity.onWindowFocusChanged 在真实失焦时派发 WebView blur。build:android 与 assembleDebug 成功，adb install -r 覆盖安装成功；未清除存档。仍需用户完成钱包授权，连接/签名闭环尚未验收。保持 1.0.30 版本号用于本地修复验证。
+2026-11-03 MWA 后续：失焦修复后真机错误推进为 identity.icon must be a relative URI，已将 appIdentity.icon 改为 icon-192.png；build:android、assembleDebug 及 adb install -r 成功。仍待用户授权验证，未宣称连接成功。
+2026-11-03 用户确认真机可拉起钱包（尚非完整签名/交易验收）。按要求精简 openSolanaModal：仅可用真实钱包、地址、复制、断连；移除网络选择、空投、游客入口、测试余额、签到及认证宣传。保留 Devnet 底层配置，未启用主网。连接时禁用重复点击并处理异常。build:android/assembleDebug 成功，已覆盖安装真机；界面观感待用户检查。
+2026-11-03 修复钱包精简界面中文被命令管道替换为问号的问题；使用直接补丁恢复。构建与 Gradle 通过，并从最终 APK 解压校验连接、复制等中文标签存在，覆盖安装真机成功。
+2026-11-03 钱包重连修复：检查已安装 SDK 源码发现 async connect() 未 return/await 内部 #connect，旧调用立即落到游客兜底，授权与游戏状态脱节。MWA 分支改为在调用前订阅 connect/error/disconnect 并等待结果，清理监听，90 秒超时。构建、assembleDebug 与覆盖安装成功；断开后重连仍需真机授权验收。
+2026-11-03 菜单关闭修复：抽屉顶部新增 48x44 关闭按钮，支持 Escape；移除 setDrawer 相同状态提前返回，确保关闭操作始终清理遮罩、body 类与 aria-expanded。build:android、assembleDebug、覆盖安装成功；真机触控关闭待验收。
+2026-11-03 菜单布局整理：按营地与制作/账户与帮助/偏好设置分组，缩短入口名称，奶油底色统一按钮与设置分段，菜单宽度340px/88vw，统一48px功能触控与44px设置触控，固定顶部关闭，横屏使用同一列滚动避免旧网格覆盖。build:android/assembleDebug/覆盖安装成功；实际真机视觉与触控待验收。
+2026-11-03 按用户确认将主菜单改为全屏浅色面板：100vw/100dvh、两列功能卡片、跨列分组和设置、固定顶部关闭，宽屏限制内容宽度并保持滚动。构建、Android debug 打包和覆盖安装成功，存档保留；真机全屏布局及关闭手感待验收。
+2026-11-03 序章提示改为每条显示6秒后隐藏，相同阶段与文案重复更新不重新显示；进入新步骤重新计时，空提示清理定时器。仅隐藏UI，不改变教学或任务进度。前端构建、Android打包和覆盖安装成功，真机提示时长待验收。
+2026-11-03 根据用户截图纠正提示目标：圈出的是 quest-card-container 顶部任务条而非 onboarding-card。updateObjective 改为任务文案变化时显示6秒后隐藏整个容器，相同文案更新不续时；保留 currentQuest 与任务进度。构建/Android打包/覆盖安装成功，真机计时效果待验收。
+2026-11-03 按用户图2调整竖屏背包与疾跑：从左侧纵排改为互动上方横排，left=28/92px、bottom=108px；跳跃和互动位置保留。构建及Android打包、覆盖安装成功；真机与参考图对照待验收。
+2026-11-03 HUD精简：竖屏顶部96/98px缩至86px，头像38px、顶排44px/底排36px，空快捷槽透明度0.22，辅助图标统一contain与标签字号；保留已确认按钮位置。菜单新增当前任务回看弹窗，使用textContent展示，不影响任务推进。构建、Android打包、覆盖安装成功。手机通知面板遮挡，真机视觉/触控尚未验收。
+2026-11-03 顶部信息减负：移除生存第二行整条底板与常驻标签，改为天气/日期与三项图标细条，顶部总高72px；点击头像显示真实生存数值。任务提示按story章节/步骤去重而非动态文案，显示5秒后隐藏，同阶段刷新不续时。build:android、assembleDebug、覆盖安装成功；真机视觉与5秒消失待验收。
+2026-11-03 任务条常驻根因已真机确认：inline display=none 而 computed=block，横竖屏CSS display:block!important覆盖定时隐藏。移除两处important，并防止账本关闭恢复过期任务条。构建、打包、覆盖安装通过。Seeker WebView实际验证：显示block→5.5秒后none→同阶段再次update仍none；验证前亦为none。未改任务进度。
+2026-11-03 GitHub交付前检查：本地与origin/main基线一致，diff --check通过；使用已找到JDK完成release资源与manifest合并，Gradle成功，替代此前缺JDK的阻断记录。release真机钱包仍未验收，关闭混合内容/明文后的MWA兼容性需单独验证。
+2026-11-03 修复钱包缓存地址误报连接：loadState仅恢复地址提示，不将真实钱包标为isConnected；用户重新授权成功后才设连接。build:android、assembleDebug、覆盖安装成功，未清存档。真机重新授权与签名仍待验收。
+2026-11-03 钱包闭环推进：支付前检查MWA当前会话；确认交易时检查confirmation.value.err，避免链上失败误报成功；签到保留完整签名字节，取消未经证明的硬件签名标记。build:android、assembleDebug、覆盖安装通过。消息签名与Devnet实际交易仍待钱包授权实测，未动主网。
+2026-11-03 开局P0跟进：确认新存档初始行囊只有苹果x1；黄金路径报告中的收音机/电池/铁钉来自岸边箱子。修正序章木棍提示：出生附近TreeInteraction木棍是靠近自动拾取，原文错误要求按互动。新增starterDrops存档字段记录4根初始木棍剩余ID，加载有该字段的存档时移除已拾取木棍；旧存档无字段时保留旧行为，避免破坏归档。npm run build通过，主包仍有>500KB警告；未做手机触屏与画面验收，未运行额外测试。先前黄金路径自动脚本会瞬移并注入后续物资/状态，不能视为真实玩家通关。
+2026-11-03 用户补充所有树木掉落物都应手动拾取，避免路过自动塞满背包：TreeInteraction 移除靠近自动收集；开局木棍、摇树果实/树皮/树脂/藤蔓、砍树木料均在 2.2 米内显示互动按钮与简短用途，点按后才入包；背包满则原物留在地上。新增 treeDrops 快照保存全部未拾取树木掉落物，旧存档继续按 starterDrops 恢复开局木棍。海滩固定物、海面漂流物和战利品原本已由互动键触发；已建成的自动打捞设施仍按其设施机制工作。npm run build 通过，主包仍有 >500 KB 提示；未做真机触控或画面验收。此前黄金路径 QA 归档变更保留，未据此宣称真人通关。
+2026-11-03 建筑触屏选中首轮：主岛可点选营地告示板、订单板、无线电站、净水台、打捞滑轮、捕蟹笼、烟熏架、矿机、伙伴暖巢及玩家摆放的储物箱/净水设施/床/熔炉。Canvas 短触经 Three.js raycast 选中，金色地面环和 HUD 显示选中目标；互动按钮优先操作目标，距离超出可操作范围时提示靠近；点空地、离开 7 米、切场景或进入建造模式清除选择。未纳入此轮点击选中的大型地标（灯塔、船坞、篝火等）仍按原有靠近互动，触控命中与遮挡待 Seeker 真机验收。npm run build 与 diff --check 通过；未安装到手机。
+2026-11-03 应用户询问补做 Android 包：npm run build:android 与 Gradle assembleDebug 成功，APK 位于 android/app/build/outputs/apk/debug/app-debug.apk，生成于 20:16（北京时间）。使用 E:/CastawaySOL/tools/platform-tools/adb.exe 两次检查 devices 均为空；本轮没有连接到可调试设备，因此尚未安装，也没有清理手机存档。设备识别后可用该 APK 覆盖安装，前提是当前应用签名兼容；若签名不兼容应先保护存档，不卸载旧版。
+2026-11-03 用户重新连接 Seeker 后，adb devices 识别 SM02G4061952376（device）。对同一 APK 执行 adb install -r 返回 Success；dumpsys 确认 com.castawaysol.game 版本 1.0.30、lastUpdateTime=20:16:53。覆盖安装未卸载或清理数据；尚未在真机完成建筑点选、互动命中与树木手动拾取的实际操作验收。
+2026-11-03 头像个人主页首轮：将竖屏头像原“生存状态”简表改为个人主页，展示本地冒险档案、真实章节/区域/天数/步数、生存四维及钱包当前连接状态；钱包按钮复用现有钱包界面。明确本机存档与钱包连接不等于玩家账号注册，没有引入虚构玩家 ID 或服务端身份。npm run build、build:android、Gradle assembleDebug 与 diff --check 通过，新 APK 生成于 20:20。打包后 Seeker 从 adb devices 消失，两次重查均为空；install -r 返回 no devices/emulators found，因此本次个人主页版本尚未安装或真机验收，手机上仍是上一次安装的 1.0.30 内容。
+2026-11-03 用户再次连接 Seeker 后，adb 识别 SM02G4061952376；个人主页版本 APK 经 adb install -r 返回 Success，dumpsys 确认 com.castawaysol.game 1.0.30、lastUpdateTime=20:21:03。覆盖安装未清理存档；头像点按、个人主页布局与钱包入口仍待真机实际操作验收。
+2026-11-03 用户真机反馈点击头像被摇杆识别：VirtualJoystick 的 window 级左半屏 touchstart 兜底未排除顶部 HUD，preventDefault 取消头像 click。把 .top-dashboard 加入忽略目标，保留场景左侧盲操；npm run build:android 与 Gradle assembleDebug 成功，adb install -r 覆盖安装成功，dumpsys 显示 lastUpdateTime=20:25:19。尚待用户在真机实际点头像确认个人主页可打开；没有清理存档。

@@ -252,7 +252,7 @@ export class VirtualJoystick {
   bindEvents() {
     const shouldIgnoreTouchTarget = (targetElem) => {
       if (!targetElem) return false;
-      return !!targetElem.closest('.bottom-quick-bar, .hud-nav-item, button, .aux-btn, .modal-backdrop, .modal-content, .animal-dialog, .hud-dialog-scrim, input, select, textarea, .action-btn, .main-action-capsule, #action-btn');
+      return !!targetElem.closest('.top-dashboard, .bottom-quick-bar, .hud-nav-item, button, .aux-btn, .modal-backdrop, .modal-content, .animal-dialog, .hud-dialog-scrim, input, select, textarea, .action-btn, .main-action-capsule, #action-btn');
     };
 
     const handleTouchStartCommon = (touch, e) => {
