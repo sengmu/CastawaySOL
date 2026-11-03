@@ -4056,7 +4056,7 @@ export class UIManager {
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:linear-gradient(135deg, rgba(0,184,148,0.18), rgba(9,132,227,0.18)); border:1px solid rgba(85,239,196,0.35); border-radius:12px; padding:10px 12px; margin-bottom:10px;">
           <div style="display:flex; flex-direction:column; gap:2px;">
             <span style="font-size:13px; font-weight:900; color:#55efc4;">🏗️ 触屏营地规划与工坊建造</span>
-            <span style="font-size:11px; color:rgba(255,255,255,0.78);">自由摆放耐火熔炉、精炼炉与生活景观家具，提升营地舒适度</span>
+            <span style="font-size:11px; color:rgba(255,255,255,0.78);">自由摆放耐火熔炉与生活景观家具，提升营地舒适度</span>
           </div>
           <button id="btn-camp-enter-build" style="padding:8px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:900; font-size:12px; white-space:nowrap; background:linear-gradient(135deg, #00b894, #00cec9); color:#0b1e22; box-shadow:0 4px 12px rgba(0,184,148,0.3);">
             营地规划与建造 ➔
@@ -4093,26 +4093,6 @@ export class UIManager {
           ? story.getChapterGateChecklist(curChap)
           : [];
 
-        const refLvl = camp.refineryLevel || 0;
-        const inv = this.inventory || {};
-        const storage = game.storageSystem?.storageInventory || {};
-        const totalTokens = inv['sol_token'] || 0;
-        const totalStone = (inv['stone_chunk'] || 0) + (storage['stone_chunk'] || 0);
-        const totalIron = (inv['iron_ingot'] || 0) + (storage['iron_ingot'] || 0);
-        const invCrystals = inv['sol_crystal'] || 0;
-        const invSap = inv['tree_sap'] || 0;
-        const stCrystals = storage['sol_crystal'] || 0;
-        const stSap = storage['tree_sap'] || 0;
-        const stPure = storage['sol_crystal_pure'] || 0;
-        const queuedBatches = Math.min(Math.floor(stCrystals / 2), stSap);
-        const dailyCap = refLvl === 1 ? 3 : (refLvl >= 2 ? 6 : 0);
-
-        const nextRefCostText = refLvl === 0
-          ? `建造消耗：算力代币×20 (持${totalTokens}) · 碎石×4 (持${totalStone}) · 铁锭×2 (持${totalIron})`
-          : (refLvl === 1
-            ? `升级 L2 消耗：算力代币×50 (持${totalTokens}) · 铁锭×4 (持${totalIron})`
-            : '已升至满级 L2（每晚最高提纯 6 批高纯度精炼硅晶）');
-
         const gateCardHtml = (!story?.isCompleted && gateChecklist.length > 0) ? `
           <div style="background:rgba(108,92,231,0.14); border:1px solid rgba(162,155,254,0.32); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:6px;">
             <div style="font-size:13px; font-weight:900; color:#dcdde1; display:flex; justify-content:space-between; align-items:center;">
@@ -4127,49 +4107,6 @@ export class UIManager {
             `).join('')}
           </div>
         ` : '';
-
-        const refineryCardHtml = `
-          <div style="background:rgba(253,203,110,0.1); border:1px solid rgba(253,203,110,0.28); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="font-size:13px; font-weight:900; color:#ffeaa7; display:flex; align-items:center; gap:6px;">
-                <span>🔥</span> 古法纯晶精炼炉 ${refLvl > 0 ? `(L${refLvl} · 日产能 ${dailyCap} 批)` : '(未建造)'}
-              </div>
-              <span style="font-size:11px; color:#55efc4; font-weight:800;">箱内纯晶: ${stPure} 枚</span>
-            </div>
-            <div style="font-size:11.5px; color:rgba(255,255,255,0.82); line-height:1.45;">
-              ${curChap < 3 && refLvl === 0
-                ? '🔒 进入第三章后解锁纯晶精炼技术（每晚自动将储物箱内【硅晶原石×2 + 粘性松脂×1】提纯为高纯硅晶×1）。'
-                : `${nextRefCostText}<br/>📦 储物箱待炼库存：原石 ${stCrystals} · 松脂 ${stSap}（已备妥 <b>${queuedBatches}/${dailyCap || 3}</b> 批，就寝自动提纯）`
-              }
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:8px;">
-              ${refLvl < 2 ? `
-                <button id="btn-camp-build-refinery" ${curChap < 3 ? 'disabled' : ''} style="
-                  flex:1; min-width:140px; padding:8px 12px; border-radius:9px; border:none; font-weight:900; font-size:12px;
-                  cursor:${curChap < 3 ? 'not-allowed' : 'pointer'};
-                  background:${curChap < 3 ? 'rgba(255,255,255,0.12)' : 'linear-gradient(135deg, #fdcb6e, #e17055)'};
-                  color:${curChap < 3 ? 'rgba(255,255,255,0.45)' : '#1e272e'};
-                ">
-                  ${refLvl === 0 ? '🔨 建造纯晶精炼炉 L1' : '⬆️ 升级精炼炉至 L2'}
-                </button>
-              ` : ''}
-              ${refLvl > 0 ? `
-                <button id="btn-camp-deposit-refinery" style="
-                  flex:1; min-width:150px; padding:8px 12px; border-radius:9px; border:1px solid rgba(85,239,196,0.4);
-                  background:rgba(0,184,148,0.22); color:#55efc4; font-weight:900; font-size:12px; cursor:pointer;
-                ">
-                  📥 划转待炼原料入箱 (包内原石${invCrystals}/松脂${invSap})
-                </button>
-                <button id="btn-camp-open-refinery-modal" style="
-                  padding:8px 12px; border-radius:9px; border:1px solid rgba(253,203,110,0.45);
-                  background:rgba(253,203,110,0.16); color:#ffeaa7; font-weight:900; font-size:12px; cursor:pointer;
-                ">
-                  🔥 独立精炼面板
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
 
         const comfort = summary.comfort || (game.buildSystem ? game.buildSystem.getComfortOverview() : {
           score: 0, maxScore: 100, level: 1, title: 'Lv.1 简陋营帐', uniqueTypes: 0, nextThreshold: 20
@@ -4200,7 +4137,6 @@ export class UIManager {
           <div style="display:flex; flex-direction:column; gap:12px;">
             ${gateCardHtml}
             ${comfortCardHtml}
-            ${refineryCardHtml}
             <!-- 核心指标四宫格 -->
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
               <!-- 1. 人口与居所 -->
@@ -4449,27 +4385,6 @@ export class UIManager {
         });
       });
 
-      // 绑定纯晶精炼炉建造/升级与一键原料划转
-      const buildRefBtn = body.querySelector('#btn-camp-build-refinery');
-      if (buildRefBtn) {
-        buildRefBtn.addEventListener('click', () => {
-          const res = camp.buildRefinery();
-          if (res && res.ok) render();
-        });
-      }
-      const depositRefBtn = body.querySelector('#btn-camp-deposit-refinery');
-      if (depositRefBtn) {
-        depositRefBtn.addEventListener('click', () => {
-          const res = camp.depositRefineryMaterials(6);
-          if (res && res.ok) render();
-        });
-      }
-      const openRefModalBtn = body.querySelector('#btn-camp-open-refinery-modal');
-      if (openRefModalBtn) {
-        openRefModalBtn.addEventListener('click', () => {
-          this.openRefineryModal();
-        });
-      }
       const enterBuildBtn = body.querySelector('#btn-camp-enter-build');
       if (enterBuildBtn) {
         enterBuildBtn.addEventListener('click', () => {
@@ -6633,7 +6548,7 @@ export class UIManager {
       sardine: '随海潮游入潮汐笼的银鳞小沙丁鱼，鲜活肥嫩，可作为生食、鱼饵或熏制军粮。',
       smoked_fish: '经营地烟熏架慢火风干的极品熏鱼干！远洋特权军粮，永久防腐不烂，出海 1 份抵 2 份！',
       sol_crystal: '后山高能矿脉开采的高频硅晶原石！蕴藏大量链上哈希数据，投入营地矿机可解密出荒岛算力代币！',
-      sol_crystal_pure: '经古法纯晶精炼炉提纯的高纯度硅晶！装填矿机具备 2.5 倍算力能量，亦可用于北崖灯塔与神殿核心工程（仅限岛内采集提纯，不可购买）。',
+      sol_crystal_pure: '经岛内提纯获得的高纯度硅晶！装填矿机具备 2.5 倍算力能量，亦可用于北崖灯塔与神殿核心工程（仅限岛内采集提纯，不可购买）。',
       sol_crystal_deep: '远海环礁与浮木暗礁深处孕育的深层海脉晶核！是高阶量子扫描仪与终局海皇信标的珍稀共鸣核心。',
       copper_ore: '泛着孔雀绿光泽的天然富铜原矿，可在营地耐火熔炉中冶炼成导电与防腐蚀俱佳的精铜锭。',
       copper_ingot: '高温熔铸锻打而成的精炼紫铜锭，用于精密仪器、高阶工具与远洋海皇信标建造。',
@@ -7294,7 +7209,7 @@ export class UIManager {
 
     const bs = this.buildSystem || window.__game?.buildSystem;
     if (bs && !bs.selectedItem && !bs.editingEntry && !bs.relocatingEntry) {
-      const firstItem = (GAME_ASSETS.furniture || []).find((it) => (it.drawerCategory || 'decor') === this._activeBuildCat);
+      const firstItem = (GAME_ASSETS.furniture || []).find((it) => !it.isRefinery && (it.drawerCategory || 'decor') === this._activeBuildCat);
       if (firstItem) bs.selectFurniture(firstItem);
     }
     this.refreshBuildDrawerCosts();
@@ -7330,23 +7245,19 @@ export class UIManager {
     const cardsWrap = this._buildOverlayEl.querySelector('#camp-build-cards');
     if (!cardsWrap) return;
 
-    const items = (GAME_ASSETS.furniture || []).filter((it) => (it.drawerCategory || 'decor') === this._activeBuildCat);
+    const items = (GAME_ASSETS.furniture || []).filter((it) => !it.isRefinery && (it.drawerCategory || 'decor') === this._activeBuildCat);
     const placedIds = new Set(comfort.uniqueIds || []);
-    const refLvl = window.__game?.campFacilities?.refineryLevel || 0;
 
     cardsWrap.innerHTML = items.map((item) => {
       const isSelected = bs.selectedItem?.id === item.id;
       const affordable = bs.canAfford(item);
       const alreadyCounted = placedIds.has(item.id);
-      const isStoredRefinery = item.isRefinery && refLvl > 0;
-      const costEntries = isStoredRefinery
-        ? '<span style="color:#55efc4;">已解锁 L' + refLvl + ' · 免费摆放</span>'
-        : Object.entries(item.cost || {}).map(([k, need]) => {
-            const have = bs.getCombinedCount(k);
-            const ok = have >= need;
-            const shortName = this.getItemName(k).replace(/\s*[^一-龥A-Za-z0-9]+$/g, '');
-            return `<span style="color:${ok ? '#7bed9f' : '#ff7675'};">${shortName} ${have}/${need}</span>`;
-          }).join(' · ');
+      const costEntries = Object.entries(item.cost || {}).map(([k, need]) => {
+        const have = bs.getCombinedCount(k);
+        const ok = have >= need;
+        const shortName = this.getItemName(k).replace(/\s*[^一-龥A-Za-z0-9]+$/g, '');
+        return `<span style="color:${ok ? '#7bed9f' : '#ff7675'};">${shortName} ${have}/${need}</span>`;
+      }).join(' · ');
 
       return `
         <button type="button" class="camp-build-item-card" data-fid="${item.id}" style="
@@ -7373,7 +7284,7 @@ export class UIManager {
       card.addEventListener('click', () => {
         haptics.light();
         const fid = card.getAttribute('data-fid');
-        const found = (GAME_ASSETS.furniture || []).find((it) => it.id === fid);
+        const found = (GAME_ASSETS.furniture || []).find((it) => !it.isRefinery && it.id === fid);
         if (found) {
           bs.selectFurniture(found);
           this.refreshBuildDrawerCosts();
@@ -7517,115 +7428,6 @@ export class UIManager {
           const res = bs.smeltInFurnace(rid, batch);
           if (res && res.ok) render();
         });
-      });
-    };
-
-    render();
-    this.modalBackdrop.style.display = 'flex';
-    soundEngine.playPlaceFurniture();
-  }
-
-  // C3：古法纯晶精炼炉单屏交互面板
-  openRefineryModal() {
-    if (this.player && this.player.resetInput) this.player.resetInput();
-    const game = window.__game;
-    const camp = game?.campFacilities;
-    if (!camp) return;
-
-    document.getElementById('modal-title').innerHTML = '💠 古法纯晶精炼炉 · 石英导流工坊';
-    const body = document.getElementById('modal-body');
-
-    const render = () => {
-      const refLvl = camp.refineryLevel || 0;
-      const curChap = game.story ? game.story.currentChapterId : 0;
-      const inv = this.inventory || {};
-      const st = game.storageSystem?.storageInventory || {};
-      const invCrystals = inv['sol_crystal'] || 0;
-      const invSap = inv['tree_sap'] || 0;
-      const stCrystals = st['sol_crystal'] || 0;
-      const stSap = st['tree_sap'] || 0;
-      const stPure = st['sol_crystal_pure'] || 0;
-      const bagPure = inv['sol_crystal_pure'] || 0;
-      const totalTokens = inv['sol_token'] || 0;
-      const totalIron = (inv['iron_ingot'] || 0) + (st['iron_ingot'] || 0);
-      const totalStone = (inv['stone_chunk'] || 0) + (st['stone_chunk'] || 0);
-      const dailyCap = refLvl === 1 ? 3 : (refLvl >= 2 ? 6 : 0);
-      const queuedBatches = Math.min(Math.floor(stCrystals / 2), stSap);
-
-      body.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px; max-height:66vh; overflow-y:auto; padding:4px;">
-          <div style="background:linear-gradient(135deg, rgba(0,206,201,0.16), rgba(108,92,231,0.16)); border:1px solid rgba(85,239,196,0.38); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:14px; font-weight:900; color:#55efc4;">
-                ${refLvl === 0 ? '🔒 精炼炉尚未点火建造' : (refLvl === 1 ? '🔥 L1 石砌坩埚精炼炉' : '💠 L2 双腔石英导流精炼塔')}
-              </span>
-              <span style="font-size:12px; font-weight:900; color:#ffeaa7;">日产能上限: ${dailyCap} 批/晚</span>
-            </div>
-            <div style="font-size:11.5px; color:rgba(255,255,255,0.82); line-height:1.45;">
-              提纯法则：每晚在营地安眠过夜时，自动消耗储物箱内【硅晶原石×2 + 天然树脂×1】提纯产出【高纯精炼硅晶×1】（纯晶仅限岛内实业提纯产出）。
-            </div>
-          </div>
-
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
-            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px;">
-              <div style="font-size:11px; color:rgba(255,255,255,0.6);">今晚待炼队列</div>
-              <div style="font-size:18px; font-weight:900; color:${queuedBatches > 0 ? '#55efc4' : '#fab1a0'}; margin-top:2px;">
-                ${queuedBatches} / ${dailyCap || 3} 批
-              </div>
-              <div style="font-size:11px; color:rgba(255,255,255,0.72);">箱内原石 ${stCrystals} · 树脂 ${stSap}</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px;">
-              <div style="font-size:11px; color:rgba(255,255,255,0.6);">高纯硅晶总储备</div>
-              <div style="font-size:18px; font-weight:900; color:#74b9ff; margin-top:2px;">
-                ${stPure + bagPure} 枚
-              </div>
-              <div style="font-size:11px; color:rgba(255,255,255,0.72);">储物箱 ${stPure} · 随身包 ${bagPure}</div>
-            </div>
-          </div>
-
-          ${refLvl > 0 ? `
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" id="btn-ref-dep-1" style="flex:1; min-width:130px; padding:9px 12px; border-radius:10px; border:1px solid rgba(85,239,196,0.45); background:rgba(0,184,148,0.2); color:#55efc4; font-weight:900; font-size:12px; cursor:pointer;">
-                📥 划转 1 批入箱
-              </button>
-              <button type="button" id="btn-ref-dep-6" style="flex:1; min-width:150px; padding:9px 12px; border-radius:10px; border:none; background:linear-gradient(135deg, #00b894, #00cec9); color:#0b1e22; font-weight:900; font-size:12px; cursor:pointer;">
-                ⚡ 一键满额划转 (包内原石${invCrystals}/树脂${invSap})
-              </button>
-            </div>
-          ` : ''}
-
-          ${refLvl < 2 ? `
-            <div style="background:rgba(253,203,110,0.09); border:1px solid rgba(253,203,110,0.3); border-radius:12px; padding:11px; display:flex; flex-direction:column; gap:8px;">
-              <div style="font-size:12px; color:#ffeaa7; font-weight:800;">
-                ${refLvl === 0
-                  ? `🔨 建造 L1 石砌坩埚炉：算力代币×20 (持${totalTokens}) · 碎石×4 (持${totalStone}) · 铁锭×2 (持${totalIron})`
-                  : `⬆️ 升级 L2 双腔石英导流塔（日产能翻倍至 6 批/晚）：算力代币×50 (持${totalTokens}) · 铁锭×4 (持${totalIron})`}
-              </div>
-              <button type="button" id="btn-ref-upgrade" ${curChap < 3 ? 'disabled' : ''} style="
-                padding:9px 14px; border-radius:10px; border:none; font-size:12px; font-weight:900;
-                cursor:${curChap < 3 ? 'not-allowed' : 'pointer'};
-                background:${curChap < 3 ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #fdcb6e, #e17055)'};
-                color:${curChap < 3 ? 'rgba(255,255,255,0.4)' : '#1e272e'};
-              ">${curChap < 3 ? '🔒 第三章解锁纯晶精炼技术' : (refLvl === 0 ? '🔨 立即建造纯晶精炼炉 L1' : '⬆️ 升级为双腔石英导流塔 L2')}</button>
-            </div>
-          ` : ''}
-        </div>
-      `;
-
-      body.querySelector('#btn-ref-dep-1')?.addEventListener('click', () => {
-        haptics.light();
-        const res = camp.depositRefineryMaterials(1);
-        if (res && res.ok) render();
-      });
-      body.querySelector('#btn-ref-dep-6')?.addEventListener('click', () => {
-        haptics.medium();
-        const res = camp.depositRefineryMaterials(6);
-        if (res && res.ok) render();
-      });
-      body.querySelector('#btn-ref-upgrade')?.addEventListener('click', () => {
-        haptics.medium();
-        const res = camp.buildRefinery();
-        if (res && res.ok) render();
       });
     };
 

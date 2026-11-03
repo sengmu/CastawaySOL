@@ -878,10 +878,6 @@ export class BuildSystem {
         uniqueMap.set(hydrated.id, hydrated.comfortScore || 0);
       }
     }
-    if ((this.game?.campFacilities?.refineryLevel || 0) > 0 && !uniqueMap.has('crystal_refinery')) {
-      const refMeta = hydrateFurnitureMeta({ id: 'crystal_refinery' });
-      uniqueMap.set('crystal_refinery', refMeta?.comfortScore || 12);
-    }
 
     let rawScore = 0;
     for (const pts of uniqueMap.values()) rawScore += pts;
@@ -924,13 +920,13 @@ export class BuildSystem {
     };
   }
 
-  // 检测玩家走近已放置的功能设施（储物箱、净水台、床位、耐火熔炉、纯晶精炼炉）
+  // 检测玩家走近已放置的功能设施（储物箱、净水台、床位、耐火熔炉）
   getNearestInteractable(playerPos, maxDist = 2.6) {
     if (!playerPos) return null;
     let nearest = null;
     let minDist = maxDist;
     for (const f of this.placedFurniture) {
-      if (!f.isStorage && !f.isWaterPurifier && !f.isBed && !f.isFurnace && !f.isRefinery) continue;
+      if (!f.isStorage && !f.isWaterPurifier && !f.isBed && !f.isFurnace) continue;
       const d = Math.hypot(playerPos.x - f.pos[0], playerPos.z - f.pos[2]);
       if (d < minDist) {
         minDist = d;
@@ -999,9 +995,7 @@ export class BuildSystem {
       entry.mesh = model;
     }
 
-    if ((this.game?.campFacilities?.refineryLevel || 0) > 0) {
-      await this.syncRefineryEntity(this.game.campFacilities.refineryLevel);
-    }
+    // 设施等级不代表已摆放家具；只恢复存档中的实体，建造仍由显式操作同步。
     this.updateWorkshopVisuals(0);
     return this.placedFurniture;
   }

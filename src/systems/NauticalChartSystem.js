@@ -251,7 +251,9 @@ export class NauticalChartSystem {
       if (data.currentIslandId) {
         this.currentIslandId = data.currentIslandId;
       }
-      this.syncEndgameRoutes();
+      // 读档必须是纯恢复：不在 deserialize 里跑 syncEndgameRoutes，
+      // 否则灯塔已点亮的存档会在读档时把晶雾回声岛 discovered 翻为 true，
+      // 破坏存档往返一致性。航路探明由点亮/升级/打开海图的游玩期触发负责。
     }
   }
 }

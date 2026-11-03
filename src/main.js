@@ -1092,7 +1092,7 @@ class Game {
       return;
     }
 
-    // 4.5 检查是否在摆放的营地功能设施旁 (储物木箱、净水滴滤台、营地单人床、耐火熔炉、纯晶精炼炉)
+    // 4.5 检查是否在摆放的营地功能设施旁 (储物木箱、净水滴滤台、营地单人床、耐火熔炉)
     if (this.buildSystem) {
       const facility = this.buildSystem.getNearestInteractable(playerPos, 2.6);
       if (facility) {
@@ -1112,11 +1112,6 @@ class Game {
         } else if (facility.isFurnace) {
           if (this.ui && typeof this.ui.openFurnaceModal === 'function') {
             this.ui.openFurnaceModal();
-            return;
-          }
-        } else if (facility.isRefinery) {
-          if (this.ui && typeof this.ui.openRefineryModal === 'function') {
-            this.ui.openRefineryModal();
             return;
           }
         }
@@ -1934,10 +1929,6 @@ class Game {
       } else if (nearestFacility.isFurnace) {
         this.ui.setContextAction('campfire');
         this.ui.showInteraction('点按互动按钮 打开【耐火冶炼面板】熔炼铁锭 / 青铜船板 / 应急电池');
-      } else if (nearestFacility.isRefinery) {
-        this.ui.setContextAction('default');
-        const refLvl = this.campFacilities ? this.campFacilities.refineryLevel : 1;
-        this.ui.showInteraction(`点按互动按钮 打开【纯晶精炼面板】(L${refLvl} · 划转待炼原料与炉腔升级)`);
       }
     } else if (nearestBeachRes) {
       if (nearestBeachRes.isMineable) {
