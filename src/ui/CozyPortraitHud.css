@@ -783,3 +783,9 @@
   body #joystick-base { background:#ecedc345!important; border:1px solid #fff0c6c9!important; box-shadow:none!important; opacity:.8!important; }
   body #joystick-thumb { background:#e9e7b885!important; border:1px solid #fff3c9a0!important; box-shadow:0 2px 5px #263d2826!important; }
 }
+@media (orientation: portrait) {
+  body .mobile-action-zone #btn-quick-run { left:28px!important; bottom:calc(max(16px,var(--sab,0px)) + 104px)!important; width:44px!important; height:44px!important; min-width:44px!important; min-height:44px!important; background:transparent!important; border:0!important; box-shadow:none!important; }
+  body #btn-quick-run::before { content:''; position:absolute; inset:8px; border-radius:50%; background:#a4b780cc; border:1px solid #fff1d0c9; pointer-events:none; }
+  body #btn-quick-run::after { width:18px!important; height:18px!important; top:13px!important; left:13px!important; }
+  body #btn-quick-run.is-running::before { background:#ffe18be6; }
+}
