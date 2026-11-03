@@ -5093,7 +5093,7 @@ export class UIManager {
     // Each winning square gets its own conditional awakening check.
     const w = ODDS_TABLE.CLUSTER_WEIGHTS;
     const cl = miningRig.resonance.cluster;
-    const estProb = (100 * (miningRig.resonance.deploy || []).reduce((sum, shares, sq) => {
+    const estProb = (100 * (miningRig.resonance.committedDeploy || []).reduce((sum, shares, sq) => {
       const weight = cl?.mainIndex === sq ? w.main : cl?.subIndices.includes(sq) ? w.sub : w.cold;
       return sum + weight / clusterWeightTotal() * motherlodeProbability(shares, miningRig.game?.weatherSystem?.currentWeather || 'clear');
     }, 0)).toFixed(2);
@@ -5167,7 +5167,7 @@ export class UIManager {
     const hints = scannerHints(res.cluster, miningRig.getScannerLevel(), res.roundSeed);
 
     const phaseLabels = {
-      OPEN: '📡 正在部署 (可调整)',
+      OPEN: res.committed ? '📡 部署已确认 (已锁定)' : '📡 正在部署 (可调整)',
       LOCK: `${iconHTML('hud/lock', 14, { eager: true })} 测算锁定中 (停止部署)`,
       REVEAL: '🌀 地脉揭晓中...',
       SETTLE: `${iconHTML('hud/check', 14, { eager: true })} 结算完成`
@@ -5179,6 +5179,8 @@ export class UIManager {
       SETTLE: '#237A9E'
     };
 
+    const canAdjust = res.phase === 'OPEN' && !res.committed;
+    const deployment = res.committed ? res.committedDeploy : res.deploy;
     const isReveal = res.phase === 'REVEAL';
     const winningSq = res.lastResult ? res.lastResult.winningSquare : -1;
 
@@ -5186,9 +5188,9 @@ export class UIManager {
     let gridHtml = '';
     for (let i = 0; i < 25; i++) {
       const isSelected = (i === selectedSq);
-      const myShares = res.deploy[i] || 0;
+      const myShares = deployment[i] || 0;
       const npcShares = Math.round(visibleBoard[i] || 0);
-      const ev = estimateSquareEV(visibleBoard, i, myShares > 0 ? myShares : 1, u);
+      const ev = estimateSquareEV(visibleBoard, i, res.committedDeploy[i] || 0, u);
       if (i === selectedSq) selectedEv = ev;
 
       let isHeat = false;
@@ -5226,7 +5228,7 @@ export class UIManager {
       `;
     }
 
-    const totalDeployed = res.deploy.reduce((a, b) => a + b, 0);
+    const totalDeployed = deployment.reduce((a, b) => a + b, 0);
     const nextScannerLv = miningRig.scannerLevel + 1;
     const hasNextScanner = (inv[`geo_scanner_mk${nextScannerLv}`] || 0) > 0;
 
@@ -5259,7 +5261,7 @@ export class UIManager {
         <div style="background:#FBEBC8; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:12px; font-weight:800; color:#6B4A32;">
-              已选格 <span style="color:#1E9E8A;">#${selectedSq + 1}</span> · EV ${selectedEv} · 押注 <strong style="color:#B97E10;">${res.deploy[selectedSq] || 0}</strong> 份
+              已选格 <span style="color:#1E9E8A;">#${selectedSq + 1}</span> · EV ${selectedEv} · 押注 <strong style="color:#B97E10;">${deployment[selectedSq] || 0}</strong> 份
             </div>
             <div style="font-size:11px; color:#7D5E47;">
               上限 ${k} 格 / ${C} 份 · 每轮至少部署 2 份
@@ -5267,11 +5269,11 @@ export class UIManager {
           </div>
 
           <div style="display:flex; gap:6px; align-items:center;">
-            <button id="btn-res-sub" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
-            <button id="btn-res-add" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
-            <button id="btn-res-split" style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
-            <button id="btn-res-allin" style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">💥 All-In</button>
-            <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:12px; height:44px; font-size:12.5px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
+            <button id="btn-res-sub" ${canAdjust ? '' : 'disabled'} style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
+            <button id="btn-res-add" ${canAdjust ? '' : 'disabled'} style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
+            <button id="btn-res-split" ${canAdjust ? '' : 'disabled'} style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
+            <button id="btn-res-allin" ${canAdjust ? '' : 'disabled'} style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">💥 All-In</button>
+            <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:12px; height:44px; font-size:12.5px; font-weight:900; cursor:pointer;" ${!canAdjust || totalDeployed < 2 ? 'disabled' : ''}>
               ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份)`}
             </button>
           </div>
@@ -5305,7 +5307,9 @@ export class UIManager {
     const subBtn = body.querySelector('#btn-res-sub');
     if (subBtn) {
       subBtn.addEventListener('click', () => {
-        miningRig.placeShares(this._selectedSquare, -1);
+        if (miningRig.resonance.phase !== 'OPEN' || miningRig.resonance.committed) return;
+        const res = miningRig.placeShares(this._selectedSquare, -1);
+        if (!res.ok) this.showToast(res.msg, 'medium');
         render();
       });
     }
@@ -5313,6 +5317,7 @@ export class UIManager {
     const addBtn = body.querySelector('#btn-res-add');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
+        if (miningRig.resonance.phase !== 'OPEN' || miningRig.resonance.committed) return;
         const res = miningRig.placeShares(this._selectedSquare, 1);
         if (!res.ok) {
           this.showToast(res.msg, 'medium');

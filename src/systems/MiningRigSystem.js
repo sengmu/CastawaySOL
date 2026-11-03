@@ -450,6 +450,9 @@ export class MiningRigSystem {
     if (this.resonance.phase !== 'OPEN') {
       return { ok: false, msg: '当前轮次已锁定或正在揭晓中，无法调整部署！' };
     }
+    if (this.resonance.committed) {
+      return { ok: false, msg: '本轮部署已确认锁定，不可撤回或追加份额！' };
+    }
     const levelInfo = ODDS_TABLE.RIG_LEVELS[this.rigLevel] || ODDS_TABLE.RIG_LEVELS[1];
     const k = levelInfo.k;
     const C = levelInfo.C;
@@ -468,15 +471,12 @@ export class MiningRigSystem {
       }
       // 检查可用料仓 (免费份额优先，原石其次)
       const available = this.resonance.freeShares + this.loadedCrystals;
-      const pendingTotal = curTotal + n - (this.resonance.committedShares || 0);
+      const pendingTotal = curTotal + n;
       if (pendingTotal > available) {
         return { ok: false, msg: `料仓原石不足 (可用: ${available} 份)！请先补充原石` };
       }
       this.resonance.deploy[sq] = (this.resonance.deploy[sq] || 0) + n;
     } else if (n < 0) {
-      if (this.resonance.committed) {
-        return { ok: false, msg: '本轮部署已确认提交，不可撤回，仅可继续追加！' };
-      }
       const cur = this.resonance.deploy[sq] || 0;
       this.resonance.deploy[sq] = Math.max(0, cur + n);
     }
@@ -530,15 +530,14 @@ export class MiningRigSystem {
   // 确认提交本轮部署
   commitDeployment() {
     if (this.resonance.phase !== 'OPEN') return { ok: false, msg: '当前不可部署' };
-    const alreadyCommitted = this.resonance.committedShares || 0;
+    if (this.resonance.committed) return { ok: false, msg: '本轮部署已确认锁定，不可重复提交！' };
     const totalShares = this.resonance.deploy.reduce((a, b) => a + b, 0);
     if (totalShares < 2) return { ok: false, msg: '每轮至少部署 2 份！' };
-    if (totalShares <= alreadyCommitted) return { ok: false, msg: '本轮部署已全部提交！' };
 
     // 扣除料仓与免费份额
-    let remainToDeduct = totalShares - alreadyCommitted;
+    let remainToDeduct = totalShares;
     if (remainToDeduct > this.resonance.freeShares + this.loadedCrystals) {
-      return { ok: false, msg: '料仓原石不足，无法确认新增份额！' };
+      return { ok: false, msg: '料仓原石不足，无法确认部署！' };
     }
     if (this.resonance.freeShares > 0) {
       const takeFree = Math.min(this.resonance.freeShares, remainToDeduct);
@@ -852,7 +851,7 @@ export class MiningRigSystem {
       if (this.resonance.history.length > 50) this.resonance.history.pop();
 
       // 记录共振勘探赛季积分 (RS)
-      const roundRS = resonanceRoundRS(res, this.resonance.deploy, this.resonance.board);
+      const roundRS = resonanceRoundRS(res, this.resonance.committedDeploy, this.resonance.board);
       this.season.rs = (this.season.rs || 0) + roundRS;
       if (this.game?.solanaBridge?.submitResonanceProof) {
         this.game.solanaBridge.submitResonanceProof(this.season.rs, this.resonance.roundId);

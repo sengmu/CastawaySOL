@@ -200,7 +200,7 @@ assert.equal(snakeSeq1.length, 25, '必须完整覆盖 25 格');
 console.log('  ✅ 扫描路径与玩家押注完全解耦，动画客观透明！');
 
 
-// Deployment accounting must charge only confirmed shares, once per increment.
+// Deployment accounting must charge once and lock the round after confirmation.
 const rigAccounting = new MiningRigSystem(mockGame);
 rigAccounting.setMode('resonance');
 rigAccounting.loadedCrystals = 10;
@@ -211,9 +211,9 @@ assert.equal(rigAccounting.commitDeployment().ok, true);
 assert.equal(rigAccounting.loadedCrystals, 7, '首次提交按份额扣除晶石');
 assert.equal(rigAccounting.commitDeployment().ok, false, '重复提交必须幂等拒绝');
 assert.equal(rigAccounting.loadedCrystals, 7, '重复提交不得二次扣费');
-assert.equal(rigAccounting.placeShares(12, 2).ok, true, '提交后允许追加部署');
-assert.equal(rigAccounting.commitDeployment().ok, true, '追加部署可再次确认');
-assert.equal(rigAccounting.loadedCrystals, 5, '追加确认只扣新增的 2 份');
+assert.equal(rigAccounting.placeShares(12, 2).ok, false, '提交后禁止追加部署');
+assert.equal(rigAccounting.commitDeployment().ok, false, '已锁定部署不可再次确认');
+assert.equal(rigAccounting.loadedCrystals, 7, '拒绝追加和重复确认后不得再次扣费');
 
 const rigUncommitted = new MiningRigSystem(mockGame);
 rigUncommitted.setMode('resonance');
