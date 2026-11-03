@@ -2958,9 +2958,9 @@ export class UIManager {
         </div>
         <div class="profile-section-title">钱包</div>
         <div class="profile-wallet"><span id="profile-wallet-state"></span><button type="button" id="profile-wallet-action"></button></div>
-        <div class="profile-section-title">账号与存档</div>
+        <div id="profile-account-panel" style="display:none"><div class="profile-section-title">账号与存档</div>
         <div class="profile-account"><span id="profile-account-state"></span><div id="profile-account-actions"></div></div>
-        <div class="profile-note">绑定账号需要钱包签名，不会发起链上交易。选择云端恢复前会保留当前本机存档备份。</div>
+        <div class="profile-note">绑定账号需要钱包签名，不会发起链上交易。选择云端恢复前会保留当前本机存档备份。</div></div>
       </div>`;
     const set = (id, value) => { body.querySelector(`#${id}`).textContent = String(value); };
     set('profile-day', `第 ${stat(survival?.day)} 天`);
@@ -2976,6 +2976,8 @@ export class UIManager {
     walletButton.textContent = walletConnected ? '查看钱包' : '连接钱包';
     walletButton.addEventListener('click', () => this.openSolanaModal());
     const account = game?.accountService;
+    const accountPanel = body.querySelector('#profile-account-panel');
+    if (account?.configured && walletConnected && !account.syncEnabled) accountPanel.style.display = '';
     const actions = body.querySelector('#profile-account-actions');
     const addAction = (label, action) => {
       const button = document.createElement('button');

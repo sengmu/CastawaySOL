@@ -12,9 +12,15 @@ export class AccountService {
     this.uploading = false;
     this.pendingSnapshot = null;
     this.syncEnabled = false;
+    this.restoringSession = false;
     window.addEventListener('solana-wallet-changed', () => {
-      if (!solanaBridge.isConnected || solanaBridge.walletAddress !== this.address) this.disconnect();
+      if (!solanaBridge.isConnected) { this.disconnect(); return; }
+      if (solanaBridge.walletAddress !== this.address) {
+        this.disconnect(false);
+        void this.restoreSession();
+      }
     });
+    void this.restoreSession();
   }
 
   get configured() { return Boolean(this.baseUrl); }
@@ -37,10 +43,33 @@ export class AccountService {
     const { message } = await this.request('/auth/challenge', { method: 'POST', body: JSON.stringify({ address }) });
     const signature = await solanaBridge.signAccountChallenge(message);
     if (solanaBridge.walletAddress !== address || !solanaBridge.isConnected) throw new Error('签名时钱包已切换');
-    const { token } = await this.request('/auth/verify', { method: 'POST', body: JSON.stringify({ address, message, signature }) });
+    const { token, expiresAt } = await this.request('/auth/verify', { method: 'POST', body: JSON.stringify({ address, message, signature }) });
     this.token = token;
     this.address = address;
+    localStorage.setItem('castaway_account_session', JSON.stringify({ token, address, expiresAt }));
     const { record } = await this.request('/save');
+    await this.adoptRecord(record);
+    return record;
+  }
+
+  async restoreSession() {
+    if (!this.configured || this.linked || this.restoringSession || !solanaBridge.isConnected || solanaBridge.isGuest) return;
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem('castaway_account_session') || 'null'); } catch {}
+    if (!saved || saved.address !== solanaBridge.walletAddress || saved.expiresAt <= Date.now()) return;
+    this.restoringSession = true;
+    this.token = saved.token;
+    this.address = saved.address;
+    try {
+      const { record } = await this.request('/save');
+      if (solanaBridge.walletAddress !== saved.address || !solanaBridge.isConnected) return this.disconnect();
+      await this.adoptRecord(record);
+      window.dispatchEvent(new CustomEvent('castaway-account-changed'));
+    } catch { this.disconnect(); }
+    finally { this.restoringSession = false; }
+  }
+
+  async adoptRecord(record) {
     this.remoteRecord = record;
     this.revision = record?.revision || 0;
     this.syncEnabled = false;
@@ -52,16 +81,16 @@ export class AccountService {
       if (local.timestamp > record.snapshot.timestamp) await this.upload(local);
       else if (local.timestamp === record.snapshot.timestamp) this.syncEnabled = true;
     }
-    return record;
   }
 
-  disconnect() {
+  disconnect(clearPersisted = true) {
     this.token = null;
     this.address = null;
     this.revision = null;
     this.remoteRecord = null;
     this.pendingSnapshot = null;
     this.syncEnabled = false;
+    if (clearPersisted) localStorage.removeItem('castaway_account_session');
   }
 
   async upload(snapshot = this.game.saveSystem.createSnapshot()) {

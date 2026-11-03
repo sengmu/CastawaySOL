@@ -10,6 +10,7 @@ const dataDir = process.env.ACCOUNT_DATA_DIR || join(process.cwd(), 'account-dat
 const origins = new Set((process.env.ACCOUNT_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean));
 const challenges = new Map();
 const sessions = new Map();
+const sessionsPath = join(dataDir, 'sessions.json');
 const writes = new Map();
 const now = () => Date.now();
 
@@ -57,6 +58,20 @@ async function locked(address, action) {
 }
 
 await mkdir(dataDir, { recursive: true });
+try {
+  for (const [token, value] of Object.entries(JSON.parse(await readFile(sessionsPath, 'utf8')))) {
+    if (value.expires > now()) sessions.set(token, value);
+  }
+} catch (error) { if (error.code !== 'ENOENT') throw error; }
+let sessionWrite = Promise.resolve();
+function persistSessions() {
+  sessionWrite = sessionWrite.catch(() => {}).then(async () => {
+    const temp = `${sessionsPath}.tmp`;
+    await writeFile(temp, JSON.stringify(Object.fromEntries(sessions)), { mode: 0o600 });
+    await rename(temp, sessionsPath);
+  });
+  return sessionWrite;
+}
 http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     if (!origins.has(req.headers.origin)) return json(req, res, 403, { error: 'Origin denied' });
@@ -82,8 +97,10 @@ http.createServer(async (req, res) => {
       if (!challenge || challenge.expires < now() || challenge.message !== message || !/^[A-Za-z0-9+/]{86}==$/.test(signature)) return json(req, res, 401, { error: 'Challenge invalid' });
       if (!verify(null, Buffer.from(message, 'utf8'), publicKey(address), Buffer.from(signature, 'base64'))) return json(req, res, 401, { error: 'Signature invalid' });
       const token = randomBytes(32).toString('hex');
-      sessions.set(token, { address, expires: now() + 86400000 });
-      return json(req, res, 200, { token, address, expiresAt: now() + 86400000 });
+      const expiresAt = now() + 30 * 86400000;
+      sessions.set(token, { address, expires: expiresAt });
+      await persistSessions();
+      return json(req, res, 200, { token, address, expiresAt });
     }
     const auth = session(req);
     if (!auth) return json(req, res, 401, { error: 'Authentication required' });
