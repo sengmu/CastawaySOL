@@ -707,3 +707,5 @@ Seeker v1.0.30 日志确认钱包 MWABottomSheetActivity 启动且 WebSocket ser
 2026-11-03 顶部信息减负：移除生存第二行整条底板与常驻标签，改为天气/日期与三项图标细条，顶部总高72px；点击头像显示真实生存数值。任务提示按story章节/步骤去重而非动态文案，显示5秒后隐藏，同阶段刷新不续时。build:android、assembleDebug、覆盖安装成功；真机视觉与5秒消失待验收。
 2026-11-03 任务条常驻根因已真机确认：inline display=none 而 computed=block，横竖屏CSS display:block!important覆盖定时隐藏。移除两处important，并防止账本关闭恢复过期任务条。构建、打包、覆盖安装通过。Seeker WebView实际验证：显示block→5.5秒后none→同阶段再次update仍none；验证前亦为none。未改任务进度。
 2026-11-03 GitHub交付前检查：本地与origin/main基线一致，diff --check通过；使用已找到JDK完成release资源与manifest合并，Gradle成功，替代此前缺JDK的阻断记录。release真机钱包仍未验收，关闭混合内容/明文后的MWA兼容性需单独验证。
+2026-11-03 修复钱包缓存地址误报连接：loadState仅恢复地址提示，不将真实钱包标为isConnected；用户重新授权成功后才设连接。build:android、assembleDebug、覆盖安装成功，未清存档。真机重新授权与签名仍待验收。
+2026-11-03 钱包闭环推进：支付前检查MWA当前会话；确认交易时检查confirmation.value.err，避免链上失败误报成功；签到保留完整签名字节，取消未经证明的硬件签名标记。build:android、assembleDebug、覆盖安装通过。消息签名与Devnet实际交易仍待钱包授权实测，未动主网。

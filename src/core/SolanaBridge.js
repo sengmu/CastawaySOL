@@ -224,9 +224,9 @@ export class SolanaBridge {
             this.publicKey = new PublicKey(this.walletAddress);
           } catch (e) {}
         }
-        this.isConnected = true;
-        // 异步查询真实 Devnet 余额
-        this.fetchBalance();
+        // A saved address is only a hint. Wallet authorization must be
+        // re-established before the UI or payment flow considers it connected.
+        this.isConnected = Boolean(this.isGuest);
       }
     } catch (e) {
       console.warn('读取本地钱包存储异常:', e);
@@ -506,7 +506,7 @@ export class SolanaBridge {
       return { success: false, message: '官方收款地址无效，支付功能已安全禁用' };
     }
 
-    if (!this.isConnected) {
+    if (!this.isConnected || (this.isMWA && !this.adapter?.connected)) {
       return { success: false, message: '请先连接钱包' };
     }
 
@@ -557,11 +557,12 @@ export class SolanaBridge {
       }
 
       console.log('⏳ 交易已广播，等待链上确认... 签名:', signature);
-      await this.connection.confirmTransaction({
+      const confirmation = await this.connection.confirmTransaction({
         signature,
         blockhash,
         lastValidBlockHeight
       }, 'confirmed');
+      if (confirmation.value?.err) throw new Error(`交易执行失败: ${JSON.stringify(confirmation.value.err)}`);
 
       console.log('✅ 交易已被网络确认！');
       await this.fetchBalance();
@@ -617,12 +618,12 @@ export class SolanaBridge {
           day,
           steps,
           timestamp,
-          signature: signatureHex.substring(0, 32) + '...',
-          isHardwareSigned: true,
+          signature: signatureHex,
+          isHardwareSigned: false,
           signer: this.walletAddress
         };
         this.saveCheckinRecord(record);
-        return { success: true, record, hardwareSigned: true };
+        return { success: true, record, hardwareSigned: false };
       } catch (err) {
         console.warn('MWA 签名未完成:', err);
         return { success: false, message: err.message || '签名被取消' };
