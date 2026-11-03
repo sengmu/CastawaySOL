@@ -681,6 +681,21 @@ export class UIManager {
         box-shadow: none;
         cursor: not-allowed;
       }
+      /* ===== 矿机一页化 v2：驾驶舱/棋盘/大奖台共享件 ===== */
+      .rig-bubble { background:#FBEBC8; color:#6B4A32; font-size:13px; font-weight:900; padding:7px 14px; border-radius:999px; box-shadow:inset 0 -3px 0 #E3CFA2; position:relative; }
+      .rig-bubble::after { content:''; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%); border:6px solid transparent; border-top-color:#FBEBC8; border-bottom:none; }
+      .rig-ring { --p:0; border-radius:50%; background:conic-gradient(#5FD4C8 calc(var(--p) * 1%), #EADFCB 0); -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 10px)); mask:radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 10px)); display:flex; align-items:center; justify-content:center; }
+      .rig-ring span { font-weight:900; color:#6B4A32; background:#FFF6E3; border-radius:999px; padding:2px 8px; font-size:12px; box-shadow:0 2px 6px rgba(142,122,160,.25); }
+      .rig-decrypt.is-turbo .rig-ring { background:conic-gradient(#FF9F43 calc(var(--p) * 1%), #EADFCB 0); }
+      .rig-batt { display:flex; align-items:center; gap:5px; background:#FBEBC8; border-radius:999px; padding:5px 10px; box-shadow:inset 0 -3px 0 #E3CFA2; font-size:11px; font-weight:900; color:#6B4A32; }
+      .rig-batt i { width:16px; height:10px; border-radius:3px; background:#EADFCB; display:block; }
+      .rig-batt i.on { background:#5FD4C8; }
+      .rig-batt.low i.on { background:#F26B5B; }
+      .rig-slot-dot { width:15px; height:15px; border-radius:5px; background:#EFE3CB; transform:rotate(45deg); }
+      .rig-slot-dot.on { background:#5FD4C8; box-shadow:0 0 8px rgba(95,212,200,.8); }
+      .feed-count { background:#BFE6F5; color:#237A9E; border-radius:999px; font-size:10px; font-weight:900; padding:1px 7px; }
+      @keyframes rigPulseGlow { from { filter:brightness(1); } to { filter:brightness(1.12); } }
+      .rig-decrypt.is-turbo .rig-img { animation:rigPulseGlow .5s ease-in-out infinite alternate; }
       .blueprint-list::-webkit-scrollbar { width: 4px; }
       .blueprint-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
       .blueprint-item {
@@ -1995,6 +2010,7 @@ export class UIManager {
     document.getElementById('modal-close-btn').addEventListener('click', () => {
       haptics.light();
       this.modalBackdrop.style.display = 'none';
+      document.querySelector('.modal-card')?.classList.remove('rig-page');
     });
 
     // 关闭对话框（兼容真机触摸 pointerdown / touchstart / click，防止遮罩锁死摇杆）
@@ -4702,7 +4718,23 @@ export class UIManager {
     const flows = { main: o.ALPHA, mother: o.MOTHERLODE_SHARE, shard: 1 - o.ALPHA - o.MOTHERLODE_SHARE - o.BURN_SHARE, burn: o.BURN_SHARE };
     const pityRounds = Object.keys(o.PITY_TABLE).map(Number);
     const m = o.MOTHERLODE;
-    return `<div style="font-size:12px;line-height:1.8;padding:12px;">
+    const summaryRows = [
+      ['💰 价值基准 V', `${o.V} 算力代币 / 份额`],
+      ['🎯 长期中性回报带', `${pct(o.LONG_TERM_RTP.min)}% ~ ${pct(o.LONG_TERM_RTP.max)}%`],
+      ['💎 母晶池注入', `投入的 ${pct(o.MOTHERLODE_SHARE)}%`],
+      ['👑 爆池唤醒者独得', `${pct(m.awakenerShare)}%`],
+      ['🛡️ 保底校准', `连续未中 ≤ ${Math.max(...pityRounds)} 轮必触发`],
+      ['🔥 晶爆期望倍率', `基础 E[m] = ${Number(expectedCritMultiplier(false).toFixed(3))}`]
+    ];
+    return `<div class="odds-root" style="display:flex; flex-direction:column; gap:10px; height:100%;">
+      <div class="odds-board" style="background:#FBEBC8; border-radius:20px; padding:14px 16px;">
+        <div style="text-align:center; font-size:15px; font-weight:900; color:#6B4A32; margin-bottom:10px;">📌 公示牌</div>
+        ${summaryRows.map(([k, v]) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 2px; border-bottom:1px dashed rgba(107,74,50,0.14); font-size:13px;"><span style="color:#6B4A32; font-weight:800;">${k}</span><strong style="color:#6B4A32;">${v}</strong></div>`).join('')}
+        <div style="text-align:center; margin-top:10px;"><span style="font-size:11px; color:#237A9E; font-weight:800; background:#E3F4FB; padding:3px 10px; border-radius:999px;">全部概率由同一张赔率表统一计算 · 可查证</span></div>
+        <div style="text-align:center; font-size:11px; color:#7D5E47; margin-top:8px;">模拟矿工与真人使用同一赔率 · 不承诺任何收益</div>
+      </div>
+      <button id="btn-odds-toggle" style="background:#FBEBC8; border:none; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:12px; padding:9px; color:#6B4A32; font-size:12px; font-weight:900; cursor:pointer;">📜 展开完整公示</button>
+      <div id="odds-full" style="display:none; overflow-y:auto; min-height:0; background:#FBEBC8; border-radius:16px; font-size:11.5px; line-height:1.65; padding:12px 14px;">
       <p>不承诺任何收益。晶石消耗即为成本；荒岛算力代币为游戏内货币。</p>
       <p>价值基准 V：${num('V', o.V)} 算力代币/份额</p>
       <p>资金流向：主池 ${num('flow-main', pct(flows.main))}% · 母晶池 ${num('flow-mother', pct(flows.mother))}% · 残晶预算 ${num('flow-shard', pct(flows.shard))}% · 销毁 ${num('flow-burn', pct(flows.burn))}%（合计 100%）。</p>
@@ -4718,6 +4750,7 @@ export class UIManager {
       <p>母晶池需单轮押注满 5 份方可参与分配。</p>
       <p>本轮种子哈希（cyrb53）：<span data-seed="commit">${miningRig?.resonance.seedCommit || '尚未生成'}</span><br>上一轮种子揭示：<span data-seed="reveal">${miningRig?.resonance.seedReveal || '暂无'}</span></p>
       <p>最近获胜格：${(miningRig?.resonance.history || []).map(r => r.winningSquare + 1).join('、') || '暂无'}</p>
+      </div>
     </div>`;
   }
 
@@ -4731,11 +4764,18 @@ export class UIManager {
       return sum + weight / clusterWeightTotal() * motherlodeProbability(shares, miningRig.game?.weatherSystem?.currentWeather || 'clear');
     }, 0)).toFixed(2);
 
+    const fame = [...(ml.hallOfFame || [])].sort((a, b) => (b.playerTake || 0) - (a.playerTake || 0));
+    const top3 = fame.slice(0, 3);
+    const rest = fame.slice(3);
+    const podiumOrder = top3.length === 3 ? [top3[1], top3[0], top3[2]] : top3;
+    const podiumHeights = ['64px', '84px', '52px'];
+
     return `
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="background:#FBEBC8; border:1.5px solid transparent; border-radius:14px; padding:16px; text-align:center;">
-          <div style="font-size:13px; color:#9945ff; font-weight:800; display:inline-flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
-          <div style="font-size:32px; font-weight:900; color:#B97E10; font-family:monospace; margin:8px 0; text-shadow:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+      <div class="ml-root" style="display:flex; flex-direction:column; gap:10px; height:100%; overflow:hidden;">
+        <div style="text-align:center; padding:2px 10px 0;">
+          <img src="ui/rig/mother-crystal.webp" alt="母晶" style="width:120px; height:120px; object-fit:contain;">
+          <div style="font-size:13px; color:#9945ff; font-weight:800; display:flex; align-items:center; gap:6px; justify-content:center;">${iconHTML('hud/motherlode', 18, { eager: true })} 远古深渊全岛母晶池 (Motherlode)</div>
+          <div style="font-size:34px; font-weight:900; color:#B97E10; margin:2px 0; display:flex; align-items:center; justify-content:center; gap:8px; line-height:1.1;">
             <span id="ml-pool-amount">${ml.pool || 0}</span> ${iconHTML('items/sol_token', 28, { eager: true })}
           </div>
           <div style="font-size:11.5px; color:#6B4A32;">
@@ -4743,22 +4783,37 @@ export class UIManager {
           </div>
         </div>
 
-        <div style="background:#FBEBC8; border-radius:12px; padding:12px; font-size:11.5px; line-height:1.6; color:#6B4A32;">
-          <div style="font-weight:900; color:#6B4A32; margin-bottom:4px;">💎 母池生态循环账本：</div>
-          <div>• 玩家共振投入：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE_SHARE * 100}% (${(ODDS_TABLE.MOTHERLODE_SHARE * ODDS_TABLE.V).toFixed(2)} 代币/份额)</span> 自动注入母池</div>
-          <div>• 岛上建设消费：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE.sinkShare * 100}%</span> (商城、船只升级、扫描仪改装) 注入</div>
+        <div style="background:#FBEBC8; border-radius:16px; padding:10px 12px; font-size:11px; line-height:1.55; color:#6B4A32;">
+          <div style="font-weight:900; margin-bottom:3px;">💎 母池生态循环账本：</div>
+          <div>• 玩家共振投入：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE_SHARE * 100}% (${(ODDS_TABLE.MOTHERLODE_SHARE * ODDS_TABLE.V).toFixed(2)} 代币/份额）</span> 自动注入母池</div>
+          <div>• 岛上建设消费：<span style="color:#1E9E8A;">${ODDS_TABLE.MOTHERLODE.sinkShare * 100}%</span> （商城、船只升级、扫描仪改装） 注入</div>
           <div>• 单轮超额溢出：超出单轮硬顶派彩全额注入母池</div>
           <div>• 模拟矿工分走部分作为系统 SINK 彻底销毁，绝不伪造虚假中奖播报</div>
         </div>
 
-        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
-          <div style="font-size:12.5px; font-weight:900; color:#6B4A32; margin-bottom:8px;">🏆 远古母脉名人堂 (最近爆池存证)</div>
-          ${ml.hallOfFame && ml.hallOfFame.length > 0 ? ml.hallOfFame.map(r => `
-            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid #FBEBC8;">
+        <div style="background:#FBEBC8; border-radius:16px; padding:10px 12px;">
+          <div style="font-size:12.5px; font-weight:900; color:#6B4A32; margin-bottom:6px;">🏆 远古母脉名人堂 （最近爆池存证）</div>
+          ${top3.length > 0 ? `
+          <div style="display:flex; align-items:flex-end; justify-content:center; gap:10px; padding:2px 0 4px;">
+            ${podiumOrder.map((r, i) => {
+              const rank = top3.indexOf(r) + 1;
+              return `<div style="flex:1; max-width:96px; text-align:center;">
+                <div style="font-size:15px;">💎</div>
+                <div style="background:#FFF6E3; border-radius:12px 12px 0 0; height:${podiumHeights[top3.length === 3 ? i : rank - 1]}; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; padding:4px 2px;">
+                  <span style="font-size:15px; font-weight:900; color:#B97E10;">${rank}</span>
+                  <span style="font-size:10px; color:#7D5E47;">轮次 #${r.roundId}</span>
+                  <span style="font-size:11px; font-weight:800; color:#B97E10;">+${r.playerTake}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="text-align:center; font-size:11px; color:#7D5E47;">我的最佳单轮：<strong style="color:#B97E10;">+${top3[0].playerTake}</strong>（池总 ${top3[0].poolSize}）</div>
+          ${rest.map(r => `
+            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(107,74,50,0.10);">
               <span>轮次 #${r.roundId}</span>
-              <span style="color:#B97E10; font-weight:800; display:inline-flex; align-items:center; gap:4px;">+${r.playerTake} ${iconHTML('items/sol_token', 13, { eager: true })} (池总: ${r.poolSize})</span>
+              <span style="color:#B97E10; font-weight:800;">+${r.playerTake} （池总： ${r.poolSize})</span>
             </div>
-          `).join('') : '<div style="font-size:11px; color:#7D5E47; text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
+          `).join('')}` : '<div style="font-size:11px; color:#7D5E47; text-align:center; padding:10px;">暂无爆池记录，静待首位地脉唤醒勇者！</div>'}
         </div>
       </div>
     `;
@@ -4819,7 +4874,7 @@ export class UIManager {
           border:1.5px solid ${isWinner ? '#E9B23F' : (isSelected ? '#5FD4C8' : (isHeat ? '#8E7AA0' : 'transparent'))};
           box-shadow:${isWinner ? '0 0 0 2px #E9B23F' : (isHeat ? '0 0 0 1px rgba(142,122,160,0.5)' : 'none')};
           border-radius:8px; padding:6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
-          height:56px; cursor:pointer; user-select:none; transition:all 0.15s; position:relative;
+          height:60px; cursor:pointer; user-select:none; transition:all 0.15s; position:relative;
         ">
           <div style="display:flex; justify-content:space-between; width:100%; font-size:9.5px; color:#7D5E47;">
             <span>#${i + 1}</span>
@@ -4840,7 +4895,7 @@ export class UIManager {
     const hasNextScanner = (inv[`geo_scanner_mk${nextScannerLv}`] || 0) > 0;
 
     return `
-      <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="res-root" style="display:flex; flex-direction:column; gap:10px;">
         <div style="background:#FBEBC8; border:1px solid transparent; border-radius:12px; padding:10px 14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -4870,7 +4925,7 @@ export class UIManager {
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
+        <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; background:#F5E7C6; padding:10px; border-radius:20px;">
           ${gridHtml}
         </div>
 
@@ -4885,11 +4940,11 @@ export class UIManager {
           </div>
 
           <div style="display:flex; gap:6px; align-items:center;">
-            <button id="btn-res-sub" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
-            <button id="btn-res-add" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px; width:44px; height:34px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
-            <button id="btn-res-split" style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
-            <button id="btn-res-allin" style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:8px; height:34px; font-size:11.5px; font-weight:800; cursor:pointer;">💥 All-In</button>
-            <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:8px; height:34px; font-size:12px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
+            <button id="btn-res-sub" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">-1</button>
+            <button id="btn-res-add" style="background:#FBEBC8; color:#6B4A32; border:1px solid transparent; box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:999px; width:48px; height:44px; font-size:16px; font-weight:900; cursor:pointer;">+1</button>
+            <button id="btn-res-split" style="flex:1; background:#E3F4FB; color:#237A9E; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">⚖️ 一键均分</button>
+            <button id="btn-res-allin" style="flex:1; background:#FFF1D0; color:#B97E10; border:1px solid transparent; border-radius:12px; height:44px; font-size:12px; font-weight:800; cursor:pointer;">💥 All-In</button>
+            <button id="btn-res-commit" style="flex:1.4; background:#FFD25A; color:#6B4A32; box-shadow:inset 0 -3px 0 #E9B23F; border:none; border-radius:12px; height:44px; font-size:12.5px; font-weight:900; cursor:pointer;" ${res.committed || totalDeployed < 2 ? 'disabled' : ''}>
               ${res.committed ? `${iconHTML('hud/check', 14, { eager: true })} 已锁定` : `确认部署 (${totalDeployed}份) · 每轮至少部署 2 份`}
             </button>
           </div>
@@ -4996,199 +5051,96 @@ export class UIManager {
     const combo = miningRig.manualTapCombo || 0;
     const turboBonus = isTurbo ? (2.2 + Math.min(combo * 0.08, 1.2)) : 1.0;
     const currentHashrate = (miningRig.hashrate * (isDay ? 1.5 : (battery > 0 ? 1.0 : 0.3)) * turboBonus).toFixed(1);
+    const statusText = isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)');
+    const bonusText = isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电');
+    const battLit = Math.max(0, Math.min(5, Math.round(battery / 20)));
+    const cap = miningRig.maxCrystalCapacity || 10;
+    const upgradeCost = ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1];
+    const feedDefs = [
+      { id: 'battery', icon: '🔋', name: '蓄电池', fx: '+50%电量' },
+      { id: 'tree_sap', icon: '💧', name: '树液', fx: '+25%电量' },
+      { id: 'tree_branch', icon: '🥢', name: '树枝', fx: '+12%电量' }
+    ];
 
     return `
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <!-- 1. 核心算力与出块大看板 -->
-        <div style="
-          background:${isTurbo ? '#FFF1D0' : '#FBEBC8'};
-          border:1.5px solid transparent;
-          border-radius:14px; padding:14px;
-          box-shadow:0 10px 24px rgba(142,122,160,0.25);
-          transition: all 0.25s ease;
-        ">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-            <div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:22px;">${isTurbo ? '🔥' : '⚡'}</span>
-                <div style="font-size:16px; font-weight:900; color:#6B4A32;">
-                  ${isTurbo ? '⚡ 狂暴超频状态 (OVERDRIVE)' : (miningRig.isActive && miningRig.loadedCrystals > 0 ? (isDay ? '☀️ 太阳能全速哈希运算中' : '🔋 蓄电池储能解密中') : '💤 待料中 (装填原石启动)')}
-                </div>
-              </div>
-              <div style="font-size:11.5px; color:${isTurbo ? '#B97E10' : '#1E9E8A'}; margin-top:2px; font-weight:700;">
-                运算算力：<span id="mr-hashrate" style="font-size:14px; font-weight:900;">${currentHashrate} MH/s</span> · ${isTurbo ? `🔥 狂暴加速 ${turboBonus.toFixed(1)}x + 45%暴击` : (isDay ? '☀️ 日光加成 +50%' : '🌙 蓄电池供电')}
-              </div>
+      <div class="rig-decrypt ${isTurbo ? 'is-turbo' : ''}">
+        <!-- 机器舞台 -->
+        <div class="rig-stage">
+          <div class="rig-bubble">${statusText}</div>
+          <div class="rig-stage-row">
+            <div class="rig-machine-wrap">
+              <img class="rig-img" src="ui/rig/rig-machine.webp" alt="矿机">
+              <div class="rig-batt ${battery <= 20 ? 'low' : ''}">${[0, 1, 2, 3, 4].map(i => `<i class="${i < battLit ? 'on' : ''}"></i>`).join('')} 电池 ${battery}%</div>
+              <div class="rig-ring" id="mr-progress-ring" style="--p:${progress}"><span id="mr-progress-text">${progress}%</span></div>
             </div>
-
-            ${miningRig.unclaimedSol > 0 ? `
-              <button id="btn-claim-sol" style="
-                background:#FFD25A; border:none; border-radius:16px;
-                padding:8px 14px; color:#6B4A32; font-weight:900; font-size:12.5px; cursor:pointer;
-                box-shadow:inset 0 -3px 0 #E9B23F, 0 8px 18px rgba(142,122,160,0.30); animation:pulse 1.2s infinite;
-                display:inline-flex; align-items:center; gap:5px;
-              ">
-                ${iconHTML('items/sol_token', 16, { eager: true })} 收获 ${miningRig.unclaimedSol} 枚算力代币！
-              </button>
-            ` : `
-              <div style="font-size:11px; background:#EADFCB; color:#7D5E47; padding:4px 8px; border-radius:6px;">
-                待出块产出
-              </div>
-            `}
-          </div>
-
-          <!-- 当前区块解密进度条 -->
-          <div style="margin-bottom:12px;">
-            <div style="display:flex; justify-content:space-between; font-size:11px; color:#6B4A32; margin-bottom:4px; font-weight:700;">
-              <span>当前区块哈希进度: <strong id="mr-progress-text" style="color:#1E9E8A;">${progress}%</strong></span>
-              <span>已验证区块: #${miningRig.totalBlocksMined} (累计挖出 ${miningRig.totalSolMined} 算力代币)</span>
-            </div>
-            <div style="width:100%; height:12px; background:#EADFCB; border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.18); position:relative;">
-              <div id="mr-progress-bar" style="
-                width:${progress}%; height:100%;
-                background:${isTurbo ? '#FF9F43' : '#5FD4C8'};
-                border-radius:6px; transition:width 0.15s linear;
-              "></div>
+            <div class="rig-slots">
+              <div class="rig-slots-label">晶仓<br>${miningRig.loadedCrystals}/${cap}</div>
+              ${Array.from({ length: cap }, (_, i) => `<div class="rig-slot-dot ${i < miningRig.loadedCrystals ? 'on' : ''}"></div>`).join('')}
             </div>
           </div>
-
-          <!-- 矿机硬件核心指标 -->
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:#7D5E47;">晶石装载量</div>
-              <div style="font-size:13px; font-weight:900; color:#1E9E8A;">${miningRig.loadedCrystals} / ${miningRig.maxCrystalCapacity} 块</div>
+          <div class="rig-hash"><span id="mr-hashrate">${currentHashrate} MH/s</span><small>运算算力 · ${bonusText}</small></div>
+          ${this._proofOpen ? `
+          <div class="rig-proof-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">🔗 Solana 链上算力存证</div>
+              <span style="font-size:11px; color:#237A9E; font-weight:800; background:#E3F4FB; padding:2px 8px; border-radius:6px;">${solanaBridge.isConnected ? (solanaBridge.isGuestMode ? "免钱包沙盒" : "Seed Vault/钱包已连接") : "未连接钱包"}</span>
             </div>
-            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:#7D5E47;">蓄电池储能</div>
-              <div style="font-size:13px; font-weight:900; color:${battery > 20 ? '#237A9E' : '#ff7675'};">${battery}%</div>
-            </div>
-            <div style="background:#FFF6E3; border-radius:8px; padding:6px 8px; text-align:center;">
-              <div style="font-size:10.5px; color:#7D5E47;">背包算力储备</div>
-              <div style="font-size:13px; font-weight:900; color:#B97E10; display:inline-flex; align-items:center; justify-content:center; gap:4px;">${tokenCount} ${iconHTML('items/sol_token', 14, { eager: true })}</div>
-            </div>
-          </div>
+            <div style="font-size:11px; color:#6B4A32; margin-bottom:8px; line-height:1.4;">一键使用 Solana 手机硬件私钥对矿机出块与算力代币产出凭证进行签名，记录至链上成就！</div>
+            <button id="btn-submit-chain-proof" style="width:100%; background:#5FD4C8; border:none; border-radius:8px; padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:800; cursor:pointer; box-shadow:inset 0 -3px 0 #45B8AB, 0 6px 14px rgba(142,122,160,0.30);">📝 签署算力工作证明上链存证 (区块 #${miningRig.totalBlocksMined})</button>
+            <button class="proof-close-btn" style="width:100%; margin-top:6px; background:transparent; border:none; color:#7D5E47; font-size:11px; font-weight:800; cursor:pointer;">收起</button>
+          </div>` : ''}
         </div>
 
-        <!-- 2. 手动狂暴增压点按核心区 -->
-        <div style="
-          background:#FBEBC8; border:1.5px dashed ${isTurbo ? '#B97E10' : 'rgba(255,255,255,0.22)'};
-          border-radius:14px; padding:12px; text-align:center; position:relative; overflow:hidden;
-        ">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">⚡ 手工手摇增压 · 狂暴解密 (Tap to Boost)</div>
-            <div id="mr-combo-badge" style="
-              font-size:11px; font-weight:900;
-              background:${combo > 5 ? '#C4443A' : '#EADFCB'};
-              color:${combo > 5 ? '#FFF6E3' : '#6B4A32'}; padding:2px 8px; border-radius:10px;
-            ">
-              ${combo > 0 ? `COMBO x${combo}` : '待增压'}
-            </div>
-          </div>
-
-          <button id="btn-manual-boost" style="
-            width:100%; height:48px;
-            background:${isTurbo ? '#FF9F43' : '#FBEBC8'};
-            border:none; border-radius:12px;
-            color:#6B4A32; font-size:15px; font-weight:900; letter-spacing:0.5px;
-            cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-            box-shadow:inset 0 -4px 0 ${isTurbo ? '#E07B2A' : '#E3CFA2'}, 0 8px 18px rgba(142,122,160,0.30);
-            user-select:none; -webkit-user-select:none;
-            transition:transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          ">
+        <!-- 操作区 -->
+        <div class="rig-actions">
+          <button id="btn-manual-boost" style="background:${isTurbo ? '#FF9F43' : '#FFD25A'}; box-shadow:inset 0 -4px 0 ${isTurbo ? '#E07B2A' : '#E9B23F'}, 0 8px 18px rgba(142,122,160,0.30);">
             <span style="font-size:20px;">⚡</span>
             <span>${isTurbo ? `🔥 极速狂暴增压中 (${miningRig.turboTimer.toFixed(1)}s)` : '猛击摇动加速 · 触发超频！'}</span>
+            <span id="mr-combo-badge" style="font-size:11px; font-weight:900; background:${combo > 5 ? '#C4443A' : '#FFF1D0'}; color:${combo > 5 ? '#FFF6E3' : '#6B4A32'}; padding:2px 8px; border-radius:10px;">${combo > 0 ? `🔥 x${combo}` : '待增压'}</span>
           </button>
-          <div style="font-size:11px; color:#7D5E47; margin-top:6px;">
-            连续点按注入机械动能：算力爆发飞涨 + 立即推进解密进度 + 45%概率出块暴击！
+          <div class="rig-load-col">
+            <button id="btn-load-1-crystal" ${crystalCount > 0 ? '' : 'disabled'}>💎 装填 1 块原石 <small>背包 ${crystalCount}</small></button>
+            <button id="btn-load-all-crystals" ${crystalCount > 0 ? '' : 'disabled'}>⚡ 一键填满矿仓</button>
           </div>
         </div>
 
-        <!-- 3. 硅晶原石装填区 -->
-        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">💎 装填硅晶原石 (提供运算原料)</div>
-            <span style="font-size:11.5px; color:#1E9E8A; font-weight:800;">
-              背包持有：${crystalCount} 块
-            </span>
-          </div>
-
-          <div style="display:flex; gap:8px;">
-            <button id="btn-load-1-crystal" style="
-              flex:1; background:#FFF6E3; border:1px solid rgba(107,74,50,0.14); box-shadow:inset 0 -3px 0 #E3CFA2; border-radius:8px;
-              padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:700; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
-            " ${crystalCount > 0 ? '' : 'disabled'}>
-              ➕ 装填 1 块原石
-            </button>
-            <button id="btn-load-all-crystals" style="
-              flex:1; background:#E3F4FB; border:1px solid transparent; box-shadow:inset 0 -3px 0 #BFE6F5;
-              border-radius:8px; padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:800; cursor:${crystalCount > 0 ? 'pointer' : 'default'};
-            " ${crystalCount > 0 ? '' : 'disabled'}>
-              ⚡ 一键填满矿仓
-            </button>
-          </div>
+        <!-- 蓄能瘦带 -->
+        <div class="rig-feedbar">
+          <span class="rig-feed-label">🔋 蓄能</span>
+          ${feedDefs.map(f => `
+            <button class="btn-feed-power" data-id="${f.id}" ${(inv[f.id] || 0) > 0 ? '' : 'disabled'}>
+              <span class="feed-ic">${f.icon}</span>
+              <span class="feed-tx">${f.name}<small>${f.fx}</small></span>
+              <span class="feed-count">${inv[f.id] || 0}</span>
+            </button>`).join('')}
         </div>
 
-        <!-- 4. 生物质与电池储能维护区 -->
-        <div style="background:#FBEBC8; border-radius:12px; padding:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#6B4A32;">🔋 蓄能维护 (夜间与阴雨天保障算力)</div>
-            <span style="font-size:11px; color:#237A9E;">太阳能板白天免费供电</span>
-          </div>
-
-          <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            ${(inv['battery'] || 0) > 0 ? `
-              <button class="btn-feed-power" data-id="battery" style="
-                background:#E3F4FB; border:1px solid transparent; border-radius:8px;
-                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
-              ">
-                🔋 充入备用电池 (+50%电量)
-              </button>
-            ` : ''}
-            ${(inv['tree_sap'] || 0) > 0 ? `
-              <button class="btn-feed-power" data-id="tree_sap" style="
-                background:#FFF1D0; border:1px solid transparent; border-radius:8px;
-                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
-              ">
-                💧 投入树脂生物质 (+25%电量)
-              </button>
-            ` : ''}
-            ${(inv['tree_branch'] || 0) > 0 ? `
-              <button class="btn-feed-power" data-id="tree_branch" style="
-                background:#FFF6E3; border:1px solid rgba(107,74,50,0.14); border-radius:8px;
-                padding:6px 10px; color:#6B4A32; font-size:11.5px; cursor:pointer; font-weight:700;
-              ">
-                🥢 投入干燥木柴 (+12%电量)
-              </button>
-            ` : ''}
-          </div>
-        </div>
-
-        <!-- 5. Solana 链上算力存证 -->
-        <div style="background:#FBEBC8; border:1.5px solid transparent; border-radius:12px; padding:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:12.5px; font-weight:900; color:#6B4A32; display:flex; align-items:center; gap:6px;">
-              <span>🔗</span>
-              <span>Solana 链上算力存证</span>
-            </div>
-            <span style="font-size:11px; color:#237A9E; font-weight:800; background:#E3F4FB; padding:2px 8px; border-radius:6px;">
-              ${solanaBridge.isConnected ? (solanaBridge.isGuestMode ? "免钱包沙盒" : "Seed Vault/钱包已连接") : "未连接钱包"}
-            </span>
-          </div>
-          <div style="font-size:11px; color:#6B4A32; margin-bottom:8px; line-height:1.4;">
-            一键使用 Solana 手机硬件私钥对矿机出块与算力代币产出凭证进行签名，记录至链上成就！
-          </div>
-          <button id="btn-submit-chain-proof" style="
-            width:100%; background:#5FD4C8; border:none; border-radius:8px;
-            padding:8px 12px; color:#6B4A32; font-size:12px; font-weight:800; cursor:pointer;
-            box-shadow:inset 0 -3px 0 #45B8AB, 0 6px 14px rgba(142,122,160,0.30);
-          ">
-            📝 签署算力工作证明上链存证 (区块 #${miningRig.totalBlocksMined})
-          </button>
+        <!-- 信息带 -->
+        <div class="rig-strip">
+          <div class="rig-cell"><small>已验证区块</small><strong>#${miningRig.totalBlocksMined}</strong></div>
+          <div class="rig-cell"><small>累计产出 · 储备 ${tokenCount}</small><strong>${miningRig.totalSolMined}</strong></div>
+          ${miningRig.unclaimedSol > 0 ? `
+            <button id="btn-claim-sol">🎁 收获 ${miningRig.unclaimedSol} 枚</button>
+          ` : `
+            <div class="rig-cell"><small>待出块产出</small><strong>0</strong></div>
+          `}
+          <button id="btn-proof-toggle">🔗 链上存证<small>${solanaBridge.isConnected ? '已连接' : '未连接'}</small></button>
+          <button id="btn-rig-upgrade" ${!upgradeCost || tokenCount < upgradeCost ? 'disabled' : ''}>${upgradeCost ? `⬆️ 升级 L${miningRig.rigLevel + 1} · ${upgradeCost}` : '✅ 已满级'}</button>
         </div>
       </div>
     `;
   }
 
   _bindDecryptTabEvents(body, miningRig, inv, render) {
+    const proofToggle = body.querySelector('#btn-proof-toggle');
+    if (proofToggle) {
+      proofToggle.addEventListener('click', () => { this._proofOpen = !this._proofOpen; render(); });
+    }
+    const proofClose = body.querySelector('.proof-close-btn');
+    if (proofClose) {
+      proofClose.addEventListener('click', () => { this._proofOpen = false; render(); });
+    }
+
     const boostBtn = body.querySelector('#btn-manual-boost');
     if (boostBtn) {
       boostBtn.addEventListener('pointerdown', (e) => {
@@ -5260,6 +5212,8 @@ export class UIManager {
   // 2.5 荒岛绿色矿机 (DePIN Green Mining Rig) 控制台弹窗（R8: 四页签支持）
   openMiningRigModal(miningRig) {
     if (this.player && this.player.resetInput) this.player.resetInput();
+    document.querySelector('.modal-card')?.classList.add('rig-page');
+    this._proofOpen = false;
     document.getElementById('modal-title').innerHTML = '⛏️ 荒岛绿色矿机 · 算力与共振中枢';
     const body = document.getElementById('modal-body');
 
@@ -5324,11 +5278,11 @@ export class UIManager {
       }
 
       body.innerHTML = `
-        <div style="display:flex; flex-direction:column; height:100%; max-height:calc(100vh - 80px); overflow:hidden; padding:2px;">
+        <div style="display:flex; flex-direction:column; height:100%; height:100%; overflow:hidden; padding:2px;">
           ${tabNavHtml}
-          <div style="flex:1; overflow-y:auto; min-height:0; padding-right:2px;">
+          <div style="flex:1; overflow:hidden; min-height:0; padding-right:2px; display:flex; flex-direction:column;">
             ${['resonance', 'motherlode'].includes(currentTab) ? `<div style="font-size:11px; padding:5px 10px; margin-bottom:8px; border-radius:8px; background:#FBEBC8; border:1px solid transparent; color:#7D5E47; text-align:center;">ℹ️ 地脉共振盘面中的其他矿工均为本地模拟矿工（非真人联机）</div>` : ''}
-            ${['decrypt', 'resonance'].includes(currentTab) ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `⬆️ 升级矿机 L${miningRig.rigLevel + 1} · 消耗 ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '✅ 矿机已达最高等级'}</button>` : ''}
+            ${false ? `<button id="btn-rig-upgrade" ${!ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] || tokenCount < ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? 'disabled' : ''}>${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1] ? `⬆️ 升级矿机 L${miningRig.rigLevel + 1} · 消耗 ${ODDS_TABLE.UPGRADE_COSTS[miningRig.rigLevel + 1]} 算力代币` : '✅ 矿机已达最高等级'}</button>` : ''}
             ${contentHtml}
           </div>
         </div>
@@ -5347,6 +5301,15 @@ export class UIManager {
           }
           render();
         });
+      });
+
+      const oddsToggle = body.querySelector('#btn-odds-toggle');
+      if (oddsToggle) oddsToggle.addEventListener('click', () => {
+        const f = body.querySelector('#odds-full');
+        if (!f) return;
+        const open = f.style.display !== 'none';
+        f.style.display = open ? 'none' : 'block';
+        oddsToggle.textContent = open ? '📜 展开完整公示' : '收起完整公示';
       });
 
       // 绑定具体页签事件
@@ -5368,10 +5331,19 @@ export class UIManager {
       }
       if (this._rigModalTab === 'decrypt') {
         const p = Math.min(100, Math.round(miningRig.hashProgress));
-        const pBar = body.querySelector('#mr-progress-bar');
+        const ring = body.querySelector('#mr-progress-ring');
         const pTxt = body.querySelector('#mr-progress-text');
-        if (pBar) pBar.style.width = `${p}%`;
+        if (ring) ring.style.setProperty('--p', p);
         if (pTxt) pTxt.textContent = `${p}%`;
+        const hrEl = body.querySelector('#mr-hashrate');
+        if (hrEl) {
+          const isDayT = miningRig.isDaytime();
+          const battT = Math.round(miningRig.batteryPower);
+          const turboT = miningRig.turboTimer > 0;
+          const comboT = miningRig.manualTapCombo || 0;
+          const bonusT = turboT ? (2.2 + Math.min(comboT * 0.08, 1.2)) : 1.0;
+          hrEl.textContent = `${(miningRig.hashrate * (isDayT ? 1.5 : (battT > 0 ? 1.0 : 0.3)) * bonusT).toFixed(1)} MH/s`;
+        }
       } else if (this._rigModalTab === 'resonance') {
         const p = Math.min(100, Math.round(miningRig.resonance.progress));
         const rBar = body.querySelector('#mr-res-progress-bar');
