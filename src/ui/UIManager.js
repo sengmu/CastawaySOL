@@ -2869,7 +2869,9 @@ export class UIManager {
       .filter(([k, cnt]) => cnt > 0 && k !== 'canteen_clean_water');
     const pageCount = Math.max(1, Math.ceil(quickItems.length / 4));
     this._quickBarPage = Math.min(this._quickBarPage || 0, pageCount - 1);
-    const visibleItems = quickItems.slice(this._quickBarPage * 4, this._quickBarPage * 4 + 4);
+    const visibleItems = portraitQuickBar
+      ? quickItems.filter(([id]) => id === this.selectedItemId).concat(quickItems.filter(([id]) => id !== this.selectedItemId)).slice(0, 2)
+      : quickItems.slice(this._quickBarPage * 4, this._quickBarPage * 4 + 4);
     const selectedQuickItem = visibleItems.some(([id]) => id === this.selectedItemId) ? this.selectedItemId : 'canteen';
     const canteenSlotHtml = `
       <div class="quick-slot quick-canteen-slot ${isWaterLow ? 'quick-canteen-alert' : ''} ${selectedQuickItem === 'canteen' ? 'selected' : ''}" data-id="canteen" title="饮用便携水壶 (剩余: ${sips}/3)">
@@ -2889,9 +2891,10 @@ export class UIManager {
 
     const occupiedSlots = 1 + visibleItems.length;
     const emptySlots = '<div class="quick-slot quick-slot-empty" aria-hidden="true"></div>'.repeat(Math.max(0, 5 - occupiedSlots));
-    this.bottomBar.innerHTML = (portraitQuickBar ? `<button class="quick-page-arrow" type="button" data-page="prev" aria-label="上一页物品" ${this._quickBarPage === 0 ? 'disabled' : ''}>‹</button>` : '')
-      + canteenSlotHtml + itemSlots + emptySlots
-      + (portraitQuickBar ? `<button class="quick-page-arrow" type="button" data-page="next" aria-label="下一页物品" ${this._quickBarPage >= pageCount - 1 ? 'disabled' : ''}>›</button>` : '');
+    this.bottomBar.innerHTML = canteenSlotHtml + itemSlots + (portraitQuickBar
+      ? `<button class="quick-slot quick-bag-button" type="button" aria-label="打开背包">${iconHTML('hud/backpack', 30, { eager: true })}</button>`
+      : emptySlots);
+    this.bottomBar.querySelector('.quick-bag-button')?.addEventListener('click', () => document.getElementById('btn-open-inv')?.click());
     this.bottomBar.style.display = '';
 
     this.bottomBar.querySelectorAll('.quick-page-arrow').forEach(button => {

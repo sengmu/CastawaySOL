@@ -760,3 +760,26 @@
   .modal-card.rig-page .res-root > div:nth-child(3) > div:nth-child(2) { flex-wrap: wrap; }
   .modal-card.rig-page #btn-res-commit { flex: 1 1 100% !important; }
 }
+
+/* Approved compact portrait controls, 2026-11-03. */
+@media (orientation: portrait) {
+  body .bottom-quick-bar { bottom:max(16px,var(--sab,0px))!important; width:max-content!important; max-width:calc(100vw - 28px)!important; padding:6px!important; gap:5px!important; justify-content:center!important; background:#f8e8c4ed!important; border:1px solid #fff4d8!important; border-radius:20px!important; box-shadow:0 4px 10px #34462826!important; }
+  body .bottom-quick-bar .quick-slot { width:44px!important; height:44px!important; min-height:44px!important; border-radius:12px!important; padding:2px!important; }
+  body .bottom-quick-bar .quick-slot .clay-icon { width:31px!important; height:31px!important; }
+  body .bottom-quick-bar .quick-slot-badge { font-size:11px!important; right:3px!important; bottom:3px!important; }
+  body .bottom-quick-bar .quick-slot-label, body .quick-page-arrow, body .quick-slot-empty { display:none!important; }
+  body .mobile-action-zone { right:max(16px,var(--sar,0px))!important; bottom:calc(max(16px,var(--sab,0px)) + 58px)!important; width:110px!important; height:120px!important; }
+  body .mobile-action-zone .main-action-capsule { width:76px!important; max-width:76px!important; height:76px!important; min-height:76px!important; max-height:76px!important; box-shadow:inset 0 -5px 0 #e9b23f,inset 0 2px 0 #fff1d0,0 4px 10px #34462826!important; }
+  body .main-action-capsule #main-action-icon .clay-icon { width:34px!important; height:34px!important; }
+  body .main-action-capsule #main-action-text { font-size:12px!important; max-width:66px; }
+  body .mobile-action-zone #btn-open-inv { display:none!important; }
+  body .mobile-action-zone #btn-quick-jump, body .mobile-action-zone #btn-quick-attack:not(.ctx-hidden) { width:44px!important; height:44px!important; left:-2px!important; bottom:80px!important; }
+  body .mobile-action-zone #btn-quick-jump .aux-btn-label { display:none!important; }
+  body #btn-quick-jump .clay-nav-icon { width:27px!important; height:27px!important; margin:0!important; }
+  body .mobile-action-zone #btn-quick-run { position:fixed!important; left:34px!important; bottom:calc(max(16px,var(--sab,0px)) + 108px)!important; width:34px!important; height:34px!important; border:1px solid #fff1d0!important; background:#d8d7a99c!important; box-shadow:none!important; }
+  body #btn-quick-run::after { width:21px!important; height:21px!important; top:5px!important; left:6px!important; opacity:.8; }
+  body #btn-quick-run .aux-btn-label { display:none!important; }
+  body #btn-quick-run.is-running { background:#ffe18bd9!important; }
+  body #joystick-base { background:#ecedc345!important; border:1px solid #fff0c6c9!important; box-shadow:none!important; opacity:.8!important; }
+  body #joystick-thumb { background:#e9e7b885!important; border:1px solid #fff3c9a0!important; box-shadow:0 2px 5px #263d2826!important; }
+}

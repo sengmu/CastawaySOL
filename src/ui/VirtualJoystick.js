@@ -95,7 +95,7 @@ export class VirtualJoystick {
     // 动态限制底盘半径
     if (isPortrait) {
       const maxAllowedRadius = Math.min(w * 0.15, 60);
-      this.baseRadius = Math.max(40, Math.min(this.isSmallScreen ? 54 : 64, maxAllowedRadius));
+      this.baseRadius = Math.max(30, Math.min(34, maxAllowedRadius));
     } else {
       // 横屏下基座半径约 48~52px（直径约 100px），精巧舒适不挡视野
       this.baseRadius = Math.min(52, Math.max(44, h * 0.13));
@@ -118,7 +118,7 @@ export class VirtualJoystick {
     }
 
     // 横屏下摇杆垂直中心距底边贴合左手拇指自然握持区（距底约 75~85px），与右侧动作区对称，绝不浮到屏幕中上方
-    const centerYFromBottom = isPortrait ? (Math.max(16, sab) + this.baseRadius) : (safeBottomMargin + this.baseRadius + 14);
+    const centerYFromBottom = isPortrait ? (Math.max(74, sab + 58) + this.baseRadius) : (safeBottomMargin + this.baseRadius + 14);
     const centerXFromLeft = isPortrait ? (Math.max(12, sal) + this.baseRadius + 6) : (safeLeftMargin + this.baseRadius + 18);
 
     this.defaultAnchor = {
