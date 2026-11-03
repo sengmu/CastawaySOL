@@ -129,9 +129,9 @@ try {
         for(const tree of g.trees.trees||[]) {
           if(ingredients.every(k=>g.ui.inventory[k]>0))break;
           teleport(tree.group.position);g.trees.shakeTree(tree);
-          const pickup=item=>{g.ui.addInventory(item);g.story.onGatherResource(item);};
-          for(let frame=0;frame<90;frame++)g.trees.update(1/60,g.player.position,pickup);
-          for(const drop of [...g.trees.droppedItems]) {teleport(drop.group.position);g.trees.update(1/60,g.player.position,pickup);}
+          const pickup=item=>{if(!g.ui.addInventory(item))return false;g.story.onGatherResource(item);return true;};
+          for(let frame=0;frame<90;frame++)g.trees.update(1/60);
+          for(const drop of [...g.trees.droppedItems]) {teleport(drop.group.position);g.trees.pickupDrop(g.player.position,pickup);}
         }
         if(!ingredients.every(k=>g.ui.inventory[k]>0))return 'missing recipe ingredients: '+ingredients.filter(k=>!g.ui.inventory[k]).join(',');
         g.ui.mergeSlots=ingredients;g.ui.executeMerge();
@@ -147,9 +147,9 @@ try {
         if(!g.ui.inventory.apple) {
           const tree=g.trees.trees.find(t=>t.dropItem==='apple'&&t.canShake&&!t.shaking);
           if(tree){teleport(tree.group.position);g.trees.shakeTree(tree);
-            const pickup=item=>{g.ui.addInventory(item);g.story.onGatherResource(item);};
-            for(let frame=0;frame<90;frame++)g.trees.update(1/60,g.player.position,pickup);
-            for(const drop of [...g.trees.droppedItems]){teleport(drop.group.position);g.trees.update(1/60,g.player.position,pickup);}
+            const pickup=item=>{if(!g.ui.addInventory(item))return false;g.story.onGatherResource(item);return true;};
+            for(let frame=0;frame<90;frame++)g.trees.update(1/60);
+            for(const drop of [...g.trees.droppedItems]){teleport(drop.group.position);g.trees.pickupDrop(g.player.position,pickup);}
           }
         }
         const {ISLAND_LAYOUT}=await import('/src/core/IslandLayout.js');const p=ISLAND_LAYOUT.campfire;teleport({x:p[0],y:p[1],z:p[2]});g.cooking.cook();return 'cooked at campfire';}
@@ -190,10 +190,10 @@ try {
       if(id==='build_raft') {
         const tidy=()=>{teleport({x:-14.5,y:0,z:23.5});for(const key of ['tree_branch','tree_bark','tree_sap','kindling','wood_plank']){const count=g.ui.inventory[key]||0;if(count)g.storageSystem.depositItem(key,count);}};
         tidy();
-        const pickup=item=>{g.ui.addInventory(item);g.story.onGatherResource(item);};
+        const pickup=item=>{if(!g.ui.addInventory(item))return false;g.story.onGatherResource(item);return true;};
         const collect=()=>{
-          for(let frame=0;frame<90;frame++)g.trees.update(1/60,g.player.position,pickup);
-          for(const drop of [...g.trees.droppedItems].filter(d=>['lumber','ivy'].includes(d.type))){teleport(drop.group.position);g.trees.update(1/60,g.player.position,pickup);}
+          for(let frame=0;frame<90;frame++)g.trees.update(1/60);
+          for(const drop of [...g.trees.droppedItems].filter(d=>['lumber','ivy'].includes(d.type))){teleport(drop.group.position);g.trees.pickupDrop(g.player.position,pickup);}
         };
         for(const tree of g.trees.trees.filter(t=>!t.isFelled)){
           if((g.ui.inventory.lumber||0)>=4)break;
@@ -205,7 +205,7 @@ try {
         }
         if((g.ui.inventory.lumber||0)<4||(g.ui.inventory.ivy||0)<2||(g.ui.inventory.nail||0)<2)throw new Error('raft collection incomplete: '+JSON.stringify({lumber:g.ui.inventory.lumber||0,ivy:g.ui.inventory.ivy||0,nail:g.ui.inventory.nail||0,trees:g.trees.trees.length,felled:g.trees.trees.filter(t=>t.isFelled).length,drops:g.trees.droppedItems.map(d=>d.type)}));
         const p=g.dockShipEntity?.slipwayAnchor;
-        if(p)interact(p);
+        if(p){for(let attempt=0;attempt<10&&!g.story.raftBuilt;attempt++)interact(p);}
         return 'gathered raft materials and used shipyard';
       }
       if(id==='rescue_partner'||id==='care_partner') {

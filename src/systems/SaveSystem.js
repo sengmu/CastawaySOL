@@ -18,15 +18,17 @@ export class SaveSystem {
     this.lastSavedTimestamp = null;
     this.autoSaveInterval = null;
 
-    // 监听窗口卸载自动保存
-    if (typeof window !== 'undefined') {
+    // 监听窗口卸载自动保存（宿主环境可能没有完整的 window/document，如 Node 测试脚手架，逐项守卫）
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('beforeunload', () => {
         this.saveGame('unload');
       });
       window.addEventListener('pagehide', () => this.saveGame('pagehide'));
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') this.saveGame('background');
-      });
+      if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') this.saveGame('background');
+        });
+      }
     }
   }
 

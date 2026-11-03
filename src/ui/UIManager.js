@@ -525,6 +525,7 @@ export class UIManager {
       .profile-facts strong, .profile-stats strong { font-size:14px; overflow-wrap:anywhere; }
       .profile-wallet { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-radius:12px; background:#fffdf6; border:1px solid #ead9b9; font-size:13px; }
       .profile-wallet button { min-height:44px; flex:none; border:0; border-radius:10px; padding:0 14px; background:#52694d; color:#fff; font-weight:800; }
+      .profile-wallet button:disabled { opacity:.55; }
       .profile-account { padding:12px; border:1px solid #ead9b9; border-radius:12px; background:#fffdf6; font-size:13px; line-height:1.5; }
       .profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; }
       #profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
@@ -2963,6 +2964,8 @@ export class UIManager {
           <div><span>💧 水分</span><strong id="profile-water"></strong></div>
           <div><span>⚡ 疲劳</span><strong id="profile-fatigue"></strong></div>
         </div>
+        <div class="profile-section-title">每日签到</div>
+        <div class="profile-wallet"><span id="profile-checkin-state"></span><button type="button" id="profile-checkin-action">领取 +5 算力代币</button></div>
         <div class="profile-section-title">钱包</div>
         <div class="profile-wallet"><span id="profile-wallet-state"></span><button type="button" id="profile-wallet-action"></button></div>
         <div id="profile-account-panel" style="display:none"><div class="profile-section-title">账号与存档</div>
@@ -2982,6 +2985,40 @@ export class UIManager {
     const walletButton = body.querySelector('#profile-wallet-action');
     walletButton.textContent = walletConnected ? '查看钱包' : '连接钱包';
     walletButton.addEventListener('click', () => this.openSolanaModal());
+    const saveSystem = game?.saveSystem;
+    const checkinState = body.querySelector('#profile-checkin-state');
+    const checkinButton = body.querySelector('#profile-checkin-action');
+    const checkinDay = Number.isFinite(survival?.day) ? survival.day : 0;
+    const checkinClaimed = !!saveSystem?.hasClaimedCheckin?.(checkinDay);
+    if (!saveSystem?.claimDailyCheckin) {
+      checkinState.textContent = '签到暂不可用';
+      checkinButton.disabled = true;
+    } else if (checkinClaimed) {
+      checkinState.textContent = `第 ${checkinDay} 天签到已领取`;
+      checkinButton.textContent = '今日已领取';
+      checkinButton.disabled = true;
+    } else {
+      checkinState.textContent = '完成今日生存打卡，领取 +5 算力代币';
+      checkinButton.addEventListener('click', async () => {
+        checkinButton.disabled = true;
+        checkinButton.textContent = '签名确认中…';
+        const res = await solanaBridge.signSurvivalCheckin(checkinDay, survival?.steps);
+        if (!res?.success) {
+          this.showToast(`打卡未完成: ${res?.message || '用户取消'}`, 'medium');
+          this.openProfileModal();
+          return;
+        }
+        if (!saveSystem.claimDailyCheckin(checkinDay)) {
+          this.showToast('今日已领取或存档失败', 'medium');
+          this.openProfileModal();
+          return;
+        }
+        this.showToast(res.hardwareSigned
+          ? `🌟 恭喜！已使用 Seeker 硬件私钥完成第 ${checkinDay} 天链上打卡！(+5 算力代币)`
+          : `✅ 完成今日打卡存证！(+5 算力代币)`, 'medium');
+        this.openProfileModal();
+      });
+    }
     const account = game?.accountService;
     const accountPanel = body.querySelector('#profile-account-panel');
     if (account?.configured && walletConnected && !account.syncEnabled) accountPanel.style.display = '';
