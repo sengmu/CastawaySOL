@@ -790,7 +790,7 @@ export class UIManager {
         .survival-warning { padding: 4px 6px; margin-top: 4px; font-size: 10px; }
       }
     `;
-    // UI 第一步优化（2026-10-31）：手机横屏优先：触控尺寸 ≥44px、手机 HUD 最小字号（集中在这一层）
+    // UI 第一步优化（2026-10-31）：竖屏 Seeker 优先（设计/验收基准 390×844，Seeker 约 411×914）：触控尺寸 ≥44px、手机 HUD 最小字号（集中在这一层）。横屏仅兼容。
     style.textContent += `
       .hud-nav-btn { min-width: 44px; min-height: 44px; justify-content: center; }
       .hud-nav-secondary .hud-nav-btn { justify-content: flex-start; font-size: 13px; }
@@ -801,7 +801,7 @@ export class UIManager {
       .modal-close-btn::after { content: ''; position: absolute; inset: -6px; }
       .gauge-drinkable, .survival-water-row { cursor: pointer; }
       .quick-slot { min-height: 44px; }
-      /* 标准设备 Solana Seeker 横屏约 914x411（DPR 2.625），兜底 844x390：按横屏低高度匹配，而不是 max-width 900 */
+      /* 竖屏 Seeker 优先：标准竖屏约 411×914（DPR 2.625），设计/验收基准 390×844。下面只服务横屏兼容（矮横屏），按低高度匹配，不把 914×411 当作主规格。 */
       @media (orientation: landscape) and (max-height: 500px) {
         /* 安全区：左右至少 24px，避开刘孔与圆角；四角不贴按钮 */
         .top-dashboard { left: max(24px, var(--sal, 0px)); top: max(8px, var(--sat, 0px)); }
@@ -2086,7 +2086,8 @@ export class UIManager {
     this.initLedgerDrawer();
   }
 
-  // 移动端全屏沉浸与横屏锁定切换
+  // 全屏沉浸。竖屏 Seeker 优先（设计/验收基准 390×844，Seeker 约 411×914），横屏仅兼容。
+  // 不调用 screen.orientation.lock：lock('landscape') 会钉死横屏，lock('portrait') 会禁掉横屏。
   toggleFullscreen() {
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || false;
     const docEl = document.documentElement;
@@ -2096,9 +2097,7 @@ export class UIManager {
       if (req) {
         req.call(docEl).then(() => {
           this.showToast('📱 已开启全屏沉浸式探索模式', 'medium');
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-          }
+          this.preferPortraitWithoutLock();
         }).catch(() => {
           this.showToast('提示：可将本游戏添加到手机桌面主屏幕以开启最佳原生全屏体验', 'medium');
         });
@@ -2108,12 +2107,20 @@ export class UIManager {
       if (exit) {
         exit.call(document).then(() => {
           this.showToast('已退出全屏', 'medium');
-          if (screen.orientation && screen.orientation.unlock) {
-            try { screen.orientation.unlock(); } catch (e) {}
-          }
+          this.preferPortraitWithoutLock();
         }).catch(() => {});
       }
     }
+  }
+
+  // 竖屏优先且横屏可兼容：只尝试解开已有方向锁，让手机回到自然竖屏。失败静默，不打断全屏。
+  preferPortraitWithoutLock() {
+    try {
+      const orientation = typeof screen !== 'undefined' ? screen.orientation : null;
+      if (!orientation || typeof orientation.unlock !== 'function') return;
+      const pending = orientation.unlock();
+      if (pending && typeof pending.catch === 'function') pending.catch(() => {});
+    } catch (e) {}
   }
 
   updateFullscreenBtn() {

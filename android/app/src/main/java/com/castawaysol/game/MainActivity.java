@@ -1,5 +1,6 @@
 package com.castawaysol.game;
 
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -11,8 +12,15 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    private boolean initialPortraitReleased = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 冷启动先请求正向竖屏，保证默认首帧是竖屏。
+        // manifest 为 unspecified：首帧获得焦点后再交回系统，横屏仍可旋转。
+        if (savedInstanceState == null) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
         super.onCreate(savedInstanceState);
         setupFullscreen();
     }
@@ -26,9 +34,18 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
+        if (!hasFocus) return;
+        setupFullscreen();
+        releaseInitialPortraitLock();
+    }
+
+    private void releaseInitialPortraitLock() {
+        if (initialPortraitReleased) return;
+        initialPortraitReleased = true;
+        getWindow().getDecorView().post(() -> {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
             setupFullscreen();
-        }
+        });
     }
 
     private void setupFullscreen() {
