@@ -2607,14 +2607,15 @@ export class UIManager {
     const next = formatKeyHints(text).replace(/^🚩\s*/, '');
     if (textEl) textEl.textContent = next;
     const story = window.__game?.story;
-    const stageKey = story ? `${story.currentChapterId}:${story.currentStepIndex}` : next;
+    const stageKey = story ? `${story.currentChapterId}:${story.currentStepIndex}:${story.isCompleted ? 'done' : 'open'}` : next;
     if (this._objectiveHintKey === stageKey) return;
     this._objectiveHintKey = stageKey;
     clearTimeout(this._objectiveHideTimer);
-    this._objectiveVisibleUntil = hasText ? Date.now() + 5000 : 0;
+    const stickyObjective = hasText && !!(story && story.isCompleted);
+    this._objectiveVisibleUntil = hasText ? (stickyObjective ? Infinity : Date.now() + 5000) : 0;
     if (container) {
       container.style.display = hasText ? '' : 'none';
-      if (hasText) this._objectiveHideTimer = setTimeout(() => {
+      if (hasText && !stickyObjective) this._objectiveHideTimer = setTimeout(() => {
         container.style.display = 'none';
       }, 5000);
     }
