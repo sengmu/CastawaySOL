@@ -191,7 +191,7 @@
     filter: none !important;
   }
   .quest-card-container {
-    display: block !important;
+    display: block;
     position: fixed !important;
     top: calc(var(--sat, 0px) + 110px) !important;
     left: max(10px, var(--sal, 0px)) !important;
@@ -323,8 +323,8 @@
     white-space: nowrap;
   }
   .mobile-action-zone .aux-btn.ctx-hidden { display: none !important; }
-  #btn-open-inv { bottom: 118px !important; }
-  #btn-quick-run { bottom: 66px !important; }
+  .mobile-action-zone #btn-open-inv { left: 28px !important; bottom: 108px !important; }
+  .mobile-action-zone #btn-quick-run { left: 92px !important; bottom: 108px !important; }
   #btn-quick-run > .clay-icon { opacity: 0 !important; }
   #btn-quick-run::after {
     content: '';
@@ -726,6 +726,36 @@
 }
 
 /* 共振减负修正：竖屏操作行换行，确认钮整行单行 */
+@media (orientation: portrait) {
+  body .top-dashboard { height:72px!important; }
+  body .portrait-capsule-wrapper, body .portrait-survival-strip { height:72px!important; gap:0!important; }
+  body .portrait-survival-strip::after { display:none!important; }
+  body .strip-row-bottom { height:26px!important; padding:0 8px!important; gap:8px!important; }
+  body .strip-row-bottom > * + * { border:0!important; }
+  body .strip-row-bottom .strip-stat { height:24px!important; padding:0!important; }
+  body .strip-row-bottom .strip-stat::before { display:none!important; }
+  body .strip-row-bottom .strip-stat::after { height:4px; left:25px; right:2px; bottom:9px; background:linear-gradient(to right,var(--meter-color) var(--fill,70%),#fff8e0aa var(--fill,70%)); }
+  body .strip-row-bottom .strip-meter-icon { top:2px; left:0; width:20px; height:20px; }
+  body .strip-subline { gap:3px!important; }
+  body .strip-subline .strip-weather-copy { flex-direction:row; gap:3px; }
+  body .strip-subline .strip-sub-weather { display:none; }
+  body .strip-subline .strip-sub-day { font-size:10px!important; color:#fff8e3!important; text-shadow:0 1px 3px #263d28; }
+  body .strip-row-bottom .strip-low, body .strip-row-bottom .strip-zero { background:#a73838aa; border-radius:8px; }
+  body #quest-card-container { top:calc(var(--sat,0px) + 84px)!important; }
+}
+@media (orientation: portrait) {
+  .top-dashboard { height:86px!important; }
+  .portrait-capsule-wrapper, .portrait-survival-strip { height:86px!important; gap:4px!important; }
+  .portrait-survival-strip::before { height:44px; }
+  .portrait-survival-strip::after { top:48px; height:36px; }
+  .strip-row-top { height:44px!important; }
+  .strip-row-bottom { height:36px!important; }
+  .portrait-protagonist-avatar { width:38px; height:38px; }
+  .top-right-group .hud-nav-btn { height:44px!important; }
+  .bottom-quick-bar .quick-slot-empty { opacity:.22; box-shadow:none!important; }
+  .mobile-action-zone .aux-btn .clay-icon, .mobile-action-zone .aux-btn .clay-nav-icon { object-fit:contain; filter:none; }
+  .mobile-action-zone .aux-btn .aux-btn-label { font-size:10px!important; line-height:1.1; }
+}
 @media (orientation: portrait) {
   .modal-card.rig-page .res-root > div:nth-child(3) > div:nth-child(2) { flex-wrap: wrap; }
   .modal-card.rig-page #btn-res-commit { flex: 1 1 100% !important; }

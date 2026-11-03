@@ -30,7 +30,13 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (!hasFocus) return;
+        if (!hasFocus) {
+            // Forward real Android focus loss for MWA wallet launch detection.
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().evaluateJavascript("window.dispatchEvent(new Event('blur'))", null);
+            }
+            return;
+        }
         setupFullscreen();
     }
 

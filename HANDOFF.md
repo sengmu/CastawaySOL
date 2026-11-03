@@ -686,3 +686,24 @@ Three.js实际几何采样检查所有布局锚点、出生到营火/帐篷/码�
    - **实际验证**：无头 Chrome CDP 在 890×400（横屏）与 400×890（竖屏）下完成全部 13 项修复的 DOM/几何断言与截图目视核验（控制台错误 0 条、空纹理警告 0 条）；合并后复测 `verify-mainline-spine`、`verify-ship-upgrade-system`、`verify-g3-economy-gate`、`verify-a1-ledger-ui` 及 `tools/verify-golden-path.mjs`（序章至第六章全流程）100% 通过；完成 `npm run build:android` 与 Gradle `assembleDebug`，最新安装包已归档至 `E:\CastawaySOL\apks\CastawaySOL-v1.0.28-debug.apk`。
    - **未验证**：打包完成时 Seeker 手机 USB 连接断开（`adb devices` 为空），`v1.0.28` APK 尚未写入真机；Seeker 真机物理手指长时实操手感、刘海/挖孔安全区实机观感、MWA / Seed Vault 真机硬件钱包签名唤起及真实链上主网支付均未验证（按红线未开启主网支付测试）。
 
+
+## Release 专用安全配置（2026-11-03）
+新增 android/app/src/release/AndroidManifest.xml 与 assets/capacitor.config.json，使用 Android release source set 覆盖调试配置：关闭明文流量、混合内容、WebView 调试。debug 配置保留。当前本地 HEAD=8b166e8（1.0.30），方向实际为 sensorPortrait；Notion 中 unspecified 的说明已过时。
+验证：npm run build 成功（主包约 2.12 MB，仍有分包警告）；Gradle mergeReleaseAssets/processReleaseMainManifest 因本环境缺 JAVA_HOME/java 未执行成功，尚未验证最终 APK 中配置合并。未签名、未安装、未提交商店。后续需在有 JDK 的环境完成 release 合并与 APK 检查，并做 MWA 真机验证。
+
+## MWA 真机连接误报修复（2026-11-03）
+Seeker v1.0.30 日志确认钱包 MWABottomSheetActivity 启动且 WebSocket server 开始监听，但网页 3 秒后误报未安装钱包。SDK 使用 window.blur 检测启动；旧补丁靠 listener.toString 的函数名识别，压缩后不可靠。移除该全局监听劫持，改由 MainActivity.onWindowFocusChanged 在真实失焦时派发 WebView blur。build:android 与 assembleDebug 成功，adb install -r 覆盖安装成功；未清除存档。仍需用户完成钱包授权，连接/签名闭环尚未验收。保持 1.0.30 版本号用于本地修复验证。
+2026-11-03 MWA 后续：失焦修复后真机错误推进为 identity.icon must be a relative URI，已将 appIdentity.icon 改为 icon-192.png；build:android、assembleDebug 及 adb install -r 成功。仍待用户授权验证，未宣称连接成功。
+2026-11-03 用户确认真机可拉起钱包（尚非完整签名/交易验收）。按要求精简 openSolanaModal：仅可用真实钱包、地址、复制、断连；移除网络选择、空投、游客入口、测试余额、签到及认证宣传。保留 Devnet 底层配置，未启用主网。连接时禁用重复点击并处理异常。build:android/assembleDebug 成功，已覆盖安装真机；界面观感待用户检查。
+2026-11-03 修复钱包精简界面中文被命令管道替换为问号的问题；使用直接补丁恢复。构建与 Gradle 通过，并从最终 APK 解压校验连接、复制等中文标签存在，覆盖安装真机成功。
+2026-11-03 钱包重连修复：检查已安装 SDK 源码发现 async connect() 未 return/await 内部 #connect，旧调用立即落到游客兜底，授权与游戏状态脱节。MWA 分支改为在调用前订阅 connect/error/disconnect 并等待结果，清理监听，90 秒超时。构建、assembleDebug 与覆盖安装成功；断开后重连仍需真机授权验收。
+2026-11-03 菜单关闭修复：抽屉顶部新增 48x44 关闭按钮，支持 Escape；移除 setDrawer 相同状态提前返回，确保关闭操作始终清理遮罩、body 类与 aria-expanded。build:android、assembleDebug、覆盖安装成功；真机触控关闭待验收。
+2026-11-03 菜单布局整理：按营地与制作/账户与帮助/偏好设置分组，缩短入口名称，奶油底色统一按钮与设置分段，菜单宽度340px/88vw，统一48px功能触控与44px设置触控，固定顶部关闭，横屏使用同一列滚动避免旧网格覆盖。build:android/assembleDebug/覆盖安装成功；实际真机视觉与触控待验收。
+2026-11-03 按用户确认将主菜单改为全屏浅色面板：100vw/100dvh、两列功能卡片、跨列分组和设置、固定顶部关闭，宽屏限制内容宽度并保持滚动。构建、Android debug 打包和覆盖安装成功，存档保留；真机全屏布局及关闭手感待验收。
+2026-11-03 序章提示改为每条显示6秒后隐藏，相同阶段与文案重复更新不重新显示；进入新步骤重新计时，空提示清理定时器。仅隐藏UI，不改变教学或任务进度。前端构建、Android打包和覆盖安装成功，真机提示时长待验收。
+2026-11-03 根据用户截图纠正提示目标：圈出的是 quest-card-container 顶部任务条而非 onboarding-card。updateObjective 改为任务文案变化时显示6秒后隐藏整个容器，相同文案更新不续时；保留 currentQuest 与任务进度。构建/Android打包/覆盖安装成功，真机计时效果待验收。
+2026-11-03 按用户图2调整竖屏背包与疾跑：从左侧纵排改为互动上方横排，left=28/92px、bottom=108px；跳跃和互动位置保留。构建及Android打包、覆盖安装成功；真机与参考图对照待验收。
+2026-11-03 HUD精简：竖屏顶部96/98px缩至86px，头像38px、顶排44px/底排36px，空快捷槽透明度0.22，辅助图标统一contain与标签字号；保留已确认按钮位置。菜单新增当前任务回看弹窗，使用textContent展示，不影响任务推进。构建、Android打包、覆盖安装成功。手机通知面板遮挡，真机视觉/触控尚未验收。
+2026-11-03 顶部信息减负：移除生存第二行整条底板与常驻标签，改为天气/日期与三项图标细条，顶部总高72px；点击头像显示真实生存数值。任务提示按story章节/步骤去重而非动态文案，显示5秒后隐藏，同阶段刷新不续时。build:android、assembleDebug、覆盖安装成功；真机视觉与5秒消失待验收。
+2026-11-03 任务条常驻根因已真机确认：inline display=none 而 computed=block，横竖屏CSS display:block!important覆盖定时隐藏。移除两处important，并防止账本关闭恢复过期任务条。构建、打包、覆盖安装通过。Seeker WebView实际验证：显示block→5.5秒后none→同阶段再次update仍none；验证前亦为none。未改任务进度。
+2026-11-03 GitHub交付前检查：本地与origin/main基线一致，diff --check通过；使用已找到JDK完成release资源与manifest合并，Gradle成功，替代此前缺JDK的阻断记录。release真机钱包仍未验收，关闭混合内容/明文后的MWA兼容性需单独验证。

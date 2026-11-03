@@ -106,7 +106,7 @@
   .dashboard-panel .canteen-dots { display: none !important; }
 
   .quest-card-container {
-    display: block !important;
+    display: block;
     position: fixed !important;
     top: calc(max(16px, var(--sat, 0px)) + 84px) !important;
     left: max(22px, var(--sal, 0px)) !important;
