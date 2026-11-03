@@ -11,13 +11,13 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
 
+        <!-- 竖屏优先、横屏可兼容。unspecified 不锁轴向：sensorPortrait 会禁横屏，user 会跟随用户已锁的横屏。冷启动默认竖屏见 MainActivity。 -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            <!-- 竖屏优先、横屏可兼容。unspecified 不锁轴向：sensorPortrait 会禁横屏，user 会跟随用户已锁的横屏。冷启动默认竖屏见 MainActivity。 -->
             android:screenOrientation="unspecified"
             android:exported="true">
 
