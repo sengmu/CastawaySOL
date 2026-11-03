@@ -660,6 +660,19 @@ export class SolanaBridge {
     }
   }
 
+  async signAccountChallenge(message) {
+    if (!this.isConnected || this.isGuest || !this.walletAddress || !message?.includes(`Wallet: ${this.walletAddress}\n`)) {
+      throw new Error('请先连接对应的钱包');
+    }
+    const bytes = new TextEncoder().encode(message);
+    let signature;
+    if (this.isMWA && this.adapter?.connected) signature = await this.adapter.signMessage(bytes);
+    else if (window.solana?.signMessage) signature = (await window.solana.signMessage(bytes, 'utf8')).signature;
+    else throw new Error('当前钱包不支持消息签名');
+    if (!(signature instanceof Uint8Array) || signature.length !== 64) throw new Error('钱包签名格式无效');
+    return btoa(String.fromCharCode(...signature));
+  }
+
   saveCheckinRecord(record) {
     try {
       if (typeof localStorage === 'undefined') return;

@@ -523,6 +523,11 @@ export class UIManager {
       .profile-facts strong, .profile-stats strong { font-size:14px; overflow-wrap:anywhere; }
       .profile-wallet { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-radius:12px; background:#fffdf6; border:1px solid #ead9b9; font-size:13px; }
       .profile-wallet button { min-height:44px; flex:none; border:0; border-radius:10px; padding:0 14px; background:#52694d; color:#fff; font-weight:800; }
+      .profile-account { padding:12px; border:1px solid #ead9b9; border-radius:12px; background:#fffdf6; font-size:13px; line-height:1.5; }
+      .profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; }
+      #profile-account-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+      #profile-account-actions button { min-height:44px; border:0; border-radius:10px; padding:0 12px; background:#52694d; color:white; font-weight:800; }
+      #profile-account-actions button:disabled { opacity:.55; }
       .profile-note { padding:0 2px 4px; }
 
       /* 双栏横屏布局通用容器 */
@@ -2953,7 +2958,9 @@ export class UIManager {
         </div>
         <div class="profile-section-title">钱包</div>
         <div class="profile-wallet"><span id="profile-wallet-state"></span><button type="button" id="profile-wallet-action"></button></div>
-        <div class="profile-note">游戏进度保存在本机。钱包连接不等于玩家账号注册。</div>
+        <div class="profile-section-title">账号与存档</div>
+        <div class="profile-account"><span id="profile-account-state"></span><div id="profile-account-actions"></div></div>
+        <div class="profile-note">绑定账号需要钱包签名，不会发起链上交易。选择云端恢复前会保留当前本机存档备份。</div>
       </div>`;
     const set = (id, value) => { body.querySelector(`#${id}`).textContent = String(value); };
     set('profile-day', `第 ${stat(survival?.day)} 天`);
@@ -2968,6 +2975,34 @@ export class UIManager {
     const walletButton = body.querySelector('#profile-wallet-action');
     walletButton.textContent = walletConnected ? '查看钱包' : '连接钱包';
     walletButton.addEventListener('click', () => this.openSolanaModal());
+    const account = game?.accountService;
+    const actions = body.querySelector('#profile-account-actions');
+    const addAction = (label, action) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try { await action(); this.openProfileModal(); }
+        catch (error) { this.showToast(error.message || '操作失败，本机存档未变', 'medium'); button.disabled = false; }
+      });
+      actions.appendChild(button);
+    };
+    if (!account?.configured) set('profile-account-state', '云端账号服务尚未配置；当前仍为本机存档');
+    else if (!account.linked) {
+      set('profile-account-state', walletConnected ? '钱包已连接，尚未签名绑定账号' : '请先连接钱包');
+      if (walletConnected) addAction('签名绑定账号', () => account.connect());
+    } else {
+      set('profile-account-state', `已绑定 ${account.address.slice(0, 4)}…${account.address.slice(-4)} · 云端版本 ${account.revision}`);
+      addAction('上传本机存档', async () => {
+        if (account.remoteRecord && !window.confirm('云端已有存档。确认用本机进度覆盖云端？')) return;
+        await account.upload();
+      });
+      if (account.remoteRecord) addAction('恢复云端存档', async () => {
+        if (!window.confirm('确认恢复云端进度？当前本机进度会先保存到本地备份。')) return;
+        await account.restore();
+      });
+    }
     this.modalBackdrop.style.display = 'flex';
   }
 

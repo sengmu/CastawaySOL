@@ -33,6 +33,7 @@ import { QuarryIsleScene } from './island/QuarryIsleScene.js';
 import { MistReefIsleScene } from './island/MistReefIsleScene.js';
 import { WildlifeCombatSystem } from './systems/WildlifeCombatSystem.js';
 import { SaveSystem } from './systems/SaveSystem.js';
+import { AccountService } from './core/AccountService.js';
 import { ShopManager } from './ui/ShopManager.js';
 import { solanaBridge } from './core/SolanaBridge.js';
 import { TREASURY_ADDRESS } from './config/payment.js';
@@ -160,6 +161,7 @@ class Game {
 
     // 10.8 引入版本化安全存档系统 (SaveSystem v1)
     this.saveSystem = new SaveSystem(this);
+    this.accountService = new AccountService(this);
 
     // 10.9 商业化特权与 Solana 商城系统 (接入官方收款地址配置)
     this.shopManager = new ShopManager(this);

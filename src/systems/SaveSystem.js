@@ -381,6 +381,7 @@ export class SaveSystem {
       const jsonStr = JSON.stringify(snapshot);
       localStorage.setItem(SAVE_KEY_PRIMARY, jsonStr);
       this.lastSavedTimestamp = snapshot.timestamp;
+      this.game.accountService?.queueUpload(snapshot);
 
       // 同时兼容同步家具到旧版键位，防止老逻辑丢失
       if (snapshot.furniture && snapshot.furniture.length > 0) {
@@ -722,6 +723,8 @@ export class SaveSystem {
       if (!this.validateSaveData(migrated)) {
         return { success: false, error: 'Validation failed for imported save data' };
       }
+      const currentRaw = localStorage.getItem(SAVE_KEY_PRIMARY);
+      if (currentRaw) localStorage.setItem(SAVE_KEY_BACKUP, currentRaw);
       this.applyDataToGame(migrated);
       localStorage.setItem(SAVE_KEY_PRIMARY, JSON.stringify(migrated));
       return { success: true, data: migrated };

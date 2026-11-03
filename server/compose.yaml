@@ -1,0 +1,12 @@
+services:
+  account-api:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18787:8787"
+    volumes:
+      - ./account-data:/data
+    environment:
+      ACCOUNT_ORIGINS: ${ACCOUNT_ORIGINS:-https://localhost,http://localhost,https://musen-ai.com}
