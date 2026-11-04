@@ -69,7 +69,7 @@ export class InteractionFeedbackSystem {
     // 预分配固定设施世界坐标，彻底消除主循环 GC 垃圾回收瞬时卡顿
     this.staticPos = {
       campfire: new THREE.Vector3(ISLAND_LAYOUT.campfire[0], 0.05, ISLAND_LAYOUT.campfire[2]),
-      chest: new THREE.Vector3(-14.5, 0.05, 23.5),
+      chest: new THREE.Vector3(ISLAND_LAYOUT.chest[0], 0.05, ISLAND_LAYOUT.chest[2]),
       tent: new THREE.Vector3(ISLAND_LAYOUT.tent[0], 0.05, ISLAND_LAYOUT.tent[2]),
       raft: new THREE.Vector3(ISLAND_LAYOUT.raft[0], 0.05, ISLAND_LAYOUT.raft[2]),
       playerWater: new THREE.Vector3(),
@@ -379,7 +379,7 @@ export class InteractionFeedbackSystem {
     }
 
     // 5.5 营地坚固储物箱
-    const distToChest = Math.hypot(playerPos.x - (-14.5), playerPos.z - 23.5);
+    const distToChest = Math.hypot(playerPos.x - ISLAND_LAYOUT.chest[0], playerPos.z - ISLAND_LAYOUT.chest[2]);
     if (distToChest < 2.5) {
       return {
         id: 'camp_chest',

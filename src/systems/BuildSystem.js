@@ -256,7 +256,7 @@ export class BuildSystem {
     const anchors = [
       { name: '露营主帐篷', x: ISLAND_LAYOUT.tent[0], z: ISLAND_LAYOUT.tent[2], radius: 2.5 },
       { name: '营地中央篝火', x: ISLAND_LAYOUT.campfire[0], z: ISLAND_LAYOUT.campfire[2], radius: 2.5 },
-      { name: '营地原生储物箱', x: -14.5, z: 23.5, radius: 2.5 },
+      { name: '营地原生储物箱', x: ISLAND_LAYOUT.chest[0], z: ISLAND_LAYOUT.chest[2], radius: 2.5 },
       { name: '码头船只与栈桥', x: ISLAND_LAYOUT.raft[0], z: ISLAND_LAYOUT.raft[2], radius: 2.5 },
       { name: '浅滩船坞码头', x: ISLAND_LAYOUT.pier[0], z: ISLAND_LAYOUT.pier[2], radius: 2.5 },
       { name: '沙滩求救信标', x: ISLAND_LAYOUT.sos[0], z: ISLAND_LAYOUT.sos[2], radius: 2.5 }

@@ -2215,10 +2215,10 @@ class Game {
       if (ISLAND_LAYOUT.raft) this.contactShadows.addStatic(ISLAND_LAYOUT.raft[0], ISLAND_LAYOUT.raft[1], ISLAND_LAYOUT.raft[2], 2.6, 1.8);
       if (ISLAND_LAYOUT.sos) this.contactShadows.addStatic(ISLAND_LAYOUT.sos[0], ISLAND_LAYOUT.sos[1], ISLAND_LAYOUT.sos[2], 3.2, 1.6);
       // 3b. 开场营地道具（坐标与 OpeningAssets.populateOpening 保持一致，此前漏注册导致道具无接地阴影、视觉悬空）
-      this.contactShadows.addStatic(-14.5, 0, 23.5, 0.75, 0.8);    // 储物木箱
-      this.contactShadows.addStatic(-17, 0, 25.5, 0.8, 1.0);       // 睡袋
-      this.contactShadows.addStatic(-20, 0, 23, 1.2, 1.2);         // 工作台
-      this.contactShadows.addStatic(-20, 0, 25, 0.6, 0.45);        // 木料堆
+      this.contactShadows.addStatic(ISLAND_LAYOUT.chest[0], ISLAND_LAYOUT.chest[1], ISLAND_LAYOUT.chest[2], 0.75, 0.8);    // 储物木箱
+      this.contactShadows.addStatic(-15.9, 0, 27.6, 0.8, 1.0);       // 睡袋
+      this.contactShadows.addStatic(-21.9, 0, 26.8, 1.2, 1.2);         // 工作台
+      this.contactShadows.addStatic(-20.7, 0, 29.3, 0.6, 0.45);        // 木料堆
       this.contactShadows.addStatic(-19, -0.15, 39.5, 1.5, 2.6);   // 沉船
       this.contactShadows.addStatic(-15.5, -0.15, 39.5, 0.5, 0.55); // 沙滩木箱
       this.contactShadows.addStatic(-15.8, -0.15, 40.5, 0.45, 0.45); // 木桶

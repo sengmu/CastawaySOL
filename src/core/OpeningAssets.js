@@ -64,15 +64,16 @@ export async function populateOpening(parent) {
     placeOpeningAsset(parent, 'pirate', 'ship-wreck', [-19, -0.15, 39.5], 4.5, 0.2),
     placeOpeningAsset(parent, 'pirate', 'crate', [-15.5, -0.15, 39.5], 0.8, -0.1),
     placeOpeningAsset(parent, 'pirate', 'barrel', [-15.8, -0.15, 40.5], 0.65, 0.15),
-    // PILOT（2026-11-04）：营地小屋试点——用自研 AI 生成网格替换 Kenney 帐篷（Pixal3D 单图出网格 → 减面 12,411 面 + 1024 贴图版）。
+    // PILOT（2026-11-04）：营地小屋试点——用自研 AI 生成网格替换 Kenney 帐篷（Pixal3D 单图出网格 → gltf-transform 保材质减面 48,934 面 + placeModelAsset 色彩校正）。
+    // 2026-11-04 晚：小屋 4.0 宽比帐篷 2.8 大一圈，原道具坐标把它贴死（木箱/工作台/睡袋零间距），已疏散：储物箱走 ISLAND_LAYOUT.chest 锚点，睡袋/工作台/木料挪到营地南侧与西侧。
     // 锚点与睡眠判定不变（ISLAND_LAYOUT.tent），宽度按模型规范小屋墙宽 4.0；回退：删本行、恢复下一行注释即可。
     placeModelAsset(parent, '/models/custom/cabin.glb', 'cabin', ISLAND_LAYOUT.tent, 4.0, 0.5),
     // placeOpeningAsset(parent, 'survival', 'tent-canvas', ISLAND_LAYOUT.tent, 2.8, 0.5),
-    placeOpeningAsset(parent, 'survival', 'bedroll', [-17, 0, 25.5], 1.5, 0.5, false),
-    placeOpeningAsset(parent, 'survival', 'workbench', [-20, 0, 23], 1.7, 0.5),
-    placeOpeningAsset(parent, 'survival', 'resource-wood', [-20, 0, 25], 1.0, 0.5),
+    placeOpeningAsset(parent, 'survival', 'bedroll', [-15.9, 0, 27.6], 1.5, 0.5, false),
+    placeOpeningAsset(parent, 'survival', 'workbench', [-21.9, 0, 26.8], 1.7, 0.5),
+    placeOpeningAsset(parent, 'survival', 'resource-wood', [-20.7, 0, 29.3], 1.0, 0.5),
     // 营地篝火旁初始坚固储物木箱 (支持玩家开局直接存取材料)
-    placeOpeningAsset(parent, 'pirate', 'crate', [-14.5, 0, 23.5], 1.05, 0.25),
+    placeOpeningAsset(parent, 'pirate', 'crate', ISLAND_LAYOUT.chest, 1.05, 0.25),
   ]);
   results.forEach(result => { if (result.status === 'rejected') console.error('Opening asset load failed', result.reason); });
   return results;
