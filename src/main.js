@@ -2211,7 +2211,7 @@ class Game {
     // 3. 营地关键地标设施 (帐篷、篝火、告示板、大木筏等)
     if (typeof ISLAND_LAYOUT !== "undefined") {
       if (ISLAND_LAYOUT.campfire) this.contactShadows.addStatic(ISLAND_LAYOUT.campfire[0], ISLAND_LAYOUT.campfire[1], ISLAND_LAYOUT.campfire[2], 1.5, 1.5);
-      if (ISLAND_LAYOUT.tent) this.contactShadows.addStatic(ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1], ISLAND_LAYOUT.tent[2], 2.8, 2.2);
+      if (ISLAND_LAYOUT.tent) this.contactShadows.addStatic(ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1], ISLAND_LAYOUT.tent[2], 4.0, 3.9);
       if (ISLAND_LAYOUT.raft) this.contactShadows.addStatic(ISLAND_LAYOUT.raft[0], ISLAND_LAYOUT.raft[1], ISLAND_LAYOUT.raft[2], 2.6, 1.8);
       if (ISLAND_LAYOUT.sos) this.contactShadows.addStatic(ISLAND_LAYOUT.sos[0], ISLAND_LAYOUT.sos[1], ISLAND_LAYOUT.sos[2], 3.2, 1.6);
     }
