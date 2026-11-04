@@ -5,7 +5,26 @@ import { ISLAND_LAYOUT } from './IslandLayout.js';
 const loader = new GLTFLoader();
 
 // 通用 GLB 摆放：按目标宽度等比缩放、XZ 居中、底部落位到 y=0，保留模型自带材质与贴图。
-async function placeGltfAsset(parent, url, name, position, width, rotation = 0, solid = true) {
+
+// 自研模型色彩校正（placeModelAsset 专用）：AI 生成 PBR 资产自带烘焙 AO/贴图，
+// 在本场景 Neutral 色调映射 + 漫反射光照下会比原画明显偏暗，此处按实测档位提亮对齐原画。
+const CUSTOM_GRADE = { toneMapped: false, emissive: 0.85, boost: [1.25, 1.12, 0.9], occ: 0.35 }; // GRADE-LINE
+function applyCustomGrade(mesh) {
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  mats.forEach(mat => {
+    if (!mat || !mat.isMeshStandardMaterial) return;
+    if (CUSTOM_GRADE.toneMapped === false) mat.toneMapped = false;
+    if (CUSTOM_GRADE.emissive > 0 && mat.map) {
+      mat.emissiveMap = mat.map;
+      mat.emissive = new THREE.Color(CUSTOM_GRADE.emissive, CUSTOM_GRADE.emissive, CUSTOM_GRADE.emissive);
+    }
+    if (CUSTOM_GRADE.boost) mat.color.setRGB(CUSTOM_GRADE.boost[0], CUSTOM_GRADE.boost[1], CUSTOM_GRADE.boost[2]);
+    if (typeof CUSTOM_GRADE.occ === 'number' && 'occlusionStrength' in mat) mat.occlusionStrength = CUSTOM_GRADE.occ;
+    mat.needsUpdate = true;
+  });
+}
+
+async function placeGltfAsset(parent, url, name, position, width, rotation = 0, solid = true, grade = false) {
   const { scene } = await loader.loadAsync(url);
   const bounds = new THREE.Box3().setFromObject(scene);
   const size = bounds.getSize(new THREE.Vector3());
@@ -17,6 +36,7 @@ async function placeGltfAsset(parent, url, name, position, width, rotation = 0, 
     if (child.isMesh) {
       child.castShadow = true;
       child.receiveShadow = true;
+      if (grade) applyCustomGrade(child);
       // Preserve supplied PBR materials and palette textures.
     }
   });
@@ -36,7 +56,7 @@ export async function placeOpeningAsset(parent, pack, name, position, width, rot
 
 // 自研模型（非 Kenney 包）：直接给完整 URL。
 export async function placeModelAsset(parent, url, name, position, width, rotation = 0, solid = true) {
-  return placeGltfAsset(parent, url, name, position, width, rotation, solid);
+  return placeGltfAsset(parent, url, name, position, width, rotation, solid, true);
 }
 
 export async function populateOpening(parent) {
