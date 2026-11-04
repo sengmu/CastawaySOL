@@ -60,15 +60,6 @@ export async function placeModelAsset(parent, url, name, position, width, rotati
 }
 
 export async function populateOpening(parent) {
-  // 小屋石基座：Pixal3D 网格底部是弧形碗底（最低点在肚子中央 r≈1.0），可见石圈一圈悬空 0.32-0.53m——
-  // 垫一座石台把缝填平，小屋本体高度与比例不动（下沉/切底都会压坏门高与屋顶比例）。
-  const foundation = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.95, 2.12, 0.52, 24),
-    new THREE.MeshStandardMaterial({ color: 0x83817c, roughness: 0.95, flatShading: true })
-  );
-  foundation.name = 'opening-cabin-foundation';
-  foundation.position.set(ISLAND_LAYOUT.tent[0], 0.23, ISLAND_LAYOUT.tent[2]);
-  parent.add(foundation);
   const results = await Promise.allSettled([
     placeOpeningAsset(parent, 'pirate', 'ship-wreck', [-19, -0.15, 39.5], 4.5, 0.2),
     placeOpeningAsset(parent, 'pirate', 'crate', [-15.5, -0.15, 39.5], 0.8, -0.1),
@@ -76,7 +67,8 @@ export async function populateOpening(parent) {
     // PILOT（2026-11-04）：营地小屋试点——用自研 AI 生成网格替换 Kenney 帐篷（Pixal3D 单图出网格 → gltf-transform 保材质减面 48,934 面 + placeModelAsset 色彩校正）。
     // 2026-11-04 晚：小屋 4.0 宽比帐篷 2.8 大一圈，原道具坐标把它贴死（木箱/工作台/睡袋零间距），已疏散：储物箱走 ISLAND_LAYOUT.chest 锚点，睡袋/工作台/木料挪到营地南侧与西侧。
     // 锚点与睡眠判定不变（ISLAND_LAYOUT.tent），宽度按模型规范小屋墙宽 4.0；回退：删本行、恢复下一行注释即可。
-    placeModelAsset(parent, '/models/custom/cabin.glb', 'cabin', ISLAND_LAYOUT.tent, 4.0, 0.5),
+    // 落位下沉 0.45：网格碗底令可见石圈悬空 0.32-0.53m；整屋按进土里让石圈自半埋贴地——评审定版不加任何外置基座。
+    placeModelAsset(parent, '/models/custom/cabin.glb', 'cabin', [ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1] - 0.45, ISLAND_LAYOUT.tent[2]], 4.0, 0.5),
     // placeOpeningAsset(parent, 'survival', 'tent-canvas', ISLAND_LAYOUT.tent, 2.8, 0.5),
     placeOpeningAsset(parent, 'survival', 'bedroll', [-15.9, 0, 27.6], 1.5, 0.5, false),
     placeOpeningAsset(parent, 'survival', 'workbench', [-21.9, 0, 26.8], 1.7, 0.5),
