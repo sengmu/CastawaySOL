@@ -13,6 +13,12 @@ export class StorySystem {
     this.onboardingStep = 0;
     this.onboardingDismissed = false;
     this.lastOnboardingPosition = null;
+    // 新手任务（步骤 1–6）事实凭据层：真实行为先发生也算数，展示顺序到达时自动满足
+    this.onboardingVersion = 1;
+    this.actionFacts = { movedMeters: 0, gatheredMaterial: false, inventoryOpened: false, ateFood: false, drankWater: false, reachedCampsite: false };
+    this.onboardingWaived = [];   // 旧档迁移豁免的步骤 id（证据不足以区分时豁免，不虚构事实）
+    this.hasEatenFood = false;     // 真实进食（与饮水独立计数，替代旧的合并标记口径）
+    this.hasDrunkWater = false;    // 真实饮水
 
     // 真实主动行为记录标记 (Action-based Milestones)
     this.hasGatheredBranch = false;        // 真实拾取/采集了木棍
@@ -312,10 +318,54 @@ export class StorySystem {
     return ONBOARDING_STEPS[this.onboardingStep];
   }
 
-  _completeOnboardingThrough(stepIndex) {
-    if (this.onboardingDismissed || this.onboardingStep > stepIndex) return;
-    this.onboardingStep = stepIndex + 1;
-    this._refreshOnboarding();
+  get onboardingTotal() {
+    return ONBOARDING_STEPS.length;
+  }
+
+  _isOnboardingStepDone(step) {
+    if (this.onboardingWaived.includes(step.id)) return true;
+    const f = this.actionFacts;
+    switch (step.fact) {
+      case 'movedMeters': return f.movedMeters >= ONBOARDING_MOVE_TARGET;
+      case 'gatheredMaterial': return f.gatheredMaterial;
+      case 'inventoryOpened': return f.inventoryOpened;
+      case 'ateFood': return f.ateFood;
+      case 'drankWater': return f.drankWater;
+      case 'reachedCampsite': return f.reachedCampsite;
+      default: return false;
+    }
+  }
+
+  // 依据事实凭据重算当前任务步：事实先于步骤到达时，到达即自动满足（不再连带跳过未做的步骤）
+  _syncOnboardingStepSilent() {
+    let idx = ONBOARDING_STEPS.findIndex((s) => !this._isOnboardingStepDone(s));
+    if (idx === -1) idx = ONBOARDING_STEPS.length;
+    this.onboardingStep = idx;
+    return idx;
+  }
+
+  _syncOnboardingStep() {
+    const prev = this.onboardingStep;
+    const idx = this._syncOnboardingStepSilent();
+    if (idx !== prev) this._refreshOnboarding();
+    return idx;
+  }
+
+  _recordOnboardingFact(key, value = true) {
+    if (key === 'movedMeters') {
+      if (this.actionFacts.movedMeters >= ONBOARDING_MOVE_TARGET) return;
+      const prev = this.actionFacts.movedMeters || 0;
+      const next = Math.min(ONBOARDING_MOVE_TARGET, prev + value);
+      if (next === prev) return;
+      this.actionFacts.movedMeters = next;
+      if (Math.floor(next) !== Math.floor(prev)) {
+        queueMicrotask(() => this.game?.saveSystem?.saveGame?.('onboarding_progress'));
+      }
+    } else {
+      if (this.actionFacts[key]) return;
+      this.actionFacts[key] = true;
+    }
+    this._syncOnboardingStep();
   }
 
   _refreshOnboarding() {
@@ -335,20 +385,25 @@ export class StorySystem {
   }
 
   onInventoryOpened() {
-    this._completeOnboardingThrough(2);
+    this._recordOnboardingFact('inventoryOpened');
   }
 
   // 帧更新循环：仅检测地理位置到达与明确的状态变更，严禁被动读取背包跳关！
   update(playerPos, inventory, survivalStats) {
-    if (!this.onboardingDismissed && this.onboardingStep === 0 && playerPos) {
+    if (playerPos) {
+      // 新手任务事实采集（与章节推进解耦；跳过提示只关展示，事实继续记录）
       if (this.lastOnboardingPosition) {
         const dx = playerPos.x - this.lastOnboardingPosition[0];
         const dz = (playerPos.z || 0) - this.lastOnboardingPosition[1];
-        if (Math.hypot(dx, dz) >= 0.75) {
-          this._completeOnboardingThrough(0);
-        }
+        const frameDist = Math.hypot(dx, dz);
+        // 累计真实移动距离；单帧跳变过大视为传送/坐标恢复，不计入
+        if (frameDist > 0 && frameDist <= 3) this._recordOnboardingFact('movedMeters', frameDist);
       }
       this.lastOnboardingPosition = [playerPos.x, playerPos.z || 0];
+      if (!this.actionFacts.reachedCampsite && distanceXZ(playerPos, ISLAND_LAYOUT.tent) < 5.0) {
+        this.hasReachedCampsite = true;
+        this._recordOnboardingFact('reachedCampsite');
+      }
     }
     if (this.isCompleted || this.isAdvancing) return;
 
@@ -395,7 +450,7 @@ export class StorySystem {
 
   // 真实采集/拾取了自然资源
   onGatherResource(itemType) {
-    if (itemType === 'tree_branch' || itemType === 'driftwood') this._completeOnboardingThrough(1);
+    if (itemType === 'tree_branch' || itemType === 'driftwood') this._recordOnboardingFact('gatheredMaterial');
     if (this.getCurrentStep()?.id === 'collect_driftwood') {
       if (itemType === 'tree_branch' || itemType === 'driftwood') {
         this.hasGatheredBranch = true;
@@ -406,7 +461,8 @@ export class StorySystem {
 
   // 真实食用了食物
   onConsumeFood(foodId) {
-    this._completeOnboardingThrough(3);
+    this.hasEatenFood = true;
+    this._recordOnboardingFact('ateFood');
     if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
       this.#advanceStep();
@@ -415,7 +471,8 @@ export class StorySystem {
 
   // 真实饮用了淡水泉水或水壶
   onDrinkWater() {
-    this._completeOnboardingThrough(3);
+    this.hasDrunkWater = true;
+    this._recordOnboardingFact('drankWater');
     if (this.getCurrentStep()?.id === 'find_food_water') {
       this.hasConsumedFoodOrWater = true;
       this.#advanceStep();
@@ -623,7 +680,12 @@ export class StorySystem {
       templeUnsealed: this.templeUnsealed,
       endedEndingId: this.endedEndingId,
       onboardingStep: this.onboardingStep,
-      onboardingDismissed: this.onboardingDismissed
+      onboardingDismissed: this.onboardingDismissed,
+      onboardingVersion: this.onboardingVersion,
+      actionFacts: { ...this.actionFacts },
+      onboardingWaived: [...this.onboardingWaived],
+      hasEatenFood: this.hasEatenFood,
+      hasDrunkWater: this.hasDrunkWater
     };
   }
 
@@ -659,19 +721,56 @@ export class StorySystem {
     this.endedEndingId = null;
     // 第六章即成长主线已完成；兼容没有 isCompleted 的旧档。
     this.isCompleted = data.isCompleted === true || this.currentChapterId === 6;
-    if (typeof data.onboardingStep === 'number') this.onboardingStep = Math.max(0, Math.min(ONBOARDING_STEPS.length, data.onboardingStep));
-    else if ((data.currentChapterId || 0) > 0 || (data.currentStepIndex || 0) > 0 || data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite) this.onboardingStep = ONBOARDING_STEPS.length;
-    if (typeof data.onboardingDismissed === 'boolean') this.onboardingDismissed = data.onboardingDismissed;
-    else if ((data.currentChapterId || 0) > 0 || (data.currentStepIndex || 0) > 0 || data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite) this.onboardingDismissed = true;
+    // === 新手任务（步骤 1–6）状态恢复与旧档迁移：只按可信证据恢复，不虚构未发生的动作 ===
+    const savedFacts = (data.actionFacts && typeof data.actionFacts === 'object') ? data.actionFacts : null;
+    if (savedFacts) {
+      this.actionFacts = {
+        movedMeters: Math.max(0, Math.min(ONBOARDING_MOVE_TARGET, Number(savedFacts.movedMeters) || 0)),
+        gatheredMaterial: savedFacts.gatheredMaterial === true,
+        inventoryOpened: savedFacts.inventoryOpened === true,
+        ateFood: savedFacts.ateFood === true,
+        drankWater: savedFacts.drankWater === true,
+        reachedCampsite: savedFacts.reachedCampsite === true
+      };
+      if (Array.isArray(data.onboardingWaived)) this.onboardingWaived = data.onboardingWaived.filter((id) => typeof id === 'string');
+      this.hasEatenFood = data.hasEatenFood === true || this.actionFacts.ateFood;
+      this.hasDrunkWater = data.hasDrunkWater === true || this.actionFacts.drankWater;
+    } else {
+      // 旧档（无 actionFacts）：按旧字段与旧步数计数器映射
+      if (this.hasGatheredBranch) this.actionFacts.gatheredMaterial = true;
+      if (this.hasReachedCampsite) this.actionFacts.reachedCampsite = true;
+      // 旧口径吃喝不分家：合并标记只证明"吃或喝过"，两步一并豁免而不虚构是哪一项
+      if (this.hasConsumedFoodOrWater) this.onboardingWaived = ['eat', 'drink'];
+      const legacyStep = typeof data.onboardingStep === 'number' ? data.onboardingStep : 0;
+      if (legacyStep >= 1) this.actionFacts.movedMeters = ONBOARDING_MOVE_TARGET;
+      if (legacyStep >= 2) this.actionFacts.gatheredMaterial = true;
+      if (legacyStep >= 3) this.actionFacts.inventoryOpened = true;
+      const hadRealProgress = legacyStep >= 4 || (data.currentChapterId || 0) > 0 || this.isCompleted
+        || Boolean(data.hasGatheredBranch || data.hasConsumedFoodOrWater || data.hasReachedCampsite);
+      if (hadRealProgress) {
+        this.actionFacts.movedMeters = ONBOARDING_MOVE_TARGET;
+        this.actionFacts.gatheredMaterial = true;
+        this.actionFacts.inventoryOpened = true;
+        if ((data.currentChapterId || 0) > 0 || this.hasReachedCampsite) this.actionFacts.reachedCampsite = true;
+        if (!this.onboardingWaived.includes('eat')) this.onboardingWaived.push('eat');
+        if (!this.onboardingWaived.includes('drink')) this.onboardingWaived.push('drink');
+      }
+    }
+    this.onboardingDismissed = data.onboardingDismissed === true;
+    // 当前步一律由事实与豁免重算，不再信任旧的单一计数器
+    this.onboardingStep = this._syncOnboardingStepSilent();
     this._renderOnboarding();
   }
 }
 
+const ONBOARDING_MOVE_TARGET = 3;   // 步骤 1：累计有效移动距离（世界单位，约合 3 米）
 const ONBOARDING_STEPS = [
-  { id: 'move', title: '先熟悉移动', text: '拖动左下角摇杆移动。' },
-  { id: 'gather', title: '拾取漂流物', text: '走近发亮的树枝，点按右侧互动按钮拾取。' },
-  { id: 'inventory', title: '查看随身行囊', text: '点按右上角行囊，查看刚捡到的材料和随身食物。' },
-  { id: 'consume', title: '补充体力', text: '在行囊中选择苹果并点按使用；也可以到溪边互动饮水。' }
+  { id: 'move', fact: 'movedMeters', title: '站稳脚步', text: '拖动左下角摇杆，在沙滩上走一走。' },
+  { id: 'gather', fact: 'gatheredMaterial', title: '第一份材料', text: '靠近发亮的树枝或漂流木，点按互动按钮拾取。' },
+  { id: 'inventory', fact: 'inventoryOpened', title: '查看收获', text: '打开底部背包，看看刚拾取的材料。' },
+  { id: 'eat', fact: 'ateFood', title: '吃点东西', text: '在背包中使用一份食物，补充饱食。' },
+  { id: 'drink', fact: 'drankWater', title: '找到淡水', text: '到内陆小溪边互动饮水，或喝一口水壶里的水。' },
+  { id: 'campsite', fact: 'reachedCampsite', title: '找到营地', text: '沿海岸向内陆探索，抵达帐篷营地。' }
 ];
 
 const FREEPLAY_BANNER = '🏝️ 主线完成 · 自由经营：继续挖矿、扩建营地与探索群岛！';

@@ -240,7 +240,7 @@ class Game {
     // 17. 实时联动 Survival Kids 经典主线任务目标 Banner
     if (this.ui) {
       this.ui.updateObjective(this.story.getQuestBannerText());
-      this.ui.updateTutorial(this.story.getOnboardingHint(), this.story.onboardingStep, 4);
+      this.ui.updateTutorial(this.story.getOnboardingHint(), this.story.onboardingStep, this.story.onboardingTotal);
     }
   }
 

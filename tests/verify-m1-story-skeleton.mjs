@@ -91,17 +91,24 @@ console.log('  ✅ 基于 Step ID 的事件流转精准，防跳关守卫完全�
 
 
 // First-run control onboarding follows real actions and is save/skip safe.
+// 2026-11-04 起改为六步事实凭据制（docs/ONBOARDING-QUESTS.md 第一批）：移动按累计距离、吃喝独立凭据、先行事实到达时自动满足。
 const onboarding = new StorySystem(mockGame);
 assert.equal(onboarding.getOnboardingHint().id, 'move', '首次进入先提示移动操作');
 onboarding.update({ x: 0, z: 0 }, {}, {});
 onboarding.update({ x: 1, z: 0 }, {}, {});
-assert.equal(onboarding.getOnboardingHint().id, 'gather', '玩家实际移动后提示拾取');
+onboarding.update({ x: 2, z: 0 }, {}, {});
+onboarding.update({ x: 3, z: 0 }, {}, {});
+assert.equal(onboarding.getOnboardingHint().id, 'gather', '累计实际移动 3 个单位后提示拾取');
 onboarding.onGatherResource('tree_branch');
-assert.equal(onboarding.getOnboardingHint().id, 'inventory', '拾取后提示打开行囊');
+assert.equal(onboarding.getOnboardingHint().id, 'inventory', '拾取后提示打开背包');
 onboarding.onInventoryOpened();
-assert.equal(onboarding.getOnboardingHint().id, 'consume', '打开行囊后提示使用食物');
+assert.equal(onboarding.getOnboardingHint().id, 'eat', '打开背包后提示进食');
 onboarding.onConsumeFood('apple');
-assert.equal(onboarding.getOnboardingHint(), null, '完成真实使用行为后结束引导');
+assert.equal(onboarding.getOnboardingHint().id, 'drink', '进食后提示饮水（吃喝独立凭据）');
+onboarding.onDrinkWater();
+assert.equal(onboarding.getOnboardingHint().id, 'campsite', '饮水后提示前往营地');
+onboarding.update({ x: -17, z: 23 }, {}, {});
+assert.equal(onboarding.getOnboardingHint(), null, '六步全部凭真实行为完成后结束引导');
 
 const resumableOnboarding = new StorySystem(mockGame);
 resumableOnboarding.dismissOnboarding();
@@ -112,5 +119,13 @@ assert.equal(restoredOnboarding.getOnboardingHint(), null, '跳过状态必须�
 
 const actionFirstOnboarding = new StorySystem(mockGame);
 actionFirstOnboarding.onConsumeFood('apple');
-assert.equal(actionFirstOnboarding.getOnboardingHint(), null, '玩家先完成食用时应跳过已完成的引导步骤');
+assert.equal(actionFirstOnboarding.getOnboardingHint().id, 'move', '先行进食只记录凭据，不跳过未做的移动步');
+assert.equal(actionFirstOnboarding.actionFacts.ateFood, true, '先行进食凭据必须被保存');
+actionFirstOnboarding.update({ x: 0, z: 0 }, {}, {});
+actionFirstOnboarding.update({ x: 1, z: 0 }, {}, {});
+actionFirstOnboarding.update({ x: 2, z: 0 }, {}, {});
+actionFirstOnboarding.update({ x: 3, z: 0 }, {}, {});
+actionFirstOnboarding.onGatherResource('tree_branch');
+actionFirstOnboarding.onInventoryOpened();
+assert.equal(actionFirstOnboarding.getOnboardingHint().id, 'drink', '到达进食步时凭据自动满足，直接进入饮水步');
 console.log('\n🎉🎉🎉 [ALL M1 STORY TESTS PASSED] M1 主线与新手引导专项自动化测试 100% 全部通过！');
