@@ -60,6 +60,15 @@ export async function placeModelAsset(parent, url, name, position, width, rotati
 }
 
 export async function populateOpening(parent) {
+  // 小屋石基座：Pixal3D 网格底部是弧形碗底（最低点在肚子中央 r≈1.0），可见石圈一圈悬空 0.32-0.53m——
+  // 垫一座石台把缝填平，小屋本体高度与比例不动（下沉/切底都会压坏门高与屋顶比例）。
+  const foundation = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.95, 2.12, 0.52, 24),
+    new THREE.MeshStandardMaterial({ color: 0x83817c, roughness: 0.95, flatShading: true })
+  );
+  foundation.name = 'opening-cabin-foundation';
+  foundation.position.set(ISLAND_LAYOUT.tent[0], 0.23, ISLAND_LAYOUT.tent[2]);
+  parent.add(foundation);
   const results = await Promise.allSettled([
     placeOpeningAsset(parent, 'pirate', 'ship-wreck', [-19, -0.15, 39.5], 4.5, 0.2),
     placeOpeningAsset(parent, 'pirate', 'crate', [-15.5, -0.15, 39.5], 0.8, -0.1),
