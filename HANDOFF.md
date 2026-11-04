@@ -768,3 +768,13 @@ Seeker v1.0.30 日志确认钱包 MWABottomSheetActivity 启动且 WebSocket ser
 2026-11-03 头像个人主页首轮：将竖屏头像原“生存状态”简表改为个人主页，展示本地冒险档案、真实章节/区域/天数/步数、生存四维及钱包当前连接状态；钱包按钮复用现有钱包界面。明确本机存档与钱包连接不等于玩家账号注册，没有引入虚构玩家 ID 或服务端身份。npm run build、build:android、Gradle assembleDebug 与 diff --check 通过，新 APK 生成于 20:20。打包后 Seeker 从 adb devices 消失，两次重查均为空；install -r 返回 no devices/emulators found，因此本次个人主页版本尚未安装或真机验收，手机上仍是上一次安装的 1.0.30 内容。
 2026-11-03 用户再次连接 Seeker 后，adb 识别 SM02G4061952376；个人主页版本 APK 经 adb install -r 返回 Success，dumpsys 确认 com.castawaysol.game 1.0.30、lastUpdateTime=20:21:03。覆盖安装未清理存档；头像点按、个人主页布局与钱包入口仍待真机实际操作验收。
 2026-11-03 用户真机反馈点击头像被摇杆识别：VirtualJoystick 的 window 级左半屏 touchstart 兜底未排除顶部 HUD，preventDefault 取消头像 click。把 .top-dashboard 加入忽略目标，保留场景左侧盲操；npm run build:android 与 Gradle assembleDebug 成功，adb install -r 覆盖安装成功，dumpsys 显示 lastUpdateTime=20:25:19。尚待用户在真机实际点头像确认个人主页可打开；没有清理存档。
+
+## 2026-11-04 凌晨合流验收与回归修复（Muse 侧，main=2a7f809）
+
+角色界面合流（7f4158c/515f364）后对 ca1d691 做全量验收：构建通过、经济模拟 Day7=44 / Day30=283 锚点不变；发现公司线批次引入 6 项测试红 + 黄金路径中断，已逐项定性修复并推送（ff476e3、c3838b8、2a7f809）。当前状态：全量测试 27/27、黄金路径 passed、构建通过。以下四点请后续迭代勿回退：
+
+1. **SaveSystem 监听守卫（ff476e3）**：构造函数注册 visibilitychange/beforeunload 时必须逐项做 typeof 函数守卫（window/document 在 Node 测试桩中不完整），否则 5 项测试统一 TypeError。
+2. **每日签到入口（ff476e3）**：HUD 精简时签到 UI 被误删，但 SaveSystem.claimDailyCheckin 与 R10b 裁定仍在。入口已恢复到个人主页（openProfileModal）内：钱包签名 signSurvivalCheckin → claimDailyCheckin → +5 算力代币，文案与流程受 verify-r10b-rulings 钉住，勿再移除。
+3. **黄金路径脚本与手动拾取（ff476e3）**：掉落物已改手动拾取（生产行为不变）；验收脚本改走 TreeInteraction.pickupDrop 且回调镜像 main.js（入包成功返回 true）；造船终步船坞交互改为重试至 raftBuilt（单次交互会被对话框/杂物一次性拦截，与 radio_contact 步同一写法）。
+4. **自由经营目标常驻（c3838b8）**：UIManager.updateObjective 的 stageKey 须计入 story.isCompleted；主线完成后目标卡常驻（不再 5 秒自动隐藏）——自由经营横幅是通关后的常驻目标，且黄金路径终局有 DOM 断言把关。
+5. **摇杆锚点裁定（2a7f809，用户 2026-11-04 01:04 拍板「以公司为准」）**：VirtualJoystick 竖屏抬高锚点 max(74, sab + 58) 为定版（贴合左手拇指摆动弧线），生产代码不动；verify-portrait-bounding-boxes 已改钉新锚点，几何口径为「摇杆底边恒高于互动按钮基线 58px」。
