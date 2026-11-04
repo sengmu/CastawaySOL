@@ -84,8 +84,10 @@ export class ModelLoader {
               if (child.isMesh && child.material) {
                 const mats = Array.isArray(child.material) ? child.material : [child.material];
                 mats.forEach(mat => {
-                  mat.metalness = 0.0;
-                  mat.emissive = new THREE.Color(0x000000);
+                  // 仅对具备该属性的材质赋值：MeshBasicMaterial（unlit）没有 emissive，
+                  // 强行挂上会让 three 的 uniforms 刷新读到不存在的 emissive uniform 而逐帧崩溃
+                  if ("metalness" in mat) mat.metalness = 0.0;
+                  if ("emissive" in mat) mat.emissive = new THREE.Color(0x000000);
                 });
               }
             });
