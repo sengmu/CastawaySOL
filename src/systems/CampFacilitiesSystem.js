@@ -62,6 +62,7 @@ export class CampFacilitiesSystem {
   assignJob(villagerId, jobId) {
     if (!this.jobsConfig[jobId]) return false;
     this.residentJobs[villagerId] = jobId;
+    this.game.story?.recordGrowthFact?.('jobAssigned');
     const jobInfo = this.jobsConfig[jobId];
     if (this.game && this.game.ui) {
       this.game.ui.showToast(`📋 成功任命岗位：【${jobInfo.name}】！每日清晨将按新岗位产出！`, 'medium');
@@ -322,6 +323,7 @@ export class CampFacilitiesSystem {
         if (bedCount < 1) {
           reports.push(`  ↳ ⚠️ 艾莉昨夜露宿草地，生产效率降低 50% (请在营地建造【避风原木单人床】保障体能)`);
         }
+        story.recordGrowthFact?.('residentProduced');
       }
     }
 
@@ -342,6 +344,7 @@ export class CampFacilitiesSystem {
       const nailCount = Math.max(1, Math.round(1 * efficiency));
       storage['lumber'] = (storage['lumber'] || 0) + lumberCount;
       storage['nail'] = (storage['nail'] || 0) + nailCount;
+      story?.recordGrowthFact?.('residentProduced');
       reports.push(`👓 【雷蒙德·工坊技师】精密切割与锻打：重型方木 x${lumberCount}、铁钉 x${nailCount}`);
 
       if (bedCount < 2) {
@@ -384,6 +387,7 @@ export class CampFacilitiesSystem {
         const outpostLumber = 1;
         storage['wood_plank'] = (storage['wood_plank'] || 0) + outpostPlanks;
         storage['lumber'] = (storage['lumber'] || 0) + outpostLumber;
+        story?.recordGrowthFact?.('outpostDelivered');
         reports.push(`🚩 【浮木前哨站】洋流潮汐回运：木板 x${outpostPlanks}、重型方木 x${outpostLumber}`);
       }
 
@@ -393,6 +397,7 @@ export class CampFacilitiesSystem {
         const outpostStone = 2;
         storage['iron_ore'] = (storage['iron_ore'] || 0) + outpostIron;
         storage['stone_chunk'] = (storage['stone_chunk'] || 0) + outpostStone;
+        story?.recordGrowthFact?.('outpostDelivered');
         reports.push(`🚩 【矿石前哨站】火山矿脉回运：富铁矿石 x${outpostIron}、玄武原石 x${outpostStone}`);
       }
 
@@ -404,6 +409,7 @@ export class CampFacilitiesSystem {
         const primaryLabel = isDeepDay ? '深层海脉晶核' : '孔雀绿铜矿石';
         storage[primaryKey] = (storage[primaryKey] || 0) + 1;
         storage['pearl'] = (storage['pearl'] || 0) + 1;
+        story?.recordGrowthFact?.('outpostDelivered');
         reports.push(`🚩 【晶雾观测前哨站】浓雾环礁回运：${primaryLabel} x1、深海纯白珍珠 x1`);
       }
     }

@@ -2037,9 +2037,39 @@ export class UIManager {
     this.closeDrawer = () => setDrawer(false);
     document.getElementById('btn-current-objective').addEventListener('click', () => {
       setDrawer(false);
-      document.getElementById('modal-title').textContent = '当前任务';
+      document.getElementById('modal-title').textContent = '成长任务';
       const body = document.getElementById('modal-body');
-      body.textContent = formatKeyHints(this.currentQuest || '当前没有待完成的任务');
+      body.replaceChildren();
+      const summary = document.createElement('p');
+      summary.textContent = formatKeyHints(this.currentQuest || '继续建设海岛家园');
+      body.appendChild(summary);
+      const tasks = window.__game?.story?.getGrowthTasks?.() || [];
+      const progress = document.createElement('p');
+      progress.textContent = `成长进度 ${tasks.filter(task => task.done).length}/${tasks.length} · 后续目标可提前完成`;
+      body.appendChild(progress);
+      for (const task of tasks) {
+        const card = document.createElement('section');
+        card.style.cssText = 'padding:12px;margin:8px 0;border:1px solid #b9a782;border-radius:12px;background:#fff8e8;color:#654d35';
+        const title = document.createElement('strong');
+        title.textContent = `${task.done ? '✓' : task.status === 'active' ? '➜' : '○'} ${task.phase} · ${task.title}`;
+        const hint = document.createElement('p');
+        hint.style.cssText = 'margin:6px 0 0;line-height:1.5;font-size:13px';
+        hint.textContent = task.done ? '已完成' : task.status === 'locked' ? `先完成 ${task.missing.join('、')}。${task.hint}` : task.hint;
+        card.append(title, hint);
+        if (!task.done) {
+          const track = document.createElement('button');
+          track.type = 'button';
+          track.disabled = task.status === 'locked';
+          track.textContent = window.__game.story.trackedGrowthTaskId === task.id ? '正在追踪' : '追踪目标';
+          track.style.cssText = 'margin-top:10px;min-height:44px;padding:8px 16px;border:1px solid #b9a782;border-radius:12px;background:#ffe1a0;color:#654d35;font:inherit';
+          track.addEventListener('click', () => {
+            window.__game.story.trackGrowthTask(task.id);
+            this.modalBackdrop.style.display = 'none';
+          });
+          card.appendChild(track);
+        }
+        body.appendChild(card);
+      }
       this.modalBackdrop.style.display = 'flex';
     });
     document.getElementById('btn-close-drawer').addEventListener('click', (event) => {
@@ -2599,6 +2629,7 @@ export class UIManager {
   }
 
   updateObjective(text) {
+    text = window.__game?.story?.getQuestBannerText?.() || text;
     this.currentQuest = text;
     const banner = document.getElementById('quest-banner');
     const container = document.getElementById('quest-card-container');
@@ -2607,11 +2638,11 @@ export class UIManager {
     const next = formatKeyHints(text).replace(/^🚩\s*/, '');
     if (textEl) textEl.textContent = next;
     const story = window.__game?.story;
-    const stageKey = story ? `${story.currentChapterId}:${story.currentStepIndex}:${story.isCompleted ? 'done' : 'open'}` : next;
+    const stageKey = next;
     if (this._objectiveHintKey === stageKey) return;
     this._objectiveHintKey = stageKey;
     clearTimeout(this._objectiveHideTimer);
-    const stickyObjective = hasText && !!(story && story.isCompleted);
+    const stickyObjective = false;
     this._objectiveVisibleUntil = hasText ? (stickyObjective ? Infinity : Date.now() + 5000) : 0;
     if (container) {
       container.style.display = hasText ? '' : 'none';

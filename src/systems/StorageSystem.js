@@ -107,6 +107,7 @@ export class StorageSystem {
 
   // 取出物品 (从储物箱转入玩家背包)
   withdrawItem(itemKey, count = 1) {
+    if (!Number.isSafeInteger(count) || count <= 0) return false;
     if (!this.game || !this.game.ui) return false;
     const currentBox = this.storageInventory[itemKey] || 0;
     if (currentBox < count) return false;
@@ -125,6 +126,9 @@ export class StorageSystem {
       this.game.ui.addInventory(itemKey, count);
     }
     if (this.storageInventory[itemKey] <= 0) delete this.storageInventory[itemKey];
+    if (this.game.story?.growthFacts?.residentProduced) {
+      this.game.story.recordGrowthFact?.('productionSuppliesWithdrawn');
+    }
 
     soundEngine.playItemDrop();
     this.game.ui.renderInventory();

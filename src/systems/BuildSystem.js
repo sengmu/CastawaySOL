@@ -729,6 +729,9 @@ export class BuildSystem {
       mesh: realModel
     };
     this.placedFurniture.push(record);
+    if (this.game?.story?.growthFacts?.productionSuppliesWithdrawn) {
+      this.game.story.recordGrowthFact('suppliesUsedForBuild');
+    }
 
     if (itemConf.isStorage && this.game?.storageSystem && itemConf.bonusStorageSlots > 0) {
       this.game.storageSystem.bonusCapacity += itemConf.bonusStorageSlots;

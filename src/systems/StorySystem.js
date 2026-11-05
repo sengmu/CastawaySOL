@@ -11,6 +11,8 @@ export class StorySystem {
     this.currentChapterId = 0;
     this.currentStepIndex = 0;
     this.onboardingStep = 0;
+    this.trackedGrowthTaskId = null;
+    this.growthFacts = {};
     this.onboardingDismissed = false;
     this.lastOnboardingPosition = null;
     // 新手任务（步骤 1–6）事实凭据层：真实行为先发生也算数，展示顺序到达时自动满足
@@ -304,6 +306,13 @@ export class StorySystem {
 
   // 获得格式化的当前任务引导文案
   getQuestBannerText() {
+    const tasks = this.getGrowthTasks();
+    const tracked = tasks.find(task => task.id === this.trackedGrowthTaskId && task.status === 'active');
+    const target = tracked || tasks.find(task => task.status === 'active');
+    return target ? `🚩 ${target.title} · ${target.hint}` : FREEPLAY_BANNER;
+  }
+
+  getLegacyQuestBannerText() {
     if (this.isCompleted) return FREEPLAY_BANNER;
     const chapter = this.getCurrentChapter();
     const step = this.getCurrentStep();
@@ -316,6 +325,66 @@ export class StorySystem {
   getOnboardingHint() {
     if (this.onboardingDismissed || this.onboardingStep >= ONBOARDING_STEPS.length) return null;
     return ONBOARDING_STEPS[this.onboardingStep];
+  }
+
+  getGrowthTasks() {
+    const rig = this.game?.miningRig;
+    const stages = [
+      ...ONBOARDING_STEPS.map(step => ({ id: step.id, title: step.title, hint: step.text, done: this._isOnboardingStepDone(step), phase: '海滩求生' })),
+      { id: 'kindling', title: '制作引火物', hint: '收集树枝与树皮，在制作面板按配方制作引火物。', done: this.hasCraftedKindling, phase: '建立营地' },
+      { id: 'cooked', title: '第一顿热食', hint: '带上引火物与可烹饪食材，在营地篝火完成烹饪。', done: this.hasCookedFood, phase: '建立营地' },
+      { id: 'axe', title: '第一件工具', hint: '按制作面板配方制作石斧，用于取得建筑木料。', done: this.hasCraftedAxe, phase: '建立营地' },
+      { id: 'build', title: '扩建营地', hint: '在建设面板选择设施，备齐材料并确认落位。', done: (this.game?.buildSystem?.placedFurniture?.length || 0) > 0, phase: '建立营地' },
+      { id: 'assign_job', title: '安排居民岗位', hint: '在营地中枢为居民选择一次生产岗位。', done: this.growthFacts.jobAssigned === true, phase: '伙伴与分工' },
+      { id: 'resident_output', title: '伙伴开始生产', hint: '救助并安置居民，安排岗位后过夜，等待实际生产物资入库。', done: this.growthFacts.residentProduced === true, phase: '伙伴与分工' },
+      { id: 'collect_output', title: '领取营地补给', hint: '居民生产入库后，打开储物箱成功取出一份物资。', done: this.growthFacts.productionSuppliesWithdrawn === true, phase: '伙伴与分工' },
+      { id: 'production', title: '启动营地生产', hint: '检视营地矿机，装载原石并完成首次实际出块。', done: (rig?.totalBlocksMined || 0) > 0, phase: '营地生产' },
+      { id: 'scanner', title: '探索地脉', hint: '制作并安装扫描仪，再完成一次共振勘探结算。', done: this.getChapterGateChecklist(2).every(item => item.done), phase: '营地生产' },
+      { id: 'monkey', title: '结识猴子伙伴', hint: '探索东侧树林，带食物靠近猴子互动。', done: this.monkeyBefriended, phase: '伙伴与救援' },
+      { id: 'partner', title: '救助主岛幸存者', hint: '前往东北高台，发现并救醒幸存者。', done: this.secondKidAwake, phase: '伙伴与救援' },
+      { id: 'radio', title: '收到海上求救', hint: '修复收音机，到南岸 SOS 地标架设调谐。', done: this.radioBroadcasted, phase: '远航救援' },
+      { id: 'boat', title: '准备航行', hint: '到西南船坞查看材料与补给条件，完成船只建造。', done: this.raftBuilt, phase: '远航救援' },
+      { id: 'voyage_ready', title: '备齐航行补给', hint: '在海图查看浮木岛所需食物、淡水与船只条件，备齐后即可出航。', done: this.growthFacts.voyageArrived || this.game?.nauticalChart?.checkSupplies?.('timber_isle')?.ok === true, phase: '远航救援' },
+      { id: 'voyage_arrived', title: '首次抵达资源岛', hint: '通过海图出航，抵达浮木岛、矿石岛或雾礁岛。', done: this.growthFacts.voyageArrived === true, phase: '远航救援' },
+      { id: 'rescue', title: '浮木岛救援', hint: '通过海图前往浮木岛，救回学者雷蒙德。', done: this.raymondRescued || this.game?.timberIsleScene?.survivorRescued === true || this.game?.raymondSettled === true, phase: '远航救援' },
+      { id: 'outpost', title: '建立海外前哨', hint: '通过海图抵达资源岛，在岛上完成前哨建设。', done: Object.entries(this.game?.nauticalChart?.islands || {}).some(([id, island]) => id !== 'home_island' && island.outpostBuilt === true), phase: '群岛扩张' },
+      { id: 'return_home', title: '完成往返航行', hint: '探索资源岛后，通过海图返回主岛营地。', done: this.growthFacts.voyageReturned === true, phase: '远航救援' },
+      { id: 'settle_rescue', title: '安置获救学者', hint: '救出雷蒙德并返航，让他在营地安置。', done: this.game?.raymondSettled === true, phase: '伙伴与救援' },
+      { id: 'use_supplies', title: '把补给用于建设', hint: '成功从生产后的仓库领取补给，再完成一次设施建设。', done: this.growthFacts.suppliesUsedForBuild === true, phase: '营地发展' },
+      { id: 'outpost_return', title: '前哨首次回运', hint: '建立资源岛前哨后过夜，等待前哨物资实际运入营地储物箱。', done: this.growthFacts.outpostDelivered === true, phase: '群岛扩张' },
+      { id: 'lighthouse', title: '点亮北崖灯塔', hint: '查看灯塔工程需求，准备晶石完成一期工程。', done: this.lighthouseLit || this.game?.lighthouse?.isLit === true, phase: '群岛探索' },
+      { id: 'temple', title: '解开遗迹封印', hint: '探索岛屿收集三颗宝石，在神殿入口解开封印。', done: this.templeUnsealed, phase: '群岛探索' },
+    ];
+    const prerequisites = {
+      gather: ['move'], inventory: ['gather'], eat: ['inventory'], drink: ['inventory'], campsite: ['move'],
+      kindling: ['campsite', 'gather'], cooked: ['kindling'], axe: ['gather'], build: ['campsite'],
+      assign_job: ['partner'], resident_output: ['partner'], collect_output: ['resident_output'],
+      production: ['campsite'], scanner: ['production'], monkey: ['eat'], partner: ['campsite'],
+      radio: ['campsite'], boat: ['campsite'], voyage_ready: ['boat'], voyage_arrived: ['boat'],
+      rescue: ['voyage_arrived'], return_home: ['voyage_arrived'], settle_rescue: ['rescue', 'return_home'],
+      outpost: ['voyage_arrived'], outpost_return: ['outpost'], use_supplies: ['collect_output'],
+      lighthouse: ['campsite'], temple: ['campsite'],
+    };
+    return stages.map(task => {
+      const missing = (prerequisites[task.id] || []).map(id => stages.find(item => item.id === id)).filter(item => item && !item.done);
+      const status = task.done ? 'completed' : missing.length ? 'locked' : 'active';
+      return { ...task, status, missing: missing.map(item => item.title) };
+    });
+  }
+
+  trackGrowthTask(id) {
+    const task = this.getGrowthTasks().find(item => item.id === id && item.status === 'active');
+    if (!task) return;
+    this.trackedGrowthTaskId = id;
+    this.game?.ui?.updateObjective?.(this.getQuestBannerText());
+    this.game?.saveSystem?.saveGame?.('growth_tracking');
+  }
+
+  recordGrowthFact(key) {
+    const allowed = ['jobAssigned', 'residentProduced', 'productionSuppliesWithdrawn', 'outpostDelivered', 'voyageArrived', 'voyageReturned', 'suppliesUsedForBuild'];
+    if (!allowed.includes(key) || this.growthFacts[key]) return;
+    this.growthFacts[key] = true;
+    queueMicrotask(() => this.game?.saveSystem?.saveGame?.('growth_progress'));
   }
 
   get onboardingTotal() {
@@ -390,6 +459,23 @@ export class StorySystem {
 
   // 帧更新循环：仅检测地理位置到达与明确的状态变更，严禁被动读取背包跳关！
   update(playerPos, inventory, survivalStats) {
+    const islandId = this.game?.currentIslandId;
+    if (['timber_isle', 'quarry_isle', 'mist_reef_isle'].includes(islandId)) this.recordGrowthFact('voyageArrived');
+    if (islandId === 'main_island' && this.growthFacts.voyageArrived) this.recordGrowthFact('voyageReturned');
+    this._growthRefreshElapsed = (this._growthRefreshElapsed || 0) + 1;
+    if (this._growthRefreshElapsed >= 30) {
+      this._growthRefreshElapsed = 0;
+      this.game?.ui?.updateObjective?.(this.getQuestBannerText());
+    }
+    if (this.trackedGrowthTaskId) {
+      const tracked = this.getGrowthTasks().find(task => task.id === this.trackedGrowthTaskId);
+      if (tracked?.done) {
+        this.trackedGrowthTaskId = null;
+        this.game?.ui?.showToast?.(`✓ ${tracked.title}已完成`, 'medium');
+        this.game?.ui?.updateObjective?.(this.getQuestBannerText());
+        queueMicrotask(() => this.game?.saveSystem?.saveGame?.('growth_completed'));
+      }
+    }
     if (playerPos) {
       // 新手任务事实采集（与章节推进解耦；跳过提示只关展示，事实继续记录）
       if (this.lastOnboardingPosition) {
@@ -481,6 +567,9 @@ export class StorySystem {
 
   // 真实在合成台完成了道具制作
   onCraftItem(product) {
+    if (product === 'kindling') this.hasCraftedKindling = true;
+    if (product === 'stone_axe') this.hasCraftedAxe = true;
+    queueMicrotask(() => this.game?.saveSystem?.saveGame?.('growth_craft'));
     const curStepId = this.getCurrentStep()?.id;
     if (curStepId === 'craft_kindling' && product === 'kindling') {
       this.hasCraftedKindling = true;
@@ -496,6 +585,8 @@ export class StorySystem {
 
   // 真实在篝火完成了烹饪
   onCookFood() {
+    this.hasCookedFood = true;
+    queueMicrotask(() => this.game?.saveSystem?.saveGame?.('growth_cook'));
     if (this.getCurrentStep()?.id === 'cook_hot_food') {
       this.hasCookedFood = true;
       this.#advanceStep();
@@ -656,6 +747,8 @@ export class StorySystem {
   // 序列化与反序列化支持 (用于 SaveSystem 安全存档与迁移)
   serialize() {
     return {
+      trackedGrowthTaskId: this.trackedGrowthTaskId,
+      growthFacts: { ...this.growthFacts },
       isCompleted: this.isCompleted,
       currentChapterId: this.currentChapterId,
       currentStepIndex: this.currentStepIndex,
@@ -691,6 +784,11 @@ export class StorySystem {
 
   deserialize(data) {
     if (!data) return;
+    this.growthFacts = {};
+    for (const key of ['jobAssigned', 'residentProduced', 'productionSuppliesWithdrawn', 'outpostDelivered', 'voyageArrived', 'voyageReturned', 'suppliesUsedForBuild']) {
+      this.growthFacts[key] = data.growthFacts?.[key] === true;
+    }
+    this.trackedGrowthTaskId = typeof data.trackedGrowthTaskId === 'string' ? data.trackedGrowthTaskId : null;
     if (typeof data.currentChapterId === 'number') this.currentChapterId = data.currentChapterId;
     if (typeof data.currentStepIndex === 'number') this.currentStepIndex = data.currentStepIndex;
     if (typeof data.hasGatheredBranch === 'boolean') this.hasGatheredBranch = data.hasGatheredBranch;
