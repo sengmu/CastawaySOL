@@ -34,6 +34,16 @@ export class ModelLoader {
     const isGlb = url.toLowerCase().endsWith('.glb') || url.toLowerCase().endsWith('.gltf');
     // 普通 clone 不会重绑骨骼，必须用 SkeletonUtils
     const inner = SkeletonUtils.clone(template);
+    // Keep baked orientation correction inside the animation wrapper.
+    const bakedPitch = {
+      '/models/custom/apple_tree.glb': -0.284,
+      '/models/custom/palm_tree.glb': -0.201,
+      '/models/custom/cedar_tree.glb': -0.120,
+      '/models/protagonist.glb': -0.159,
+    };
+    if (bakedPitch[url]) {
+      inner.rotateX(bakedPitch[url]);
+    }
     inner.traverse((child) => {
       if (child.isMesh) {
         const cName = (child.name || '').toLowerCase();

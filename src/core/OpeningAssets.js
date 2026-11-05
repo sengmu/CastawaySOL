@@ -26,7 +26,18 @@ function applyCustomGrade(mesh) {
 
 async function placeGltfAsset(parent, url, name, position, width, rotation = 0, solid = true, grade = false) {
   const { scene } = await loader.loadAsync(url);
-  const bounds = new THREE.Box3().setFromObject(scene);
+  // Generated meshes contain a baked pitch. Level their base before measuring placement.
+  const basePitch = {
+    cabin: -0.410,
+    workbench: -0.490,
+    'storage-chest': -0.322,
+    scanner: -0.322,
+    'temple-gate': -0.300,
+    boat: -0.068,
+  };
+  if (grade && basePitch[name]) scene.rotation.x = basePitch[name];
+  scene.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(scene, true);
   const size = bounds.getSize(new THREE.Vector3());
   const center = bounds.getCenter(new THREE.Vector3());
   const scale = width / Math.max(size.x, size.z, 0.001);
