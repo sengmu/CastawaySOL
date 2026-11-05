@@ -1946,6 +1946,11 @@ export class UIManager {
     if (mainActionBtn) {
       mainActionBtn.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
+      });
+      // Finish the tap before opening an overlay so its release cannot dismiss it.
+      mainActionBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         haptics.medium();
         if (this._isWaterDepleted) {
           drink();
