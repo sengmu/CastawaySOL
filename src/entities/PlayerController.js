@@ -330,7 +330,7 @@ export class PlayerController {
           if (pmat.map && 'emissiveMap' in pmat) {
             pmat.emissiveMap = pmat.map;
             pmat.emissive = new THREE.Color(0xffffff);
-            pmat.emissiveIntensity = 0.5;
+            pmat.emissiveIntensity = 0.7;
             pmat.needsUpdate = true;
           }
         });
