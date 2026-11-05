@@ -75,6 +75,12 @@ export async function populateOpening(parent) {
     placeOpeningAsset(parent, 'survival', 'resource-wood', [-20.7, 0, 29.3], 1.0, 0.5),
     // 营地篝火旁初始坚固储物木箱 (支持玩家开局直接存取材料)
     placeModelAsset(parent, '/models/custom/storage_chest.glb', 'storage-chest', ISLAND_LAYOUT.chest, 1.05, 0.25),
+    // Group C 落位（2026-11-05 用户批准）：小船泊西码头木筏旁浅水（无碰撞，水面下沉 0.3 呈系泊吃水）；
+    placeModelAsset(parent, '/models/custom/boat.glb', 'boat', [-28.5, -0.3, 34.5], 3.1, 0.5, false),
+    // 扫描仪立矿机旁成采矿工位（矿机本体为程序化模型，风扇/LED 与挖矿状态联动，不换）；
+    placeModelAsset(parent, '/models/custom/scanner.glb', 'scanner', [-8.2, 0.05, 21.6], 1.03, -0.7),
+    // 神殿门立神殿入口遗迹（锚点 0,0,-26）南向 approach 上，拱门正对来路（+Z）。
+    placeModelAsset(parent, '/models/custom/temple_gate.glb', 'temple-gate', [0, 0.2, -19], 3.0, 0),
   ]);
   results.forEach(result => { if (result.status === 'rejected') console.error('Opening asset load failed', result.reason); });
   return results;
