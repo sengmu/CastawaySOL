@@ -320,6 +320,22 @@ export class PlayerController {
       receiveShadow: true
     });
     this.model = playerModel;
+    // 主角渲染提亮：Pixal3D 的 PBR 贴图在场景直射光下正面（背阳面）偏暗偏闷，
+    // 与设计稿明亮柔和的渲染观感不符。用自身贴图作 emissiveMap 做贴图自补光，
+    // 保留方向性明暗的同时把整体亮度抬回设计稿区间（仅主角，不动场景光照）。
+    this.model.traverse((mchild) => {
+      if (mchild.isMesh && mchild.material) {
+        const pmats = Array.isArray(mchild.material) ? mchild.material : [mchild.material];
+        pmats.forEach((pmat) => {
+          if (pmat.map && 'emissiveMap' in pmat) {
+            pmat.emissiveMap = pmat.map;
+            pmat.emissive = new THREE.Color(0xffffff);
+            pmat.emissiveIntensity = 0.5;
+            pmat.needsUpdate = true;
+          }
+        });
+      }
+    });
     this.group.add(this.model);
 
     // 检索并绑定骨骼关节与 SkinnedMesh 蒙皮骨架
