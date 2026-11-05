@@ -71,10 +71,10 @@ export async function populateOpening(parent) {
     placeModelAsset(parent, '/models/custom/cabin.glb', 'cabin', [ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1] - 0.45, ISLAND_LAYOUT.tent[2]], 4.0, 0.5),
     // placeOpeningAsset(parent, 'survival', 'tent-canvas', ISLAND_LAYOUT.tent, 2.8, 0.5),
     placeOpeningAsset(parent, 'survival', 'bedroll', [-15.9, 0, 27.6], 1.5, 0.5, false),
-    placeOpeningAsset(parent, 'survival', 'workbench', [-21.9, 0, 26.8], 1.7, 0.5),
+    placeModelAsset(parent, '/models/custom/workbench.glb', 'workbench', [-21.9, 0, 26.8], 1.7, 0.5),
     placeOpeningAsset(parent, 'survival', 'resource-wood', [-20.7, 0, 29.3], 1.0, 0.5),
     // 营地篝火旁初始坚固储物木箱 (支持玩家开局直接存取材料)
-    placeOpeningAsset(parent, 'pirate', 'crate', ISLAND_LAYOUT.chest, 1.05, 0.25),
+    placeModelAsset(parent, '/models/custom/storage_chest.glb', 'storage-chest', ISLAND_LAYOUT.chest, 1.05, 0.25),
   ]);
   results.forEach(result => { if (result.status === 'rejected') console.error('Opening asset load failed', result.reason); });
   return results;

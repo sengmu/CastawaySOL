@@ -126,7 +126,7 @@ export const GAME_ASSETS = {
       id: 'apple_tree',
       name: '苹果阔叶树',
       category: 'tree',
-      path: '/models/plants/Model/PltTreeOak.Nin_NX_NVN/PltTreeOak4.dae',
+      path: '/models/custom/apple_tree.glb',
       scale: 1.0,
       canShake: true,
       dropItem: 'apple'
@@ -135,7 +135,7 @@ export const GAME_ASSETS = {
       id: 'palm_tree',
       name: '海滩椰子树',
       category: 'tree',
-      path: '/models/plants/Model/PltTreePalm.Nin_NX_NVN/PltTreePalm4.dae',
+      path: '/models/custom/palm_tree.glb',
       scale: 1.0,
       canShake: true,
       dropItem: 'coconut'
@@ -144,7 +144,7 @@ export const GAME_ASSETS = {
       id: 'cedar_tree',
       name: '针叶雪松树',
       category: 'tree',
-      path: '/models/plants/Model/PltTreeCedar.Nin_NX_NVN/PltTreeCedar4.dae',
+      path: '/models/custom/cedar_tree.glb',
       scale: 1.0,
       canShake: true,
       dropItem: 'tree_branch'
@@ -153,14 +153,14 @@ export const GAME_ASSETS = {
       id: 'azalea_bush',
       name: '杜鹃花灌木',
       category: 'bush',
-      path: '/models/plants/Model/PltBushAzalea.Nin_NX_NVN/PltBushAzalea4.dae',
+      path: '/models/custom/azalea_bush.glb',
       scale: 0.9
     },
     camellia_bush: {
       id: 'camellia_bush',
       name: '山茶花灌木',
       category: 'bush',
-      path: '/models/plants/Model/PltBushCamellia.Nin_NX_NVN/PltBushCamellia4.dae',
+      path: '/models/custom/camellia_bush.glb',
       scale: 0.9
     }
   },
@@ -234,7 +234,7 @@ export const GAME_ASSETS = {
       drawerCategory: 'facility',
       comfortScore: 10,
       cost: { stone_chunk: 2, tree_branch: 3, nail: 1 },
-      path: '/models/furniture/Model/FtrDrinkingfountain.Nin_NX_NVN/FtrDrinkingfountain.dae',
+      path: '/models/custom/water_purifier.glb',
       scale: 1.0,
       icon: '🚰',
       isWaterPurifier: true
@@ -302,7 +302,7 @@ export const GAME_ASSETS = {
       drawerCategory: 'decor',
       comfortScore: 7,
       cost: { tree_branch: 3, stone_chunk: 2 },
-      path: '/models/furniture/Model/FtrCampfire.Nin_NX_NVN/FtrCampfire.dae',
+      path: '/models/custom/campfire.glb',
       scale: 1.0,
       icon: '🔥'
     },

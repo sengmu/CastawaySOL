@@ -80,6 +80,7 @@ export class ModelLoader {
         this.cache.set(url, new Promise((resolve, reject) => {
           this.gltfLoader.load(url, (gltf) => {
             const model = gltf.scene;
+            const isCustomGlb = url.toLowerCase().includes('/models/custom/');
             model.traverse((child) => {
               if (child.isMesh && child.material) {
                 const mats = Array.isArray(child.material) ? child.material : [child.material];
@@ -88,6 +89,18 @@ export class ModelLoader {
                   // 强行挂上会让 three 的 uniforms 刷新读到不存在的 emissive uniform 而逐帧崩溃
                   if ("metalness" in mat) mat.metalness = 0.0;
                   if ("emissive" in mat) mat.emissive = new THREE.Color(0x000000);
+                  // 自研 AI 模型（/models/custom/）色彩校正：与 OpeningAssets 的 CUSTOM_GRADE 同档，
+                  // 抵消 PBR 背阳面偏暗，对齐设计稿明亮观感（2026-11-05 批量替换植物/家具接入）
+                  if (isCustomGlb && mat.isMeshStandardMaterial) {
+                    mat.toneMapped = false;
+                    if (mat.map) {
+                      mat.emissiveMap = mat.map;
+                      mat.emissive = new THREE.Color(0.85, 0.85, 0.85);
+                    }
+                    mat.color.setRGB(1.25, 1.12, 0.9);
+                    if ('occlusionStrength' in mat) mat.occlusionStrength = 0.35;
+                    mat.needsUpdate = true;
+                  }
                 });
               }
             });
