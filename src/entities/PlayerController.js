@@ -62,7 +62,7 @@ export class PlayerController {
     this.cameraAngleV = (typeof window !== 'undefined' && window.innerWidth < window.innerHeight) ? 0.40 : 0.58;
     this.baseCameraDistance = 8.8; // 8.8 米宏大开阔黄金基准视距
     this.isPortrait = (typeof window !== 'undefined' && window.innerWidth < window.innerHeight);
-    const initialDist = this.isPortrait ? (this.baseCameraDistance * 1.25) : this.baseCameraDistance;
+    const initialDist = this.isPortrait ? (this.baseCameraDistance * 1.15) : this.baseCameraDistance;
     this.cameraDistance = initialDist;
     this.targetCameraDistance = initialDist;
     this.cameraVelH = 0;           // 偏航角平滑旋转阻尼速度
@@ -313,6 +313,8 @@ export class PlayerController {
     // 若需回退至经典小猫模型，可配置 GAME_ASSETS.player.path 为旧 DAE 路径
     const playerAsset = GAME_ASSETS?.player;
     const playerPath = playerAsset?.path || '/models/protagonist.glb';
+    this.usesProtagonistRig = ['/models/protagonist.glb', '/models/protagonist-round3.glb'].includes(playerPath);
+    this.hasBakedArmPose = playerPath === '/models/protagonist.glb';
     const playerScale = playerAsset?.scale ?? 1.0;
     const playerModel = await modelLoader.loadModel(playerPath, {
       scale: playerScale,
@@ -710,6 +712,11 @@ export class PlayerController {
 
     const w = this.movementWeight;
     const isRun = this.isRunning;
+    // The protagonist's waist is rotated -90° around Y relative to the model.
+    // Forward leg swing therefore uses negative local Z instead of local X.
+    const legPitchAxis = this.usesProtagonistRig ? 'z' : 'x';
+    const legPitchSign = this.usesProtagonistRig ? -1 : 1;
+    const legSpreadAxis = this.usesProtagonistRig ? 'x' : 'z';
 
     // 1. 双腿交替摆动 (迈大步前蹬与后摆)
     const legAmp = (isRun ? 0.75 : 0.48) * w;
@@ -717,30 +724,30 @@ export class PlayerController {
 
     if (this.bones.legL && this.initialBoneRotations.has(this.bones.legL)) {
       const initL = this.initialBoneRotations.get(this.bones.legL);
-      this.bones.legL.rotation.x = initL.x + legSwing;
-      this.bones.legL.rotation.z = initL.z + (isRun ? 0.05 : 0.02) * w;
+      this.bones.legL.rotation[legPitchAxis] = initL[legPitchAxis] + legPitchSign * (this.isGrounded ? legSwing : 0.2);
+      this.bones.legL.rotation[legSpreadAxis] = initL[legSpreadAxis] + (isRun ? 0.05 : 0.02) * w;
     }
 
     if (this.bones.legR && this.initialBoneRotations.has(this.bones.legR)) {
       const initR = this.initialBoneRotations.get(this.bones.legR);
-      this.bones.legR.rotation.x = initR.x - legSwing;
-      this.bones.legR.rotation.z = initR.z - (isRun ? 0.05 : 0.02) * w;
+      this.bones.legR.rotation[legPitchAxis] = initR[legPitchAxis] - legPitchSign * (this.isGrounded ? legSwing : 0.2);
+      this.bones.legR.rotation[legSpreadAxis] = initR[legSpreadAxis] - (isRun ? 0.05 : 0.02) * w;
     }
 
     // 2. 膝盖弯折 (小腿离地前迈时自然屈膝)
     if (this.bones.kneeL && this.initialBoneRotations.has(this.bones.kneeL)) {
       const initKL = this.initialBoneRotations.get(this.bones.kneeL);
       const kneeFlexL = Math.max(0, -Math.sin(this.walkCycle)) * 0.45 * w;
-      this.bones.kneeL.rotation.x = initKL.x + kneeFlexL;
+      this.bones.kneeL.rotation[legPitchAxis] = initKL[legPitchAxis] + legPitchSign * kneeFlexL;
     }
     if (this.bones.kneeR && this.initialBoneRotations.has(this.bones.kneeR)) {
       const initKR = this.initialBoneRotations.get(this.bones.kneeR);
       const kneeFlexR = Math.max(0, Math.sin(this.walkCycle)) * 0.45 * w;
-      this.bones.kneeR.rotation.x = initKR.x + kneeFlexR;
+      this.bones.kneeR.rotation[legPitchAxis] = initKR[legPitchAxis] + legPitchSign * kneeFlexR;
     }
 
     // 3. 手臂自然下垂与交替摆臂 (双手服帖垂顺在身体两侧)
-    const baseArmDrop = 0.95; // 待机与行走时双手自然下垂贴于身体两侧约 55°
+    const baseArmDrop = this.hasBakedArmPose ? 0 : 0.95;
     const armAmp = (isRun ? 0.75 : 0.45) * w;
     const armSwing = Math.sin(this.walkCycle) * armAmp;
     const armBreathe = Math.sin(this.idleTimer * 1.8) * 0.03 * (1.0 - w);
@@ -854,7 +861,9 @@ export class PlayerController {
       const initHead = this.initialBoneRotations.get(this.bones.head);
       const headNod = Math.sin(this.walkCycle * 2) * 0.05 * w;
       const headBreathe = Math.sin(this.idleTimer * 2.2) * 0.03 * (1.0 - w);
-      this.bones.head.rotation.x = initHead.x + headNod + headBreathe;
+      // The neck parent turns the opposite way to the waist.
+      const headPitchAxis = this.usesProtagonistRig ? 'z' : 'x';
+      this.bones.head.rotation[headPitchAxis] = initHead[headPitchAxis] + headNod + headBreathe;
     }
 
     // 6. 身体整体上下颠簸与左右扭胯
@@ -870,10 +879,6 @@ export class PlayerController {
       if (this.bones.armL && this.bones.armR) {
         this.bones.armL.rotation.z -= 0.3;
         this.bones.armR.rotation.z += 0.3;
-      }
-      if (this.bones.legL && this.bones.legR) {
-        this.bones.legL.rotation.x = 0.2;
-        this.bones.legR.rotation.x = -0.2;
       }
     }
 
@@ -897,7 +902,7 @@ export class PlayerController {
 
     // 2. 视距平滑过渡 (Smooth Zoom Lerp) + 移动与疾跑时动态广角后拉 (探索视野大 25%)
     const speedPullback = this.isMoving ? (this.isRunning ? 1.5 : 0.85) : 0.0;
-    const portraitOffset = this.isPortrait ? 1.8 : 0.0;
+    const portraitOffset = this.isPortrait ? 1.0 : 0.0;
     const desiredDistance = this.targetCameraDistance + speedPullback + portraitOffset;
     this.cameraDistance = THREE.MathUtils.lerp(this.cameraDistance, desiredDistance, Math.min(1.0, 8.0 * delta));
 

@@ -102,7 +102,7 @@ export const GAME_ASSETS = {
   // 玩家角色外观
   player: {
     // 3D-PILOT: 启用主角自建 3D 荒岛款模型 (GLTF/GLB)
-    path: '/models/protagonist.glb',
+    path: '/models/npcs/Model/NpcNmlCat23.Nin_NX_NVN/NpcNmlCat23.dae',
     scale: 1.0,
     // [回退注释 / Fallback]: 若需回退至小猫咪模型，解开下行注释并恢复 PlayerController 引用
     // fallbackCatDae: '/models/npcs/Model/NpcNmlCat23.Nin_NX_NVN/NpcNmlCat23.dae',

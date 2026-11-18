@@ -3,6 +3,42 @@ import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
+function repairProtagonistFeet(mesh) {
+  const geometry = mesh.geometry.clone();
+  const { position, skinIndex, skinWeight } = geometry.attributes;
+  const joints = new Map(mesh.skeleton.bones.map((bone, index) => [bone.name, index]));
+  const left = new Set(['Leg_1_L', 'Leg_1_L_Sub', 'Leg_2_L', 'Leg_2_L_Sub', 'Ankle_L', 'Toe_L'].map(name => joints.get(name)));
+  const right = new Set(['Leg_1_R', 'Leg_1_R_Sub', 'Leg_2_R', 'Leg_2_R_Sub', 'Ankle_R', 'Toe_R'].map(name => joints.get(name)));
+  if (!position || !skinIndex || !skinWeight || !geometry.index || !joints.has('Ankle_L') || !joints.has('Ankle_R')) return;
+  const footHeight = 0.16;
+  // The soles are staggered along Z. A diagonal dividing plane follows
+  // that stagger so an inner edge can stay with its own foot.
+  const leftFoot = index => position.getX(index) - 0.32 * (position.getZ(index) + 0.14) >= 0;
+  for (let i = 0; i < position.count; i++) {
+    if (position.getY(i) >= 0.28) continue;
+    const isLeft = leftFoot(i);
+    const side = isLeft ? left : right;
+    const weights = [0, 1, 2, 3].map(slot => side.has(skinIndex.getComponent(i, slot)) ? skinWeight.getComponent(i, slot) : 0);
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    if (total > 0) {
+      skinWeight.setXYZW(i, ...weights.map(weight => weight / total));
+    } else {
+      skinIndex.setXYZW(i, joints.get(isLeft ? 'Ankle_L' : 'Ankle_R'), 0, 0, 0);
+      skinWeight.setXYZW(i, 1, 0, 0, 0);
+    }
+  }
+  const faces = [];
+  const index = geometry.index;
+  for (let i = 0; i < index.count; i += 3) {
+    const a = index.getX(i), b = index.getX(i + 1), c = index.getX(i + 2);
+    const bridge = Math.max(position.getY(a), position.getY(b), position.getY(c)) < footHeight
+      && (leftFoot(a) !== leftFoot(b) || leftFoot(a) !== leftFoot(c));
+    if (!bridge) faces.push(a, b, c);
+  }
+  geometry.setIndex(faces);
+  mesh.geometry = geometry;
+}
+
 // 原始模型以分米(dm)为单位导出，全局基准缩放系数 0.1 转为米制
 export const DAE_GLOBAL_SCALE = 0.1;
 
@@ -92,6 +128,7 @@ export class ModelLoader {
             const model = gltf.scene;
             const isCustomGlb = url.toLowerCase().includes('/models/custom/');
             model.traverse((child) => {
+              if (url === '/models/protagonist.glb' && child.isSkinnedMesh) repairProtagonistFeet(child);
               if (child.isMesh && child.material) {
                 const mats = Array.isArray(child.material) ? child.material : [child.material];
                 mats.forEach(mat => {
@@ -105,7 +142,8 @@ export class ModelLoader {
                     mat.toneMapped = false;
                     if (mat.map) {
                       mat.emissiveMap = mat.map;
-                      mat.emissive = new THREE.Color(0.85, 0.85, 0.85);
+                      const fill = url === '/models/custom/apple_tree.glb' ? 0.60 : 0.85;
+                      mat.emissive = new THREE.Color(fill, fill, fill);
                     }
                     mat.color.setRGB(1.25, 1.12, 0.9);
                     if ('occlusionStrength' in mat) mat.occlusionStrength = 0.35;

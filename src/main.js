@@ -1010,32 +1010,8 @@ class Game {
     if (this.campEntities) {
       const anchors = this.campEntities.anchors;
 
-      // 4.4.1 营地经营与居民岗位排班告示牌 (-13.2, 0.05, 21.8)
-      if (playerPos.distanceTo(anchors.noticeboard) < 2.5) {
-        if (this.ui) this.ui.openCampManageModal();
-        return;
-      }
-
-      // 4.4.1.5 营地日常交付订单板 (-12.0, 0.05, 20.2)
-      if (anchors.orderBoard && playerPos.distanceTo(anchors.orderBoard) < 2.5) {
-        if (this.ui) this.ui.openOrderBoardModal();
-        return;
-      }
-
-      // 4.4.2 救援空投与商业化特权无线电站 (-10.2, 0.05, 22.2)
-      if (playerPos.distanceTo(anchors.radioTerminal) < 2.5) {
-        if (this.shopManager) this.shopManager.open();
-        else if (this.ui) this.ui.openShopModal();
-        return;
-      }
-
-      // 4.4.3 原生净水滴滤台 (-11.0, 0.05, 25.8)
-      if (playerPos.distanceTo(anchors.waterPurifier) < 2.5) {
-        if (this.campFacilities) {
-          this.campFacilities.interactWaterPurifier({ isWaterPurifier: true });
-        }
-        return;
-      }
+      const facility = this.getNearbyCampFacility(playerPos);
+      if (facility && this.interactSelectedBuilding(facility)) return;
 
       // 4.4.4 南岸打捞浮标岸边滑轮锚桩 (-20.2, 0.02, 33.2)
       if (playerPos.distanceTo(anchors.buoyWinch) < 2.8) {
@@ -1577,6 +1553,19 @@ class Game {
     this.ui.showToast(`已选中【${name}】`, 'small');
   }
 
+  getNearbyCampFacility(position) {
+    if (!this.campEntities?.group?.visible) return null;
+    const range = 2.5;
+    let nearest = null;
+    for (const id of ['noticeboard', 'orderBoard', 'radioTerminal', 'waterPurifier']) {
+      const anchor = this.campEntities.anchors[id];
+      if (!anchor) continue;
+      const distance = position.distanceTo(anchor);
+      if (distance < (nearest?.distance ?? range)) nearest = { id, distance, range };
+    }
+    return nearest;
+  }
+
   interactSelectedBuilding(selected) {
     if (selected.distance > selected.range) {
       this.ui.showToast(`请靠近【${selected.name}】再互动`, 'small');
@@ -1585,7 +1574,10 @@ class Game {
     switch (selected.id) {
       case 'noticeboard': this.ui.openCampManageModal(); break;
       case 'orderBoard': this.ui.openOrderBoardModal(); break;
-      case 'radioTerminal': this.shopManager?.open(); break;
+      case 'radioTerminal':
+        if (this.shopManager) this.shopManager.open();
+        else this.ui.openShopModal();
+        break;
       case 'waterPurifier': this.campFacilities?.interactWaterPurifier({ isWaterPurifier: true }); break;
       case 'buoyWinch': this.ui.openAutoSalvageModal(this.flotsamSalvage); break;
       case 'crabTrap': this.ui.openCrabTrapModal(this.tidalTrap); break;
@@ -1934,11 +1926,11 @@ class Game {
     // 营地原生 3D 实体近距检测
     const isCampfire = distanceXZ(playerPos, ISLAND_LAYOUT.campfire) < 3.2;
     const isCampChest = Math.hypot(playerPos.x - (-14.5), playerPos.z - 23.5) < 2.5;
-    const isNoticeboard = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.noticeboard) < 2.5 : false;
-    const isOrderBoard = this.campEntities?.anchors?.orderBoard ? playerPos.distanceTo(this.campEntities.anchors.orderBoard) < 2.5 : false;
-    const isLighthouse = this.lighthouse && playerPos.distanceTo(this.lighthouse.anchor) < 4.5;
-    const isRadioTerminal = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.radioTerminal) < 2.5 : false;
-    const isNativePurifier = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.waterPurifier) < 2.5 : false;
+    const nearbyCampFacility = this.getNearbyCampFacility(playerPos)?.id;
+    const isNoticeboard = nearbyCampFacility === 'noticeboard';
+    const isOrderBoard = nearbyCampFacility === 'orderBoard';
+    const isRadioTerminal = nearbyCampFacility === 'radioTerminal';
+    const isNativePurifier = nearbyCampFacility === 'waterPurifier';
     const isBuoyWinch = this.campEntities ? playerPos.distanceTo(this.campEntities.anchors.buoyWinch) < 2.8 : false;
     const isCrabTrap = this.tidalTrap && playerPos.distanceTo(this.tidalTrap.crabTrapAnchor) < 3.0;
     const isSmoker = this.tidalTrap && playerPos.distanceTo(this.tidalTrap.smokerAnchor) < 2.8;
@@ -2211,7 +2203,7 @@ class Game {
     // 3. 营地关键地标设施 (帐篷、篝火、告示板、大木筏等)
     if (typeof ISLAND_LAYOUT !== "undefined") {
       if (ISLAND_LAYOUT.campfire) this.contactShadows.addStatic(ISLAND_LAYOUT.campfire[0], ISLAND_LAYOUT.campfire[1], ISLAND_LAYOUT.campfire[2], 1.5, 1.5);
-      if (ISLAND_LAYOUT.tent) this.contactShadows.addStatic(ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1], ISLAND_LAYOUT.tent[2], 4.0, 3.9);
+      if (ISLAND_LAYOUT.tent) this.contactShadows.addStatic(ISLAND_LAYOUT.tent[0], ISLAND_LAYOUT.tent[1], ISLAND_LAYOUT.tent[2], 2.35, 2.35);
       if (ISLAND_LAYOUT.raft) this.contactShadows.addStatic(ISLAND_LAYOUT.raft[0], ISLAND_LAYOUT.raft[1], ISLAND_LAYOUT.raft[2], 2.6, 1.8);
       if (ISLAND_LAYOUT.sos) this.contactShadows.addStatic(ISLAND_LAYOUT.sos[0], ISLAND_LAYOUT.sos[1], ISLAND_LAYOUT.sos[2], 3.2, 1.6);
       // 3b. 开场营地道具（坐标与 OpeningAssets.populateOpening 保持一致，此前漏注册导致道具无接地阴影、视觉悬空）
@@ -2219,6 +2211,10 @@ class Game {
       this.contactShadows.addStatic(-15.9, 0, 27.6, 0.8, 1.0);       // 睡袋
       this.contactShadows.addStatic(-21.9, 0, 26.8, 1.2, 1.2);         // 工作台
       this.contactShadows.addStatic(-20.7, 0, 29.3, 0.6, 0.45);        // 木料堆
+      const purifier = this.campEntities?.anchors?.waterPurifier;
+      if (purifier) this.contactShadows.addStatic(purifier.x, purifier.y, purifier.z, 0.9, 0.8);
+      const rig = this.miningRig?.anchor;
+      if (rig) this.contactShadows.addStatic(rig.x, 0, rig.z, 0.95, 0.85);
       this.contactShadows.addStatic(-19, -0.15, 39.5, 1.5, 2.6);   // 沉船
       this.contactShadows.addStatic(-15.5, -0.15, 39.5, 0.5, 0.55); // 沙滩木箱
       this.contactShadows.addStatic(-15.8, -0.15, 40.5, 0.45, 0.45); // 木桶

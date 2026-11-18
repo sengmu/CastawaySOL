@@ -87,9 +87,8 @@ export class IslandTerrain {
       { x: -10.3, z: 34.6, scale: 0.74, rot: -0.4 },
       { x: -10.8, z: 32.4, scale: 0.65, rot: 0.8 },
       { x: -11.2, z: 30.2, scale: 0.72, rot: -0.1 },
-      { x: -11.8, z: 28.0, scale: 0.78, rot: 0.5 },
-      { x: -12.6, z: 26.0, scale: 0.82, rot: -0.3 },
-      { x: -13.8, z: 24.8, scale: 0.75, rot: 0.2 }
+      { x: -11.6, z: 28.0, scale: 0.70, rot: 0.5 },
+      { x: -11.9, z: 26.1, scale: 0.68, rot: -0.3 }
     ];
 
     stonePositions.forEach((st, idx) => {
@@ -354,10 +353,27 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     const shoreFoamMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.22,
       depthWrite: false,
       side: THREE.DoubleSide
     });
+    const foamTime = this.shoreFoamTime = { value: 0 };
+    shoreFoamMat.onBeforeCompile = shader => {
+      shader.uniforms.uFoamTime = foamTime;
+      shader.vertexShader = 'varying vec2 vShoreFoam;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>',
+        '#include <project_vertex>\nvShoreFoam = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      shader.fragmentShader = 'uniform float uFoamTime;\nvarying vec2 vShoreFoam;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <alphamap_fragment>', `
+        #include <alphamap_fragment>
+        float section = smoothstep(-25.0, -19.0, vShoreFoam.x)
+          * (1.0 - smoothstep(1.0, 8.0, vShoreFoam.x)) * smoothstep(36.0, 39.0, vShoreFoam.y);
+        float crest = sin(vShoreFoam.x * 1.8 - uFoamTime * 0.8)
+          + 0.35 * sin(vShoreFoam.x * 4.1 + uFoamTime * 0.5);
+        diffuseColor.a *= mix(1.0, mix(0.30, 1.0, smoothstep(-0.6, 0.6, crest)), section);
+      `);
+    };
+    shoreFoamMat.customProgramCacheKey = () => 'castaway-south-foam-v1';
 
     this.shoreFoamMesh = new THREE.Mesh(foamGeo, shoreFoamMat);
     this.shoreFoamMesh.position.y = -0.32;
@@ -371,7 +387,7 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     this.shoreFoamOuter = new THREE.Mesh(outerGeo, new THREE.MeshBasicMaterial({
       color: 0xf4fbff,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.09,
       depthWrite: false,
       side: THREE.DoubleSide
     }));
@@ -465,6 +481,32 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
       roughness: 0.92,
       metalness: 0.01
     });
+    const southShore = islandOutline(49, 42)
+      .filter(point => point.y > 30 && point.x > -30 && point.x < 13)
+      .sort((a, b) => a.x - b.x);
+    const shoreSegments = southShore.slice(1).map((end, index) => {
+      const start = southShore[index];
+      return `if (shoreX >= ${start.x.toFixed(6)} && shoreX < ${end.x.toFixed(6)})
+        shoreZ = mix(${start.y.toFixed(6)}, ${end.y.toFixed(6)},
+          (shoreX - (${start.x.toFixed(6)})) / ${(end.x - start.x).toFixed(6)});`;
+    }).join('\n');
+    sandMat.onBeforeCompile = shader => {
+      shader.vertexShader = 'varying vec3 vBeachPosition;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>',
+        '#include <project_vertex>\nvBeachPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      shader.fragmentShader = 'varying vec3 vBeachPosition;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
+        #include <map_fragment>
+        float shoreX = vBeachPosition.x;
+        float shoreZ = 100.0;
+        ${shoreSegments}
+        float wetWidth = 1.25 + 0.20 * sin(shoreX * 1.1);
+        float wetSand = 1.0 - smoothstep(0.1, wetWidth, shoreZ - vBeachPosition.z);
+        wetSand *= smoothstep(-25.0, -19.0, shoreX) * (1.0 - smoothstep(1.0, 8.0, shoreX));
+        diffuseColor.rgb *= mix(vec3(1.0), vec3(0.70, 0.74, 0.75), wetSand);
+      `);
+    };
+    sandMat.customProgramCacheKey = () => 'castaway-south-wet-sand-v1';
 
     const beachMesh = new THREE.Mesh(geom, sandMat);
     beachMesh.position.set(0, 0, 0);
@@ -1354,6 +1396,7 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
     }
     // 拍岸白浪呼吸潮汐动画 (在沙滩边缘柔和涨退漫涌，双频自然韵律)
     if (this.shoreFoamMesh) {
+      this.shoreFoamTime.value = this.time;
       // 1. 长周期主涌浪 (约 6.5 秒一涌一退，缓慢深呼吸)
       const swell = (Math.sin(this.time * 0.95) + 1.0) * 0.5;
       // 2. 拍岸碎浪快动量 (约 3.2 秒小浪花破水)
@@ -1363,15 +1406,15 @@ diffuseColor.a *= mix(1.0, 0.85, lagoonMix);
 
       // 浪花漫上沙滩斜坡 (Y坐标与边缘平滑漫涌)
       this.shoreFoamMesh.position.y = -0.325 + tideMotion * 0.045;
-      this.shoreFoamMesh.scale.set(0.985 + tideMotion * 0.035, 1.0, 0.985 + tideMotion * 0.035);
-      this.shoreFoamMesh.material.opacity = 0.28 + tideMotion * 0.48;
+      this.shoreFoamMesh.scale.set(0.993 + tideMotion * 0.016, 1.0, 0.993 + tideMotion * 0.016);
+      this.shoreFoamMesh.material.opacity = 0.18 + tideMotion * 0.24;
 
       // 外圈回卷浪沫 (相位滞后，退潮时拉出细碎泡沫带)
       if (this.shoreFoamOuter) {
         const outerTide = (Math.sin(this.time * 0.95 - 1.1) + 1.0) * 0.5;
         this.shoreFoamOuter.position.y = -0.338 + outerTide * 0.03;
-        this.shoreFoamOuter.scale.set(0.995 + outerTide * 0.025, 1.0, 0.995 + outerTide * 0.025);
-        this.shoreFoamOuter.material.opacity = 0.08 + (1.0 - tideMotion) * 0.22;
+        this.shoreFoamOuter.scale.set(1.001 + outerTide * 0.012, 1.0, 1.001 + outerTide * 0.012);
+        this.shoreFoamOuter.material.opacity = 0.05 + (1.0 - tideMotion) * 0.10;
       }
     }
     // 瀑布激流泡沫呼吸微动

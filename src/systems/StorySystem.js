@@ -308,6 +308,7 @@ export class StorySystem {
   getQuestBannerText() {
     const tasks = this.getGrowthTasks();
     const tracked = tasks.find(task => task.id === this.trackedGrowthTaskId && task.status === 'active');
+    if (this.isCompleted && !tracked) return FREEPLAY_BANNER;
     const target = tracked || tasks.find(task => task.status === 'active');
     return target ? `🚩 ${target.title} · ${target.hint}` : FREEPLAY_BANNER;
   }
@@ -329,6 +330,16 @@ export class StorySystem {
 
   getGrowthTasks() {
     const rig = this.game?.miningRig;
+    const chart = this.game?.nauticalChart;
+    const timberRoute = chart?.islands?.timber_isle;
+    const voyageCheck = this.raftBuilt && timberRoute?.discovered
+      ? chart.checkSupplies?.('timber_isle')
+      : null;
+    const voyageHint = !this.raftBuilt
+      ? '先到西南船坞完成船只建造。'
+      : timberRoute && !timberRoute.discovered
+        ? '先修复收音机并在南岸 SOS 地标调谐，解锁浮木岛航线。'
+        : voyageCheck?.reason || '在海图确认浮木岛航线，备齐食物和淡水后出航。';
     const stages = [
       ...ONBOARDING_STEPS.map(step => ({ id: step.id, title: step.title, hint: step.text, done: this._isOnboardingStepDone(step), phase: '海滩求生' })),
       { id: 'kindling', title: '制作引火物', hint: '收集树枝与树皮，在制作面板按配方制作引火物。', done: this.hasCraftedKindling, phase: '建立营地' },
@@ -344,8 +355,8 @@ export class StorySystem {
       { id: 'partner', title: '救助主岛幸存者', hint: '前往东北高台，发现并救醒幸存者。', done: this.secondKidAwake, phase: '伙伴与救援' },
       { id: 'radio', title: '收到海上求救', hint: '修复收音机，到南岸 SOS 地标架设调谐。', done: this.radioBroadcasted, phase: '远航救援' },
       { id: 'boat', title: '准备航行', hint: '到西南船坞查看材料与补给条件，完成船只建造。', done: this.raftBuilt, phase: '远航救援' },
-      { id: 'voyage_ready', title: '备齐航行补给', hint: '在海图查看浮木岛所需食物、淡水与船只条件，备齐后即可出航。', done: this.growthFacts.voyageArrived || this.game?.nauticalChart?.checkSupplies?.('timber_isle')?.ok === true, phase: '远航救援' },
-      { id: 'voyage_arrived', title: '首次抵达资源岛', hint: '通过海图出航，抵达浮木岛、矿石岛或雾礁岛。', done: this.growthFacts.voyageArrived === true, phase: '远航救援' },
+      { id: 'voyage_ready', title: '备齐航行补给', hint: voyageHint, done: this.growthFacts.voyageArrived === true || voyageCheck?.ok === true, phase: '远航救援' },
+      { id: 'voyage_arrived', title: '首次抵达资源岛', hint: '从船坞打开海图，选择浮木岛出发。抵达任何资源岛都可完成。', done: this.growthFacts.voyageArrived === true, phase: '远航救援' },
       { id: 'rescue', title: '浮木岛救援', hint: '通过海图前往浮木岛，救回学者雷蒙德。', done: this.raymondRescued || this.game?.timberIsleScene?.survivorRescued === true || this.game?.raymondSettled === true, phase: '远航救援' },
       { id: 'outpost', title: '建立海外前哨', hint: '通过海图抵达资源岛，在岛上完成前哨建设。', done: Object.entries(this.game?.nauticalChart?.islands || {}).some(([id, island]) => id !== 'home_island' && island.outpostBuilt === true), phase: '群岛扩张' },
       { id: 'return_home', title: '完成往返航行', hint: '探索资源岛后，通过海图返回主岛营地。', done: this.growthFacts.voyageReturned === true, phase: '远航救援' },
@@ -360,15 +371,19 @@ export class StorySystem {
       kindling: ['campsite', 'gather'], cooked: ['kindling'], axe: ['gather'], build: ['campsite'],
       assign_job: ['partner'], resident_output: ['partner'], collect_output: ['resident_output'],
       production: ['campsite'], scanner: ['production'], monkey: ['eat'], partner: ['campsite'],
-      radio: ['campsite'], boat: ['campsite'], voyage_ready: ['boat'], voyage_arrived: ['boat'],
+      radio: ['campsite'], boat: ['campsite'], voyage_ready: ['boat'], voyage_arrived: ['voyage_ready'],
       rescue: ['voyage_arrived'], return_home: ['voyage_arrived'], settle_rescue: ['rescue', 'return_home'],
       outpost: ['voyage_arrived'], outpost_return: ['outpost'], use_supplies: ['collect_output'],
       lighthouse: ['campsite'], temple: ['campsite'],
     };
     return stages.map(task => {
       const missing = (prerequisites[task.id] || []).map(id => stages.find(item => item.id === id)).filter(item => item && !item.done);
-      const status = task.done ? 'completed' : missing.length ? 'locked' : 'active';
-      return { ...task, status, missing: missing.map(item => item.title) };
+      const missingTitles = missing.map(item => item.title);
+      if (task.id === 'voyage_ready' && timberRoute && !timberRoute.discovered) {
+        missingTitles.push('解锁浮木岛航线');
+      }
+      const status = task.done ? 'completed' : missingTitles.length ? 'locked' : 'active';
+      return { ...task, status, missing: missingTitles };
     });
   }
 
@@ -786,7 +801,7 @@ export class StorySystem {
     if (!data) return;
     this.growthFacts = {};
     for (const key of ['jobAssigned', 'residentProduced', 'productionSuppliesWithdrawn', 'outpostDelivered', 'voyageArrived', 'voyageReturned', 'suppliesUsedForBuild']) {
-      this.growthFacts[key] = data.growthFacts?.[key] === true;
+      if (data.growthFacts?.[key] === true) this.growthFacts[key] = true;
     }
     this.trackedGrowthTaskId = typeof data.trackedGrowthTaskId === 'string' ? data.trackedGrowthTaskId : null;
     if (typeof data.currentChapterId === 'number') this.currentChapterId = data.currentChapterId;

@@ -9,14 +9,15 @@ const loader = new GLTFLoader();
 // 自研模型色彩校正（placeModelAsset 专用）：AI 生成 PBR 资产自带烘焙 AO/贴图，
 // 在本场景 Neutral 色调映射 + 漫反射光照下会比原画明显偏暗，此处按实测档位提亮对齐原画。
 const CUSTOM_GRADE = { toneMapped: false, emissive: 0.85, boost: [1.25, 1.12, 0.9], occ: 0.35 }; // GRADE-LINE
-function applyCustomGrade(mesh) {
+function applyCustomGrade(mesh, name) {
   const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
   mats.forEach(mat => {
     if (!mat || !mat.isMeshStandardMaterial) return;
     if (CUSTOM_GRADE.toneMapped === false) mat.toneMapped = false;
     if (CUSTOM_GRADE.emissive > 0 && mat.map) {
       mat.emissiveMap = mat.map;
-      mat.emissive = new THREE.Color(CUSTOM_GRADE.emissive, CUSTOM_GRADE.emissive, CUSTOM_GRADE.emissive);
+      const fill = name === 'cabin' || name === 'workbench' ? 0.60 : CUSTOM_GRADE.emissive;
+      mat.emissive = new THREE.Color(fill, fill, fill);
     }
     if (CUSTOM_GRADE.boost) mat.color.setRGB(CUSTOM_GRADE.boost[0], CUSTOM_GRADE.boost[1], CUSTOM_GRADE.boost[2]);
     if (typeof CUSTOM_GRADE.occ === 'number' && 'occlusionStrength' in mat) mat.occlusionStrength = CUSTOM_GRADE.occ;
@@ -47,7 +48,7 @@ async function placeGltfAsset(parent, url, name, position, width, rotation = 0, 
     if (child.isMesh) {
       child.castShadow = true;
       child.receiveShadow = true;
-      if (grade) applyCustomGrade(child);
+      if (grade) applyCustomGrade(child, name);
       // Preserve supplied PBR materials and palette textures.
     }
   });
@@ -89,7 +90,7 @@ export async function populateOpening(parent) {
     // Group C 落位（2026-11-05 用户批准）：小船泊西码头木筏旁浅水（无碰撞，水面下沉 0.3 呈系泊吃水）；
     placeModelAsset(parent, '/models/custom/boat.glb', 'boat', [-28.5, -0.3, 34.5], 3.1, 0.5, false),
     // 扫描仪立矿机旁成采矿工位（矿机本体为程序化模型，风扇/LED 与挖矿状态联动，不换）；
-    placeModelAsset(parent, '/models/custom/scanner.glb', 'scanner', [-8.2, 0.05, 21.6], 1.03, -0.7),
+    placeModelAsset(parent, '/models/custom/scanner.glb', 'scanner', ISLAND_LAYOUT.scanner, 1.03, -0.7),
     // 神殿门立神殿入口遗迹（锚点 0,0,-26）南向 approach 上，拱门正对来路（+Z）。
     placeModelAsset(parent, '/models/custom/temple_gate.glb', 'temple-gate', [0, 0.2, -19], 3.0, 0),
   ]);

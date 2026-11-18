@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "b3c70983a1518d9dd26285f3a7f9b556",
+  "saveSeed": "760e0b61160bbcaae0e640e789aad570",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -12,19 +12,19 @@
             "resonance_free": 3
           },
           "sol_token": {
-            "decrypt": 7
+            "decrypt": 6
           }
         },
         "outflow": {
           "sol_crystal": {
-            "decrypt_consume": 3
+            "decrypt_consume": 2
           }
         },
         "transfers": {}
       }
     ]
   },
-  "timestamp": 1793632825933,
+  "timestamp": 1793707088808,
   "player": {
     "position": [
       -20,
@@ -48,7 +48,7 @@
     "broken_radio": 0,
     "battery": 1,
     "nail": 1,
-    "coconut": 8,
+    "coconut": 4,
     "baked_apple": 0,
     "stone_axe": 1,
     "sol_crystal_pure": 0,
@@ -57,12 +57,12 @@
   "bonusInventorySlots": 0,
   "storage": {
     "storageInventory": {
-      "wood_plank": 2,
-      "tree_branch": 10,
+      "wood_plank": 3,
+      "tree_branch": 11,
+      "tree_bark": 6,
       "stone_chunk": 3,
       "kindling": 1,
-      "tree_sap": 1,
-      "tree_bark": 3
+      "tree_sap": 5
     },
     "bonusCapacity": 0
   },
@@ -126,6 +126,24 @@
         "discovered": false,
         "outpostBuilt": false,
         "thumbnailIcon": "🌋"
+      },
+      "mist_reef_isle": {
+        "id": "mist_reef_isle",
+        "name": "晶雾回声岛 (Mist Reef Isle)",
+        "badge": "🔮 终局晶海 · 地脉共鸣源",
+        "desc": "隐匿在 12.8 海里风暴浓雾深处的环礁秘岛，生长着璀璨的荧光深层海脉晶核、孔雀铜矿与深海母贝珍珠，并残存着先民潮汐传送阵。",
+        "climate": "浓雾潮涌 · 荧光晶脉冲盈",
+        "dangerLevel": "高度危险 (3★)",
+        "distanceKm": 12.8,
+        "requiredSupplies": {
+          "food": 4,
+          "water": 4
+        },
+        "discovered": false,
+        "outpostBuilt": false,
+        "requiresLighthouse": true,
+        "requiredTierLevel": 3,
+        "thumbnailIcon": "🔮"
       }
     }
   },
@@ -213,7 +231,8 @@
   "timberIsle": {
     "survivorRescued": true,
     "outpostClaimed": false,
-    "collectedResourceIds": []
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
   },
   "raymondSettled": false,
   "currentIslandId": "main_island",
@@ -243,15 +262,16 @@
     "raymondRescued": true,
     "lighthouseLit": true,
     "firstResonanceSettled": true,
+    "templeUnsealed": false,
     "endedEndingId": null,
     "onboardingStep": 4,
     "onboardingDismissed": false
   },
   "miningRig": {
     "loadedCrystals": 0,
-    "unclaimedSol": 7,
-    "totalBlocksMined": 3,
-    "totalSolMined": 7,
+    "unclaimedSol": 6,
+    "totalBlocksMined": 2,
+    "totalSolMined": 6,
     "batteryPower": 75,
     "hashProgress": 0,
     "isOverclocked": false,
@@ -339,7 +359,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793632778714,
+      "freeGrantTs": 1793707040186,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,
@@ -366,7 +386,18 @@
   },
   "quarryIsle": {
     "outpostClaimed": false,
-    "collectedResourceIds": []
+    "monolithRead": false,
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
+  },
+  "mistReefIsle": {
+    "outpostClaimed": false,
+    "teleportActive": false,
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
+  },
+  "wildlife": {
+    "deadMobs": {}
   },
   "flotsamSalvage": {
     "collectedIds": [],
@@ -376,7 +407,9 @@
   },
   "lighthouse": {
     "isLit": true,
-    "phase1Complete": true
+    "phase1Complete": true,
+    "phase2Complete": false,
+    "poseidonRelicEnshrined": false
   },
   "orderBoard": {
     "currentDay": 1,
@@ -421,7 +454,21 @@
         "completed": false
       }
     ],
-    "completedCount": 0
+    "completedCount": 0,
+    "fullAttendanceClaimedDay": null
+  },
+  "codex": {
+    "unlocked": [
+      "stone_chunk",
+      "coconut",
+      "tree_sap",
+      "apple",
+      "sol_crystal_pure",
+      "ivy"
+    ],
+    "claimedVolumes": [],
+    "hasWatcherTitle": false,
+    "chroniclesUnlocked": false
   },
   "world": {
     "collectedBeachResources": [

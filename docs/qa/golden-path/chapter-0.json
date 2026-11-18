@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "saveSeed": "b3c70983a1518d9dd26285f3a7f9b556",
+  "saveSeed": "760e0b61160bbcaae0e640e789aad570",
   "checkinClaimDays": [],
   "economyLedger": {
     "days": [
@@ -17,7 +17,7 @@
       }
     ]
   },
-  "timestamp": 1793632786146,
+  "timestamp": 1793707048078,
   "player": {
     "position": [
       -17,
@@ -108,6 +108,24 @@
         "discovered": false,
         "outpostBuilt": false,
         "thumbnailIcon": "🌋"
+      },
+      "mist_reef_isle": {
+        "id": "mist_reef_isle",
+        "name": "晶雾回声岛 (Mist Reef Isle)",
+        "badge": "🔮 终局晶海 · 地脉共鸣源",
+        "desc": "隐匿在 12.8 海里风暴浓雾深处的环礁秘岛，生长着璀璨的荧光深层海脉晶核、孔雀铜矿与深海母贝珍珠，并残存着先民潮汐传送阵。",
+        "climate": "浓雾潮涌 · 荧光晶脉冲盈",
+        "dangerLevel": "高度危险 (3★)",
+        "distanceKm": 12.8,
+        "requiredSupplies": {
+          "food": 4,
+          "water": 4
+        },
+        "discovered": false,
+        "outpostBuilt": false,
+        "requiresLighthouse": true,
+        "requiredTierLevel": 3,
+        "thumbnailIcon": "🔮"
       }
     }
   },
@@ -195,7 +213,8 @@
   "timberIsle": {
     "survivorRescued": false,
     "outpostClaimed": false,
-    "collectedResourceIds": []
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
   },
   "raymondSettled": false,
   "currentIslandId": "main_island",
@@ -221,6 +240,7 @@
     "raymondRescued": false,
     "lighthouseLit": false,
     "firstResonanceSettled": false,
+    "templeUnsealed": false,
     "endedEndingId": null,
     "onboardingStep": 4,
     "onboardingDismissed": false
@@ -317,7 +337,7 @@
       "calib": 0,
       "freeShares": 3,
       "freeGrantDay": 1,
-      "freeGrantTs": 1793632778714,
+      "freeGrantTs": 1793707040186,
       "freeGrantSteps": 0,
       "buff": {
         "id": null,
@@ -344,7 +364,18 @@
   },
   "quarryIsle": {
     "outpostClaimed": false,
-    "collectedResourceIds": []
+    "monolithRead": false,
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
+  },
+  "mistReefIsle": {
+    "outpostClaimed": false,
+    "teleportActive": false,
+    "collectedResourceIds": [],
+    "resourceCooldowns": {}
+  },
+  "wildlife": {
+    "deadMobs": {}
   },
   "flotsamSalvage": {
     "collectedIds": [],
@@ -354,7 +385,9 @@
   },
   "lighthouse": {
     "isLit": false,
-    "phase1Complete": false
+    "phase1Complete": false,
+    "phase2Complete": false,
+    "poseidonRelicEnshrined": false
   },
   "orderBoard": {
     "currentDay": 1,
@@ -399,7 +432,14 @@
         "completed": false
       }
     ],
-    "completedCount": 0
+    "completedCount": 0,
+    "fullAttendanceClaimedDay": null
+  },
+  "codex": {
+    "unlocked": [],
+    "claimedVolumes": [],
+    "hasWatcherTitle": false,
+    "chroniclesUnlocked": false
   },
   "world": {
     "collectedBeachResources": [

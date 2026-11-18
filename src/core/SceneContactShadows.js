@@ -26,8 +26,8 @@ export class SceneContactShadows {
     const ctx = canvas.getContext("2d");
     const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
     grad.addColorStop(0, "rgba(12, 18, 14, 0.62)");
-    grad.addColorStop(0.35, "rgba(14, 20, 16, 0.42)");
-    grad.addColorStop(0.72, "rgba(16, 24, 18, 0.12)");
+    grad.addColorStop(0.28, "rgba(14, 20, 16, 0.46)");
+    grad.addColorStop(0.65, "rgba(16, 24, 18, 0.09)");
     grad.addColorStop(1, "rgba(16, 24, 18, 0.0)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 128, 128);

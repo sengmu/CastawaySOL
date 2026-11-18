@@ -6,6 +6,7 @@ import { economyLedger } from './EconomyLedger.js';
 // 3. 出块结算：移动步数与实时时间推进哈希运算，出块产出【荒岛算力代币 sol_token】。
 
 import * as THREE from 'three';
+import { ISLAND_LAYOUT } from '../core/IslandLayout.js';
 import { soundEngine } from '../core/AudioSystem.js';
 import { haptics } from '../core/HapticFeedback.js';
 import { ODDS_TABLE, cyrb53, genRoundSeed, genCluster, genNpcBoard, settle } from './resonance/ResonanceEngine.js';
@@ -25,7 +26,7 @@ export class MiningRigSystem {
     this.game = game;
 
     // 营地矿机固定锚点坐标（位于营地西侧开阔平地，靠近储物箱）
-    this.anchor = new THREE.Vector3(-10.5, 0.05, 20.0);
+    this.anchor = new THREE.Vector3(...ISLAND_LAYOUT.miningRig);
 
     // 矿机运行数据
     this.isActive = true;                // 初始预装硅晶原石后默认通电运行
@@ -1131,12 +1132,15 @@ export class MiningRigSystem {
       this.beamGroup.visible = isRigRunning;
       if (isRigRunning) {
         const beamPulse = 0.5 + Math.sin(Date.now() * 0.004) * 0.2;
+        const player = this.game?.player?.position;
+        const distance = player ? Math.hypot(player.x - this.anchor.x, player.z - this.anchor.z) : 20;
+        const beamVisibility = 0.42 + 0.58 * THREE.MathUtils.smoothstep(distance, 5, 18);
         if (this.innerBeam) {
-          this.innerBeam.material.opacity = (isTurbo ? 0.85 : 0.45) * beamPulse;
+          this.innerBeam.material.opacity = (isTurbo ? 0.85 : 0.45) * beamPulse * beamVisibility;
           this.innerBeam.material.color.setHex(isTurbo ? 0xfffa65 : 0x14f195);
         }
         if (this.outerBeam) {
-          this.outerBeam.material.opacity = (isTurbo ? 0.45 : 0.22) * beamPulse;
+          this.outerBeam.material.opacity = (isTurbo ? 0.45 : 0.22) * beamPulse * beamVisibility;
           this.outerBeam.material.color.setHex(isTurbo ? 0xff7675 : 0x9945ff);
         }
         // 光环上升流动

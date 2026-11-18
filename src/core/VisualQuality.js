@@ -63,7 +63,7 @@ export function applyPostOverlay(container, quality, canvas) {
   overlay.id = 'visual-post-overlay';
   overlay.style.cssText = [
     'position:fixed', 'inset:0', 'pointer-events:none', 'z-index:0',
-    'background:radial-gradient(ellipse 75% 70% at 50% 46%, rgba(255,244,222,0.05) 0%, rgba(255,244,222,0) 45%, rgba(8,32,46,0) 62%, rgba(8,32,46,0.26) 100%)'
+    'background:radial-gradient(ellipse 85% 78% at 50% 46%, rgba(255,244,222,0.035) 0%, transparent 55%, rgba(8,32,46,0.13) 100%)'
   ].join(';');
   container.appendChild(overlay);
   if (quality.colorGrade && canvas) {

@@ -2647,7 +2647,7 @@ export class UIManager {
     if (this._objectiveHintKey === stageKey) return;
     this._objectiveHintKey = stageKey;
     clearTimeout(this._objectiveHideTimer);
-    const stickyObjective = false;
+    const stickyObjective = hasText && story?.isCompleted && !story.trackedGrowthTaskId;
     this._objectiveVisibleUntil = hasText ? (stickyObjective ? Infinity : Date.now() + 5000) : 0;
     if (container) {
       container.style.display = hasText ? '' : 'none';

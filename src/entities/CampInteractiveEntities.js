@@ -2,6 +2,7 @@
 // 将“经营排班”、“商业特权空投”、“净水滴滤台”、“打捞浮标缆线”全部具象化为 3D 场景实体
 // 玩家在海岛上自由漫步时，走到实体前按下【E】或点击情境动作大胶囊即可无缝互动
 import * as THREE from 'three';
+import { ISLAND_LAYOUT } from '../core/IslandLayout.js';
 
 export class CampInteractiveEntities {
   constructor(scene) {
@@ -16,13 +17,13 @@ export class CampInteractiveEntities {
     // 1. 实体坐标配置
     this.anchors = {
       // 营地经营与岗位排班告示牌 (位于西侧木箱与帐篷之间)
-      noticeboard: new THREE.Vector3(-13.2, 0.05, 21.8),
+      noticeboard: new THREE.Vector3(...ISLAND_LAYOUT.noticeboard),
       // 商业化特权与救援空投无线电终端 (位于营火东侧木料旁，带微光天线)
-      radioTerminal: new THREE.Vector3(-10.2, 0.05, 22.2),
+      radioTerminal: new THREE.Vector3(...ISLAND_LAYOUT.radioTerminal),
       // 营地原生多孔火山石净水滴滤台 (位于营火南侧溪流旁)
-      waterPurifier: new THREE.Vector3(-11.0, 0.05, 25.8),
+      waterPurifier: new THREE.Vector3(...ISLAND_LAYOUT.waterPurifier),
       // 营地日常交付订单板 (位于告示牌右侧)
-      orderBoard: new THREE.Vector3(-12.0, 0.05, 20.2),
+      orderBoard: new THREE.Vector3(...ISLAND_LAYOUT.orderBoard),
       // 南岸沙滩自动打捞浮标岸边滑轮锚桩 (南岸与出航湾交汇处)
       buoyWinch: new THREE.Vector3(-20.2, 0.02, 33.2)
     };
